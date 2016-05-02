@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+SUBCMD=$1
+shift
+echo $SUBCMD
+JAR=`ls retz-client/build/libs/retz-client-*-all.jar`
+echo "Using jar file '$JAR'"
+java -jar $JAR $SUBCMD -C ./retz.properties "$@"
+#echo ./gradlew :retz-client:shadowJar :retz-client:run -Pargs=\"$SUBCMD -C ../retz.properties $@\"
+#./gradlew :retz-client:shadowJar :retz-client:run -Pargs=\"$SUBCMD -C ../retz.properties $@\"

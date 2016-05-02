@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+CURRENT=$(cd $(dirname $0) && pwd)
+BUILD_DIR=${CURRENT}/../../../build/
+
+SUBCOMMAND=$1
+shift
+
+java -jar ${BUILD_DIR}/libs/retz-client-all.jar ${SUBCOMMAND} \
+     -C ${CURRENT}/retz.properties \
+     "$@"

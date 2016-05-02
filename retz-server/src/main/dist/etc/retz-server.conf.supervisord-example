@@ -1,0 +1,5 @@
+[program:retz-server]
+command=/opt/retz-server/bin/retz-server
+redirect_stderr=true
+stdout_logfile=/var/log/retz-server.log
+user=retz

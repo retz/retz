@@ -1,0 +1,95 @@
+/**
+ *    Retz
+ *    Copyright (C) 2016 Nautilus Technologies, KK.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+package com.asakusafw.retz.mesos;
+
+import com.asakusafw.retz.protocol.Application;
+import com.asakusafw.retz.protocol.Job;
+import com.asakusafw.retz.protocol.MetaJob;
+import com.asakusafw.retz.protocol.Range;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.protobuf.ByteString;
+import org.apache.mesos.Protos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class TaskBuilder {
+    private static final Logger LOG = LoggerFactory.getLogger(TaskBuilder.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    Protos.TaskInfo.Builder builder;
+    {
+        MAPPER.registerModule(new Jdk8Module());
+    }
+
+    TaskBuilder() {
+        builder = Protos.TaskInfo.newBuilder();
+    }
+
+    // @doc assign as much CPU/Memory as possible
+    public TaskBuilder setOffer(Resource r, Range cpu, Range memMB, Protos.SlaveID slaveID) {
+        assert cpu.getMin() < r.cpu();
+        assert memMB.getMin() < r.memMB();
+        int assignedCpu = Integer.min((int) r.cpu(), cpu.getMax());
+        int assignedMem = Integer.min(r.memMB(), memMB.getMax());
+
+        builder.addAllResources(ResourceConstructor.construct(assignedCpu, assignedMem))
+                //builder.addAllResources(offer.getResourcesList())
+                .setSlaveId(slaveID);
+        r.subCPU(assignedCpu);
+        r.subMemMB(assignedMem);
+        LOG.info("Assigning cpu={}, mem={}", assignedCpu, assignedMem);
+        return this;
+    }
+
+    public TaskBuilder setVolume(Resource r, String volumeId) {
+        assert r.volumes().containsKey(volumeId);
+        LOG.debug(r.volumes().get(volumeId).toString());
+        builder.addResources(r.volumes().get(volumeId));
+        return this;
+    }
+
+    public TaskBuilder setName(String name) {
+        builder.setName(name);
+        return this;
+    }
+
+    public TaskBuilder setTaskId(String id) {
+        //TODO set some unique batch execution id here
+        builder.setTaskId(Protos.TaskID.newBuilder().setValue(id).build());
+        return this;
+    }
+
+    public TaskBuilder setExecutor(Protos.ExecutorInfo e) {
+        builder.setExecutor(e);
+        return this;
+    }
+
+    public TaskBuilder setJob(Job job, Application app) throws JsonProcessingException {
+        MetaJob metaJob = new MetaJob(job, app);
+        String json = TaskBuilder.MAPPER.writeValueAsString(metaJob);
+        builder.setData(ByteString.copyFromUtf8(json));
+        return this;
+    }
+
+    public Protos.TaskInfo build() {
+        return builder.build();
+    }
+
+
+}

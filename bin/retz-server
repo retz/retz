@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+pwd
+./gradlew :retz-server:jar :retz-server:run -Pargs="-C ../retz.properties" -is

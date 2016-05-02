@@ -9,11 +9,10 @@
  * in the user guide at https://docs.gradle.org/2.9/userguide/multi_project_builds.html
  */
 
-/*
-// To declare projects as part of a multi-project build use the 'include' method
-include 'shared'
-include 'api'
-include 'services:webservice'
-*/
+include 'retz-server'
+include 'retz-executor'
+include 'retz-client'
+include 'retz-common'
+include 'retz-inttest'
 
-rootProject.name = 'yaess2'
+rootProject.name = 'retz'
