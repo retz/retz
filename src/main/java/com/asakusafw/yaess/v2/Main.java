@@ -1,0 +1,346 @@
+package com.asakusafw.yaess.v2;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import com.asakusafw.yaess.bootstrap.CommandLineUtil;
+import com.asakusafw.yaess.bootstrap.ArgumentList;
+import com.asakusafw.yaess.basic.ExitCodeException;
+import com.asakusafw.yaess.core.Blob;
+import com.asakusafw.yaess.core.ExecutionPhase;
+import com.asakusafw.yaess.core.Extension;
+import com.asakusafw.yaess.core.ProfileContext;
+import com.asakusafw.yaess.core.VariableResolver;
+import com.asakusafw.yaess.core.YaessLogger;
+import com.asakusafw.yaess.core.YaessProfile;
+import com.asakusafw.yaess.core.task.ExecutionTask;
+
+import com.asakusafw.yaess.core.task.ExecutionTask;
+import com.asakusafw.yaess.core.Blob;
+import com.asakusafw.yaess.core.Extension;
+
+/**
+ * Created by kuenishi on 5/2/16.
+ */
+public class Main {
+
+    static final Logger LOG = LoggerFactory.getLogger(Main.class);
+
+    public static void main(String... argv) {
+        System.setProperty("org.slf4j.simpleLogger.log.defaultLogLevel", "DEBUG");
+        final String asakusaHome = System.getenv("ASAKUSA_HOME");
+        if (asakusaHome == null) {
+            LOG.error("ASAKUSA_HOME is not defined.");
+            System.exit(-1);
+        }
+        LOG.info("Starting YAESS2 with ASAKUSA_HOME={}", asakusaHome);
+        long start = System.currentTimeMillis();
+        int status = execute(asakusaHome, argv);
+        long end = System.currentTimeMillis();
+        LOG.info("YAESS2 finished in {} seconds", (end - start) / 1000.0);
+        System.exit(status);
+    }
+        static int execute (String asakusaHome, String... argv){
+            Configuration conf;
+
+            try {
+                conf = parseConfiguration(argv, asakusaHome);
+
+            } catch (ParseException e) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.setWidth(Integer.MAX_VALUE);
+                formatter.printHelp(
+                        MessageFormat.format(
+                                "java -classpath ... {0}",
+                                Main.class.getName()),
+                        OPTIONS,
+                        true);
+                System.out.println("Phase name is one of:");
+                for (ExecutionPhase phase : ExecutionPhase.values()) {
+                    System.out.printf("    %s%n", phase.getSymbol());
+                }
+                //YSLOG.error(e, "E00001", Arrays.toString(args));
+                return 1;
+            } catch (IllegalArgumentException e) {
+                LOG.error("Illegal Option specified: {}", e.getMessage());
+                e.printStackTrace();
+                return -1;
+            }
+            try {
+                ExecutionTask task;
+                try {
+                    Map<String, Blob> blobs = new LinkedHashMap<>();
+                    for (Extension extension : conf.extensions) {
+                        blobs.put(extension.getName(), extension.getData());
+                    }
+                    task = ExecutionTask.load(conf.profile, conf.script,
+                            conf.arguments, conf.definitions, blobs);
+                } catch (Exception e) {
+                    //YSLOG.error(e, "E00002", conf);
+                    return 1;
+                }
+                //YSLOG.info("I00001", conf);
+
+                        task.executeBatch(conf.batchId);
+                return 0;
+            } catch (ExitCodeException e) {
+                //YSLOG.error("E00003", conf);
+                return 1;
+            } catch (Exception e) {
+                //YSLOG.error(e, "E00003", conf);
+                return 1;
+            } finally {
+                for (Extension ext : conf.extensions) {
+                    try {
+                        ext.close();
+                    } catch (IOException e) {
+                        LOG.debug("error occurred while closing extension: {}", ext, e); //$NON-NLS-1$
+                    }
+                }
+            }
+        }
+
+
+    static final String KEY_CUSTOM_PROFILE = "profile";
+
+    static final Option OPT_PROFILE;
+    static final Option OPT_SCRIPT;
+    static final Option OPT_BATCH_ID;
+    static final Option OPT_FLOW_ID;
+    static final Option OPT_EXECUTION_ID;
+    static final Option OPT_PHASE_NAME;
+    static final Option OPT_PLUGIN;
+    static final Option OPT_ARGUMENT;
+    static final Option OPT_DEFINITION;
+    static final Option OPT_ENVIRONMENT_VARIABLE;
+
+    private static final Options OPTIONS;
+    static {
+        OPT_PROFILE = new Option("profile", true, "profile path");
+        OPT_PROFILE.setArgName("/path/to/profile");
+
+        OPT_SCRIPT = new Option("script", true, "script path");
+        OPT_SCRIPT.setArgName("/path/to/script");
+
+        OPT_BATCH_ID = new Option("batch", true, "batch ID");
+        OPT_BATCH_ID.setArgName("batch_id");
+        OPT_BATCH_ID.setRequired(true);
+
+        OPT_FLOW_ID = new Option("flow", true, "flow ID");
+        OPT_FLOW_ID.setArgName("flow_id");
+        OPT_FLOW_ID.setRequired(false);
+
+        OPT_EXECUTION_ID = new Option("execution", true, "execution ID");
+        OPT_EXECUTION_ID.setArgName("execution-id");
+        OPT_EXECUTION_ID.setRequired(false);
+
+        OPT_PHASE_NAME = new Option("phase", true, "target phase name");
+        OPT_PHASE_NAME.setArgName("phase-name");
+        OPT_PHASE_NAME.setRequired(false);
+
+        OPT_PLUGIN = new Option("plugin", true, "YAESS plug-ins");
+        OPT_PLUGIN.setArgName("plugin-1.jar" + File.pathSeparatorChar + "plugin-2.jar");
+        OPT_PLUGIN.setRequired(false);
+
+        OPT_ARGUMENT = new Option("A", "argument", true, "batch argument");
+        OPT_ARGUMENT.setArgs(2);
+        OPT_ARGUMENT.setValueSeparator('=');
+        OPT_ARGUMENT.setArgName("name=value");
+        OPT_ARGUMENT.setRequired(false);
+
+        OPT_DEFINITION = new Option("D", "define", true, "definitions");
+        OPT_DEFINITION.setArgs(2);
+        OPT_DEFINITION.setValueSeparator('=');
+        OPT_DEFINITION.setArgName("name=value");
+        OPT_DEFINITION.setRequired(false);
+
+        OPT_ENVIRONMENT_VARIABLE = new Option("V", "variable", true, "extra environment variable");
+        OPT_ENVIRONMENT_VARIABLE.setArgs(2);
+        OPT_ENVIRONMENT_VARIABLE.setValueSeparator('=');
+        OPT_ENVIRONMENT_VARIABLE.setArgName("name=value");
+        OPT_ENVIRONMENT_VARIABLE.setRequired(false);
+
+        OPTIONS = new Options();
+        OPTIONS.addOption(OPT_PROFILE);
+        OPTIONS.addOption(OPT_SCRIPT);
+        OPTIONS.addOption(OPT_BATCH_ID);
+        OPTIONS.addOption(OPT_FLOW_ID);
+        OPTIONS.addOption(OPT_EXECUTION_ID);
+        OPTIONS.addOption(OPT_PHASE_NAME);
+        OPTIONS.addOption(OPT_PLUGIN);
+        OPTIONS.addOption(OPT_ARGUMENT);
+        OPTIONS.addOption(OPT_DEFINITION);
+        OPTIONS.addOption(OPT_ENVIRONMENT_VARIABLE);
+    }
+
+    static Configuration parseConfiguration(String[] args, String home) throws ParseException {
+        assert args != null;
+        LOG.debug("Analyzing YAESS bootstrap arguments: {}", Arrays.toString(args));
+
+        ArgumentList argList = ArgumentList.parse(args);
+        LOG.debug("Argument List: {}", argList);
+
+        CommandLineParser parser = new BasicParser();
+        CommandLine cmd = parser.parse(OPTIONS, argList.getStandardAsArray());
+
+        String profile = cmd.getOptionValue(OPT_PROFILE.getOpt(),
+                home + "/yaess/conf/yaess.properties");
+        LOG.info("Profile: {}", profile);
+        String batchId = cmd.getOptionValue(OPT_BATCH_ID.getOpt());
+        LOG.info("Batch ID: {}", batchId);
+        String script = cmd.getOptionValue(OPT_SCRIPT.getOpt(),
+                home + "/batchapps/" + batchId + "/etc/yaess-script.properties");
+        LOG.info("Script: {}", script);
+        String flowId = cmd.getOptionValue(OPT_FLOW_ID.getOpt());
+        LOG.debug("Flow ID: {}", flowId);
+        String executionId = cmd.getOptionValue(OPT_EXECUTION_ID.getOpt());
+        LOG.debug("Execution ID: {}", executionId);
+        String phaseName = cmd.getOptionValue(OPT_PHASE_NAME.getOpt());
+        LOG.debug("Phase name: {}", phaseName);
+        String plugins = cmd.getOptionValue(OPT_PLUGIN.getOpt());
+        LOG.debug("Plug-ins: {}", plugins);
+        Properties arguments = cmd.getOptionProperties(OPT_ARGUMENT.getOpt());
+        LOG.debug("Execution arguments: {}", arguments);
+        Properties variables = cmd.getOptionProperties(OPT_ENVIRONMENT_VARIABLE.getOpt());
+        LOG.debug("Environment variables: {}", variables);
+        Properties definitions = cmd.getOptionProperties(OPT_DEFINITION.getOpt());
+        LOG.debug("YAESS feature definitions: {}", definitions);
+
+        LOG.debug("Loading plugins: {}", plugins);
+        List<File> pluginFiles = CommandLineUtil.parseFileList(plugins);
+        ClassLoader loader = CommandLineUtil.buildPluginLoader(Main.class.getClassLoader(), pluginFiles);
+
+        Configuration result = new Configuration();
+
+        LOG.debug("Loading profile: {}", profile);
+        File file = new File(profile);
+        file = findCustomProfile(file, definitions.getProperty(KEY_CUSTOM_PROFILE));
+        try {
+            definitions.remove(KEY_CUSTOM_PROFILE);
+            Map<String, String> env = new HashMap<>();
+            env.putAll(System.getenv());
+            env.putAll(toMap(variables));
+            result.context = new ProfileContext(loader, new VariableResolver(env));
+            Properties properties = CommandLineUtil.loadProperties(file);
+            result.profile = YaessProfile.load(properties, result.context);
+        } catch (Exception e) {
+            //YSLOG.error(e, "E01001", file.getPath());
+            throw new IllegalArgumentException(MessageFormat.format(
+                    "Invalid profile \"{0}\".",
+                    file), e);
+        }
+
+        LOG.debug("Loading script: {}", script);
+        try {
+            Properties properties = CommandLineUtil.loadProperties(new File(script));
+            result.script = properties;
+        } catch (Exception e) {
+            //YSLOG.error(e, "E01002", script);
+            throw new IllegalArgumentException(MessageFormat.format(
+                    "Invalid script \"{0}\".",
+                    script), e);
+        }
+
+        result.batchId = batchId;
+        result.flowId = flowId;
+        result.executionId = executionId;
+        if (phaseName != null) {
+            result.phase = ExecutionPhase.findFromSymbol(phaseName);
+            if (result.phase == null) {
+                throw new IllegalArgumentException(MessageFormat.format(
+                        "Unknown phase name \"{0}\".",
+                        phaseName));
+            }
+        }
+
+        result.arguments = toMap(arguments);
+        result.definitions = toMap(definitions);
+        result.extensions = CommandLineUtil.loadExtensions(loader, argList.getExtended());
+
+        LOG.debug("Analyzed YAESS bootstrap arguments");
+        return result;
+    }
+
+    private static File findCustomProfile(File file, String customProfileName) {
+        if (customProfileName == null) {
+            return file;
+        }
+        String fileName = file.getName();
+        int index = fileName.lastIndexOf('.');
+        String extension = ""; //$NON-NLS-1$
+        if (index >= 0) {
+            extension = fileName.substring(index);
+        }
+
+        File result = new File(file.getParentFile(), customProfileName + extension);
+        //YSLOG.info("I01001", //$NON-NLS-1$
+        //        result);
+        return result;
+    }
+
+    private static Map<String, String> toMap(Properties p) {
+        assert p != null;
+        Map<String, String> results = new TreeMap<>();
+        for (Map.Entry<Object, Object> entry : p.entrySet()) {
+            results.put((String) entry.getKey(), (String) entry.getValue());
+        }
+        return results;
+    }
+
+    static final class Configuration {
+        ProfileContext context;
+        YaessProfile profile;
+        Properties script;
+        String batchId;
+        String flowId;
+        String executionId;
+        ExecutionPhase phase;
+        Map<String, String> arguments;
+        Map<String, String> definitions;
+        List<Extension> extensions;
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("Configuration batch=Id");
+            builder.append(batchId);
+            builder.append(", arguments=");
+            builder.append(arguments);
+            builder.append(", definitions=");
+            builder.append(definitions);
+            if (flowId != null) {
+                builder.append(", flowId=");
+                builder.append(flowId);
+            }
+            if (executionId != null) {
+                builder.append(", executionId=");
+                builder.append(executionId);
+            }
+            if (phase != null) {
+                builder.append(", phase=");
+                builder.append(phase);
+            }
+            builder.append("]");
+            return builder.toString();
+        }
+    }
+
+}
+
