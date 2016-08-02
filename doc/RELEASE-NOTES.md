@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.9
+
+* Squash all past commits to remove confidential information
+
 ## 0.0.8
 
 * Add retz.mesos.offer_interval as retz.config parameter to control
