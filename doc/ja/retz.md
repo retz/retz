@@ -22,19 +22,19 @@ Spark や Hadoop ではユーザーの本番環境では規模が大きくて投
 
 * ジョブの kill: ニーズが分かっていない
 * ジョブをまとめて投入 `schedule -file`: ニーズが分かっていない
-* 特殊なリソースの指定: [GPU (1.0~)](https://issues.apache.org/jira/browse/MESOS-4424) など
-* ジョブのリトライ
-* Mesos への認証アクセス
-* **ジョブキューの内容は永続化されない**
-* Shutdown hook ( `java.lang.Runtime.addShutdownHook(Thread)` ) でタスク終了を待ち、キュー内容を保存・閉塞して Graceful stop する
 
 #### ロードマップ
 
+* ジョブ終了後もステータスを保存する
+* 特殊なリソースの指定: [GPU (1.0~)](https://issues.apache.org/jira/browse/MESOS-4424) など
 * ジョブ登録などに認証機構
-* キューの永続化およびFO - サービス化に向けて
-* S3/etc - データをHTTP以外の方法で外部から取得
-* YARN対応 - Mesosの代わりにYARNでも動作
-* Asakusa on Spark on Mesos のサポート
+* クライアント毎にIsolation
+* Docker などコンテナ上での実行
+* キューの永続化およびFO
+* Shutdown hook ( `java.lang.Runtime.addShutdownHook(Thread)` ) でタスク終了を待ち、キュー内容を保存・閉塞して Graceful stop する
+* Mesos への認証アクセス
+* ジョブのリトライ
+* ワークフローエンジンとの連携
 
 以下、新しい分散スケジューラのアーキテクチャ、構成要素、開発部分などを定義する
 
