@@ -42,18 +42,21 @@ public class TaskBuilder {
     }
 
     // @doc assign as much CPU/Memory as possible
-    public TaskBuilder setOffer(Resource r, Range cpu, Range memMB, Protos.SlaveID slaveID) {
-        assert cpu.getMin() < r.cpu();
-        assert memMB.getMin() < r.memMB();
+    public TaskBuilder setOffer(Resource r, Range cpu, Range memMB, Range gpu, Protos.SlaveID slaveID) {
+        assert cpu.getMin() <= r.cpu();
+        assert memMB.getMin() <= r.memMB();
+        assert gpu.getMin() <= r.gpu();
         int assignedCpu = Integer.min((int) r.cpu(), cpu.getMax());
         int assignedMem = Integer.min(r.memMB(), memMB.getMax());
+        int assignedGPU = Integer.min(r.gpu(), gpu.getMax());
 
-        builder.addAllResources(ResourceConstructor.construct(assignedCpu, assignedMem))
+        builder.addAllResources(ResourceConstructor.construct(assignedCpu, assignedMem, 0, assignedGPU))
                 //builder.addAllResources(offer.getResourcesList())
                 .setSlaveId(slaveID);
         r.subCPU(assignedCpu);
         r.subMemMB(assignedMem);
-        LOG.info("Assigning cpu={}, mem={}", assignedCpu, assignedMem);
+        r.subGPU(assignedGPU);
+        LOG.info("Assigning cpu={}, mem={}, gpus={}", assignedCpu, assignedMem, assignedGPU);
         return this;
     }
 

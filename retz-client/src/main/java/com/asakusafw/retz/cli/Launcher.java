@@ -46,6 +46,7 @@ public class Launcher {
     static final Option OPT_CPU;
     static final Option OPT_MEM_MB;
     static final Option OPT_DISK_MB;
+    static final Option OPT_GPU;
     static final Option OPT_TRUST_PVFILES;
 
     private static final Options OPTIONS;
@@ -80,6 +81,8 @@ public class Launcher {
         OPT_MEM_MB.setArgName("512-");
         OPT_DISK_MB = new Option("disk", true, "Disk size for persistent volume in MB");
         OPT_DISK_MB.setArgName("1024");
+        OPT_GPU = new Option("gpu", true, "Range of GPU cards assigned to the job");
+        OPT_GPU.setArgName("1-1");
 
         OPT_TRUST_PVFILES = new Option("trustpvfiles", false, "Whether to trust decompressed files in persistent volume from -P option");
 
@@ -94,6 +97,7 @@ public class Launcher {
         OPTIONS.addOption(OPT_CPU);
         OPTIONS.addOption(OPT_MEM_MB);
         OPTIONS.addOption(OPT_DISK_MB);
+        OPTIONS.addOption(OPT_GPU);
         OPTIONS.addOption(OPT_TRUST_PVFILES);
     }
 
@@ -185,7 +189,7 @@ public class Launcher {
             }
             try {
                 Job job = new Job(conf.getAppName().get(), conf.getRemoteCommand().get(),
-                        conf.getJobEnv(), conf.getCpu(), conf.getMemMB());
+                        conf.getJobEnv(), conf.getCpu(), conf.getMemMB(), conf.getGPU());
                 job.setTrustPVFiles(conf.getTrustPVFiles());
                 LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
                 Response res = c.schedule(job);
@@ -211,7 +215,7 @@ public class Launcher {
                 return -1;
             }
             Job job = new Job(conf.getAppName().get(), conf.getRemoteCommand().get(),
-                    conf.getJobEnv(), conf.getCpu(), conf.getMemMB());
+                    conf.getJobEnv(), conf.getCpu(), conf.getMemMB(), conf.getGPU());
             job.setTrustPVFiles(conf.getTrustPVFiles());
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
             Job result = c.run(job);
@@ -367,7 +371,8 @@ public class Launcher {
         // TODO: write tests on Range.parseRange and Range#toString
         result.cpu = Range.parseRange(cmd.getOptionValue(OPT_CPU.getOpt(), "2-"));
         result.memMB = Range.parseRange(cmd.getOptionValue(OPT_MEM_MB.getOpt(), "512-"));
-        LOG.info("Range of CPU and Memory: {} {}MB", result.cpu, result.memMB);
+        result.gpu = Range.parseRange(cmd.getOptionValue(OPT_GPU.getOpt(), "0-0"));
+        LOG.info("Range of CPU and Memory: {} {}MB ({} gpus)", result.cpu, result.memMB, result.gpu);
 
         String maybeDiskMBstring = cmd.getOptionValue(OPT_DISK_MB.getOpt());
         if (maybeDiskMBstring == null) {
@@ -403,6 +408,7 @@ public class Launcher {
         Optional<String> jobResultDir;
         Range cpu;
         Range memMB;
+        Range gpu;
         Optional<Integer> diskMB;
         boolean trustPVFiles;
 
@@ -423,6 +429,7 @@ public class Launcher {
                     .append(", cpu=").append(cpu)
                     .append(", mem=").append(memMB)
                     .append(", disk=").append(diskMB)
+                    .append(", gpu=").append(gpu)
                     .append(", fileConfig=").append(fileConfig)
                     .append(", trustPVFiles=").append(trustPVFiles)
                     .append("]");
@@ -463,6 +470,10 @@ public class Launcher {
 
         public Optional<Integer> getDiskMB() {
             return diskMB;
+        }
+
+        public Range getGPU() {
+            return gpu;
         }
 
         public boolean getTrustPVFiles() {

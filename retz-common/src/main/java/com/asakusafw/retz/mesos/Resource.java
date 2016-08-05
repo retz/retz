@@ -29,17 +29,19 @@ public class Resource {
     private int memMB;
     private int diskMB;
     private int reservedDiskMB;
+    private int gpu;
     private final Map<String, Protos.Resource> volumes = new LinkedHashMap<>();
 
     public Resource(double cpu, int memMB, int diskMB) {
-        this(cpu, memMB, diskMB, 0);
+        this(cpu, memMB, diskMB, 0, 0);
     }
 
-    public Resource(double cpu, int memMB, int diskMB, int reservedDiskMB) {
+    public Resource(double cpu, int memMB, int diskMB, int reservedDiskMB, int gpu) {
         this.cpu = cpu;
         this.memMB = memMB;
         this.diskMB = diskMB;
         this.reservedDiskMB = reservedDiskMB;
+        this.gpu = gpu;
     }
 
     public double cpu() {
@@ -56,6 +58,10 @@ public class Resource {
 
     public int reservedDiskMB() {
         return reservedDiskMB;
+    }
+
+    public int gpu() {
+        return gpu;
     }
 
     public Map<String, Protos.Resource> volumes() {
@@ -79,6 +85,10 @@ public class Resource {
         this.memMB -= memMB;
     }
 
+    public void subGPU(int gpu) {
+        this.gpu -= gpu;
+    }
+
     @Override
     public String toString() {
         List<String> vols = volumes.entrySet().stream()
@@ -87,7 +97,7 @@ public class Resource {
                         entry.getValue().getDisk().getVolume().getContainerPath(),
                         entry.getValue().getDisk().getVolume().getHostPath()))
                 .collect(Collectors.toList());
-        return String.format("cpu=%.1f, mem=%d, disk=%d, reserved_disk=%d, volumes=[%s]",
-                cpu, memMB, diskMB, reservedDiskMB, String.join(", ", vols));
+        return String.format("cpu=%.1f, mem=%d, disk=%d, reserved_disk=%d, gpus=%d, volumes=[%s]",
+                cpu, memMB, diskMB, reservedDiskMB, gpu, String.join(", ", vols));
     }
 }

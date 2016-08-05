@@ -219,9 +219,18 @@ public class RetzScheduler implements Scheduler {
                     job.killed(JobQueue.now(), reason);
                     WebConsole.notifyKilled(job);
                     continue;
+                } else if (!conf.fileConfig.useGPU() && job.gpu().getMin() > 0) {
+                    // TODO: this should be checked before enqueuing to JobQueue
+                    String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
+                            job.id(), job.appid(), job.gpu().getMin());
+                    LOG.warn(reason);
+                    job.killed(JobQueue.now(), reason);
+                    WebConsole.notifyKilled(job);
+                    continue;
                 } else {
                     commands.add(job.appid(), job.cmd());
                 }
+
 
                 String id = Integer.toString(job.id());
                 // Not using simple CommandExecutor to keep the executor lifecycle with its assets
@@ -229,7 +238,7 @@ public class RetzScheduler implements Scheduler {
                 Protos.ExecutorInfo executorInfo = app.get().toExecutorInfo(frameworkInfo.getId());
                 try {
                     TaskBuilder tb = new TaskBuilder()
-                            .setOffer(r, job.cpu(), job.memMB(), offer.getSlaveId())
+                            .setOffer(r, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
                             .setName("retz-task-name-" + job.name())
                             .setTaskId("retz-task-id-" + id)
                             .setExecutor(executorInfo)

@@ -145,7 +145,7 @@ public class WebConsoleTest {
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Response res = webClient.schedule("foobar", cmd, null, new Range(1, 0), new Range(256, 0));
+            Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(256, 0)));
             assert res instanceof ErrorResponse;
 
             maybeJob = JobQueue.pop();
@@ -168,7 +168,7 @@ public class WebConsoleTest {
         {
             // You know, these spaces are to be normalized
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Response res = webClient.schedule("foobar", cmd, null, new Range(1, 0), new Range(200, 0));
+            Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(200, 0)));
             assert res instanceof ScheduleResponse;
             ScheduleResponse sres = (ScheduleResponse) res;
             assert sres.job.scheduled() != null;
@@ -199,7 +199,7 @@ public class WebConsoleTest {
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Job job = new Job(cmd, "", "", "", null, -1, 234, "", null, "foobar-nosuchapp", "name", new Range(1, 0), new Range(256, 0), true);
+            Job job = new Job("foobar-nosuchapp", cmd, null, new Range(1, 0), new Range(256, 0));
             Job done = webClient.run(job);
             assert done == null;
 

@@ -36,6 +36,7 @@ public class FileConfiguration {
     static final String QUEUE_MAX = "retz.queue.max";
     static final String MESOS_ROLE = "retz.mesos.role";
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
+    static final String USE_GPU = "retz.gpu";
     static final String ACCESS_SECRET = "retz.secret";
     static final String SCHEDULE_RESULTS = "retz.results";
     static final String SCHEDULE_RETRY = "retz.retry";
@@ -45,8 +46,9 @@ public class FileConfiguration {
 
     static final String DEFAULT_MESOS_PRINCIPAL = "retz";
 
-    private Properties properties;
-    private URI uri;
+    private final Properties properties;
+    private final URI uri;
+    private final boolean useGPU;
 
     public FileConfiguration(String path) throws IOException, URISyntaxException {
         this(new File(path));
@@ -76,6 +78,15 @@ public class FileConfiguration {
             throw new IllegalArgumentException();
         }
 
+        String gpu = properties.getProperty(USE_GPU, "false");
+        if (gpu.equals("true")) {
+            useGPU = true;
+        } else if (gpu.equals("false")) {
+            useGPU = false;
+        } else {
+            throw new IllegalArgumentException(USE_GPU + "must be boolean");
+        }
+
         LOG.info("Mesos master={}, principal={}, role={}", getMesosMaster(), getPrincipal(), getRole());
     }
 
@@ -103,6 +114,10 @@ public class FileConfiguration {
 
     public String getUserName() {
         return properties.getProperty(USER_NAME, System.getProperty("user.name"));
+    }
+
+    public boolean useGPU() {
+        return useGPU;
     }
 
     @Override

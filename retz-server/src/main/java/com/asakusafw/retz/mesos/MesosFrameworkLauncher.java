@@ -92,17 +92,24 @@ public final class MesosFrameworkLauncher {
     private static Protos.FrameworkInfo buildFrameworkInfo(Configuration conf) {
         String userName = conf.fileConfig.getUserName();
 
-        Protos.FrameworkInfo fw = Protos.FrameworkInfo.newBuilder()
+        Protos.FrameworkInfo.Builder fwBuilder = Protos.FrameworkInfo.newBuilder()
                 .setUser(userName)
                 .setName(RetzScheduler.FRAMEWORK_NAME)
                 .setWebuiUrl(conf.fileConfig.getUri().toASCIIString())
                 .setFailoverTimeout(0)
                 .setCheckpoint(true)
                 .setPrincipal(conf.fileConfig.getPrincipal())
-                .setRole(conf.fileConfig.getRole())
-                .build();
+                .setRole(conf.fileConfig.getRole());
+
+        if (conf.fileConfig.useGPU()) {
+            LOG.info("GPU enabled - registering with GPU_RESOURCES capability.");
+            fwBuilder.addCapabilities(Protos.FrameworkInfo.Capability.newBuilder()
+                    .setType(Protos.FrameworkInfo.Capability.Type.GPU_RESOURCES)
+                    .build());
+        }
+
         LOG.info("Connecting to Mesos master {} as {}", conf.getMesosMaster(), userName);
-        return fw;
+        return fwBuilder.build();
     }
 
     static final Option OPT_CONFIG;

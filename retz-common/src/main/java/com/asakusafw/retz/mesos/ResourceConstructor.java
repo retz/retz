@@ -39,9 +39,14 @@ public class ResourceConstructor {
         return list;
     }
 
-    public static List<Protos.Resource> construct(int cpus, int memMB, int disk) {
+    public static List<Protos.Resource> construct(int cpus, int memMB, int disk, int gpu) {
         List<Protos.Resource> list = construct(cpus, memMB);
         list.add(buildDisk(disk));
+        list.add(Protos.Resource.newBuilder()
+                .setName("gpus")
+                .setScalar(Protos.Value.Scalar.newBuilder().setValue(gpu))
+                .setType(Protos.Value.Type.SCALAR)
+                .build());
         return list;
     }
 
@@ -54,7 +59,7 @@ public class ResourceConstructor {
     }
 
     public static Resource decode(List<Protos.Resource> resources) {
-        int memMB = 0, diskMB = 0, reservedDiskMB = 0;
+        int memMB = 0, diskMB = 0, reservedDiskMB = 0, gpu = 0;
         double cpu = 0;
         Map<String, Protos.Resource> volumes = new LinkedHashMap<>();
         for (Protos.Resource r : resources) {
@@ -89,9 +94,11 @@ public class ResourceConstructor {
                 for (Protos.Label label : r.getReservation().getLabels().getLabelsList()) {
                     System.err.println(label.getKey() + "=>" + label.getValue());
                 } */
+            } else if (r.getName().equals("gpus")) {
+                gpu = (int) (r.getScalar().getValue());
             }
         }
-        Resource ret = new Resource(cpu, memMB, diskMB, reservedDiskMB);
+        Resource ret = new Resource(cpu, memMB, diskMB, reservedDiskMB, gpu);
         ret.volumes().putAll(volumes);
         return ret;
     }

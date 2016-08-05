@@ -38,6 +38,7 @@ public class Job {
     private String name;
     private final Range cpu;
     private final Range memMB;
+    private Range gpu;
 
     private boolean trustPVFiles = false;
 
@@ -49,6 +50,15 @@ public class Job {
         assert (cpu.getMin() > 0 && memMB.getMin() >= 128);
         this.cpu = cpu;
         this.memMB = memMB;
+        this.gpu = new Range(0, 0);
+    }
+
+
+    public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, Range gpu) {
+        this(appName, cmd, props, cpu, memMB);
+        if (gpu != null ) {
+            this.gpu = gpu;
+        }
     }
 
     @JsonCreator
@@ -65,6 +75,7 @@ public class Job {
                @JsonProperty(value = "name") String name,
                @JsonProperty("cpu") Range cpu,
                @JsonProperty("memMB") Range memMB,
+               @JsonProperty("gpu") Range gpu,
                @JsonProperty("trustPVFiles") boolean trustPVFiles) {
         this.cmd = cmd;
         this.scheduled = scheduled;
@@ -79,6 +90,7 @@ public class Job {
         this.name = (name != null) ? name : appid;
         this.cpu = cpu;
         this.memMB = memMB;
+        this.gpu = gpu;
         this.trustPVFiles = trustPVFiles;
     }
 
@@ -145,6 +157,11 @@ public class Job {
     @JsonGetter("memMB")
     public Range memMB() {
         return memMB;
+    }
+
+    @JsonGetter("gpu")
+    public Range gpu() {
+        return gpu;
     }
 
     @JsonGetter("trustPVFiles")
