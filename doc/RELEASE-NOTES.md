@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.10
+
+* Add GPU support
+
 ## 0.0.9
 
 * Squash all past commits to remove confidential information

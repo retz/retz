@@ -235,6 +235,8 @@ $ retz-client config
   ブは通常、Mesosに与えられたCPU数または、ここで指定した最大値を実行時に設定する。
 * `-mem <posint>-[<posint>]` [opt default=512-] in MB ジョブを実行可能なメモリ量の範囲。ジョ
   ブは通常、Mesosに与えられたRAM量または、ここで指定した最大値を実行時に利用する。
+* `-gpu <posint>-[<posint>]` [opt default=0-0] ジョブを実行可能なGPUの枚数。
+  これを有効にするためには、サーバーの設定ファイルで `retz.gpu=true` を設定しておかなければならない。
 * `-trustpvfiles` Persistent Volumes 上に展開されているファイルが完全であると信用する
 * `-file <filename>` [must if batch/home is omitted] **未実装**
 * `-retry <posint>` [opt default=config] **未実装**
@@ -272,6 +274,7 @@ $ retz-client schedule -A asakusa \
 ```
 retz.mesos = hostname:5050
 retz.mesos.offer_interval = 1
+retz.gpu=false
 retz.bind  = http://my-hostname:9090
 retz.queue.max = 65536
 retz.key = deadbeef
@@ -284,12 +287,13 @@ retz.schedule.retry = 5
 
 * `retz.mesos` - Mesos master の位置を `master.mesos.example.com:5050` などと指定する。省略不可
 * `retz.mesos.offer_interval` - Mesos からの resource offer を受け取る間隔を指定する。デフォルトは5。単位は秒
+* `retz.gpu` - Mesos に対して GPU_RESOURCES Capability を指定する
 * `retz.mesos.role` - Mesos 上でのRetzのRoleを指定する。デフォルトは `*`
 * `retz.mesos.principal` - Mesos 上でのRetzのPrincipalを指定する。デフォルトは空
 * `retz.bind` - Retz が listen するTCPのポート番号およびアドレスを `http://localhost:9090` などと指定する。省略不可
 
 これらが正しく設定されているかどうかは、 `retz-client config -C
-path/to/retz.properties` を実行するとよい。
+path/to/retz.properties` を実行する。
 
 #### ジョブリスト（未実装）
 

@@ -76,12 +76,7 @@ public class Client implements AutoCloseable {
     public Response list() throws IOException, InterruptedException {
         return rpc(new ListJobRequest());
     }
-/*
-    public Response schedule(String appName, String jobCommand, Properties env,
-                             Range cpu, Range memMB, Range gpu) throws IOException, InterruptedException {
-        return schedule(new Job(appName, jobCommand, env, cpu, memMB, gpu));
-    }
-*/
+
     public Response schedule(Job job) throws IOException, InterruptedException {
         return rpc(new ScheduleRequest(job, false));
     }
