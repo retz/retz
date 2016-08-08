@@ -18,12 +18,14 @@ def gitVersion() {
     versionText
 }
 
+apply plugin: 'nebula-aggregate-javadocs'
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'findbugs'
     apply plugin: "com.github.hierynomus.license"
 
-    group = 'com.asakusafw.retz'
+    group = 'io.github.retz'
     // Note: You can't create RPM with hyphen included in version name
     version = '0.0.10-SNAPSHOT'
     sourceCompatibility = '1.8'
@@ -93,7 +95,7 @@ project(':retz-executor') {
         testCompile 'com.sparkjava:spark-core:2.5'
     }
 
-    mainClassName = 'com.asakusafw.retz.mesos.MesosExecutorLauncher'
+    mainClassName = 'io.github.retz.mesos.MesosExecutorLauncher'
 }
 
 def makePropertyFile(jarFileName, basedir, testType) {
@@ -174,7 +176,7 @@ project(':retz-server') {
         }
     }
 
-    mainClassName = 'com.asakusafw.retz.mesos.MesosFrameworkLauncher'
+    mainClassName = 'io.github.retz.mesos.MesosFrameworkLauncher'
 
     shadowJar {
         dependsOn 'copyExecutorJar'
@@ -230,7 +232,7 @@ project(':retz-client') {
         }
     }
 
-    mainClassName = 'com.asakusafw.retz.cli.Launcher'
+    mainClassName = 'io.github.retz.cli.Launcher'
 
     ospackage {
         os = LINUX
