@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.*;
 @JsonSubTypes({
         @JsonSubTypes.Type(name = "list", value = ListJobResponse.class),
         @JsonSubTypes.Type(name = "schedule", value = ScheduleResponse.class),
+        @JsonSubTypes.Type(name = "get-job", value = GetJobResponse.class),
         @JsonSubTypes.Type(name = "kill", value = KillResponse.class),
         @JsonSubTypes.Type(name = "watch", value = WatchResponse.class),
         @JsonSubTypes.Type(name = "load-app", value = LoadAppResponse.class),

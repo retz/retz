@@ -20,33 +20,18 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+import java.util.Optional;
 
-public class ListJobResponse extends Response {
-    private List<Job> queue;
-    private List<Job> running;
-    private List<Job> finished;
+public class GetJobResponse extends Response {
+    private Optional<Job> job;
 
     @JsonCreator
-    public ListJobResponse(@JsonProperty("queue") List<Job> queue,
-                           @JsonProperty("running") List<Job> running,
-                           @JsonProperty("finished") List<Job> finished) {
-        this.queue = queue;
-        this.running = running;
-        this.finished = finished;
-    }
-    @JsonGetter("queue")
-    public List<Job> queue() {
-        return queue;
+    public GetJobResponse(@JsonProperty("job") Optional<Job> job) {
+        this.job = job;
     }
 
-    @JsonGetter("running")
-    public List<Job> running() {
-        return running;
-    }
-
-    @JsonGetter("finished")
-    public List<Job> finished() {
-        return finished;
+    @JsonGetter("job")
+    public Optional<Job> job() {
+        return job;
     }
 }

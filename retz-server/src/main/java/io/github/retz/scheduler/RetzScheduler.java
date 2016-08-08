@@ -38,11 +38,9 @@ public class RetzScheduler implements Scheduler {
     private MesosFrameworkLauncher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
-    private ConcurrentHashMap<String, Job> running; // TaskID#getValue() -> Job
 
     public RetzScheduler(MesosFrameworkLauncher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
         this.conf = Objects.requireNonNull(conf);
-        this.running = new ConcurrentHashMap<>();
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
 
@@ -272,7 +270,7 @@ public class RetzScheduler implements Scheduler {
                     slaves.add(offer.getSlaveId());
                     this.slaves.put(app.get().appName, slaves);
 
-                    running.put(taskId.getValue(), job);
+                    JobQueue.start(taskId.getValue(), job);
 
 
                     operations.add(Protos.Offer.Operation.newBuilder()
@@ -328,14 +326,7 @@ public class RetzScheduler implements Scheduler {
         }
 
         // TODO: remove **ONLY** tasks that is running on the failed slave
-        for (Map.Entry<String, Job> entry : running.entrySet()) {
-            try {
-                JobQueue.push(entry.getValue());
-                running.remove(entry.getKey());
-            } catch (InterruptedException e) {
-                LOG.warn("Can't re-schedule job '{}' at {}", entry.getValue().cmd(), slaveId.getValue());
-            }
-        }
+        JobQueue.recoverRunning();
     }
 
     @Override
@@ -344,7 +335,7 @@ public class RetzScheduler implements Scheduler {
 
         switch (status.getState().getNumber()) {
             case Protos.TaskState.TASK_FINISHED_VALUE: {
-                Job job = running.remove(status.getTaskId().getValue());
+                Job job = JobQueue.finish(status.getTaskId().getValue());
                 int result = -42;
                 try {
                     result = Integer.parseInt(status.getMessage());
@@ -365,7 +356,7 @@ public class RetzScheduler implements Scheduler {
             case Protos.TaskState.TASK_KILLED_VALUE:
             case Protos.TaskState.TASK_KILLING_VALUE:
             case Protos.TaskState.TASK_LOST_VALUE: {
-                Job job = running.remove(status.getTaskId().getValue());
+                Job job = JobQueue.finish(status.getTaskId().getValue());
                 int result = -42;
                 try {
                     result = Integer.parseInt(status.getMessage());
@@ -402,15 +393,6 @@ public class RetzScheduler implements Scheduler {
                 .setReservation(Protos.Resource.ReservationInfo.newBuilder()
                         .setPrincipal(frameworkInfo.getPrincipal()))
                 .setRole(frameworkInfo.getRole());
-    }
-
-    // Methods for test
-    public Map<String, Job> getRunning() {
-        return running;
-    }
-
-    public void setStatus(StatusResponse response) {
-        response.setStatus(JobQueue.size(), slaves.size(), running.size());
     }
 
     private static class SetMap {

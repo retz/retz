@@ -117,9 +117,9 @@ public class RetzSchedulerTest {
             System.err.println(r.getScalar().getValue());
         }
 
-        assert scheduler.getRunning().size() == 1;
+        assert JobQueue.getRunning().size() == 1;
         driver.dummyTaskStarted();
-        assert scheduler.getRunning().size() == 1;
+        assert JobQueue.getRunning().size() == 1;
 
         // TODO: introduce DI to skip URL fetch
         //driver.dummyTaskFinish();
@@ -183,13 +183,13 @@ public class RetzSchedulerTest {
             System.err.println(r.getScalar().getValue());
         }
 
-        assert scheduler.getRunning().size() == 1;
+        assert JobQueue.getRunning().size() == 1;
         driver.dummyTaskStarted();
-        assert scheduler.getRunning().size() == 1;
+        assert JobQueue.getRunning().size() == 1;
 
         // Simulate slave failure to test task re-assign
         scheduler.slaveLost(driver, slaveID);
-        assert scheduler.getRunning().size() == 0;
+        assert JobQueue.getRunning().size() == 0;
 
         // TODO: introduce
         //driver.dummyTaskFinish();

@@ -1,18 +1,18 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, KK.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, KK.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.cli;
 
@@ -48,6 +48,7 @@ public class Launcher {
     static final Option OPT_DISK_MB;
     static final Option OPT_GPU;
     static final Option OPT_TRUST_PVFILES;
+    static final Option OPT_JOB_ID; // only used in get-job request
 
     private static final Options OPTIONS;
 
@@ -86,6 +87,9 @@ public class Launcher {
 
         OPT_TRUST_PVFILES = new Option("trustpvfiles", false, "Whether to trust decompressed files in persistent volume from -P option");
 
+        OPT_JOB_ID = new Option("id", true, "Job ID whose state and details you want");
+        OPT_JOB_ID.setArgName("234");
+
         OPTIONS = new Options();
         OPTIONS.addOption(OPT_CONFIG);
         OPTIONS.addOption(OPT_YAESS_COMMAND);
@@ -99,6 +103,7 @@ public class Launcher {
         OPTIONS.addOption(OPT_DISK_MB);
         OPTIONS.addOption(OPT_GPU);
         OPTIONS.addOption(OPT_TRUST_PVFILES);
+        OPTIONS.addOption(OPT_JOB_ID);
     }
 
     public static void main(String... argv) {
@@ -125,7 +130,7 @@ public class Launcher {
                 System.exit(0);
 
 
-            } else if (oneOf(argv[0], "list", "schedule", "run", "watch", "load-app", "list-app", "unload-app")) {
+            } else if (oneOf(argv[0], "list", "schedule", "get-job", "run", "watch", "load-app", "list-app", "unload-app")) {
                 String uri = new StringBuilder()
                         .append("ws://")
                         .append(conf.getUri().getHost())
@@ -175,10 +180,18 @@ public class Launcher {
 
     private static int doRequest(Client c, String cmd, Configuration conf) throws IOException, InterruptedException {
         if (cmd.equals("list")) {
-            ListJobResponse r = (ListJobResponse) c.list();
-            LOG.info("AppName\tTaskId\tScheduled\tCommand");
+            ListJobResponse r = (ListJobResponse) c.list(64); // TODO: make this CLI argument
+            LOG.info("Queue: AppName\tTaskId\tScheduled\tCommand");
             for (Job job : r.queue()) {
-                LOG.info("{}\t{}\t{}\t{}", job.appid(), job.id(), job.scheduled(), job.cmd());
+                LOG.info("\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.scheduled(), job.cmd());
+            }
+            LOG.info("Running: AppName\tTaskId\tStarted\tCommand");
+            for (Job job : r.running()) {
+                LOG.info("\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.started(), job.cmd());
+            }
+            LOG.info("Finished: AppName\tTaskId\tFinished\tCommand\tStatus");
+            for (Job job : r.finished()) {
+                LOG.info("\t{}\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.finished(), job.cmd(), job.result());
             }
             return 0;
 
@@ -207,6 +220,46 @@ public class Launcher {
             } catch (InterruptedException e) {
                 LOG.error(e.getMessage());
 
+            }
+
+        } else if (cmd.equals("get-job")) {
+            if (conf.getJobId().isPresent()) {
+                Response res = c.getJob(conf.getJobId().get());
+                if (res instanceof GetJobResponse) {
+                    GetJobResponse getJobResponse = (GetJobResponse)res;
+
+                    if (getJobResponse.job().isPresent()) {
+                        Job job = getJobResponse.job().get();
+
+                        LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
+                        LOG.info("\tstarted={}, finished={}, result={}", job.started(), job.finished(), job.result());
+
+                        if (conf.getJobResultDir().isPresent()) {
+                            if (conf.getJobResultDir().get().equals("-")) {
+                                LOG.info("==== Printing stdout of remote executor ====");
+                                Client.catHTTPFile(job.url(), "stdout");
+                                LOG.info("==== Printing stderr of remote executor ====");
+                                Client.catHTTPFile(job.url(), "stderr");
+                                LOG.info("==== Printing stdout-{} of remote executor ====", job.id());
+                                Client.catHTTPFile(job.url(), "stdout-" + job.id());
+                                LOG.info("==== Printing stderr-{} of remote executor ====", job.id());
+                                Client.catHTTPFile(job.url(), "stderr-" + job.id());
+                            } else {
+                                Client.fetchHTTPFile(job.url(), "stdout", conf.getJobResultDir().get());
+                                Client.fetchHTTPFile(job.url(), "stderr", conf.getJobResultDir().get());
+                                Client.fetchHTTPFile(job.url(), "stdout-" + job.id(), conf.getJobResultDir().get());
+                                Client.fetchHTTPFile(job.url(), "stderr-" + job.id(), conf.getJobResultDir().get());
+                            }
+                        }
+                    } else {
+                        LOG.error("No such job: id={}", conf.getJobId());
+                    }
+                } else {
+                    ErrorResponse errorResponse = (ErrorResponse) res;
+                    LOG.error("Error: {}", errorResponse.status());
+                }
+            } else {
+                LOG.error("get-job requires job id you want: {} specified", conf.getJobId());
             }
 
         } else if (cmd.equals("run")) {
@@ -384,6 +437,14 @@ public class Launcher {
 
         result.trustPVFiles = cmd.hasOption(OPT_TRUST_PVFILES.getOpt());
         LOG.info("Check PV files: {}", result.trustPVFiles);
+
+        String jobIdStr = cmd.getOptionValue(OPT_JOB_ID.getOpt());
+        if (jobIdStr == null) {
+            result.jobId = Optional.empty();
+        } else {
+            result.jobId = Optional.of(Integer.parseInt(jobIdStr));
+        }
+
         return result;
     }
 
@@ -412,6 +473,8 @@ public class Launcher {
         Optional<Integer> diskMB;
         boolean trustPVFiles;
 
+        Optional<Integer> jobId;
+
         FileConfiguration fileConfig;
 
         @Override
@@ -432,6 +495,7 @@ public class Launcher {
                     .append(", gpu=").append(gpu)
                     .append(", fileConfig=").append(fileConfig)
                     .append(", trustPVFiles=").append(trustPVFiles)
+                    .append(", jobId=").append(jobId)
                     .append("]");
             return builder.toString();
         }
@@ -478,6 +542,10 @@ public class Launcher {
 
         public boolean getTrustPVFiles() {
             return trustPVFiles;
+        }
+
+        public Optional<Integer> getJobId() {
+            return jobId;
         }
 
         public URI getUri() {

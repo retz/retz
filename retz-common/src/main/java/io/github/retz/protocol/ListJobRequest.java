@@ -16,8 +16,19 @@
  */
 package io.github.retz.protocol;
 
-public class ListJobRequest extends Request {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    public ListJobRequest() {
+public class ListJobRequest extends Request {
+    private int limit;
+
+    @JsonCreator
+    public ListJobRequest(@JsonProperty("limit") int limit) {
+        this.limit = limit;
+    }
+    @JsonGetter("limit")
+    public int limit() {
+        return limit;
     }
 }

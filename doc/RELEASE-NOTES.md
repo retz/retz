@@ -2,6 +2,8 @@
 
 ## 0.0.10
 
+* Add 'get-job' subcommand to CLI
+* Add running and finished jobs to the result of 'list' subcommand
 * Add GPU support
 
 ## 0.0.9

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 @JsonSubTypes({
         @Type(name = "list", value = ListJobRequest.class),
         @Type(name = "schedule", value = ScheduleRequest.class),
+        @Type(name = "get-job", value = GetJobRequest.class),
         @Type(name = "kill", value = KillRequest.class),
         @Type(name = "watch", value = WatchRequest.class),
         @Type(name = "load-app", value = LoadAppRequest.class),

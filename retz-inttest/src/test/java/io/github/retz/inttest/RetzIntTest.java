@@ -78,6 +78,11 @@ public class RetzIntTest extends IntTestBase {
         String actualText = out.toString(String.valueOf(StandardCharsets.UTF_8));
         assertEquals(echoText + "\n", actualText);
 
+        ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
+        assertEquals(1, listJobResponse.finished().size());
+        assertEquals(0, listJobResponse.running().size());
+        assertEquals(0, listJobResponse.queue().size());
+
         UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
         assertEquals("ok", unloadRes.status());
 

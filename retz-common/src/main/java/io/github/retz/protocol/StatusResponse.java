@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class StatusResponse extends Response {
     private int queueLength;
     private int runningLength;
-    private int numSlaves;
+    private int numSlaves; // TODO: use this value in report
     private int watcherLength;
     private int sessionLength;
 
@@ -69,12 +69,15 @@ public class StatusResponse extends Response {
         return sessionLength;
     }
 
-    public void setStatus(int queueLength, int numSlaves, int runningLength) {
+    public void setStatus(int queueLength, int runningLength) {
         this.queueLength = queueLength;
-        this.numSlaves = numSlaves;
         this.runningLength = runningLength;
     }
-
+/*
+    public void setStatus(int numSlaves) {
+        this.numSlaves = numSlaves;
+    }
+*/
     public void setStatus2(int watcherLength, int sessionLength) {
         this.watcherLength = watcherLength;
         this.sessionLength = sessionLength;

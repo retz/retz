@@ -1,27 +1,27 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, KK.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, KK.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.web;
 
-import io.github.retz.scheduler.Applications;
-import io.github.retz.scheduler.JobQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.protocol.*;
+import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.JobQueue;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketException;
@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -166,7 +167,8 @@ public class ConsoleWebSocketHandler {
         }
 
         if (req instanceof ListJobRequest) {
-            ListJobResponse res = new ListJobResponse(WebConsole.list());
+            ListJobRequest listJobRequest = (ListJobRequest) req;
+            ListJobResponse res = WebConsole.list(listJobRequest.limit());
             res.ok();
             LOG.info("Command: list -> {}", res.queue());
             respond(user, res);
@@ -199,17 +201,18 @@ public class ConsoleWebSocketHandler {
                 respond(user, res);
             }
 
-        } else if (req instanceof WatchRequest)
+        } else if (req instanceof GetJobRequest) {
+            GetJobRequest getJobRequest = (GetJobRequest)req;
+            Optional<Job> job = WebConsole.getJob(getJobRequest.id());
+            respond(user, new GetJobResponse(job));
 
-        {
+        } else if (req instanceof WatchRequest) {
             WatchResponse res = new WatchResponse("start", null);
             res.status("Start watching");
             WATCHERS.add(user);
             respond(user, res);
 
-        } else if (req instanceof LoadAppRequest)
-
-        {
+        } else if (req instanceof LoadAppRequest) {
             LoadAppRequest loadAppRequest = (LoadAppRequest) req;
             LoadAppResponse res = new LoadAppResponse();
             boolean result = WebConsole.load(loadAppRequest.application());
@@ -220,16 +223,12 @@ public class ConsoleWebSocketHandler {
                 respond(user, new ErrorResponse("cannot load application"));
             }
 
-        } else if (req instanceof ListAppRequest)
-
-        {
+        } else if (req instanceof ListAppRequest) {
             ListAppResponse res = new ListAppResponse(WebConsole.listApps());
             res.ok();
             respond(user, res);
 
-        } else if (req instanceof UnloadAppRequest)
-
-        {
+        } else if (req instanceof UnloadAppRequest) {
             UnloadAppRequest unloadAppRequest = (UnloadAppRequest) req;
             WebConsole.unload(unloadAppRequest.appid());
             UnloadAppResponse res = new UnloadAppResponse();
@@ -239,7 +238,6 @@ public class ConsoleWebSocketHandler {
         } else
 
         {
-
             // XXXXX: Cannot reach here
             LOG.error("unknown request: {}", req.getClass().getName());
             throw new AssertionError();

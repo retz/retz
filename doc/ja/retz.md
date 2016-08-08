@@ -218,6 +218,7 @@ $ retz-client kill <jobid>
 $ retz-client schedule OPTIONS
 $ retz-client run OPTIONS
 $ retz-client schedule -file <list of batches in a text file>
+$ retz-client get-job -id <jobid>
 $ retz-client watch
 $ retz-client config
 ```
@@ -238,6 +239,7 @@ $ retz-client config
 * `-gpu <posint>-[<posint>]` [opt default=0-0] ジョブを実行可能なGPUの枚数。
   これを有効にするためには、サーバーの設定ファイルで `retz.gpu=true` を設定しておかなければならない。
 * `-trustpvfiles` Persistent Volumes 上に展開されているファイルが完全であると信用する
+* `-id <jobid>` ジョブの状態を表示する。`-R <dir>` を `run` と同様に指定することで、結果をローカルに取得できる
 * `-file <filename>` [must if batch/home is omitted] **未実装**
 * `-retry <posint>` [opt default=config] **未実装**
 

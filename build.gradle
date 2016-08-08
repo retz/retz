@@ -97,7 +97,7 @@ project(':retz-executor') {
         testCompile 'com.sparkjava:spark-core:2.5'
     }
 
-    mainClassName = 'io.github.retz.mesos.MesosExecutorLauncher'
+    mainClassName = 'io.github.retz.executor.MesosExecutorLauncher'
 }
 
 def makePropertyFile(jarFileName, basedir, testType) {
@@ -178,7 +178,7 @@ project(':retz-server') {
         }
     }
 
-    mainClassName = 'io.github.retz.mesos.MesosFrameworkLauncher'
+    mainClassName = 'io.github.retz.scheduler.MesosFrameworkLauncher'
 
     shadowJar {
         dependsOn 'copyExecutorJar'

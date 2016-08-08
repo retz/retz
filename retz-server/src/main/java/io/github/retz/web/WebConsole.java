@@ -16,13 +16,10 @@
  */
 package io.github.retz.web;
 
+import io.github.retz.protocol.*;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
-import io.github.retz.protocol.Application;
-import io.github.retz.protocol.ErrorResponse;
-import io.github.retz.protocol.Job;
-import io.github.retz.protocol.StatusResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -33,10 +30,13 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.github.retz.scheduler.JobQueue.getAll;
 import static spark.Spark.*;
 
 public final class WebConsole {
@@ -77,7 +77,7 @@ public final class WebConsole {
         io.github.retz.protocol.Response res;
         if (scheduler.isPresent()) {
             StatusResponse statusResponse = new StatusResponse();
-            scheduler.get().setStatus(statusResponse);
+            JobQueue.setStatus(statusResponse);
             ConsoleWebSocketHandler.setStatus(statusResponse);
             res = statusResponse;
         } else {
@@ -101,31 +101,23 @@ public final class WebConsole {
         Spark.stop();
     }
 
-    public static List<Job> list() {
-        return JobQueue.getAll();
+    public static ListJobResponse list(int limit)
+    {
+        List<Job> queue = JobQueue.getAll();
+        List<Job> running = new LinkedList<>();
+        for (Map.Entry<String, Job> entry : JobQueue.getRunning().entrySet()) {
+            running.add(entry.getValue());
+        }
+        List<Job> finished = new LinkedList<>();
+        JobQueue.getAllFinished(finished, limit);
+
+        return new ListJobResponse(queue, running, finished);
     }
 
-    /*
-    public static Job issueJobId(Job job) {
-        if (Applications.get(job.appid()).isPresent()) {
-            job.schedule(JobQueue.issueJobId(), JobQueue.now());
-            return job;
-        }
-        // No such application
-        return null;
+    // Search job from JobQueue with matching id
+    public static Optional<Job> getJob(int id) {
+        return JobQueue.getJob(id);
     }
-
-    public static Job schedule(Job job) throws InterruptedException {
-        if (job == null) {
-            return null;
-        } else if (Applications.get(job.appid()).isPresent()) {
-            Job scheduledJob = JobQueue.push(job);
-            broadcast(EventType.SCHEDULED, scheduledJob);
-            return scheduledJob;
-        }
-        // No such job
-        return null;
-    } */
 
     public static boolean load(Application app) {
         return Applications.load(app);

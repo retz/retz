@@ -73,12 +73,16 @@ public class Client implements AutoCloseable {
         }
     }
 
-    public Response list() throws IOException, InterruptedException {
-        return rpc(new ListJobRequest());
+    public Response list(int limit) throws IOException, InterruptedException {
+        return rpc(new ListJobRequest(limit));
     }
 
     public Response schedule(Job job) throws IOException, InterruptedException {
         return rpc(new ScheduleRequest(job, false));
+    }
+
+    public Response getJob(int id) throws IOException, InterruptedException {
+        return rpc(new GetJobRequest(id));
     }
 
     public Job run(Job job) throws IOException, InterruptedException {

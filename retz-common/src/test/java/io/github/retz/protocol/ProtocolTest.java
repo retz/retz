@@ -20,10 +20,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Optional;
 
 // TODO: introduce ScalaCheck for further tests here
 public class ProtocolTest {
@@ -100,6 +102,14 @@ public class ProtocolTest {
             assert sreq.job().cmd().equals("Mmmmmmmmmy commmmmand1!!!!!");
         }
         {
+            String json = "{\"command\":\"get-job\", \"id\":23}";
+            Request req = mapper.readValue(json, Request.class);
+            Assert.assertTrue(req instanceof GetJobRequest);
+            GetJobRequest getJobRequest = (GetJobRequest)req;
+            Assert.assertEquals(23, getJobRequest.id());
+        }
+
+        {
             String json = "{\"command\":\"kill\",\"id\":2}}";
             Request req = mapper.readValue(json, Request.class);
             assert req instanceof KillRequest;
@@ -137,6 +147,15 @@ public class ProtocolTest {
             assert sres.job.id() == 23;
         }
         {
+            String json = "{\"command\":\"get-job\",\"job\":{\"appid\":\"foobar\", \"cmd\":\"Mmmmmmmmmy commmmmand1!!!!!\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":0,\"id\":0,\"url\":null}}";
+
+            Response res = mapper.readValue(json, Response.class);
+            Assert.assertTrue(res instanceof GetJobResponse);
+            GetJobResponse getJobResponse = (GetJobResponse)res;
+            Assert.assertEquals(0, getJobResponse.job().get().id());
+            Assert.assertEquals("Mmmmmmmmmy commmmmand1!!!!!", getJobResponse.job().get().cmd());
+        }
+        {
             String json = "{\"command\":\"watch\", \"status\":\"ok\", \"event\":\"finished\", \"job\":{\"cmd\":\"ls\", \"id\":23, \"appid\":\"myapp\"}}";
             Response res = mapper.readValue(json, Response.class);
             assert res instanceof WatchResponse;
@@ -158,7 +177,7 @@ public class ProtocolTest {
     @Test
     public void encode() throws JsonProcessingException, IOException {
         {
-            ListJobRequest req = new ListJobRequest();
+            ListJobRequest req = new ListJobRequest(0);
             String json = mapper.writeValueAsString(req);
             Request req2 = mapper.readValue(json, Request.class);
             assert req2 instanceof ListJobRequest;
@@ -172,6 +191,9 @@ public class ProtocolTest {
             assert req instanceof ScheduleRequest;
             ScheduleRequest scheduleRequest1 = (ScheduleRequest) req;
             assert scheduleRequest1.job() != null;
+
+            GetJobResponse getJobResponse = new GetJobResponse(Optional.of(job));
+            mapper.writeValueAsString(getJobResponse);
         }
         // Hanc marginis exiguitas non caperet.
     }
