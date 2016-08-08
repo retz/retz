@@ -1,6 +1,9 @@
-.PHONY: test build clean inttest rpm deb dist
+.PHONY: test build clean inttest rpm deb dist javadoc
 
 GRADLE=./gradlew
+
+javadoc:
+	$(GRADLE) aggregateJavadoc
 
 test:
 	$(GRADLE) test

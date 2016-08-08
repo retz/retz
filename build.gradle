@@ -3,11 +3,13 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+        jcenter()
     }
     dependencies {
         classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:3.+'
         classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1"
+        classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
     }
 }
 
