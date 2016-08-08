@@ -14,9 +14,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.executor;
 
+import io.github.retz.executor.DummyExecutorDriver;
 import io.github.retz.executor.LocalProcessManager;
+import io.github.retz.executor.RetzExecutor;
 import io.github.retz.protocol.Application;
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.MetaJob;
@@ -31,6 +33,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;

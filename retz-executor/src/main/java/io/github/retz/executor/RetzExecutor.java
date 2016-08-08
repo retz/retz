@@ -14,12 +14,13 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.executor;
 
-import io.github.retz.executor.LocalProcessManager;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

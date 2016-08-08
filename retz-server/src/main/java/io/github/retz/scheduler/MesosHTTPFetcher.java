@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

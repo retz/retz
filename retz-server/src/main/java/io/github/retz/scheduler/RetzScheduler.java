@@ -14,11 +14,13 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.scheduler;
 
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.web.WebConsole;
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;

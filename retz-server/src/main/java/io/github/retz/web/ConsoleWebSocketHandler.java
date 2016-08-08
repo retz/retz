@@ -16,8 +16,8 @@
  */
 package io.github.retz.web;
 
-import io.github.retz.mesos.Applications;
-import io.github.retz.mesos.JobQueue;
+import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.JobQueue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;

@@ -14,10 +14,12 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.scheduler;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
 
 import java.util.LinkedList;
 import java.util.List;

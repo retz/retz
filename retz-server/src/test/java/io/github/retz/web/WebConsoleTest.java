@@ -17,10 +17,10 @@
 package io.github.retz.web;
 
 import io.github.retz.cli.FileConfiguration;
-import io.github.retz.mesos.Applications;
-import io.github.retz.mesos.JobQueue;
-import io.github.retz.mesos.MesosFrameworkLauncher;
-import io.github.retz.mesos.RetzScheduler;
+import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.JobQueue;
+import io.github.retz.scheduler.MesosFrameworkLauncher;
+import io.github.retz.scheduler.RetzScheduler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.protocol.*;

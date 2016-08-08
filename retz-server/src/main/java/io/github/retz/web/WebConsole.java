@@ -16,9 +16,9 @@
  */
 package io.github.retz.web;
 
-import io.github.retz.mesos.Applications;
-import io.github.retz.mesos.JobQueue;
-import io.github.retz.mesos.RetzScheduler;
+import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.JobQueue;
+import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.protocol.Application;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.Job;

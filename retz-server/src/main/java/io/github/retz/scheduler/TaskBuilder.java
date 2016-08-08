@@ -14,12 +14,14 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.scheduler;
 
 import io.github.retz.protocol.Application;
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.MetaJob;
 import io.github.retz.protocol.Range;
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
