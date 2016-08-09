@@ -102,9 +102,21 @@ See and walk around `doc` directory for documents.
 * [Asakusa Framework](https://github.com/asakusafw/asakusafw)
 * [Asakusa on M3BP](https://github.com/asakusafw/asakusafw-m3bp)
 
-## Bug reports, Patch contribution
-* Please report any issues to [repository for issue tracking](https://github.com/asakusafw/asakusafw-issues/issues)
-* Please contribute with patches according to our [contribution guide (Japanese only, English version to be added)](http://docs.asakusafw.com/latest/release/ja/html/contribution.html)
+## Reporting issues
+* Please report any issues to [repository for issue tracking](https://github.com/retz/retz/issues)
+
+## How to contribute
+1. Clone this repository
+1. Make a topic branch
+1. If it is a bugfix, add test(s) to reproduce the bug
+1. Add your your modification
+1. Make sure nothing is broken by running `make build inttest`
+1. Commit with proper description in the commit message
+1. Open a pull request to [Retz repository](https://github.com/retz/retz)
+
+* By opening a pull request, we assume the contributor has agreed to donate
+  all copyright of the patch to the original author Nautilus Technologies
+  and agreed not to claim any intellectual properties in the patch.
 
 ## License
 * [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
