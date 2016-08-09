@@ -2,6 +2,7 @@
 
 ## 0.0.10
 
+* Add job history compaction when it exceeds max payload size in client
 * Add 'get-job' subcommand to CLI
 * Add running and finished jobs to the result of 'list' subcommand
 * Add GPU support

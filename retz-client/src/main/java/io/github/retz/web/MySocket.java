@@ -16,6 +16,7 @@
  */
 package io.github.retz.web;
 
+import io.github.retz.protocol.Response;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeoutException;
  *       the pair of CountDownLatch and bare String.
  */
 // NOTE: TODO: this message size limits the size of job, number of jobs listable via 'list' command
-@WebSocket(maxTextMessageSize = 64 * 1024 * 1024)
+@WebSocket(maxTextMessageSize = Response.MAX_PAYLOAD_SIZE)
 public class MySocket {
     private Session session;
     private CountDownLatch requestLatch;

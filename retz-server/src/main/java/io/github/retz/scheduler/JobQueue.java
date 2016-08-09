@@ -154,6 +154,13 @@ public class JobQueue {
         list.addAll(finished);
     }
 
+    public static void compact() {
+        int size = finished.size() / 2;
+        while (finished.size() > size) {
+            finished.remove();
+        }
+    }
+
     // Methods for test
     public static void setStatus(StatusResponse response) {
         response.setStatus(JobQueue.size(), running.size());

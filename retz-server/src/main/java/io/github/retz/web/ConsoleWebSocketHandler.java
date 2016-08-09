@@ -1,18 +1,18 @@
 /**
- * Retz
- * Copyright (C) 2016 Nautilus Technologies, KK.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Retz
+ *    Copyright (C) 2016 Nautilus Technologies, KK.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package io.github.retz.web;
 
@@ -246,7 +246,17 @@ public class ConsoleWebSocketHandler {
     }
 
     private <ResType extends Response> void respond(Session user, ResType res) throws IOException {
-        user.getRemote().sendString(MAPPER.writeValueAsString(res));
+        String json = MAPPER.writeValueAsString(res);
+        if (json.length() <= Response.MAX_PAYLOAD_SIZE) {
+            user.getRemote().sendString(json);
+        } else {
+            String msg = String.format("%s: Payload JSON is larger than max size supported in client (%d > %d).",
+                    res.getClass().getName(), json.length(), Response.MAX_PAYLOAD_SIZE);
+            LOG.warn(msg);
+            JobQueue.compact();
+            ErrorResponse eres = new ErrorResponse(msg);
+            respond(user, eres);
+        }
     }
 
     public static void setStatus(StatusResponse statusResponse) {
