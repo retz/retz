@@ -189,9 +189,13 @@ public class Launcher {
             for (Job job : r.running()) {
                 LOG.info("\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.started(), job.cmd());
             }
-            LOG.info("Finished: AppName\tTaskId\tFinished\tCommand\tStatus");
+            LOG.info("Finished: AppName\tTaskId\tFinished\tCommand\tStatus\tReason");
             for (Job job : r.finished()) {
-                LOG.info("\t{}\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.finished(), job.cmd(), job.result());
+                String reason = "";
+                if (job.reason() != null) {
+                    reason = "'" + job.reason() + "'";
+                }
+                LOG.info("\t{}\t{}\t'{}'\t'{}'\t{}\t{}", job.appid(), job.id(), job.finished(), job.cmd(), job.result(), reason);
             }
             return 0;
 

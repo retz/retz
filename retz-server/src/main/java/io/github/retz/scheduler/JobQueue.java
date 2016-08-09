@@ -146,6 +146,16 @@ public class JobQueue {
         return job;
     }
 
+    public static Job kill(String taskId) {
+        Job job = running.remove(taskId);
+        finished.add(job);
+        return job;
+    }
+
+    public static void kill(Job job) {
+        finished.add(job);
+    }
+
     public static Map<String, Job> getRunning() {
         return running;
     }

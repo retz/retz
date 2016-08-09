@@ -16,12 +16,11 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.protocol.Job;
-import io.github.retz.protocol.StatusResponse;
-import io.github.retz.web.WebConsole;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import io.github.retz.protocol.Job;
+import io.github.retz.web.WebConsole;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
@@ -204,28 +203,19 @@ public class RetzScheduler implements Scheduler {
 
                 if (!app.isPresent()) {
                     String reason = String.format("Application %s does not exist any more. Cancel.", job.appid());
-                    LOG.warn(reason);
-                    // TODO: notify all watchers that this job was cancelled
-                    // TODO: retry with newly popped Job with this offer
-                    job.killed(JobQueue.now(), reason);
-                    WebConsole.notifyKilled(job);
+                    kill(job, reason);
                     continue;
                 }
-
                 if (commands.hasEntry(job.appid(), job.cmd())) {
                     String reason = String.format("Same command is going to be scheduled in single executor; skipping %s '%s'",
                             job.appid(), job.cmd());
-                    LOG.warn(reason);
-                    job.killed(JobQueue.now(), reason);
-                    WebConsole.notifyKilled(job);
+                    kill(job, reason);
                     continue;
                 } else if (!conf.fileConfig.useGPU() && job.gpu().getMin() > 0) {
                     // TODO: this should be checked before enqueuing to JobQueue
                     String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
                             job.id(), job.appid(), job.gpu().getMin());
-                    LOG.warn(reason);
-                    job.killed(JobQueue.now(), reason);
-                    WebConsole.notifyKilled(job);
+                    kill(job, reason);
                     continue;
                 } else {
                     commands.add(job.appid(), job.cmd());
@@ -281,8 +271,7 @@ public class RetzScheduler implements Scheduler {
 
                 } catch (JsonProcessingException e) {
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
-                    job.killed(JobQueue.now(), reason);
-                    WebConsole.notifyKilled(job);
+                    kill(job, reason);
                 }
             }
             if (jobs.isEmpty() && operations.isEmpty()) {
@@ -335,20 +324,7 @@ public class RetzScheduler implements Scheduler {
 
         switch (status.getState().getNumber()) {
             case Protos.TaskState.TASK_FINISHED_VALUE: {
-                Job job = JobQueue.finish(status.getTaskId().getValue());
-                int result = -42;
-                try {
-                    result = Integer.parseInt(status.getMessage());
-                    job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                            status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                            status.getExecutorId().getValue()).get(), JobQueue.now(), result);
-                    LOG.info("Job {} (id {}) has finished. State: {}",
-                            status.getTaskId().getValue(), job.id(), status.getState().name());
-                    WebConsole.notifyFinished(job);
-                } catch (Exception e) {
-                    LOG.warn("Failed to parse message from executor: {} '{}'", e.getMessage(), status.getMessage());
-
-                }
+                finished(status);
                 break;
             }
             case Protos.TaskState.TASK_ERROR_VALUE:
@@ -356,21 +332,7 @@ public class RetzScheduler implements Scheduler {
             case Protos.TaskState.TASK_KILLED_VALUE:
             case Protos.TaskState.TASK_KILLING_VALUE:
             case Protos.TaskState.TASK_LOST_VALUE: {
-                Job job = JobQueue.finish(status.getTaskId().getValue());
-                int result = -42;
-                try {
-                    result = Integer.parseInt(status.getMessage());
-                    job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                            status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                            status.getExecutorId().getValue()).get(), JobQueue.now(), result);
-                    job.killed(JobQueue.now(), status.getState().name());
-                    LOG.info("Job {} (id {}) has been failed. State: {}",
-                            status.getTaskId().getValue(), job.id(), status.getState().name());
-                    WebConsole.notifyKilled(job);
-
-                } catch (Exception e) {
-                    LOG.warn("Failed to parse message from executor: {} '{}'", e.getMessage(), status.getMessage());
-                }
+                failed(status);
                 break;
             }
             case Protos.TaskState.TASK_RUNNING_VALUE:
@@ -384,6 +346,53 @@ public class RetzScheduler implements Scheduler {
                 break;
         }
     }
+
+    void finished(Protos.TaskStatus status) {
+        Job job = JobQueue.finish(status.getTaskId().getValue());
+        int result = -42;
+        try {
+            result = Integer.parseInt(status.getMessage());
+            job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue()).get(), JobQueue.now(), result);
+            LOG.info("Job {} (id {}) has finished. State: {}",
+                    status.getTaskId().getValue(), job.id(), status.getState().name());
+            WebConsole.notifyFinished(job);
+        } catch (Exception e) {
+            String msg = String.format("Failed to parse message from executor: %s '%s'", e.getMessage(), status.getMessage());
+            LOG.warn(msg);
+            job.killed(JobQueue.now(), msg);
+            WebConsole.notifyKilled(job);
+        }
+    }
+    void failed(Protos.TaskStatus status) {
+
+        Job job = JobQueue.finish(status.getTaskId().getValue());
+        int result = -42;
+        try {
+            result = Integer.parseInt(status.getMessage());
+            job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue()).get(), JobQueue.now(), result);
+            LOG.info("Job {} (id {}) has been failed. State: {}",
+                    status.getTaskId().getValue(), job.id(), status.getState().name());
+            job.killed(JobQueue.now(), status.getState().name());
+            WebConsole.notifyKilled(job);
+
+        } catch (Exception e) {
+            String msg = String.format("Failed to parse message from executor: %s '%s'", e.getMessage(), status.getMessage());
+            LOG.warn(msg);
+            job.killed(JobQueue.now(), msg);
+            WebConsole.notifyKilled(job);
+        }
+    }
+    void kill(Job job, String reason) {
+        LOG.warn(reason);
+        job.killed(JobQueue.now(), reason);
+        JobQueue.kill(job);
+        WebConsole.notifyKilled(job);
+    }
+
 
     private Protos.Resource.Builder baseResourceBuilder(int diskMB) {
         return Protos.Resource.newBuilder()
