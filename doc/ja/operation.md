@@ -9,7 +9,7 @@
 Ansible のインストールと環境設定は、次のコマンドで簡単にできる（はず…）。
 
 ```
-$ sudo yum install gcc python-devel python-virtualenv libffi-devel
+$ sudo yum install gcc python-devel python-virtualenv libffi-devel openssl-devel
 $ virtualenv v
 $ source v/bin/activate
 (v)$ easy_install pip
@@ -192,13 +192,18 @@ JSON here
 
 # FAQ
 
-## Asakusa on M3BP Batch が `execute.sh` が見つからなくて失敗する (FileNotFoundException)
+## Q. `pip install ansible` で `ImportError: No module named markupsafe` が出る
+
+[Jinja2](https://github.com/ansible/ansible/issues/13570) の問題と思われる
+が、再現条件がはっきりしていない。大抵は `pip install markupsafe` で解決する。
+
+## Q. Asakusa on M3BP Batch が `execute.sh` が見つからなくて失敗する (FileNotFoundException)
 
 YAESS内で一箇所 `$HOME` にディレクトリ移動する部分があるらしいが詳しい原因は不明。Executor の
 子プロセスには正しく設定されているのに…。ワークアラウンドとして、 `schedule` `run` の際に
 `-E YAESS_OPTS='-Duser.home=.'` というオプションをつけてJVMに設定を入れることで回避出来る。
 
-## `retz-client run ... -R dir ` がタスク終了後、ファイルのダウンロードで固まる
+## Q. `retz-client run ... -R dir ` がタスク終了後、ファイルのダウンロードで固まる
 
 クライアントがRetzサーバーにはアクセスできるが、Mesos SlaveのHTTP ポー
 トにアクセスできないときにこの現象が起きる。
