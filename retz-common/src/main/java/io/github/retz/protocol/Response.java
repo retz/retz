@@ -35,7 +35,6 @@ import com.fasterxml.jackson.annotation.*;
 })
 public abstract class Response {
     private String status; // Probably ENUM?
-    public static final int MAX_PAYLOAD_SIZE = 64 * 1024 * 1024;
 
     @JsonCreator
     public Response (@JsonProperty("status") String status) {

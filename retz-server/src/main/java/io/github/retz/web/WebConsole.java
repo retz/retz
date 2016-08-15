@@ -56,9 +56,10 @@ public final class WebConsole {
         port(port);
         staticFileLocation("/public");
         webSocket("/cui", ConsoleWebSocketHandler.class);
+        webSocketIdleTimeoutMillis(Connection.IDLE_TIMEOUT_SEC * 1000);
         get("/ping", (req, res) -> "OK");
         get("/status", WebConsole::status);
-        clientMonitor = new ClientMonitor(60);  // I won't make this configurable until it's needed
+        clientMonitor = new ClientMonitor(Connection.KEEPALIVE_INTERVAL_SEC);  // I won't make this configurable until it's needed
         clientMonitorThread = new Thread(clientMonitor);
         clientMonitorThread.setName("ClientMonitor");
         clientMonitorThread.start();

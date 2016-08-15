@@ -16,7 +16,7 @@
  */
 package io.github.retz.web;
 
-import io.github.retz.protocol.Response;
+import io.github.retz.protocol.Connection;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
@@ -55,8 +55,9 @@ import java.util.concurrent.TimeoutException;
  *       If you want to only subscribe messages, you can just use LinkedBlockingQueue<String> instead of
  *       the pair of CountDownLatch and bare String.
  */
-// NOTE: TODO: this message size limits the size of job, number of jobs listable via 'list' command
-@WebSocket(maxTextMessageSize = Response.MAX_PAYLOAD_SIZE)
+@WebSocket(
+        maxTextMessageSize = Connection.MAX_PAYLOAD_SIZE,
+        maxIdleTime = Connection.IDLE_TIMEOUT_SEC * 1000)
 public class MySocket {
     private Session session;
     private CountDownLatch requestLatch;
@@ -116,8 +117,9 @@ public class MySocket {
         // REVIEW: Logger.*(..., Throwable) will print stacktrace of the Throwable
         synchronized (this) {
             if (session != null) {
-                response = String.format("Connection error from %s: %s",
+                String msg = String.format("Connection error from %s: %s",
                         session.getRemoteAddress().getHostName(), error.getMessage());
+                response = String.format("{\"status\":\"%s\", \"command\":\"error\"}", msg);
             } else {
                 response = String.format("{\"status\":\"%s\", \"command\":\"error\"}", error.getMessage());
             }

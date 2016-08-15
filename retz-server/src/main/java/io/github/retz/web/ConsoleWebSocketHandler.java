@@ -247,11 +247,11 @@ public class ConsoleWebSocketHandler {
 
     private <ResType extends Response> void respond(Session user, ResType res) throws IOException {
         String json = MAPPER.writeValueAsString(res);
-        if (json.length() <= Response.MAX_PAYLOAD_SIZE) {
+        if (json.length() <= Connection.MAX_PAYLOAD_SIZE) {
             user.getRemote().sendString(json);
         } else {
             String msg = String.format("%s: Payload JSON is larger than max size supported in client (%d > %d).",
-                    res.getClass().getName(), json.length(), Response.MAX_PAYLOAD_SIZE);
+                    res.getClass().getName(), json.length(), Connection.MAX_PAYLOAD_SIZE);
             LOG.warn(msg);
             JobQueue.compact();
             ErrorResponse eres = new ErrorResponse(msg);

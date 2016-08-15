@@ -2,6 +2,7 @@
 
 ## 0.0.11
 
+* Fix bug keepalive interval being longer than Jetty idle timeout
 * Support single range format of just a number like "-4", "-32" for
   CLI options like'-cpu', '-mem', '-disk', and '-gpu'
 

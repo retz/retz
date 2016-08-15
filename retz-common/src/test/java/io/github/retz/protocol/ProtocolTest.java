@@ -197,4 +197,9 @@ public class ProtocolTest {
         }
         // Hanc marginis exiguitas non caperet.
     }
+
+    @Test
+    public void timeout() {
+        Assert.assertTrue(Connection.IDLE_TIMEOUT_SEC > Connection.KEEPALIVE_INTERVAL_SEC);
+    }
 }
