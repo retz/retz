@@ -28,7 +28,13 @@ public class Range {
     public Range(@JsonProperty(value = "min", required = true) int min,
                  @JsonProperty("max") int max) {
         this.min = min;
-        this.max = (max < min) ? Integer.MAX_VALUE : max;
+        if (max == 0) {
+            this.max = Integer.MAX_VALUE;
+        } else if (max < min){
+            throw new IllegalArgumentException();
+        } else {
+            this.max = max;
+        }
     }
 
     @JsonGetter
@@ -43,12 +49,22 @@ public class Range {
 
     public static Range parseRange(String s) {
         String[] pair = s.split("-", 2);
+        if (pair.length == 1) {
+            int i = Integer.parseInt(pair[0]);
+            return new Range(i, i);
+        }
         int max = 0;
         try {
             max = Integer.parseInt(pair[1]);
         } catch (NumberFormatException e) {
         }
-        return new Range(Integer.parseInt(pair[0]), max);
+        int min = 0;
+        try {
+            min = Integer.parseInt(pair[0]);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Minimal value of a range must not be absent" + s);
+        }
+        return new Range(min, max);
     }
 
     @Override

@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.0.11
+
+* Support single range format of just a number like "-4", "-32" for
+  CLI options like'-cpu', '-mem', '-disk', and '-gpu'
+
 ## 0.0.10
 
 * Add job history compaction when it exceeds max payload size in client

@@ -18,6 +18,8 @@ package io.github.retz.protocol;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+
 public class RangeTest {
 
     @Test
@@ -25,12 +27,38 @@ public class RangeTest {
         Range r;
 
         r = Range.parseRange("2-20");
-        assert r.getMin() == 2;
-        assert r.getMax() == 20;
+        assertEquals(2, r.getMin());
+        assertEquals(20, r.getMax());
 
         r = Range.parseRange("2-");
-        assert r.getMin() == 2;
-        assert r.getMax() == Integer.MAX_VALUE;
+        assertEquals(2, r.getMin());
+        assertEquals(Integer.MAX_VALUE, r.getMax());
+
+        int[] list = {2, 3, 4, 5, 10, 1024};
+        for (int i : list) {
+            r = Range.parseRange(Integer.toString(i));
+            assertEquals(i, r.getMin());
+            assertEquals(i, r.getMax());
+        }
+
+        r = Range.parseRange("0-0");
+        assertEquals(0, r.getMin());
+        assertEquals(Integer.MAX_VALUE, r.getMax());
+
+        r = Range.parseRange("2-0");
+        assertEquals(2, r.getMin());
+        assertEquals(Integer.MAX_VALUE, r.getMax());
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void parseExceptionTest() {
+        Range.parseRange("-3");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void parseExceptionTest2() {
+        Range.parseRange("2--23");
+    }
+
 
 }
