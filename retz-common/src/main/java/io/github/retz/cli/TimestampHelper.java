@@ -22,7 +22,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class TimestampHelper {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS z");
+    // Use ISO8601 extended format
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssXXX");
 
     public static String now() {
         synchronized (DATE_FORMAT) {

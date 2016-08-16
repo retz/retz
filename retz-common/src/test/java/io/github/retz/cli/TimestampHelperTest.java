@@ -23,6 +23,7 @@ public class TimestampHelperTest {
 
     @Test
     public void timestamp() throws Exception {
+        System.err.println(TimestampHelper.now());
         for (int i = 0; i < 1000; i++) {
             String t = TimestampHelper.now();
             Assert.assertEquals(0, TimestampHelper.diffSec(t, t));
