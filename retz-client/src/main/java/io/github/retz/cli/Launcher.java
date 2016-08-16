@@ -263,6 +263,8 @@ public class Launcher {
                                 Client.fetchHTTPFile(job.url(), "stderr-" + job.id(), conf.getJobResultDir().get());
                             }
                         }
+                        return 0;
+
                     } else {
                         LOG.error("No such job: id={}", conf.getJobId());
                     }

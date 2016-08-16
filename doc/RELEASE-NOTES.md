@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.12
+
+* Fix return value of 'get-job' success
+
 ## 0.0.11
 
 * Change output format of the result of 'list' and sort it by Job id
