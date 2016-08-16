@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.Job;
@@ -27,6 +28,7 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -252,7 +254,7 @@ public class RetzScheduler implements Scheduler {
                             .build();
 
                     Protos.TaskID taskId = task.getTaskId();
-                    job.setStarted(JobQueue.now());
+                    job.setStarted(TimestampHelper.now());
                     WebConsole.notifyStarted(job);
 
                     // This shouldn't be a List nor a set, but a Map
@@ -261,7 +263,6 @@ public class RetzScheduler implements Scheduler {
                     this.slaves.put(app.get().appName, slaves);
 
                     JobQueue.start(taskId.getValue(), job);
-
 
                     operations.add(Protos.Offer.Operation.newBuilder()
                             .setType(Protos.Offer.Operation.Type.LAUNCH)
@@ -354,14 +355,14 @@ public class RetzScheduler implements Scheduler {
             result = Integer.parseInt(status.getMessage());
             job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue()).get(), JobQueue.now(), result);
+                    status.getExecutorId().getValue()).get(), TimestampHelper.now(), result);
             LOG.info("Job {} (id {}) has finished. State: {}",
                     status.getTaskId().getValue(), job.id(), status.getState().name());
             WebConsole.notifyFinished(job);
         } catch (Exception e) {
             String msg = String.format("Failed to parse message from executor: %s '%s'", e.getMessage(), status.getMessage());
             LOG.warn(msg);
-            job.killed(JobQueue.now(), msg);
+            job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
         }
     }
@@ -373,22 +374,22 @@ public class RetzScheduler implements Scheduler {
             result = Integer.parseInt(status.getMessage());
             job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue()).get(), JobQueue.now(), result);
+                    status.getExecutorId().getValue()).get(), TimestampHelper.now(), result);
             LOG.info("Job {} (id {}) has been failed. State: {}",
                     status.getTaskId().getValue(), job.id(), status.getState().name());
-            job.killed(JobQueue.now(), status.getState().name());
+            job.killed(TimestampHelper.now(), status.getState().name());
             WebConsole.notifyKilled(job);
 
         } catch (Exception e) {
             String msg = String.format("Failed to parse message from executor: %s '%s'", e.getMessage(), status.getMessage());
             LOG.warn(msg);
-            job.killed(JobQueue.now(), msg);
+            job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
         }
     }
     void kill(Job job, String reason) {
         LOG.warn(reason);
-        job.killed(JobQueue.now(), reason);
+        job.killed(TimestampHelper.now(), reason);
         JobQueue.kill(job);
         WebConsole.notifyKilled(job);
     }

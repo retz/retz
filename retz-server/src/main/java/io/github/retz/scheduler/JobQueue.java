@@ -21,6 +21,7 @@ import io.github.retz.protocol.StatusResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,13 +36,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JobQueue {
     private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
 
-    // CMT: I thought capital case was for static const, like in C++
-    // REVIEW: static final fields should have CAPITAL_CASE name
     private static final BlockingQueue<Job> JOB_QUEUE = new LinkedBlockingDeque<>();
     private static final AtomicInteger COUNTER = new AtomicInteger(1);
 
-    private static final ConcurrentHashMap<String, Job> running = new ConcurrentHashMap<>(); // TaskID#getValue() -> Job
-    private static final ConcurrentLinkedDeque<Job> finished = new ConcurrentLinkedDeque<>();
+    private static final ConcurrentHashMap<String, Job> RUNNING = new ConcurrentHashMap<>(); // TaskID#getValue() -> Job
+    private static final ConcurrentLinkedDeque<Job> FINISHED = new ConcurrentLinkedDeque<>();
 
     private JobQueue() {
     }
@@ -98,21 +97,17 @@ public class JobQueue {
                 return Optional.of(job);
             }
         }
-        for(Map.Entry<String, Job> entry : running.entrySet()) {
+        for(Map.Entry<String, Job> entry : RUNNING.entrySet()) {
             if (id == entry.getValue().id()) {
                 return Optional.of(entry.getValue());
             }
         }
-        for(Job job : finished) {
+        for(Job job : FINISHED) {
             if (id == job.id()) {
                 return Optional.of(job);
             }
         }
         return Optional.empty();
-    }
-
-    public static String now() {
-        return Calendar.getInstance().getTime().toString();
     }
 
     public synchronized static void clear() {
@@ -124,11 +119,11 @@ public class JobQueue {
     }
 
     public static void start(String taskId, Job job) {
-        running.put(taskId, job);
+        RUNNING.put(taskId, job);
     }
 
     public static void recoverRunning() {
-        for(Iterator<Map.Entry<String, Job>> it = running.entrySet().iterator(); it.hasNext();) {
+        for(Iterator<Map.Entry<String, Job>> it = RUNNING.entrySet().iterator(); it.hasNext();) {
             Map.Entry<String, Job> entry = it.next();
             try {
                 push(entry.getValue());
@@ -141,38 +136,38 @@ public class JobQueue {
     }
 
     public static Job finish(String taskId) {
-        Job job = running.remove(taskId);
-        finished.add(job);
+        Job job = RUNNING.remove(taskId);
+        FINISHED.add(job);
         return job;
     }
 
     public static Job kill(String taskId) {
-        Job job = running.remove(taskId);
-        finished.add(job);
+        Job job = RUNNING.remove(taskId);
+        FINISHED.add(job);
         return job;
     }
 
     public static void kill(Job job) {
-        finished.add(job);
+        FINISHED.add(job);
     }
 
     public static Map<String, Job> getRunning() {
-        return running;
+        return RUNNING;
     }
 
     public static void getAllFinished(List<Job> list, int limit) {
-        list.addAll(finished);
+        list.addAll(FINISHED);
     }
 
     public static void compact() {
-        int size = finished.size() / 2;
-        while (finished.size() > size) {
-            finished.remove();
+        int size = FINISHED.size() / 2;
+        while (FINISHED.size() > size) {
+            FINISHED.remove();
         }
     }
 
     // Methods for test
     public static void setStatus(StatusResponse response) {
-        response.setStatus(JobQueue.size(), running.size());
+        response.setStatus(JobQueue.size(), RUNNING.size());
     }
 }

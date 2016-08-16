@@ -19,6 +19,7 @@ package io.github.retz.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
@@ -182,7 +183,7 @@ public class ConsoleWebSocketHandler {
             ScheduleRequest scheduleRequest = (ScheduleRequest) req;
             if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
                 Job job = scheduleRequest.job();
-                job.schedule(JobQueue.issueJobId(), JobQueue.now());
+                job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
 
                 if (scheduleRequest.doWatch()) {
                     JOB_WATCHERS.put(job.id(), user);
