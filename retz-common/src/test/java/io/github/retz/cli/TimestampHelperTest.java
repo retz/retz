@@ -26,7 +26,7 @@ public class TimestampHelperTest {
         System.err.println(TimestampHelper.now());
         for (int i = 0; i < 1000; i++) {
             String t = TimestampHelper.now();
-            Assert.assertEquals(0, TimestampHelper.diffSec(t, t));
+            Assert.assertEquals(0, TimestampHelper.diffMillisec(t, t));
         }
     }
 }
