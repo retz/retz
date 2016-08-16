@@ -182,14 +182,14 @@ public class Launcher {
         String state = "Queued";
         if (job.finished() != null) {
             state = "Finished";
-        } else if (job.started()!= null) {
+        } else if (job.started() != null) {
             state = "Started";
         }
         String reason = "";
         if (job.reason() != null) {
             reason = "'" + job.reason() + "'";
         }
-        LOG.info("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", state, job.appid(), job.id(),
+        LOG.info("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", state, job.id(), job.appid(),
                 job.scheduled(), job.started(), job.finished(), job.cmd(), reason);
     }
 
@@ -200,7 +200,7 @@ public class Launcher {
             jobs.addAll(r.queue());
             jobs.addAll(r.running());
             jobs.addAll(r.finished());
-            LOG.info("State\tAppName\tTaskId\tScheduled\tStarted\tFinished\tCommand\tReason");
+            LOG.info("State\tTaskId\tAppName\tScheduled\tStarted\tFinished\tCommand\tReason");
             jobs.sort((a, b) -> a.id() - b.id());
             for (Job job : jobs) {
                 printJob(job);
@@ -393,7 +393,7 @@ public class Launcher {
     }
 
     static Configuration parseConfiguration(String[] args) throws ParseException, IOException, URISyntaxException {
-        assert args != null;
+        assert args !=null;
         Configuration result = new Configuration();
 
         CommandLineParser parser = new DefaultParser();
@@ -461,7 +461,7 @@ public class Launcher {
     }
 
     private static Map<String, String> toMap(Properties p) {
-        assert p != null;
+        assert p !=null;
         Map<String, String> results = new TreeMap<>();
         for (Map.Entry<Object, Object> entry : p.entrySet()) {
             results.put((String) entry.getKey(), (String) entry.getValue());
