@@ -22,8 +22,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class TimestampHelper {
-    // Use ISO8601 extended format
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssXXX");
+    // Use ISO8601-like extended format
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSXXX");
 
     public static String now() {
         synchronized (DATE_FORMAT) {
@@ -32,12 +32,12 @@ public class TimestampHelper {
     }
 
     // Returns duration in second
-    public static long diffSec(String lhs, String rhs) throws ParseException {
+    public static long diffMillisec(String lhs, String rhs) throws ParseException {
         synchronized (DATE_FORMAT) {
             Date l = DATE_FORMAT.parse(lhs);
             Date r = DATE_FORMAT.parse(rhs);
             // Date#getTime returns timestamp since 1970 in milliseconds
-            return (l.getTime() - r.getTime()) / 1000;
+            return l.getTime() - r.getTime();
         }
     }
 }

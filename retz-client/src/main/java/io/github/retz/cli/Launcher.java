@@ -1,31 +1,32 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, KK.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, KK.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.cli;
 
 import io.github.retz.protocol.*;
 import io.github.retz.web.Client;
 import org.apache.commons.cli.*;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.MessageFormat;
+import java.text.*;
 import java.util.*;
 
 import static java.util.Arrays.asList;
@@ -187,7 +188,7 @@ public class Launcher {
             jobs.addAll(r.finished());
 
             TableFormatter formatter = new TableFormatter(
-                    "TaskId", "State", "Result", "AppName", "Command",
+                    "TaskId", "State", "Result", "Duration", "AppName", "Command",
                     "Scheduled", "Started", "Finished", "Reason");
 
             jobs.sort((a, b) -> a.id() - b.id());
@@ -199,11 +200,18 @@ public class Launcher {
                 } else if (job.started() != null) {
                     state = "Started";
                 }
-                String reason = "";
+                String reason = "-";
                 if (job.reason() != null) {
                     reason = "'" + job.reason() + "'";
                 }
-                formatter.feed(Integer.toString(job.id()), state, Integer.toString(job.result()), job.appid(), job.cmd(),
+                String duration = "-";
+                if (job.started() != null && job.finished() != null) {
+                    try {
+                        duration = Double.toString(TimestampHelper.diffMillisec(job.finished(), job.started()) / 1000.0);
+                    }catch (java.text.ParseException e) {
+                    }
+                }
+                formatter.feed(Integer.toString(job.id()), state, Integer.toString(job.result()), duration, job.appid(), job.cmd(),
                         job.scheduled(), job.started(), job.finished(), reason);
             }
             LOG.info(formatter.titles());
@@ -400,7 +408,7 @@ public class Launcher {
     }
 
     static Configuration parseConfiguration(String[] args) throws ParseException, IOException, URISyntaxException {
-        assert args !=null;
+        assert args != null;
         Configuration result = new Configuration();
 
         CommandLineParser parser = new DefaultParser();
@@ -468,7 +476,7 @@ public class Launcher {
     }
 
     private static Map<String, String> toMap(Properties p) {
-        assert p !=null;
+        assert p != null;
         Map<String, String> results = new TreeMap<>();
         for (Map.Entry<Object, Object> entry : p.entrySet()) {
             results.put((String) entry.getKey(), (String) entry.getValue());

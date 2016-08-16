@@ -2,6 +2,7 @@
 
 ## 0.0.12
 
+* Improve output format of the result of 'list', aligning and duration
 * Fix return value of 'get-job' success
 
 ## 0.0.11
