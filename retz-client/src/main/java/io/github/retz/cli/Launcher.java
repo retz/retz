@@ -178,21 +178,6 @@ public class Launcher {
         return false;
     }
 
-    private static void printJob(Job job) {
-        String state = "Queued";
-        if (job.finished() != null) {
-            state = "Finished";
-        } else if (job.started() != null) {
-            state = "Started";
-        }
-        String reason = "";
-        if (job.reason() != null) {
-            reason = "'" + job.reason() + "'";
-        }
-        LOG.info("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", state, job.id(), job.appid(),
-                job.scheduled(), job.started(), job.finished(), job.cmd(), reason);
-    }
-
     private static int doRequest(Client c, String cmd, Configuration conf) throws IOException, InterruptedException {
         if (cmd.equals("list")) {
             ListJobResponse r = (ListJobResponse) c.list(64); // TODO: make this CLI argument
@@ -200,10 +185,30 @@ public class Launcher {
             jobs.addAll(r.queue());
             jobs.addAll(r.running());
             jobs.addAll(r.finished());
-            LOG.info("State\tTaskId\tAppName\tScheduled\tStarted\tFinished\tCommand\tReason");
+
+            TableFormatter formatter = new TableFormatter(
+                    "TaskId", "State", "Result", "AppName", "Command",
+                    "Scheduled", "Started", "Finished", "Reason");
+
             jobs.sort((a, b) -> a.id() - b.id());
+
             for (Job job : jobs) {
-                printJob(job);
+                String state = "Queued";
+                if (job.finished() != null) {
+                    state = "Finished";
+                } else if (job.started() != null) {
+                    state = "Started";
+                }
+                String reason = "";
+                if (job.reason() != null) {
+                    reason = "'" + job.reason() + "'";
+                }
+                formatter.feed(Integer.toString(job.id()), state, Integer.toString(job.result()), job.appid(), job.cmd(),
+                        job.scheduled(), job.started(), job.finished(), reason);
+            }
+            LOG.info(formatter.titles());
+            for (String line : formatter) {
+                LOG.info(line);
             }
             return 0;
 
