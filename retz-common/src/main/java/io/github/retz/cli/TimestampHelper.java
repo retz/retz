@@ -25,14 +25,18 @@ public class TimestampHelper {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS z");
 
     public static String now() {
-        return DATE_FORMAT.format(Calendar.getInstance().getTime());
+        synchronized (DATE_FORMAT) {
+            return DATE_FORMAT.format(Calendar.getInstance().getTime());
+        }
     }
 
     // Returns duration in second
     public static long diffSec(String lhs, String rhs) throws ParseException {
-        Date l = DATE_FORMAT.parse(lhs);
-        Date r = DATE_FORMAT.parse(rhs);
-        // Date#getTime returns timestamp since 1970 in milliseconds
-        return (l.getTime() - r.getTime()) / 1000;
+        synchronized (DATE_FORMAT) {
+            Date l = DATE_FORMAT.parse(lhs);
+            Date r = DATE_FORMAT.parse(rhs);
+            // Date#getTime returns timestamp since 1970 in milliseconds
+            return (l.getTime() - r.getTime()) / 1000;
+        }
     }
 }
