@@ -178,24 +178,26 @@ public class Launcher {
         return false;
     }
 
+    private static void printJob(String state, Job job) {
+        String reason = "";
+        if (job.reason() != null) {
+            reason = "'" + job.reason() + "'";
+        }
+        LOG.info("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", state, job.appid(), job.id(),
+                job.scheduled(), job.started(), job.finished(), job.cmd(), reason);
+    }
     private static int doRequest(Client c, String cmd, Configuration conf) throws IOException, InterruptedException {
         if (cmd.equals("list")) {
             ListJobResponse r = (ListJobResponse) c.list(64); // TODO: make this CLI argument
-            LOG.info("Queue: AppName\tTaskId\tScheduled\tCommand");
+            LOG.info("State\tAppName\tTaskId\tScheduled\tStarted\tFinished\tCommand\tReason");
             for (Job job : r.queue()) {
-                LOG.info("\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.scheduled(), job.cmd());
+                printJob("Queued", job);
             }
-            LOG.info("Running: AppName\tTaskId\tStarted\tCommand");
             for (Job job : r.running()) {
-                LOG.info("\t{}\t{}\t{}\t{}", job.appid(), job.id(), job.started(), job.cmd());
+                printJob("Running", job);
             }
-            LOG.info("Finished: AppName\tTaskId\tFinished\tCommand\tStatus\tReason");
             for (Job job : r.finished()) {
-                String reason = "";
-                if (job.reason() != null) {
-                    reason = "'" + job.reason() + "'";
-                }
-                LOG.info("\t{}\t{}\t'{}'\t'{}'\t{}\t{}", job.appid(), job.id(), job.finished(), job.cmd(), job.result(), reason);
+                printJob("Finished", job);
             }
             return 0;
 
