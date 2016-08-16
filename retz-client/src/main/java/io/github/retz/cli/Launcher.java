@@ -178,7 +178,13 @@ public class Launcher {
         return false;
     }
 
-    private static void printJob(String state, Job job) {
+    private static void printJob(Job job) {
+        String state = "Queued";
+        if (job.finished() != null) {
+            state = "Finished";
+        } else if (job.started()!= null) {
+            state = "Started";
+        }
         String reason = "";
         if (job.reason() != null) {
             reason = "'" + job.reason() + "'";
@@ -186,18 +192,18 @@ public class Launcher {
         LOG.info("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", state, job.appid(), job.id(),
                 job.scheduled(), job.started(), job.finished(), job.cmd(), reason);
     }
+
     private static int doRequest(Client c, String cmd, Configuration conf) throws IOException, InterruptedException {
         if (cmd.equals("list")) {
             ListJobResponse r = (ListJobResponse) c.list(64); // TODO: make this CLI argument
+            List<Job> jobs = new LinkedList<>();
+            jobs.addAll(r.queue());
+            jobs.addAll(r.running());
+            jobs.addAll(r.finished());
             LOG.info("State\tAppName\tTaskId\tScheduled\tStarted\tFinished\tCommand\tReason");
-            for (Job job : r.queue()) {
-                printJob("Queued", job);
-            }
-            for (Job job : r.running()) {
-                printJob("Running", job);
-            }
-            for (Job job : r.finished()) {
-                printJob("Finished", job);
+            jobs.sort((a, b) -> a.id() - b.id());
+            for (Job job : jobs) {
+                printJob(job);
             }
             return 0;
 
@@ -232,7 +238,7 @@ public class Launcher {
             if (conf.getJobId().isPresent()) {
                 Response res = c.getJob(conf.getJobId().get());
                 if (res instanceof GetJobResponse) {
-                    GetJobResponse getJobResponse = (GetJobResponse)res;
+                    GetJobResponse getJobResponse = (GetJobResponse) res;
 
                     if (getJobResponse.job().isPresent()) {
                         Job job = getJobResponse.job().get();
