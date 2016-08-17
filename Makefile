@@ -12,7 +12,7 @@ inttest:
 	$(GRADLE) inttest
 
 build:
-	$(GRADLE) test
+	$(GRADLE) build
 
 rpm:
 	$(GRADLE) buildRpm
