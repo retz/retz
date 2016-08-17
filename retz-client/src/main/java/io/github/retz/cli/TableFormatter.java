@@ -61,6 +61,9 @@ public class TableFormatter implements Iterable<String> {
             throw new IllegalArgumentException("Input array length does not match the width");
         }
         for (int i = 0; i < widths.length; i++) {
+            if (cells[i] == null) {
+                cells[i] = "N/A";
+            }
             if (cells[i].length() > this.widths[i]) {
                 this.widths[i] = cells[i].length();
             }

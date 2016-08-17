@@ -188,7 +188,7 @@ public class Launcher {
             jobs.addAll(r.finished());
 
             TableFormatter formatter = new TableFormatter(
-                    "TaskId", "State", "Result", "Duration", "AppName", "Command",
+                    "TaskId", "State", "AppName", "Command", "Result", "Duration",
                     "Scheduled", "Started", "Finished", "Reason");
 
             jobs.sort((a, b) -> a.id() - b.id());
@@ -211,7 +211,7 @@ public class Launcher {
                     }catch (java.text.ParseException e) {
                     }
                 }
-                formatter.feed(Integer.toString(job.id()), state, Integer.toString(job.result()), duration, job.appid(), job.cmd(),
+                formatter.feed(Integer.toString(job.id()), state, job.appid(), job.cmd(), Integer.toString(job.result()), duration,
                         job.scheduled(), job.started(), job.finished(), reason);
             }
             LOG.info(formatter.titles());
