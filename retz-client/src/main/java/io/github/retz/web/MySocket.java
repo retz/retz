@@ -75,11 +75,17 @@ public class MySocket {
         }
     }
 
-    public String awaitResponse(int timeoutSec) throws InterruptedException, TimeoutException {
-        if (requestLatch.await(timeoutSec, TimeUnit.SECONDS)) {
-            synchronized (this) {
-                requestLatch = new CountDownLatch(1);
-                return response;
+    public String awaitResponse(int timeoutSec) throws TimeoutException {
+        while (true) {
+            try {
+                if (requestLatch.await(timeoutSec, TimeUnit.SECONDS)) {
+                    synchronized (this) {
+                        requestLatch = new CountDownLatch(1);
+                        return response;
+                    }
+                }
+                break;
+            } catch (InterruptedException e) {
             }
         }
         throw new TimeoutException();

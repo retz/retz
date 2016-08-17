@@ -47,6 +47,12 @@ public class Range {
         return max;
     }
 
+    public static Range parseRange(String s, String dflt) {
+        if (s == null) {
+            return parseRange(dflt);
+        }
+        return parseRange(s);
+    }
     public static Range parseRange(String s) {
         String[] pair = s.split("-", 2);
         if (pair.length == 1) {

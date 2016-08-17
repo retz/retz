@@ -16,18 +16,26 @@
  */
 package io.github.retz.cli;
 
-import org.junit.Test;
+import com.beust.jcommander.JCommander;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+public class CommandConfig implements SubCommand {
+    static final Logger LOG = LoggerFactory.getLogger(CommandConfig.class);
 
-public class LauncherTest {
-    @Test
-    public void parseTest () throws IOException, URISyntaxException {
-        String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t"};
-        // System.err.println(System.getProperty("user.dir"));
-        Launcher.Configuration conf = Launcher.parseConfiguration(argv);
-        assert conf != null;
-        // TODO: add more pattern tests
+    @Override
+    public String description() {
+        return "Check configuration file";
+    }
+
+    @Override
+    public String getName() {
+        return "config";
+    }
+
+    @Override
+    public int handle(FileConfiguration fileConfig) {
+        LOG.info("Configuration: {}", fileConfig.toString());
+        return 0;
     }
 }

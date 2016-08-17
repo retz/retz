@@ -16,18 +16,14 @@
  */
 package io.github.retz.cli;
 
-import org.junit.Test;
+import com.beust.jcommander.JCommander;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+public interface SubCommand {
 
-public class LauncherTest {
-    @Test
-    public void parseTest () throws IOException, URISyntaxException {
-        String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t"};
-        // System.err.println(System.getProperty("user.dir"));
-        Launcher.Configuration conf = Launcher.parseConfiguration(argv);
-        assert conf != null;
-        // TODO: add more pattern tests
+    default public void add(JCommander commander) {
+        commander.addCommand(getName(), this, description());
     }
+    public String description();
+    public int handle(FileConfiguration fileConfig);
+    public String getName();
 }

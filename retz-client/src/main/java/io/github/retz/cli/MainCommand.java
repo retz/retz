@@ -16,18 +16,16 @@
  */
 package io.github.retz.cli;
 
-import org.junit.Test;
+import com.beust.jcommander.Parameter;;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+public class MainCommand {
+    @Parameter(names={"--config", "-C"})
+    private String configFile;
 
-public class LauncherTest {
-    @Test
-    public void parseTest () throws IOException, URISyntaxException {
-        String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t"};
-        // System.err.println(System.getProperty("user.dir"));
-        Launcher.Configuration conf = Launcher.parseConfiguration(argv);
-        assert conf != null;
-        // TODO: add more pattern tests
+    public String getConfigFile() {
+        if (configFile == null) {
+            configFile = "/opt/retz-client/etc/retz.properties";
+        }
+        return configFile;
     }
 }
