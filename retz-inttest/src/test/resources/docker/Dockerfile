@@ -40,6 +40,8 @@ COPY spawn_mesos_slave.sh /spawn_mesos_slave.sh
 COPY spawn_retz_server2.sh /spawn_retz_server2.sh
 COPY spawn_mesos_agent2.sh /spawn_mesos_agent2.sh
 
+COPY echo.sh /usr/bin/echo.sh
+
 ## These files are not used now, better to use?
 # COPY mesos-slave_isolation /etc/mesos-slave/isolation
 # COPY cgroups_enable_cfs /etc/mesos-slave/cgroups_enable_cfs

@@ -47,7 +47,7 @@ public class Job {
         this.appid = appName;
         this.cmd = cmd;
         this.props = props;
-        assert (cpu.getMin() > 0 && memMB.getMin() >= 128);
+        assert (cpu.getMin() > 0 && memMB.getMin() >= 32);
         this.cpu = cpu;
         this.memMB = memMB;
         this.gpu = new Range(0, 0);
