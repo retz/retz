@@ -16,9 +16,9 @@
  */
 package io.github.retz.inttest;
 
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.web.Client;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -31,7 +31,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Simple integration test cases for retz-server / -executor.
@@ -55,8 +55,9 @@ public class RetzIntTest extends IntTestBase {
                 return;
             }
         }
-        Assert.fail("List does not include element " + element);
+        fail("List does not include element " + element);
     }
+
     @Test
     public void runAppTest() throws Exception {
         Client client = new Client(retzServerUri());
@@ -121,7 +122,8 @@ public class RetzIntTest extends IntTestBase {
 
             List<EchoJob> echoJobs = new LinkedList<>();
             List<EchoJob> finishedJobs = new LinkedList<>();
-            for (int i = 0; i < 20; i++) {
+            int jobNum = 192;
+            for (int i = 0; i < jobNum; i++) {
                 Job job = new Job("echo2", "echo.sh " + Integer.toString(i),
                         new Properties(), new Range(1, 1), new Range(32, 256));
 
@@ -131,18 +133,30 @@ public class RetzIntTest extends IntTestBase {
                 Job scheduledJob = scheduleResponse.job();
                 echoJobs.add(new EchoJob(i, scheduledJob));
             }
-            assertEquals(20, echoJobs.size());
+            assertEquals(jobNum, echoJobs.size());
 
-            for(int i = 0; i < 32; i++) {
+            for (int i = 0; i < 16; i++) {
                 List<EchoJob> toRemove = new LinkedList<>();
                 for (EchoJob echoJob : echoJobs) {
-                    GetJobResponse getJobResponse = (GetJobResponse) client.getJob(echoJob.job.id());
-                    // System.err.println(echoJob.job.id() + " => " + getJobResponse.job().get().result());
-                    if (getJobResponse.job().isPresent() && getJobResponse.job().get().result() == echoJob.argv) {
-                        toRemove.add(echoJob);
+                    Response response = client.getJob(echoJob.job.id());
+                    if (response instanceof GetJobResponse) {
+                        GetJobResponse getJobResponse = (GetJobResponse) client.getJob(echoJob.job.id());
+                        // System.err.println(echoJob.job.id() + " => " + getJobResponse.job().get().result());
+                        if (getJobResponse.job().isPresent()) {
+                            if (getJobResponse.job().get().result() == echoJob.argv) {
+                                toRemove.add(echoJob);
+                            } else {
+                                assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
+                                                + ", Message: " + getJobResponse.job().get().reason(),
+                                        getJobResponse.job().get().finished());
+
+                            }
+                        }
+                    } else {
+                        ErrorResponse errorResponse = (ErrorResponse) response;
+                        System.err.println(echoJob.job.id() + ": " + errorResponse.status());
                     }
                 }
-                System.err.println(toRemove.size() + " jobs finished. " + echoJobs.size() + " remaining.");
                 if (!toRemove.isEmpty()) {
                     i = 0;
                 }
@@ -152,8 +166,14 @@ public class RetzIntTest extends IntTestBase {
                     break;
                 }
                 Thread.sleep(1000);
+
+                ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
+                System.err.println(TimestampHelper.now()
+                        + ": Finished=" + listJobResponse.finished().size()
+                        + ", Running=" + listJobResponse.running().size()
+                        + ", Scheduled=" + listJobResponse.queue().size());
             }
-            assertEquals(20, finishedJobs.size());
+            assertEquals(jobNum, finishedJobs.size());
 
             ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
             assertTrue(listJobResponse.finished().size() >= finishedJobs.size());
@@ -169,8 +189,9 @@ public class RetzIntTest extends IntTestBase {
     static class EchoJob {
         int argv;
         Job job;
+
         EchoJob(int argv, Job job) {
-            this.argv =argv;
+            this.argv = argv;
             this.job = job;
         }
     }
