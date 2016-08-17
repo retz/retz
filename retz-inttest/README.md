@@ -12,6 +12,16 @@ $ ../gradlew inttest
 If it does not work, please read following chunk of duct-tape code and
 workarounds.
 
+In MacOS, you may need Docker host listening to TCP rather than Unix
+domain socket, in another console:
+
+```
+$ sudo socat TCP-LISTEN:2375,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock
+```
+
+Then set `DOCKER_HOST=tcp://127.0.0.1:2375` as an environment variable where
+you run `inttest`.
+
 ## Docker Setup: CentOS 7
 
 ```
