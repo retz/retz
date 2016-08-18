@@ -205,7 +205,7 @@ Executor と実行されたコマンドの標準出力を擬似的にローカ�
 #### その他のジョブ管理
 
 ```sh
-$ /opt/retz-client/bin/retz-client <command> [-C <configfile>] [command args]
+$ /opt/retz-client/bin/retz-client [-C <configfile>] <command> [command args]
 ```
 
 設定ファイルはデフォルトでは `/opt/retz-client/etc/retz.properties` を参照する。
@@ -294,8 +294,8 @@ retz.schedule.retry = 5
 * `retz.mesos.principal` - Mesos 上でのRetzのPrincipalを指定する。デフォルトは空
 * `retz.bind` - Retz が listen するTCPのポート番号およびアドレスを `http://localhost:9090` などと指定する。省略不可
 
-これらが正しく設定されているかどうかは、 `retz-client config -C
-path/to/retz.properties` を実行する。
+これらが正しく設定されているかどうかは、 `retz-client -C
+path/to/retz.properties config` を実行する。
 
 #### ジョブリスト（未実装）
 
