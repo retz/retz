@@ -266,7 +266,6 @@ project('retz-inttest') {
         into "${buildDir}/libs/"
         rename(/(retz-client)-.+-(all)/, '$1-$2')
     }
-
     task copy(dependsOn: ['copyServerJar', 'copyClientJar'])
 
     task buildDocker {
@@ -278,18 +277,15 @@ project('retz-inttest') {
         }
     }
 
-    test.dependsOn([buildDocker, copy])
-    task inttest(dependsOn: [test])
-
-    // For normal "test" target, all test cases in retz-inttest
-    // are skipped. On the other hand, if inttest(2) is triggered,
-    // they are executed as JUnit test cases as usual.
-    gradle.taskGraph.whenReady { taskGraph ->
-        if(taskGraph.hasTask(inttest)) {
-            test.excludes = []
-        } else {
-            test.excludes = ["**/*"]
+    test {
+        // Execute test suites only if "inttest" property is explicitly passed,
+        // like "gradlew test -Dinttest"
+        ext.integration = System.getProperty('inttest', 'false') != 'false'
+        inputs.property 'integration', integration
+        if (integration) {
+            dependsOn buildDocker, copy
         }
+        onlyIf { integration }
     }
 
     // Initial attempt for integration test by shell script.
