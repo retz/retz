@@ -1,0 +1,16 @@
+box: openjdk:8-jdk
+
+build:
+  steps:
+    - install-packages:
+      packages: numactl
+
+    - script:
+      name: gradle build
+      code: |
+        ./gradlew -is clean build
+
+  after-steps:
+    - slack-notifier:
+      url: $SLACK_URL
+      username: wercker
