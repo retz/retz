@@ -213,6 +213,7 @@ public class Client implements AutoCloseable {
         }
         if (job.url() == null) {
             LOG.error("Can't fetch outputs: no url found");
+            return;
         }
         if (resultDir.equals("-")) {
             LOG.info("==== Printing stdout of remote executor ====");
