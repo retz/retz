@@ -77,9 +77,7 @@ public class RetzIntTest extends IntTestBase {
         Job runRes = client.run(job);
         assertEquals(RES_OK, runRes.result());
 
-        URL resUrl = new URL(runRes.url());
-        // Rewrite HOST (IP) part to access without bridge interface in Docker for Mac
-        String baseUrl = new URL(resUrl.getProtocol(), "127.0.0.1", resUrl.getPort(), resUrl.getFile()).toString();
+        String baseUrl = baseUrl(runRes);
         String toDir = "build/log/";
         // These downloaded files are not inspected now, useful for debugging test cases, maybe
         Client.fetchHTTPFile(baseUrl, "stdout", toDir);
@@ -87,9 +85,7 @@ public class RetzIntTest extends IntTestBase {
         Client.fetchHTTPFile(baseUrl, "stdout-" + runRes.id(), toDir);
         Client.fetchHTTPFile(baseUrl, "stderr-" + runRes.id(), toDir);
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Client.catHTTPFile(baseUrl, "stdout-" + runRes.id(), out);
-        String actualText = out.toString(String.valueOf(StandardCharsets.UTF_8));
+        String actualText = catStdout(runRes);
         assertEquals(echoText + "\n", actualText);
 
         ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
@@ -145,6 +141,8 @@ public class RetzIntTest extends IntTestBase {
                         if (getJobResponse.job().isPresent()) {
                             if (getJobResponse.job().get().result() == echoJob.argv) {
                                 toRemove.add(echoJob);
+                                assertEquals(Integer.toString(echoJob.argv) + "\n",
+                                        catStdout(getJobResponse.job().get()));
                             } else {
                                 assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
                                                 + ", Message: " + getJobResponse.job().get().reason(),
@@ -184,6 +182,19 @@ public class RetzIntTest extends IntTestBase {
             assertEquals("ok", unloadRes.status());
 
         }
+    }
+
+    private String catStdout(Job job) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        String baseUrl = baseUrl(job);
+        Client.catHTTPFile(baseUrl, "stdout-" + job.id(), out);
+        return out.toString(String.valueOf(StandardCharsets.UTF_8));
+    }
+
+    private String baseUrl(Job job) throws Exception {
+        URL resUrl = new URL(job.url());
+        // Rewrite HOST (IP) part to access without bridge interface in Docker for Mac
+        return (new URL(resUrl.getProtocol(), "127.0.0.1", resUrl.getPort(), resUrl.getFile())).toString();
     }
 
     static class EchoJob {
