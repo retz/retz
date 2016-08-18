@@ -1,4 +1,4 @@
-# Retz
+# Retz [![wercker status](https://app.wercker.com/status/8aa503883d1a504ebd34ae72b9ac9dfd/s/master "wercker status")](https://app.wercker.com/project/byKey/8aa503883d1a504ebd34ae72b9ac9dfd)
 
 Retz is a simple job queuing and execution service which runs on top
 of [Mesos](https://mesos.apache.org) as a framework.
