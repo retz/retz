@@ -34,9 +34,11 @@ import java.io.OutputStream;
 import java.net.*;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 
+// WebSocket client to Retz service
 public class Client implements AutoCloseable {
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
 
@@ -45,18 +47,33 @@ public class Client implements AutoCloseable {
     private final MySocket socket;
     private final ObjectMapper mapper;
 
+    public Client(String host, int port) throws URISyntaxException {
+        this(String.format("ws://%s:%d/cui", host, port));
+    }
+
     public Client(String uri) throws URISyntaxException {
         this.uri = new URI(uri);
         this.wsclient = new WebSocketClient();
         this.socket = new MySocket();
         this.mapper = new ObjectMapper();
         this.mapper.registerModule(new Jdk8Module());
+        try {
+            wsclient.start();
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+        }
     }
 
-    public boolean connect() throws Exception {
-        wsclient.start();
+    public boolean connect() throws IOException, ExecutionException {
+
         Future<Session> f = wsclient.connect(socket, uri, new ClientUpgradeRequest());
-        f.get();
+        while (true) {
+            try {
+                f.get();
+                break;
+            } catch (InterruptedException e) {
+            }
+        }
         return !f.isCancelled();
     }
 
@@ -73,19 +90,19 @@ public class Client implements AutoCloseable {
         }
     }
 
-    public Response list(int limit) throws IOException, InterruptedException {
+    public Response list(int limit) throws IOException {
         return rpc(new ListJobRequest(limit));
     }
 
-    public Response schedule(Job job) throws IOException, InterruptedException {
+    public Response schedule(Job job) throws IOException {
         return rpc(new ScheduleRequest(job, false));
     }
 
-    public Response getJob(int id) throws IOException, InterruptedException {
+    public Response getJob(int id) throws IOException {
         return rpc(new GetJobRequest(id));
     }
 
-    public Job run(Job job) throws IOException, InterruptedException {
+    public Job run(Job job) throws IOException {
         ScheduleRequest request = new ScheduleRequest(job, true);
         if (!socket.sendRequest(mapper.writeValueAsString(request))) {
             throw new IOException("Request still sending");
@@ -93,7 +110,12 @@ public class Client implements AutoCloseable {
 
         Job ret = job;
         while (true) {
-            String json = socket.awaitResponse();
+            String json;
+            try {
+                json = socket.awaitResponse();
+            } catch (InterruptedException e) {
+                continue;
+            }
             Response response = mapper.readValue(json, Response.class);
 
             if (response instanceof ScheduleResponse) {
@@ -128,16 +150,21 @@ public class Client implements AutoCloseable {
 
     }
 
-    public Response kill(int id) throws IOException, InterruptedException {
+    public Response kill(int id) throws IOException {
         return rpc(new KillRequest(id));
     }
 
     // This method does block while callback returns
-    public void startWatch(Predicate<WatchResponse> callback) throws IOException, InterruptedException {
+    public void startWatch(Predicate<WatchResponse> callback) throws IOException {
         socket.sendRequest(mapper.writeValueAsString(new WatchRequest()));
         boolean doCont = true;
         while (doCont) {
-            String json = socket.awaitResponse();
+            String json;
+            try {
+                json = socket.awaitResponse();
+            } catch (InterruptedException e) {
+                continue;
+            }
             Response res = mapper.readValue(json, Response.class);
             if (res instanceof WatchResponse) {
                 WatchResponse wres = (WatchResponse) res;
@@ -150,40 +177,75 @@ public class Client implements AutoCloseable {
         }
     }
 
-    public Response load(String appid, List<String> persistentFiles, List<String> files, Optional<Integer> diskMB) throws IOException, InterruptedException {
+    public Response load(String appid, List<String> persistentFiles, List<String> files, Optional<Integer> diskMB) throws IOException {
         return rpc(new LoadAppRequest(new Application(appid, persistentFiles, files, diskMB)));
     }
 
-    public Response load(String appid, List<String> persistenFiles, List<String> files) throws IOException, InterruptedException {
+    public Response load(String appid, List<String> persistenFiles, List<String> files) throws IOException {
         return rpc(new LoadAppRequest(new Application(appid, persistenFiles, files, Optional.empty())));
     }
 
-    public Response listApp() throws IOException, InterruptedException {
+    public Response listApp() throws IOException {
         return rpc(new ListAppRequest());
     }
 
-    public Response unload(String appName) throws IOException, InterruptedException {
+    public Response unload(String appName) throws IOException {
         return rpc(new UnloadAppRequest(appName));
     }
 
-    private <ReqType> Response rpc(ReqType request) throws IOException, InterruptedException {
+    private <ReqType> Response rpc(ReqType request) throws IOException {
         if (!socket.sendRequest(mapper.writeValueAsString(request))) {
             throw new IOException("Request still sending");
         }
-        String json = socket.awaitResponse();
-        Response res = mapper.readValue(json, Response.class);
-        return res;
+        while (true) {
+            try {
+                String json = socket.awaitResponse();
+                Response res = mapper.readValue(json, Response.class);
+                return res;
+            } catch (InterruptedException e) {
+            }
+        }
     }
 
-    public static void catHTTPFile(String url, String name) throws MalformedURLException, IOException {
+    public static void fetchJobResult(Job job, String resultDir) {
+        if (resultDir == null) {
+            return;
+        }
+        if (job.url() == null) {
+            LOG.error("Can't fetch outputs: no url found");
+        }
+        if (resultDir.equals("-")) {
+            LOG.info("==== Printing stdout of remote executor ====");
+            catHTTPFile(job.url(), "stdout");
+            LOG.info("==== Printing stderr of remote executor ====");
+            catHTTPFile(job.url(), "stderr");
+            LOG.info("==== Printing stdout-{} of remote executor ====", job.id());
+            catHTTPFile(job.url(), "stdout-" + job.id());
+            LOG.info("==== Printing stderr-{} of remote executor ====", job.id());
+            catHTTPFile(job.url(), "stderr-" + job.id());
+        } else {
+            fetchHTTPFile(job.url(), "stdout", resultDir);
+            Client.fetchHTTPFile(job.url(), "stderr", resultDir);
+            Client.fetchHTTPFile(job.url(), "stdout-" + job.id(), resultDir);
+            Client.fetchHTTPFile(job.url(), "stderr-" + job.id(), resultDir);
+        }
+    }
+
+    public static void catHTTPFile(String url, String name) {
         catHTTPFile(url, name, System.out);
     }
 
-    public static void catHTTPFile(String url, String name, OutputStream out) throws MalformedURLException, IOException {
+    public static void catHTTPFile(String url, String name, OutputStream out) {
         String addr = url.replace("files/browse", "files/download") + "/" + name;
 
-        HttpURLConnection conn = (HttpURLConnection) new URL(addr).openConnection();
-        conn.setRequestMethod("GET");
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(addr).openConnection();
+            conn.setRequestMethod("GET");
+        } catch (IOException e) {
+            LOG.error("Failed to fetch {}: {}", addr, e.getMessage());
+            return;
+        }
         conn.setDoOutput(true);
 
         try (InputStream input = conn.getInputStream()) {

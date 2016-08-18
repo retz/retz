@@ -1,4 +1,4 @@
-.PHONY: test build clean inttest rpm deb dist javadoc
+.PHONY: test build clean inttest rpm deb dist javadoc license
 
 GRADLE=./gradlew
 
@@ -22,6 +22,9 @@ deb:
 
 clean:
 	$(GRADLE) clean
+
+license:
+	$(GRADLE) licenseFormatMain licenseFormatTest
 
 ## Currently for in RHEL/CentOS
 dist: #clean rpm
