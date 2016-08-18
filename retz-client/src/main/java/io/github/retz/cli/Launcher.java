@@ -60,12 +60,8 @@ public class Launcher {
                 LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
                         conf.commands.getConfigFile());
                 LOG.debug("Configuration: {}", conf.fileConfiguration.toString());
+                return conf.getParsedSubCommand().handle(conf.fileConfiguration);
 
-                for (SubCommand subCommand : SUB_COMMANDS) {
-                    if (subCommand.getName().equals(commander.getParsedCommand())) {
-                        return subCommand.handle(conf.fileConfiguration);
-                    }
-                }
             } else {
                 LOG.error("Invalid subcommand");
                 help(SUB_COMMANDS);
@@ -104,7 +100,7 @@ public class Launcher {
 
     static Configuration parseConfiguration(String... argv) throws IOException, URISyntaxException {
         Configuration conf = new Configuration();
-        
+
         conf.commands = new MainCommand();
         conf.commander = new JCommander(conf.commands);
 
@@ -122,6 +118,15 @@ public class Launcher {
         FileConfiguration fileConfiguration;
         JCommander commander;
         MainCommand commands;
+
+        SubCommand getParsedSubCommand() {
+            for (SubCommand subCommand : SUB_COMMANDS) {
+                if (subCommand.getName().equals(commander.getParsedCommand())) {
+                    return subCommand;
+                }
+            }
+            throw new ParameterException("unknown command: " + commander.getParsedCommand());
+        }
     }
 }
 

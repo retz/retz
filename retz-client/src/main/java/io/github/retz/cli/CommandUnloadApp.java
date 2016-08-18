@@ -36,7 +36,6 @@ public class CommandUnloadApp implements SubCommand {
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
 
-
     @Override
     public String description() {
         return "Unload app and release everything";

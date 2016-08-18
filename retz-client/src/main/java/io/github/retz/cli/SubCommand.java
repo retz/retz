@@ -18,12 +18,39 @@ package io.github.retz.cli;
 
 import com.beust.jcommander.JCommander;
 
+import java.util.List;
+import java.util.Properties;
+
 public interface SubCommand {
 
-    default public void add(JCommander commander) {
+    default void add(JCommander commander) {
         commander.addCommand(getName(), this, description());
     }
-    public String description();
-    public int handle(FileConfiguration fileConfig);
-    public String getName();
+
+    String description();
+
+    int handle(FileConfiguration fileConfig);
+
+    String getName();
+
+    static Properties parseKeyValuePairs(List<String> pairs) {
+        Properties props = new Properties();
+        if (pairs == null) {
+            return props;
+        }
+
+        for (String e : pairs) {
+            String[] pair = e.split("=");
+            if (pair[0].isEmpty()) {
+                continue;
+            }
+            if (pair.length == 2) {
+                props.put(pair[0], pair[1]);
+            } else if (pair.length == 1 && e.contains("=")) {
+                props.put(pair[0], "");
+            }
+        }
+        return props;
+
+    }
 }

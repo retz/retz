@@ -38,11 +38,11 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
 
-    @Parameter(names = {"-F", "--file"}, arity = 2, description = "Asakusa Application environment files")
-    private List<String> files = new LinkedList<>();
+    @Parameter(names = {"-F", "--file"}, description = "Asakusa Application environment files")
+    List<String> files = new LinkedList<>();
     //"http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
 
-    @Parameter(names = {"-P","--persistent"}, arity = 2, description = "Asakusa Application environment persistent files")
+    @Parameter(names = {"-P","--persistent"}, description = "Asakusa Application environment persistent files")
     private List<String> persistentFiles = new LinkedList<>();
      // ("http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
 

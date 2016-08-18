@@ -70,17 +70,7 @@ public class CommandSchedule implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) {
-        Properties envProps = new Properties();
-        if (envs != null) {
-            for (String e : envs) {
-                String[] pair = e.split("=");
-                if (pair.length != 2 || pair[0].isEmpty() || pair[1].isEmpty()) {
-                    LOG.error("Invalid environment variable: {}", e);
-                    return -1;
-                }
-                envProps.put(pair[0], pair[1]);
-            }
-        }
+        Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         Job job = new Job(appName, remoteCmd,
                 envProps, parseRange(cpu, "1"), parseRange(mem, "32"), parseRange(gpu, "0"));

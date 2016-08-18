@@ -40,9 +40,9 @@ public class CommandRun implements SubCommand {
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
 
-    @Parameter(names = {"-E", "--env"}, arity = 2,
+    @Parameter(names = {"-E", "--env"},
             description = "Pairs of environment variable names and values, like '-E ASAKUSA_M3BP_OPTS='-Xmx32g' -E SPARK_CMD=path/to/spark-cmd'")
-    private List<String> envs;
+    List<String> envs;
 
     @Parameter(names = "-cpu", description = "Range of CPU cores assigned to the job, like '2-'")
     private String cpu;
@@ -71,17 +71,7 @@ public class CommandRun implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) {
-        Properties envProps = new Properties();
-        if (envs != null) {
-            for (String e : envs) {
-                String[] pair = e.split("=");
-                if (pair.length != 2 || pair[0].isEmpty() || pair[1].isEmpty()) {
-                    LOG.error("Invalid environment variable: {}", e);
-                    return -1;
-                }
-                envProps.put(pair[0], pair[1]);
-            }
-        }
+        Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         Job job = new Job(appName, remoteCmd,
                 envProps, parseRange(cpu, "1"), parseRange(mem, "32"), parseRange(gpu, "0"));
