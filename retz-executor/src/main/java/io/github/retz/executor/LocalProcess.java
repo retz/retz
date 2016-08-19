@@ -65,10 +65,7 @@ public class LocalProcess {
         try {
             FileManager.fetchPersistentFiles(metaJob.getApp().getPersistentFiles(), path, metaJob.getJob().trustPVFiles());
         } catch (IOException e) {
-            LOG.error("Cannot fetch persistent files: {}", e.getMessage());
-            if (LOG.isDebugEnabled()) {
-                e.printStackTrace();
-            }
+            LOG.error("Cannot fetch persistent files: {}", e.toString());
             return false;
         }
 
@@ -99,7 +96,7 @@ public class LocalProcess {
             LOG.info("Assigning CPU cores [{}] to {}", CPUManager.listIntToString(assigned), task.getTaskId());
             p = processBuilder.start();
         } catch (IOException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
             return false;
         }
         if (Objects.isNull(p)) {

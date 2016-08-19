@@ -40,13 +40,13 @@ public final class MesosFrameworkLauncher {
         try {
             conf = parseConfiguration(argv);
         } catch (ParseException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
             return -1;
         } catch (URISyntaxException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
             return -1;
         } catch (IOException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
             return -1;
         }
 
@@ -57,7 +57,7 @@ public final class MesosFrameworkLauncher {
         try {
             driver = new MesosSchedulerDriver(scheduler, fw, conf.getMesosMaster());
         } catch (Exception e) {
-            LOG.error("Cannot start Mesos scheduler: {}", e.getMessage());
+            LOG.error("Cannot start Mesos scheduler: {}", e.toString());
             return -1;
         }
         Protos.Status status = driver.start();

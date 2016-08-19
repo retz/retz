@@ -97,7 +97,7 @@ public final class WebConsole {
         try {
             clientMonitorThread.join();
         } catch (InterruptedException e) {
-            LOG.warn("Can't join client monitor thread: " + e.getMessage());
+            LOG.warn("Can't join client monitor thread: " + e.toString());
         }
         Spark.stop();
     }

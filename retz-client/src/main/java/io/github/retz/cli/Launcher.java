@@ -68,14 +68,14 @@ public class Launcher {
             }
 
         } catch (IOException e) {
-            LOG.error("Invalid configuration file: {}", e.getMessage());
+            LOG.error("Invalid configuration file: {}", e.toString());
         } catch (URISyntaxException e) {
-            LOG.error("Bad file format: {}", e.getMessage());
+            LOG.error("Bad file format: {}", e.toString());
         } catch (MissingCommandException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
             help(SUB_COMMANDS);
         } catch (ParameterException e) {
-            LOG.error("{}", e.getMessage());
+            LOG.error("{}", e.toString());
             help(SUB_COMMANDS);
         }
         //$ retz kill <jobid>

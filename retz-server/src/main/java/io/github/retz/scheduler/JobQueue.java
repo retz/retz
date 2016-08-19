@@ -128,7 +128,7 @@ public class JobQueue {
             try {
                 push(entry.getValue());
             } catch (InterruptedException e) {
-                LOG.warn("Interruption: Job(id={}) must be rerun ({})", entry.getValue().id(), e.getMessage());
+                LOG.warn("Interruption: Job(id={}) must be rerun ({})", entry.getValue().id(), e.toString());
                 continue; // Avoid remove in case we could retry removal again
             }
             it.remove();

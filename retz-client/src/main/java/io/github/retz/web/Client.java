@@ -60,7 +60,7 @@ public class Client implements AutoCloseable {
         try {
             wsclient.start();
         } catch (Exception e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
         }
     }
 
@@ -244,7 +244,7 @@ public class Client implements AutoCloseable {
             conn = (HttpURLConnection) new URL(addr).openConnection();
             conn.setRequestMethod("GET");
         } catch (IOException e) {
-            LOG.error("Failed to fetch {}: {}", addr, e.getMessage());
+            LOG.error("Failed to fetch {}: {}", addr, e.toString());
             return;
         }
         conn.setDoOutput(true);
@@ -256,7 +256,7 @@ public class Client implements AutoCloseable {
                 out.write(buffer, 0, bytesRead);
             }
         } catch (IOException e) {
-            LOG.error("Cannot fetch file {}: {}", url, e.getMessage());
+            LOG.error("Cannot fetch file {}: {}", url, e.toString());
         }
         conn.disconnect();
     }
@@ -269,9 +269,9 @@ public class Client implements AutoCloseable {
         try {
             FileUtils.copyURLToFile(new URL(addr), new File(localfile));
         } catch (MalformedURLException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
         } catch (IOException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
         }
     }
 }

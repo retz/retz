@@ -87,7 +87,7 @@ public class LocalProcessManager implements Runnable {
                 MANAGER.killed(task);
             }
         } catch (IOException e) {
-            LOG.debug(e.getMessage());
+            LOG.debug(e.toString());
             MANAGER.killed(task);
         }
 
@@ -165,7 +165,7 @@ public class LocalProcessManager implements Runnable {
                 MANAGER.poll();
                 Thread.sleep(512);
             } catch (InterruptedException e) {
-                LOG.warn("Polling error: {}", e.getMessage());
+                LOG.warn("Polling error: {}", e.toString());
             }
         }
     }
