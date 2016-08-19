@@ -34,11 +34,9 @@ RUN systemctl enable zookeeper.service mesos-master.service
 
 # On the other hand, mesos-master and retz-server need configuration
 # with actual IP address. This may be done in service files managed by
-# SystemD, but it's dirty workaround to launch them after docker run.
+# SystemD, but current workaround is to launch them after docker run.
 COPY spawn_retz_server.sh /spawn_retz_server.sh
-COPY spawn_mesos_slave.sh /spawn_mesos_slave.sh
-COPY spawn_retz_server2.sh /spawn_retz_server2.sh
-COPY spawn_mesos_agent2.sh /spawn_mesos_agent2.sh
+COPY spawn_mesos_agent.sh /spawn_mesos_agent.sh
 
 COPY echo.sh /usr/bin/echo.sh
 

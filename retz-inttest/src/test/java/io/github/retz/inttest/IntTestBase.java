@@ -220,9 +220,9 @@ public class IntTestBase {
         }
 
         private void startServers() {
-            mesosAgentHolder = new Thread(createHolderTask("mesos-agent-holder", "/spawn_mesos_agent2.sh"));
+            mesosAgentHolder = new Thread(createHolderTask("mesos-agent-holder", "/spawn_mesos_agent.sh"));
             mesosAgentHolder.start();
-            retzServerHolder = new Thread(createHolderTask("retz-server-holder", "/spawn_retz_server2.sh"));
+            retzServerHolder = new Thread(createHolderTask("retz-server-holder", "/spawn_retz_server.sh"));
             retzServerHolder.start();
         }
 

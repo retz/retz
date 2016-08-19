@@ -6,7 +6,7 @@ In `retz-inttest` project, there is a gradle task `inttest` to execute
 simplest test. If everything goes well, all one should do is:
 
 ```
-$ ../gradlew inttest
+$ ../gradlew test -Dinttest
 ```
 
 If it does not work, please read following chunk of duct-tape code and
@@ -20,7 +20,7 @@ $ sudo socat TCP-LISTEN:2375,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock
 ```
 
 Then set `DOCKER_HOST=tcp://127.0.0.1:2375` as an environment variable where
-you run `inttest`.
+you run inttest.
 
 ## Docker Setup: CentOS 7
 
@@ -78,10 +78,12 @@ $ ./src/test/resources/retz-client run -A echo -cmd 'echo foo' -R ./out
 $ ./src/test/resources/retz-client unload-app -A echo
 ```
 
-To stop the container, it's better to add short timeout as `-t 1`:
+To stop the container, it's better to add short timeout as `-t 1` or just kill it:
 
 ```
 $ docker stop -t 1 $RETZ_CONTAINER
+## or
+$ docker kill $RETZ_CONTAINER
 ```
 
 ## Docker related messy things

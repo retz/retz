@@ -18,6 +18,7 @@
 
 
 set -e
+set -x
 
 IP_ADDR=`ip -f inet address show eth0 | grep inet | awk {'print $2;}' | cut -d/ -f1`
 echo "eth0 IP address used by retz-server: " ${IP_ADDR}
@@ -25,6 +26,4 @@ echo "eth0 IP address used by retz-server: " ${IP_ADDR}
 sed -i -e 's/##IP##/'${IP_ADDR}'/' retz.properties
 
 nohup java -jar /build/libs/retz-server-all.jar \
-    -C /retz.properties > ./retz-server.nohup.out &
-
-sleep 1
+    -C /retz.properties > /build/log/retz-server.log 2>&1 &
