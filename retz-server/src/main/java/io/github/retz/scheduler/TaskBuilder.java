@@ -34,6 +34,8 @@ public class TaskBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(TaskBuilder.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    private Resource assigned;
+
     Protos.TaskInfo.Builder builder;
     {
         MAPPER.registerModule(new Jdk8Module());
@@ -44,21 +46,22 @@ public class TaskBuilder {
     }
 
     // @doc assign as much CPU/Memory as possible
-    public TaskBuilder setOffer(Resource r, Range cpu, Range memMB, Range gpu, Protos.SlaveID slaveID) {
-        assert cpu.getMin() <= r.cpu();
-        assert memMB.getMin() <= r.memMB();
-        assert gpu.getMin() <= r.gpu();
-        int assignedCpu = Integer.min((int) r.cpu(), cpu.getMax());
-        int assignedMem = Integer.min(r.memMB(), memMB.getMax());
-        int assignedGPU = Integer.min(r.gpu(), gpu.getMax());
+    public TaskBuilder setOffer(Resource offered, Range cpu, Range memMB, Range gpu, Protos.SlaveID slaveID) {
+        assert cpu.getMin() <= offered.cpu();
+        assert memMB.getMin() <= offered.memMB();
+        assert gpu.getMin() <= offered.gpu();
+        int assignedCpu = Integer.min((int) offered.cpu(), cpu.getMax());
+        int assignedMem = Integer.min(offered.memMB(), memMB.getMax());
+        int assignedGPU = Integer.min(offered.gpu(), gpu.getMax());
 
+        assigned = new Resource(assignedCpu, assignedMem, 0, 0, assignedGPU);
         builder.addAllResources(ResourceConstructor.construct(assignedCpu, assignedMem, 0, assignedGPU))
                 //builder.addAllResources(offer.getResourcesList())
                 .setSlaveId(slaveID);
-        r.subCPU(assignedCpu);
-        r.subMemMB(assignedMem);
-        r.subGPU(assignedGPU);
-        LOG.info("Assigning cpu={}, mem={}, gpus={}", assignedCpu, assignedMem, assignedGPU);
+        offered.subCPU(assignedCpu);
+        offered.subMemMB(assignedMem);
+        offered.subGPU(assignedGPU);
+        LOG.debug("Assigning cpu={}, mem={}, gpus={}", assignedCpu, assignedMem, assignedGPU);
         return this;
     }
 
@@ -96,5 +99,7 @@ public class TaskBuilder {
         return builder.build();
     }
 
-
+    public Resource getAssigned() {
+        return assigned;
+    }
 }

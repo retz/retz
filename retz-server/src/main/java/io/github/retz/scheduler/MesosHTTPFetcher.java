@@ -58,7 +58,7 @@ public class MesosHTTPFetcher {
     public static Optional<String> sandboxUri(String t, String master, String slaveId, String frameworkId, String executorId) {
 
         Optional<String> slaveAddr = fetchSlaveAddr(master, slaveId); // get master:5050/slaves with slaves/pid, cut with '@'
-        LOG.info("{}", slaveAddr);
+        LOG.debug("Agent address of executor {}: {}", executorId, slaveAddr);
 
         if (!slaveAddr.isPresent()) {
             return Optional.empty();
@@ -68,8 +68,6 @@ public class MesosHTTPFetcher {
         if (!dir.isPresent()) {
             return Optional.empty();
         }
-        LOG.info("{}", dir);
-
 
         try {
             return Optional.of(String.format("http://%s/files/%s?path=%s",

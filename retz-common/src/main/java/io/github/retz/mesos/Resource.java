@@ -44,6 +44,15 @@ public class Resource {
         this.gpu = gpu;
     }
 
+    public void merge(Resource rhs) {
+        this.cpu += rhs.cpu();
+        this.memMB += rhs.memMB();
+        this.diskMB += rhs.diskMB();
+        this.reservedDiskMB += rhs.reservedDiskMB();
+        this.gpu += rhs.reservedDiskMB();
+        this.volumes.putAll(rhs.volumes());
+    }
+
     public double cpu() {
         return cpu;
     }

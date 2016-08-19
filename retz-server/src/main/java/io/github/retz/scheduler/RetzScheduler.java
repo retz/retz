@@ -28,7 +28,6 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -198,6 +197,7 @@ public class RetzScheduler implements Scheduler {
                         ).build());
             }
 
+            Resource assigned = new Resource(0, 0, 0);
             List<Job> jobs = JobQueue.popMany((int) r.cpu(), r.memMB());
             // Assign tasks if it has enough CPU/Memory
             for (Job job : jobs) {
@@ -247,6 +247,7 @@ public class RetzScheduler implements Scheduler {
                         tb.setVolume(r, volumeId);
                     }
 
+                    assigned.merge(tb.getAssigned());
                     Protos.TaskInfo task = tb.build();
 
                     Protos.Offer.Operation.Launch launch = Protos.Offer.Operation.Launch.newBuilder()
@@ -268,7 +269,7 @@ public class RetzScheduler implements Scheduler {
                             .setType(Protos.Offer.Operation.Type.LAUNCH)
                             .setLaunch(launch).build());
 
-                    LOG.info("Task {} is to be ran as '{}'", taskId.getValue(), job.cmd());
+                    LOG.info("Task {} is to be ran as '{}' with {}", taskId.getValue(), job.cmd(), tb.getAssigned().toString());
 
                 } catch (JsonProcessingException e) {
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
@@ -282,6 +283,7 @@ public class RetzScheduler implements Scheduler {
                 Protos.Filters filters = Protos.Filters.newBuilder().setRefuseSeconds(1).build();
                 List<Protos.OfferID> offerIds = new ArrayList<>();
                 offerIds.add(offer.getId());
+                LOG.info("Total resource newly used: {}", assigned.toString());
                 LOG.info("Accepting offer {}, {} operations (remaining: {})", offer.getId().getValue(), operations.size(), r);
                 driver.acceptOffers(offerIds, operations, filters);
             }
@@ -341,7 +343,7 @@ public class RetzScheduler implements Scheduler {
             case Protos.TaskState.TASK_STAGING_VALUE:
                 break;
             case Protos.TaskState.TASK_STARTING_VALUE:
-                LOG.info("Task {} starting", status.getTaskId().getValue());
+                LOG.debug("Task {} starting", status.getTaskId().getValue());
                 break;
             default:
                 break;
