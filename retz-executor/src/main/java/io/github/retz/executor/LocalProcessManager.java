@@ -17,9 +17,10 @@
 package io.github.retz.executor;
 
 
-import io.github.retz.protocol.MetaJob;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.protocol.MetaJob;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
  * @doc Unlike CPUManager, this is a singleton thread that works concurrently, waits for local processes finish,
@@ -39,67 +41,84 @@ public class LocalProcessManager implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalProcessManager.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final LocalProcessManager MANAGER = new LocalProcessManager();
-    private static Thread managerThread;
+    private static Thread managerThread = new Thread(MANAGER);
+    private static AtomicBoolean running = new AtomicBoolean(false);
+
+    // TaskID => LocalProcess
+    private Map<String, LocalProcess> processes = new ConcurrentHashMap<>();
+    private ExecutorDriver driver;
 
     {
         MAPPER.registerModule(new Jdk8Module());
     }
+
     private LocalProcessManager() {
     }
 
     public static synchronized void start(ExecutorDriver driver) {
-        if (managerThread != null) {
-            return;
+        if (!managerThread.isAlive()) {
+            managerThread = new Thread(MANAGER);
         }
         MANAGER.setDriver(driver);
 
-        managerThread = new Thread(MANAGER);
         managerThread.setName("ProcessManager");
         managerThread.start();
+        running.set(managerThread.isAlive());
     }
 
-    public static synchronized void join() throws InterruptedException {
-        if (managerThread != null)
-            managerThread.join();
+    public static void join() {
+        while (managerThread.isAlive()) {
+            try {
+                managerThread.join();
+                break;
+            } catch (InterruptedException e) {
+                continue;
+            }
+        }
     }
 
     public static synchronized void startTask(Protos.TaskInfo task,
                                               int cpus, int memMB) {
+        MetaJob metaJob;
+        try {
+            metaJob = MAPPER.readValue(task.getData().toByteArray(), MetaJob.class);
+        } catch (JsonProcessingException e) {
+            LOG.warn("Invalid JSON from RetzScheduler, {}", e.toString());
+            MANAGER.killed(task);
+            return;
+        } catch (IOException e) {
+            LOG.warn("Invalid JSON from RetzScheduler, {}", e.toString());
+            MANAGER.killed(task);
+            return;
+        }
+
         List<Integer> assigned = CPUManager.get().assign(task.getTaskId().getValue(), cpus);
         LOG.info("Given {}cpus/{}MB by Mesos, CPUManager got {}", cpus, memMB, assigned.size());
 
         if (assigned.isEmpty()) {
             LOG.error("No CPU was assigned by CPUManager at task {}", task.getTaskId().getValue());
-            // XXX: must not reach here...
+            // XXX: must not reach here as long as Mesos resource allocation is correct
             MANAGER.killed(task);
             return;
         }
-        try {
-            LOG.debug(task.getData().toStringUtf8());
 
-            MetaJob metaJob = MAPPER.readValue(task.getData().toByteArray(), MetaJob.class);
-            LocalProcess p = new LocalProcess(task, metaJob, assigned);
-            MANAGER.starting(task.getTaskId());
+        LocalProcess p = new LocalProcess(task, metaJob, assigned);
+        MANAGER.starting(task.getTaskId());
 
-            if (p.start()) {
-                MANAGER.started(task.getTaskId().getValue(), p);
-            } else {
-                MANAGER.killed(task);
-            }
-        } catch (IOException e) {
-            LOG.debug(e.toString());
+        if (p.start()) {
+            MANAGER.started(task.getTaskId().getValue(), p);
+        } else {
             MANAGER.killed(task);
         }
+    }
 
+    public static void stop () {
+        running.set(false);
     }
 
     public static boolean isTaskFinished(Protos.TaskID taskID) {
-        return MANAGER.processes.containsKey(taskID.getValue());
+        return !MANAGER.processes.containsKey(taskID.getValue());
     }
-
-    // TaskID => LocalProcess
-    private Map<String, LocalProcess> processes = new ConcurrentHashMap<>();
-    private ExecutorDriver driver;
 
     public void starting(Protos.TaskID taskId) {
         Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder()
@@ -108,6 +127,7 @@ public class LocalProcessManager implements Runnable {
                 .setState(Protos.TaskState.TASK_STARTING);
         driver.sendStatusUpdate(builder.build());
     }
+
     public void started(String taskID, LocalProcess p) {
         processes.put(taskID, p);
 
@@ -123,7 +143,7 @@ public class LocalProcessManager implements Runnable {
                 .setTaskId(task.getTaskId())
                 .setMessage("-42")
                 .setState(Protos.TaskState.TASK_KILLED);
-
+        CPUManager.get().free(task.getTaskId().getValue());
         driver.sendStatusUpdate(builder.build());
     }
 
@@ -160,7 +180,7 @@ public class LocalProcessManager implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
+        while (MANAGER.running.get()) {
             try {
                 MANAGER.poll();
                 Thread.sleep(512);

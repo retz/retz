@@ -113,6 +113,8 @@ public class RetzExecutor implements Executor {
     @Override
     public void shutdown(ExecutorDriver driver) {
         LOG.info("Executor shutting down");
+        LocalProcessManager.stop();
+        LocalProcessManager.join();
     }
 
     // Only for tests

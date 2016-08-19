@@ -17,6 +17,7 @@
 package io.github.retz.executor;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import scala.actors.threadpool.Arrays;
 import xerial.jnuma.Numa;
@@ -27,6 +28,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CPUManagerTest {
+
+    @Before
+    public void before() {
+    }
 
     @After
     public void after() {
@@ -73,5 +78,14 @@ public class CPUManagerTest {
 
         CPUManager.get().free("hey><");
         assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
+    }
+
+    @Test
+    public void notEnough () {
+        Integer[] nodes = {4, 4, 4, 4};
+        CPUManager.setTopology(Arrays.asList(nodes));
+
+        List<Integer> cpus = CPUManager.get().assign("not-enough", 32);
+        assertTrue(cpus.isEmpty());
     }
 }

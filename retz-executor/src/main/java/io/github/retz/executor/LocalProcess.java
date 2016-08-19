@@ -63,6 +63,7 @@ public class LocalProcess {
         }
 
         try {
+            // TODO: this is actually done in LocalProcessManager singleton thread, which may block other task invocations
             FileManager.fetchPersistentFiles(metaJob.getApp().getPersistentFiles(), path, metaJob.getJob().trustPVFiles());
         } catch (IOException e) {
             LOG.error("Cannot fetch persistent files: {}", e.toString());

@@ -16,19 +16,18 @@
  */
 package io.github.retz.executor;
 
+import io.github.retz.mesos.ResourceConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.junit.rules.TemporaryFolder;
 
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
-
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class DummyExecutorDriver implements ExecutorDriver {
     Executor executor;
@@ -38,6 +37,8 @@ public class DummyExecutorDriver implements ExecutorDriver {
     Protos.SlaveInfo slaveInfo;
 
     TemporaryFolder folder;
+
+    Protos.TaskStatus statusUpdate;
 
     public DummyExecutorDriver(Executor executor, TemporaryFolder folder) {
         this.executor = Objects.requireNonNull(executor);
@@ -55,9 +56,12 @@ public class DummyExecutorDriver implements ExecutorDriver {
                 .addAllResources(ResourceConstructor.construct(4, 4096))
                 .setHostname("localhost-dummy:5053")
                 .build();
+        statusUpdate = null;
     }
 
-    public Protos.Status stop() {
+    public synchronized Protos.Status stop() {
+        executor.shutdown(this);
+        //statusUpdate = null;
         return Protos.Status.DRIVER_STOPPED;
     }
 
@@ -79,10 +83,18 @@ public class DummyExecutorDriver implements ExecutorDriver {
         return Protos.Status.DRIVER_STOPPED;
     }
 
-    public Protos.Status sendStatusUpdate(Protos.TaskStatus status) {
+    @Override
+    public synchronized Protos.Status sendStatusUpdate(Protos.TaskStatus status) {
+        //System.err.println("Driver#sendStatusUpdate with " + status);
+        statusUpdate = status;
         return Protos.Status.DRIVER_RUNNING;
     }
 
+    public Optional<Protos.TaskStatus> getUpdatedStatus() {
+        return Optional.ofNullable(statusUpdate);
+    }
+
+    @Override
     public Protos.Status sendFrameworkMessage(byte[] data) {
         return Protos.Status.DRIVER_RUNNING;
     }
