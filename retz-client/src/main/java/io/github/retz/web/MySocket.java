@@ -124,10 +124,10 @@ public class MySocket {
         synchronized (this) {
             if (session != null) {
                 String msg = String.format("Connection error from %s: %s",
-                        session.getRemoteAddress().getHostName(), error.getMessage());
+                        session.getRemoteAddress().getHostName(), error.toString());
                 response = String.format("{\"status\":\"%s\", \"command\":\"error\"}", msg);
             } else {
-                response = String.format("{\"status\":\"%s\", \"command\":\"error\"}", error.getMessage());
+                response = String.format("{\"status\":\"%s\", \"command\":\"error\"}", error.toString());
             }
         }
         requestLatch.countDown();

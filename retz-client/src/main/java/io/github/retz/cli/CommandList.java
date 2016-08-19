@@ -81,13 +81,13 @@ public class CommandList implements SubCommand {
             }
             return 0;
         } catch (URISyntaxException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
         } catch (ExecutionException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return -1;
     }

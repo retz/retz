@@ -56,8 +56,7 @@ public class FileManager {
                             LOG.info("File {} was correctly decompressed before. Skipping decompression.", file);
                         }
                     } catch (ArchiveException e) {
-                        LOG.error("ArchiveException on {}: {}", f, e.getMessage());
-                        e.printStackTrace();
+                        LOG.error("ArchiveException on {}: {}", f, e.toString(), e);
                     }
                 }
             } else if (file.startsWith("http")) {
@@ -96,7 +95,7 @@ public class FileManager {
                 output.write(buffer, 0, bytesRead);
             }
         } catch (IOException e) {
-            LOG.debug(e.getMessage());
+            LOG.debug(e.toString());
             throw e;
         } finally {
             if (input != null) input.close();
@@ -124,7 +123,7 @@ public class FileManager {
                 }
                 return;
             } catch (InterruptedException e) {
-                LOG.error("Download process interrupted: {}", e.getMessage()); // TODO: debug?
+                LOG.error("Download process interrupted: {}", e.toString()); // TODO: debug?
             }
         }
     }
@@ -170,7 +169,7 @@ public class FileManager {
                 LOG.error("Failed decompression of file {}: {}", file, r);
             }
         } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
+            LOG.error(e.toString());
         }
     }
 

@@ -73,7 +73,7 @@ public class ConsoleWebSocketHandler {
             try {
                 s.getRemote().sendString(msg);
             } catch (IOException e) {
-                LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.getMessage());
+                LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.toString());
             }
         }
     }
@@ -84,7 +84,7 @@ public class ConsoleWebSocketHandler {
                 ByteBuffer ping = ByteBuffer.wrap("ping".getBytes(StandardCharsets.UTF_8));
                 s.getRemote().sendPing(ping);
             } catch (IOException e) {
-                LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.getMessage());
+                LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.toString());
                 s.close();
                 WATCHERS.remove(s);
             }
@@ -94,7 +94,7 @@ public class ConsoleWebSocketHandler {
                 ByteBuffer ping = ByteBuffer.wrap("ping".getBytes(StandardCharsets.UTF_8));
                 watcher.getValue().getRemote().sendPing(ping);
             } catch (IOException e) {
-                LOG.warn("cannot send to {}: {}", watcher.getValue().getRemoteAddress().getHostName(), e.getMessage());
+                LOG.warn("cannot send to {}: {}", watcher.getValue().getRemoteAddress().getHostName(), e.toString());
                 watcher.getValue().close();
                 JOB_WATCHERS.remove(watcher.getKey());
             }
@@ -117,11 +117,11 @@ public class ConsoleWebSocketHandler {
                     JOB_WATCHERS.remove(job.id());
                 }
             } catch (JsonProcessingException e) {
-                LOG.error("Cannot encode Job {}: {}", job, e.getMessage());
+                LOG.error("Cannot encode Job {}: {}", job, e.toString());
             } catch (IOException e) {
                 LOG.warn("Cannot send {} to {}", update, s.getRemoteAddress());
             } catch (WebSocketException e) {
-                LOG.error("Client were disconnected: {}", e.getMessage());
+                LOG.error("Client were disconnected: {}", e.toString());
             }
         }
     }
@@ -157,7 +157,7 @@ public class ConsoleWebSocketHandler {
         try {
             req = MAPPER.readValue(message, Request.class);
         } catch (IOException e) {
-            respond(user, new ErrorResponse("Invalid command: " + e.getMessage()));
+            respond(user, new ErrorResponse("Invalid command: " + e.toString()));
             return;
         } catch (NullPointerException e) {
             LOG.error("NullPointerException: {}", user);

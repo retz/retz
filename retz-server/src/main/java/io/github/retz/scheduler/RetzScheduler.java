@@ -362,7 +362,7 @@ public class RetzScheduler implements Scheduler {
                     status.getTaskId().getValue(), job.id(), status.getState().name());
             WebConsole.notifyFinished(job);
         } catch (Exception e) {
-            String msg = String.format("Failed to parse message from executor: %s '%s'", e.getMessage(), status.getMessage());
+            String msg = String.format("Failed to parse message from executor: %s '%s'", e.toString(), status.getMessage());
             LOG.warn(msg);
             job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
@@ -385,7 +385,7 @@ public class RetzScheduler implements Scheduler {
         } catch (NumberFormatException e) {
             String msg = String.format("Failed to parse message from executor: '%s'", status.getMessage());
             LOG.warn(msg);
-            LOG.warn("Exception: {}", e.getMessage());
+            LOG.warn("Exception: {}", e.toString());
             job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
         }
