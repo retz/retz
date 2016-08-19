@@ -57,15 +57,16 @@ $ ../gradlew copy
 Then, run a container from the image above;
 
 ```
-$ RETZ_CONTAINER=`docker run -d -p 5050:5050 -p 5051:5051 -p 9090:9090 --privileged \
+$ RETZ_CONTAINER=`docker run -d -p 15050:15050 -p 15051:15051 -p 19090:19090 \
+     --privileged \
      -v $(pwd)/build:/build mesos-retz`
 ```
 
 Spawn mesos slave and retz server and confirm they are alive.
 
 ```
-$ docker exec -it $RETZ_CONTAINER /spawn_mesos_slave.sh
-$ docker exec -it $RETZ_CONTAINER /spawn_retz_server.sh
+$ docker exec -it $RETZ_CONTAINER sh -c "/spawn_mesos_agent.sh && sleep 1"
+$ docker exec -it $RETZ_CONTAINER sh -c "/spawn_retz_server.sh && sleep 1"
 $ docker exec -it $RETZ_CONTAINER ps awxx
 ```
 
@@ -77,6 +78,9 @@ Now it's possible to kick retz client at host OS.
 $ ./src/test/resources/retz-client run -A echo -cmd 'echo foo' -R ./out
 $ ./src/test/resources/retz-client unload-app -A echo
 ```
+
+*Note* When you run with Docker for Mac, remove `-R ./out` option in `run` command.
+Download will fail because no bridge interface like `docker0` is not installed.
 
 To stop the container, it's better to add short timeout as `-t 1` or just kill it:
 
@@ -96,6 +100,11 @@ $ docker kill $RETZ_CONTAINER
   When we want to run multiple mesos instances, e.g. for parallel test
   execution, there should be some trick to pass mesos master IP:port to
   external world and use it from test handle.
+
+- Docker for Mac does NOT support tap/bridge device like `docker0` in
+  Linux, at least, in latest version of 2016-08-19. Because of it,
+  network communication from host to containers should be via mapped
+  ports.
 
 ## Misc one liners that may be useful
 
