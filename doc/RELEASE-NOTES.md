@@ -1,5 +1,14 @@
 # Retz release notes
 
+## 0.0.13
+
+* Introduce [Wercker](https://app.wercker.com/retz/retz/) as external
+  CI service to keep sanity
+* Fix exception in server side when Mesos sends message to scheduler
+* Fix ordering of retz-client subcommand: '-C path/to/retz.properties'
+  **must** be before subcommand, otherwise it fails, by moving to
+  JCommander in client
+
 ## 0.0.12
 
 * Improve output format of the result of 'list', aligning and duration
