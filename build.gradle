@@ -288,18 +288,6 @@ project('retz-inttest') {
         onlyIf { integration }
     }
 
-    // Initial attempt for integration test by shell script.
-    // This can be removed if JUnit based inttest work well.
-    task inttestByScript {
-        dependsOn copy
-        doLast {
-            exec {
-                executable "bash"
-                args "${projectDir}/src/test/scripts/simple-test.sh"
-            }
-        }
-    }
-
     task cleanDockerIamges {
         doLast {
             exec {

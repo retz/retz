@@ -23,7 +23,7 @@ set -x
 RETZ_CONTAINER=$1
 CURRENT=$(cd $(dirname $0) && pwd)
 
-docker exec -it $RETZ_CONTAINER /spawn_mesos_slave.sh
+docker exec -it $RETZ_CONTAINER /spawn_mesos_agent.sh
 docker exec -it $RETZ_CONTAINER /spawn_retz_server.sh
 
 docker exec -it $RETZ_CONTAINER ps awxx | egrep -E '(mesos-slave|mesos-master|retz)'
