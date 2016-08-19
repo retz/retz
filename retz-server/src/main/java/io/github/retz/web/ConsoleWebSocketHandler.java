@@ -122,7 +122,6 @@ public class ConsoleWebSocketHandler {
                 LOG.warn("Cannot send {} to {}", update, s.getRemoteAddress());
             } catch (WebSocketException e) {
                 LOG.error("Client were disconnected: {}", e.getMessage());
-                e.printStackTrace();
             }
         }
     }

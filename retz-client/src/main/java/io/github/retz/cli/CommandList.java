@@ -61,12 +61,6 @@ public class CommandList implements SubCommand {
             jobs.sort((a, b) -> a.id() - b.id());
 
             for (Job job : jobs) {
-                String state = "Queued";
-                if (job.finished() != null) {
-                    state = "Finished";
-                } else if (job.started() != null) {
-                    state = "Started";
-                }
                 String reason = "-";
                 if (job.reason() != null) {
                     reason = "'" + job.reason() + "'";
@@ -78,7 +72,7 @@ public class CommandList implements SubCommand {
                     } catch (java.text.ParseException e) {
                     }
                 }
-                formatter.feed(Integer.toString(job.id()), state, job.appid(), job.cmd(), Integer.toString(job.result()), duration,
+                formatter.feed(Integer.toString(job.id()), job.state().toString(), job.appid(), job.cmd(), Integer.toString(job.result()), duration,
                         job.scheduled(), job.started(), job.finished(), reason);
             }
             LOG.info(formatter.titles());

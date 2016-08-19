@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Properties;
 
+import static io.github.retz.protocol.Job.JobState.*;
+
 public class Job {
     private final String cmd;
     private String scheduled;
@@ -40,8 +42,23 @@ public class Job {
     private final Range memMB;
     private Range gpu;
 
-    private boolean trustPVFiles = false;
+    /**
+     * State diagram:
+     *  [CREATED] ---> [QUEUED] ---> [STARTED] ---> [FINISHED]
+     *                    |              +--------> [KILLED]
+     *                    +----------------------------^
+     */
+    public enum JobState {
+        CREATED,
+        QUEUED,
+        STARTED,
+        FINISHED,
+        KILLED,
+    }
 
+    private JobState state;
+
+    private boolean trustPVFiles = false;
 
     public Job(String appName, String cmd, Properties props, Range cpu, Range memMB) {
         this.appid = appName;
@@ -51,8 +68,8 @@ public class Job {
         this.cpu = cpu;
         this.memMB = memMB;
         this.gpu = new Range(0, 0);
+        this.state = CREATED;
     }
-
 
     public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, Range gpu) {
         this(appName, cmd, props, cpu, memMB);
@@ -76,7 +93,8 @@ public class Job {
                @JsonProperty("cpu") Range cpu,
                @JsonProperty("memMB") Range memMB,
                @JsonProperty("gpu") Range gpu,
-               @JsonProperty("trustPVFiles") boolean trustPVFiles) {
+               @JsonProperty("trustPVFiles") boolean trustPVFiles,
+               @JsonProperty("state") JobState state) {
         this.cmd = cmd;
         this.scheduled = scheduled;
         this.started = started;
@@ -92,6 +110,7 @@ public class Job {
         this.memMB = memMB;
         this.gpu = gpu;
         this.trustPVFiles = trustPVFiles;
+        this.state = state;
     }
 
     @JsonGetter("cmd")
@@ -169,6 +188,11 @@ public class Job {
         return trustPVFiles;
     }
 
+    @JsonGetter("state")
+    public JobState state() {
+        return state;
+    }
+
     public void setTrustPVFiles(boolean trustPVFiles) {
         this.trustPVFiles = trustPVFiles;
     }
@@ -176,21 +200,25 @@ public class Job {
     public void schedule(int id, String now) {
         this.id = id;
         this.scheduled = now;
+        this.state = QUEUED;
     }
 
     public void setStarted(String now) {
         this.started = now;
+        this.state = STARTED;
     }
 
     public void finished(String url, String now, int result) {
         this.url = url;
         this.finished = now;
         this.result = result;
+        this.state = FINISHED;
     }
 
     public void killed(String now, String reason) {
         this.finished = now;
         this.reason = reason;
+        this.state = KILLED;
     }
 
 }
