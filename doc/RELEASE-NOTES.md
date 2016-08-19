@@ -1,6 +1,12 @@
 # Retz release notes
 
-## 0.0.13
+## 0.0.14
+
+* Fix several stacktrace printing from stderr to log stream
+* Change state representation at 'list' command
+* Fix log output at assigned resouces on an offer
+
+## 0.0.13 (not released and no tag)
 
 * Introduce [Wercker](https://app.wercker.com/retz/retz/) as external
   CI service to keep sanity
