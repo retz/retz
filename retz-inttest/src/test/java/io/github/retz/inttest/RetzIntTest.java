@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.*;
@@ -122,16 +123,18 @@ public class RetzIntTest extends IntTestBase {
 
             List<EchoJob> echoJobs = new LinkedList<>();
             List<EchoJob> finishedJobs = new LinkedList<>();
-            int jobNum = 192;
-            for (int i = 0; i < jobNum; i++) {
-                Job job = new Job("echo2", "echo.sh " + Integer.toString(i),
+            List<Integer> argvList = IntStream.rangeClosed(0, 32).boxed().collect(Collectors.toList());
+            argvList.addAll(Arrays.asList(42, 63, 64, 127, 128, 151, 192, 255));
+            int jobNum = argvList.size();
+            for (Integer i : argvList) {
+                Job job = new Job("echo2", "echo.sh " + i.toString(),
                         new Properties(), new Range(1, 1), new Range(32, 256));
 
                 ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
                 assertEquals("ok", scheduleResponse.status());
 
                 Job scheduledJob = scheduleResponse.job();
-                echoJobs.add(new EchoJob(i, scheduledJob));
+                echoJobs.add(new EchoJob(i.intValue(), scheduledJob));
             }
             assertEquals(jobNum, echoJobs.size());
 

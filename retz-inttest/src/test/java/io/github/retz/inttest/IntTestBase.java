@@ -162,7 +162,7 @@ public class IntTestBase {
          *    by SystemD.
          * 2. Wait for "/build/libs/retz-srver-all.jar" is available.
          *    Not sure the root cause, but sometimes the file is not visible in the container
-         * 3. Then, spawn mesos slave and retz server.
+         * 3. Then, spawn a mesos agent and a retz server.
          * 4. Wait for these two processes are up by "ps -awxx"
          * 5. Wait for retz server WS interface is ready
          *
@@ -201,7 +201,7 @@ public class IntTestBase {
 
         private void waitFor(Callable<Boolean> validator, String errorMessage,
                              Callable<String> whenFail) throws Exception {
-            int retries = 50;
+            int retries = 200;
             while(true) {
                 try {
                     if(validator.call()) return;
