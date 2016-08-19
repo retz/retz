@@ -23,6 +23,9 @@ import xerial.jnuma.Numa;
 
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 public class CPUManagerTest {
 
     @After
@@ -32,17 +35,15 @@ public class CPUManagerTest {
 
     @Test
     public void numaTopologyDetection() {
-
+        CPUManager manager = CPUManager.get();
         if (Numa.isAvailable()) {
             // Only one socket isn't NUMA?
-            assert Numa.numNodes() > 0;
-            assert Numa.numCPUs() > 1;
+            assertTrue(Numa.numNodes() > 0);
+            assertTrue(Numa.numCPUs() > 1);
 
-            CPUManager manager = CPUManager.get();
-            assert manager.availableCPUCount() == Numa.numCPUs();
-            assert manager.availableCPUCount() == Runtime.getRuntime().availableProcessors();
-
+            assertEquals(Numa.numCPUs(), manager.availableCPUCount());
         }
+        assertEquals(Runtime.getRuntime().availableProcessors(), manager.availableCPUCount());
     }
 
     @Test
@@ -51,24 +52,26 @@ public class CPUManagerTest {
 
         // Assuming test machine has more than two CPU cores
         List<Integer> cpus = manager.assign("foobar", 2);
-        assert cpus.size() == 2;
+        assertEquals(cpus.size(), 2);
 
         manager.free("foobar");
-        assert manager.availableCPUCount() == Runtime.getRuntime().availableProcessors();
+
+        assertEquals(Runtime.getRuntime().availableProcessors(), manager.availableCPUCount());
     }
+
     @Test
     public void crossNodeTest() {
         Integer[] nodes = {4, 4, 4, 4}; // 4x4 numa structure
         CPUManager.setTopology(Arrays.asList(nodes));
 
-        assert CPUManager.get().availableCPUCount() == 4 * nodes.length;
+        assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
         System.err.println(CPUManager.get().toString());
 
         List<Integer> cpus = CPUManager.get().assign("hey><", 7);
         System.err.println("Assigned: [" + CPUManager.listIntToString(cpus) + "]");
-        assert cpus.size() == 7;
+        assertEquals(7, cpus.size());
 
         CPUManager.get().free("hey><");
-        assert CPUManager.get().availableCPUCount() == 4 * nodes.length;
+        assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
     }
 }
