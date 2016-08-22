@@ -23,7 +23,10 @@ import org.apache.mesos.SchedulerDriver;
 
 import java.util.*;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Created by kuenishi on 16/06/08.
@@ -62,7 +65,7 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
                 .build();
         System.err.println(mesosMaster);
         String master[] = mesosMaster.split(":");
-        assert master.length == 2;
+        assertThat(master.length, is(2));
         this.masterInfo = Protos.MasterInfo.newBuilder()
                 .setHostname(master[0])
                 .setPort(Integer.parseInt(master[1]))
@@ -180,7 +183,7 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
                         break;
                     }
                     default:
-                        throw new AssertionError();
+                        fail();
                 }
             }
         }

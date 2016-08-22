@@ -36,6 +36,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 public class RetzSchedulerTest {
 
     MesosSchedulerDummyDriver driver;
@@ -81,8 +86,8 @@ public class RetzSchedulerTest {
 
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
-        assert driver.getDeclined().size() == 1;
-        assert driver.getDeclined().get(0).getValue().equals(offerId);
+        assertThat(driver.getDeclined().size(), is(1));
+        assertThat(driver.getDeclined().get(0).getValue(), is(offerId));
 
         driver.stop();
     }
@@ -102,28 +107,28 @@ public class RetzSchedulerTest {
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
 
-        assert driver.getDeclined().isEmpty();
-        assert driver.getAccepted().size() == 1;
-        assert driver.getTasks().size() == 1;
+        assertTrue(driver.getDeclined().isEmpty());
+        assertThat(driver.getAccepted().size(), is(1));
+        assertThat(driver.getTasks().size(), is(1));
 
         Protos.TaskInfo task = driver.getTasks().get(0);
 
-        assert job.cmd().equals(mapper.readValue(task.getData().toStringUtf8(), Job.class).cmd());
-        assert task.getSlaveId().getValue().equals(offers[0].getSlaveId().getValue());
-        assert !task.getTaskId().getValue().isEmpty();
+        assertThat(mapper.readValue(task.getData().toStringUtf8(), Job.class).cmd(), is(job.cmd()));
+        assertThat(task.getSlaveId().getValue(), is(offers[0].getSlaveId().getValue()));
+        assertFalse(task.getTaskId().getValue().isEmpty());
         // TODO: Not knowing why this is empty
         for (Protos.Resource r : task.getExecutor().getResourcesList()) {
             System.err.println(r.getName());
             System.err.println(r.getScalar().getValue());
         }
 
-        assert JobQueue.getRunning().size() == 1;
+        assertThat(JobQueue.getRunning().size(), is(1));
         driver.dummyTaskStarted();
-        assert JobQueue.getRunning().size() == 1;
+        assertThat(JobQueue.getRunning().size(), is(1));
 
         // TODO: introduce DI to skip URL fetch
         //driver.dummyTaskFinish();
-        //assert scheduler.getRunning().isEmpty();
+        //assertTrue(scheduler.getRunning().isEmpty());
 
         Applications.unload("fooapp");
         driver.stop();
@@ -144,9 +149,9 @@ public class RetzSchedulerTest {
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
 
-        assert driver.getDeclined().size() == 1;
-        assert driver.getAccepted().isEmpty();
-        assert driver.getTasks().isEmpty();
+        assertThat(driver.getDeclined().size(), is(1));
+        assertTrue(driver.getAccepted().isEmpty());
+        assertTrue(driver.getTasks().isEmpty());
 
         Applications.unload("fooapp");
         driver.stop();
@@ -169,31 +174,31 @@ public class RetzSchedulerTest {
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
 
-        assert driver.getDeclined().isEmpty();
-        assert driver.getAccepted().size() == 1;
-        assert driver.getTasks().size() == 1;
+        assertTrue(driver.getDeclined().isEmpty());
+        assertThat(driver.getAccepted().size(), is(1));
+        assertThat(driver.getTasks().size(), is(1));
 
         Protos.TaskInfo task = driver.getTasks().get(0);
-        assert job.cmd().equals(mapper.readValue(task.getData().toStringUtf8(), Job.class).cmd());
-        assert task.getSlaveId().getValue().equals(slaveID.getValue());
-        assert !task.getTaskId().getValue().isEmpty();
+        assertThat(mapper.readValue(task.getData().toStringUtf8(), Job.class).cmd(), is(job.cmd()));
+        assertThat(task.getSlaveId().getValue(), is(slaveID.getValue()));
+        assertFalse(task.getTaskId().getValue().isEmpty());
         // TODO: Not knowing why this is empty
         for (Protos.Resource r : task.getExecutor().getResourcesList()) {
             System.err.println(r.getName());
             System.err.println(r.getScalar().getValue());
         }
 
-        assert JobQueue.getRunning().size() == 1;
+        assertThat(JobQueue.getRunning().size(), is(1));
         driver.dummyTaskStarted();
-        assert JobQueue.getRunning().size() == 1;
+        assertThat(JobQueue.getRunning().size(), is(1));
 
         // Simulate slave failure to test task re-assign
         scheduler.slaveLost(driver, slaveID);
-        assert JobQueue.getRunning().size() == 0;
+        assertThat(JobQueue.getRunning().size(), is(0));
 
         // TODO: introduce
         //driver.dummyTaskFinish();
-        //assert scheduler.getRunning().isEmpty();
+        //assertTrue(scheduler.getRunning().isEmpty());
 
         Applications.unload("fooapp");
         driver.stop();
@@ -215,4 +220,3 @@ public class RetzSchedulerTest {
     }
 
 }
-

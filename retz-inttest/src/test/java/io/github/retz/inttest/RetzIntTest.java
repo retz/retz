@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 /**
@@ -43,40 +44,35 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void listAppTest() throws Exception {
         Client client = new Client(retzServerUri());
-        assert (client.connect());
+        assertTrue(client.connect());
         ListAppResponse response = (ListAppResponse) client.listApp();
-        assertEquals("ok", response.status());
-        assertEquals(0, response.applicationList().size());
+        assertThat(response.status(), is("ok"));
+        assertThat(response.applicationList().size(), is(0));
         client.close();
     }
 
     public <E> void assertIncludes(List<E> list, E element) {
-        for (E e : list) {
-            if (e.equals(element)) {
-                return;
-            }
-        }
-        fail("List does not include element " + element);
+        assertThat(list, hasItem(element));
     }
 
     @Test
     public void runAppTest() throws Exception {
         Client client = new Client(retzServerUri());
-        assert (client.connect());
+        assertTrue(client.connect());
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load("echo-app", Arrays.asList(),
                         Arrays.asList("file:///spawn_retz_server.sh"), null);
-        assertEquals("ok", loadRes.status());
+        assertThat(loadRes.status(), is("ok"));
 
         ListAppResponse listRes = (ListAppResponse) client.listApp();
-        assertEquals("ok", listRes.status());
+        assertThat(listRes.status(), is("ok"));
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
         String echoText = "hoge from echo-app via Retz!";
         Job job = new Job("echo-app", "echo " + echoText,
                 new Properties(), new Range(1, 2), new Range(128, 256));
         Job runRes = client.run(job);
-        assertEquals(RES_OK, runRes.result());
+        assertThat(runRes.result(), is(RES_OK));
 
         String baseUrl = baseUrl(runRes);
         String toDir = "build/log/";
@@ -90,12 +86,12 @@ public class RetzIntTest extends IntTestBase {
         assertEquals(echoText + "\n", actualText);
 
         ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
-        assertTrue(listJobResponse.finished().size() > 0);
-        assertEquals(0, listJobResponse.running().size());
-        assertEquals(0, listJobResponse.queue().size());
+        assertThat(listJobResponse.finished().size(), greaterThan(0));
+        assertThat(listJobResponse.running().size(), is(0));
+        assertThat(listJobResponse.queue().size(), is(0));
 
         UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
-        assertEquals("ok", unloadRes.status());
+        assertThat(unloadRes.status(), is("ok"));
 
         client.close();
     }
@@ -104,16 +100,16 @@ public class RetzIntTest extends IntTestBase {
     public void scheduleAppTest() throws Exception {
         try (Client client = new Client(retzServerUri())) {
 
-            assert (client.connect());
+            assertTrue(client.connect());
             LoadAppResponse loadRes =
                     (LoadAppResponse) client.load("echo2",
                             Arrays.asList(),
                             Arrays.asList(),
                             null);
-            assertEquals("ok", loadRes.status());
+            assertThat(loadRes.status(), is("ok"));
 
             ListAppResponse listRes = (ListAppResponse) client.listApp();
-            assertEquals("ok", listRes.status());
+            assertThat(listRes.status(), is("ok"));
             List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
             assertIncludes(appNameList, "echo2");
 
@@ -127,12 +123,12 @@ public class RetzIntTest extends IntTestBase {
                         new Properties(), new Range(1, 1), new Range(32, 256));
 
                 ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
-                assertEquals("ok", scheduleResponse.status());
+                assertThat(scheduleResponse.status(), is("ok"));
 
                 Job scheduledJob = scheduleResponse.job();
                 echoJobs.add(new EchoJob(i.intValue(), scheduledJob));
             }
-            assertEquals(jobNum, echoJobs.size());
+            assertThat(echoJobs.size(), is(jobNum));
 
             for (int i = 0; i < 16; i++) {
                 List<EchoJob> toRemove = new LinkedList<>();
@@ -144,8 +140,8 @@ public class RetzIntTest extends IntTestBase {
                         if (getJobResponse.job().isPresent()) {
                             if (getJobResponse.job().get().result() == echoJob.argv) {
                                 toRemove.add(echoJob);
-                                assertEquals(Integer.toString(echoJob.argv) + "\n",
-                                        catStdout(getJobResponse.job().get()));
+                                assertThat(catStdout(getJobResponse.job().get()),
+                                        is(Integer.toString(echoJob.argv) + "\n"));
                             } else {
                                 assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
                                                 + ", Message: " + getJobResponse.job().get().reason(),
@@ -174,15 +170,15 @@ public class RetzIntTest extends IntTestBase {
                         + ", Running=" + listJobResponse.running().size()
                         + ", Scheduled=" + listJobResponse.queue().size());
             }
-            assertEquals(jobNum, finishedJobs.size());
+            assertThat(finishedJobs.size(), is(jobNum));
 
             ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
-            assertTrue(listJobResponse.finished().size() >= finishedJobs.size());
-            assertEquals(0, listJobResponse.running().size());
-            assertEquals(0, listJobResponse.queue().size());
+            assertThat(listJobResponse.finished().size(), greaterThanOrEqualTo(finishedJobs.size()));
+            assertThat(listJobResponse.running().size(), is(0));
+            assertThat(listJobResponse.queue().size(), is(0));
 
             UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
-            assertEquals("ok", unloadRes.status());
+            assertThat(unloadRes.status(), is("ok"));
 
         }
     }
