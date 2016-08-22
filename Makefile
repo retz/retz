@@ -3,7 +3,7 @@
 GRADLE=./gradlew
 
 javadoc:
-	$(GRADLE) aggregateJavadoc
+	LANG=C $(GRADLE) aggregateJavadoc
 
 test:
 	$(GRADLE) test

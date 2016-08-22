@@ -44,8 +44,8 @@ public class Job {
 
     /**
      * State diagram:
-     *  [CREATED] ---> [QUEUED] ---> [STARTED] ---> [FINISHED]
-     *                    |              +--------> [KILLED]
+     *  [CREATED] ---&gt; [QUEUED] ---&gt; [STARTED] ---&gt; [FINISHED]
+     *                    |              +--------&gt; [KILLED]
      *                    +----------------------------^
      */
     public enum JobState {
