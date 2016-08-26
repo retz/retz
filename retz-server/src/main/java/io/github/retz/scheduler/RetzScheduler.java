@@ -120,9 +120,11 @@ public class RetzScheduler implements Scheduler {
             List<Protos.Offer.Operation> operations = new ArrayList<>();
 
             SetMap commands = new SetMap();
+            // REVIEW: This "resource" object is equivalent to "r" above
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
 
             List<Applications.Application> apps = Applications.needsPersistentVolume(resource, frameworkInfo.getRole());
+            // REVIEW: These logs are debug level
             for (Applications.Application a : apps) {
                 LOG.info("Application {}: {} {} volume: {} {}MB",
                         a.appName, String.join(" ", a.persistentFiles),
@@ -272,6 +274,8 @@ public class RetzScheduler implements Scheduler {
                     LOG.info("Task {} is to be ran as '{}' with {}", taskId.getValue(), job.cmd(), tb.getAssigned().toString());
 
                 } catch (JsonProcessingException e) {
+                    // REVIEW: It seems that JsonProcessingException may be thrown only from TaskBuilder#setJob.
+                    // Is it reasonable to move this catch clause just after it and narrow the try scope?
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
                     kill(job, reason);
                 }
@@ -318,6 +322,7 @@ public class RetzScheduler implements Scheduler {
         }
 
         // TODO: remove **ONLY** tasks that is running on the failed slave
+        // REVIEW: :+1:
         JobQueue.recoverRunning();
     }
 

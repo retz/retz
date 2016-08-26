@@ -82,6 +82,7 @@ public class CPUManager {
         return nodes.stream().mapToInt(n -> n.cpus.size()).sum();
     }
 
+    // REVIEW: This method call has race with self and free method calls.
     // TODO: optimization; find out best task assignment regarding locality
     public List<Integer> assign(String taskID, int numCpus) {
         if (availableCPUCount() < numCpus) {
@@ -91,6 +92,11 @@ public class CPUManager {
         for (Node node : nodes) {
             if (node.used.containsKey(taskID)) {
                 // Tasks with the same name must not exist
+                // REVIEW: It's possible that other node instance has been modified
+                // prior in loop for "nodes". In current implementation, it is
+                // "node.cpus.remove(0)" loop below, those cpus are lost.
+                // I guess this if statement will not be true, but code with
+                //  corruption of static data looks horrible.
                 throw new InvalidParameterException();
             }
             if (node.cpus.size() < numCpus) {
