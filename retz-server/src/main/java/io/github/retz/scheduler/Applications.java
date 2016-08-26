@@ -93,10 +93,6 @@ public class Applications {
         public Protos.ExecutorInfo toExecutorInfo(Protos.FrameworkID frameworkID) {
 
             String jarFile = FilenameUtils.getName(RetzScheduler.getJarUri());
-
-            // COMMENT: Yes, this jarFile is actually a fat jar and could be executable, but
-            //          I didn't want to mess up the build script any further
-            // REVIEW: if only one jar file is on classpath, you can use "executable jar" file
             String cmd = "java -jar " + jarFile;
             Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
                     .setEnvironment(Protos.Environment.newBuilder()

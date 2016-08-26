@@ -41,6 +41,7 @@ public class LocalProcessManager implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalProcessManager.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final LocalProcessManager MANAGER = new LocalProcessManager();
+    // REVIEW: This Thread instance will be just discarded in start() method.
     private static Thread managerThread = new Thread(MANAGER);
     private static AtomicBoolean running = new AtomicBoolean(false);
 
@@ -48,6 +49,7 @@ public class LocalProcessManager implements Runnable {
     private Map<String, LocalProcess> processes = new ConcurrentHashMap<>();
     private ExecutorDriver driver;
 
+    // REVIEW: This initializer should be static one.
     {
         MAPPER.registerModule(new Jdk8Module());
     }

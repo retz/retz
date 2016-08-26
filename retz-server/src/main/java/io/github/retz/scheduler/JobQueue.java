@@ -62,6 +62,7 @@ public class JobQueue {
         queue.put(job);
     }
 
+    // REVIEW: popMany() is synchronized but this is NOT. I guess this is only used in test ;)
     public static Optional<Job> pop() {
         BlockingQueue<Job> queue = get();
         return Optional.ofNullable(queue.poll());
@@ -83,6 +84,7 @@ public class JobQueue {
                 totalMem += job.memMB().getMax();
             } else if (totalCpu + job.cpu().getMin() < cpu && totalMem + job.memMB().getMin() < memMB) {
                 ret.add(get().remove());
+                // REVIEW: totalCpu and totalMem are not incremented.
                 break;
             } else {
                 break;
@@ -122,6 +124,7 @@ public class JobQueue {
         RUNNING.put(taskId, job);
     }
 
+    // REVIEW: Should this method be synchronized?
     public static void recoverRunning() {
         for(Iterator<Map.Entry<String, Job>> it = RUNNING.entrySet().iterator(); it.hasNext();) {
             Map.Entry<String, Job> entry = it.next();
