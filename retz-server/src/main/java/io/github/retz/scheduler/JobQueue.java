@@ -84,7 +84,6 @@ public class JobQueue {
                 totalMem += job.memMB().getMax();
             } else if (totalCpu + job.cpu().getMin() < cpu && totalMem + job.memMB().getMin() < memMB) {
                 ret.add(get().remove());
-                // REVIEW: totalCpu and totalMem are not incremented.
                 break;
             } else {
                 break;

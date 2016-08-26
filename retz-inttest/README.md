@@ -62,6 +62,9 @@ $ RETZ_CONTAINER=`docker run -d -p 15050:15050 -p 15051:15051 -p 19090:19090 \
      -v $(pwd)/build:/build mesos-retz`
 ```
 
+If you want to map mesos workspace to host directory, you can add another option like
+`-v $(pwd)/build/var:/var/lib/mesos`.
+
 Spawn mesos slave and retz server and confirm they are alive.
 
 ```
