@@ -40,14 +40,9 @@ public interface SubCommand {
         }
 
         for (String e : pairs) {
-            String[] pair = e.split("=");
-            if (pair[0].isEmpty()) {
-                continue;
-            }
-            if (pair.length == 2) {
-                props.put(pair[0], pair[1]);
-            } else if (pair.length == 1 && e.contains("=")) {
-                props.put(pair[0], "");
+            int p = e.indexOf('=');
+            if (p > 0) {
+                props.put(e.substring(0, p), e.substring(p + 1));
             }
         }
         return props;
