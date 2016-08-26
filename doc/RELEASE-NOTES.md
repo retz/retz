@@ -1,5 +1,11 @@
 # Retz release notes
 
+## 0.0.15
+
+* This is a release for debug build: log output of server and client are
+  both in debug level.
+* Several debug log around WebSocket PING/PONG is added
+
 ## 0.0.14
 
 * Fix several stacktrace printing from stderr to log stream

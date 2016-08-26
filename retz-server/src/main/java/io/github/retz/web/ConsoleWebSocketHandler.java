@@ -82,6 +82,7 @@ public class ConsoleWebSocketHandler {
         for (Session s : WATCHERS) {
             try {
                 ByteBuffer ping = ByteBuffer.wrap("ping".getBytes(StandardCharsets.UTF_8));
+                LOG.debug("Sending ping to {}", s.getRemoteAddress().getHostName());
                 s.getRemote().sendPing(ping);
             } catch (IOException e) {
                 LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.toString());
@@ -92,6 +93,7 @@ public class ConsoleWebSocketHandler {
         for (Map.Entry<Integer, Session> watcher : JOB_WATCHERS.entrySet()) {
             try {
                 ByteBuffer ping = ByteBuffer.wrap("ping".getBytes(StandardCharsets.UTF_8));
+                LOG.debug("Sending ping to watcher {}", watcher.getValue().getRemoteAddress().getHostName());
                 watcher.getValue().getRemote().sendPing(ping);
             } catch (IOException e) {
                 LOG.warn("cannot send to {}: {}", watcher.getValue().getRemoteAddress().getHostName(), e.toString());
@@ -144,8 +146,10 @@ public class ConsoleWebSocketHandler {
     public void onSocketFrame(Session user, Frame frame) throws IOException {
         if (frame.getType() == Frame.Type.PING) {
             ByteBuffer bb = ByteBuffer.wrap("pong".getBytes(StandardCharsets.UTF_8));
+            LOG.debug("Got ping from {}", user.getRemoteAddress().getHostName());
             user.getRemote().sendPong(bb);
         } else if (frame.getType() == Frame.Type.PONG) {
+            LOG.debug("Got pong from {}", user.getRemoteAddress().getHostName());
             // OK
         }
     }

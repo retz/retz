@@ -20,6 +20,8 @@ import io.github.retz.protocol.Connection;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -59,6 +61,8 @@ import java.util.concurrent.TimeoutException;
         maxTextMessageSize = Connection.MAX_PAYLOAD_SIZE,
         maxIdleTime = Connection.IDLE_TIMEOUT_SEC * 1000)
 public class MySocket {
+    static final Logger LOG = LoggerFactory.getLogger(MySocket.class);
+
     private Session session;
     private CountDownLatch requestLatch;
     private String response;
@@ -136,10 +140,11 @@ public class MySocket {
     @OnWebSocketFrame
     public void onSocketFrame(Session user, Frame frame) throws IOException {
         if (frame.getType() == Frame.Type.PING) {
-            // System.err.println("PING from " + user.getRemoteAddress());
             ByteBuffer bb = ByteBuffer.wrap("pong".getBytes(StandardCharsets.UTF_8));
+            LOG.debug("Got ping from {}", user.getRemoteAddress().getHostName());
             user.getRemote().sendPong(bb);
         } else if (frame.getType() == Frame.Type.PONG) {
+            LOG.debug("Got pong from {}", user.getRemoteAddress().getHostName());
             // OK
         }
     }
