@@ -35,6 +35,7 @@ public class Launcher {
     static {
         SUB_COMMANDS = new LinkedList<>();
 
+        SUB_COMMANDS.add(new CommandHelp());
         SUB_COMMANDS.add(new CommandConfig());
         SUB_COMMANDS.add(new CommandList());
         SUB_COMMANDS.add(new CommandSchedule());
@@ -56,15 +57,14 @@ public class Launcher {
             Configuration conf = parseConfiguration(argv);
             JCommander commander = conf.commander;
 
-            if (commander.getParsedCommand() != null) {
+            if (commander.getParsedCommand() == null) {
+                LOG.error("Invalid subcommand");
+                help(SUB_COMMANDS);
+            } else {
                 LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
                         conf.commands.getConfigFile());
                 LOG.debug("Configuration: {}", conf.fileConfiguration.toString());
                 return conf.getParsedSubCommand().handle(conf.fileConfiguration);
-
-            } else {
-                LOG.error("Invalid subcommand");
-                help(SUB_COMMANDS);
             }
 
         } catch (IOException e) {
@@ -90,6 +90,9 @@ public class Launcher {
         return false;
     }
 
+    public static void help() {
+        help(SUB_COMMANDS);
+    }
     private static void help(List<SubCommand> subCommands) {
         LOG.info("Subcommands:");
         for (SubCommand subCommand : subCommands) {
