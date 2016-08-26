@@ -21,7 +21,6 @@ import io.github.retz.protocol.StatusResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,12 +59,6 @@ public class JobQueue {
         // TODO: set a cap of queue
         BlockingQueue<Job> queue = get();
         queue.put(job);
-    }
-
-    // REVIEW: popMany() is synchronized but this is NOT. I guess this is only used in test ;)
-    public static Optional<Job> pop() {
-        BlockingQueue<Job> queue = get();
-        return Optional.ofNullable(queue.poll());
     }
 
     // @doc take as much jobs as in the max cpu/memMB
@@ -123,8 +116,7 @@ public class JobQueue {
         RUNNING.put(taskId, job);
     }
 
-    // REVIEW: Should this method be synchronized?
-    public static void recoverRunning() {
+    public synchronized static void recoverRunning() {
         for(Iterator<Map.Entry<String, Job>> it = RUNNING.entrySet().iterator(); it.hasNext();) {
             Map.Entry<String, Job> entry = it.next();
             try {

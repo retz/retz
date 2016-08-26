@@ -18,22 +18,21 @@ package io.github.retz.scheduler;
 
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.Range;
-import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Optional;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 public class JobQueueTest {
     @Test
     public void q() throws InterruptedException {
         Job job = new Job("a", "b", null, new Range(1000, 0), new Range(100000000, 0));
         JobQueue.push(job);
-        Optional<Job> job2 = JobQueue.pop();
-        assertTrue(job2.isPresent());
-        assertThat(job2.get().appid(), is(job.appid()));
+        List<Job> job2 = JobQueue.popMany(1001, 100000001);
+        assertFalse(job2.isEmpty());
+        assertThat(job2.get(0).appid(), is(job.appid()));
     }
 }

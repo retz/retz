@@ -120,45 +120,43 @@ public class RetzScheduler implements Scheduler {
 
         for (Protos.Offer offer : offers) {
 
-            Resource r = ResourceConstructor.decode(offer.getResourcesList());
-            LOG.debug("Offer: {}", r);
+            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+            LOG.debug("Offer: {}", resource);
 
             List<Protos.Offer.Operation> operations = new ArrayList<>();
 
             SetMap commands = new SetMap();
-            // REVIEW: This "resource" object is equivalent to "r" above
-            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
 
             List<Applications.Application> apps = Applications.needsPersistentVolume(resource, frameworkInfo.getRole());
-            // REVIEW: These logs are debug level
             for (Applications.Application a : apps) {
-                LOG.info("Application {}: {} {} volume: {} {}MB",
+                LOG.debug("Application {}: {} {} volume: {} {}MB",
                         a.appName, String.join(" ", a.persistentFiles),
                         String.join(" ", a.appFiles), a.toVolumeId(frameworkInfo.getRole()), a.diskMB);
             }
             int reservedSpace = resource.reservedDiskMB();
-            LOG.debug("Number of volumes: {}, reserved space: {}", r.volumes().size(), reservedSpace);
+            LOG.debug("Number of volumes: {}, reserved space: {}", resource.volumes().size(), reservedSpace);
 
             for (Applications.Application app : apps) {
 
                 String volumeId = app.toVolumeId(frameworkInfo.getRole());
-                LOG.info("Application {} needs {} MB persistent volume", app.appName, app.diskMB);
+                LOG.debug("Application {} needs {} MB persistent volume", app.appName, app.diskMB);
                 if (reservedSpace < app.diskMB.get()) {
                     // If enough space is not reserved, then reserve
                     // TODO: how it must behave when we only have too few space to reserve
                     Protos.Resource.Builder rb = baseResourceBuilder(app.diskMB.get() - reservedSpace);
 
-                    LOG.info("Reserving resource with principal={}, role={}", frameworkInfo.getPrincipal(), frameworkInfo.getRole());
+                    LOG.info("Reserving resource with principal={}, role={}, app={}",
+                            frameworkInfo.getPrincipal(), frameworkInfo.getRole(), app.appName);
                     operations.add(Protos.Offer.Operation.newBuilder()
                             .setType(Protos.Offer.Operation.Type.RESERVE)
                             .setReserve(Protos.Offer.Operation.Reserve.newBuilder()
                                     .addResources(rb.build())
                             )
                             .build());
-                } else if (!r.volumes().containsKey(volumeId)) {
+                } else if (!resource.volumes().containsKey(volumeId)) {
                     // We have enough space to reserve, then do it
                     Protos.Resource.Builder rb = baseResourceBuilder(app.diskMB.get());
-                    LOG.info("Creating volume {} with {}", volumeId, app.appName);
+                    LOG.info("Creating {} MB volume {} for application {}", app.diskMB, volumeId, app.appName);
                     operations.add(Protos.Offer.Operation.newBuilder()
                             .setType(Protos.Offer.Operation.Type.CREATE)
                             .setCreate(Protos.Offer.Operation.Create.newBuilder().addVolumes(
@@ -206,7 +204,7 @@ public class RetzScheduler implements Scheduler {
             }
 
             Resource assigned = new Resource(0, 0, 0);
-            List<Job> jobs = JobQueue.popMany((int) r.cpu(), r.memMB());
+            List<Job> jobs = JobQueue.popMany((int) resource.cpu(), resource.memMB());
             // Assign tasks if it has enough CPU/Memory
             for (Job job : jobs) {
                 Optional<Applications.Application> app = Applications.get(job.appid());
@@ -236,56 +234,55 @@ public class RetzScheduler implements Scheduler {
                 // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                 // (esp ASAKUSA_HOME env)
                 Protos.ExecutorInfo executorInfo = app.get().toExecutorInfo(frameworkInfo.getId());
+                TaskBuilder tb = new TaskBuilder()
+                        .setOffer(resource, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
+                        .setName("retz-task-name-" + job.name())
+                        .setTaskId("retz-task-id-" + id)
+                        .setExecutor(executorInfo);
+                
                 try {
-                    TaskBuilder tb = new TaskBuilder()
-                            .setOffer(r, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
-                            .setName("retz-task-name-" + job.name())
-                            .setTaskId("retz-task-id-" + id)
-                            .setExecutor(executorInfo)
-                            .setJob(job, Applications.encodable(app.get()));
-
-                    String volumeId = app.get().toVolumeId(frameworkInfo.getRole());
-                    if (app.get().diskMB.isPresent() && resource.volumes().containsKey(volumeId)) {
-                        LOG.info("getting {}, diskMB {}", volumeId, app.get().diskMB.get());
-                        Protos.Resource res = r.volumes().get(volumeId);
-                        LOG.debug("name:{}, role:{}, path:{}, size:{}, principal:{}",
-                                res.getName(), res.getRole(), res.getDisk().getVolume().getContainerPath(),
-                                res.getScalar().getValue(),
-                                res.getReservation().getPrincipal());
-                        tb.setVolume(r, volumeId);
-                    }
-
-                    assigned.merge(tb.getAssigned());
-                    Protos.TaskInfo task = tb.build();
-
-                    Protos.Offer.Operation.Launch launch = Protos.Offer.Operation.Launch.newBuilder()
-                            .addTaskInfos(Protos.TaskInfo.newBuilder(task))
-                            .build();
-
-                    Protos.TaskID taskId = task.getTaskId();
-                    job.setStarted(TimestampHelper.now());
-                    WebConsole.notifyStarted(job);
-
-                    // This shouldn't be a List nor a set, but a Map
-                    List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.get().appName, new LinkedList<>());
-                    slaves.add(offer.getSlaveId());
-                    this.slaves.put(app.get().appName, slaves);
-
-                    JobQueue.start(taskId.getValue(), job);
-
-                    operations.add(Protos.Offer.Operation.newBuilder()
-                            .setType(Protos.Offer.Operation.Type.LAUNCH)
-                            .setLaunch(launch).build());
-
-                    LOG.info("Task {} is to be ran as '{}' with {}", taskId.getValue(), job.cmd(), tb.getAssigned().toString());
-
+                    tb.setJob(job, Applications.encodable(app.get()));
                 } catch (JsonProcessingException e) {
-                    // REVIEW: It seems that JsonProcessingException may be thrown only from TaskBuilder#setJob.
-                    // Is it reasonable to move this catch clause just after it and narrow the try scope?
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
                     kill(job, reason);
+                    continue;
                 }
+
+                String volumeId = app.get().toVolumeId(frameworkInfo.getRole());
+                if (app.get().diskMB.isPresent() && resource.volumes().containsKey(volumeId)) {
+                    LOG.debug("getting {}, diskMB {}", volumeId, app.get().diskMB.get());
+                    Protos.Resource res = resource.volumes().get(volumeId);
+                    LOG.debug("name:{}, role:{}, path:{}, size:{}, principal:{}",
+                            res.getName(), res.getRole(), res.getDisk().getVolume().getContainerPath(),
+                            res.getScalar().getValue(),
+                            res.getReservation().getPrincipal());
+                    tb.setVolume(resource, volumeId);
+                }
+
+                assigned.merge(tb.getAssigned());
+                Protos.TaskInfo task = tb.build();
+
+                Protos.Offer.Operation.Launch launch = Protos.Offer.Operation.Launch.newBuilder()
+                        .addTaskInfos(Protos.TaskInfo.newBuilder(task))
+                        .build();
+
+                Protos.TaskID taskId = task.getTaskId();
+                job.setStarted(TimestampHelper.now());
+                WebConsole.notifyStarted(job);
+
+                // This shouldn't be a List nor a set, but a Map
+                List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.get().appName, new LinkedList<>());
+                slaves.add(offer.getSlaveId());
+                this.slaves.put(app.get().appName, slaves);
+
+                JobQueue.start(taskId.getValue(), job);
+
+                operations.add(Protos.Offer.Operation.newBuilder()
+                        .setType(Protos.Offer.Operation.Type.LAUNCH)
+                        .setLaunch(launch).build());
+                LOG.info("Task {} is to be ran as '{}' with {}", taskId.getValue(), job.cmd(), tb.getAssigned().toString());
             }
+
             if (jobs.isEmpty() && operations.isEmpty()) {
                 LOG.debug("Nothing to do: declining the whole offer");
                 driver.declineOffer(offer.getId());
@@ -294,7 +291,7 @@ public class RetzScheduler implements Scheduler {
                 List<Protos.OfferID> offerIds = new ArrayList<>();
                 offerIds.add(offer.getId());
                 LOG.info("Total resource newly used: {}", assigned.toString());
-                LOG.info("Accepting offer {}, {} operations (remaining: {})", offer.getId().getValue(), operations.size(), r);
+                LOG.info("Accepting offer {}, {} operations (remaining: {})", offer.getId().getValue(), operations.size(), resource);
                 driver.acceptOffers(offerIds, operations, filters);
             }
         }

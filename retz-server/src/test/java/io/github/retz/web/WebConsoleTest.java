@@ -38,12 +38,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static spark.Spark.awaitInitialization;
 
@@ -144,8 +143,8 @@ public class WebConsoleTest {
     @Test
     public void schedule() throws Exception {
         JobQueue.clear();
-        Optional<Job> maybeJob = JobQueue.pop();
-        assertFalse(maybeJob.isPresent());
+        List<Job> maybeJob = JobQueue.popMany(10000, 10000);
+        assertTrue(maybeJob.isEmpty());
 
         assertTrue(webClient.connect());
 
@@ -155,8 +154,8 @@ public class WebConsoleTest {
             Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(256, 0)));
             assertThat(res, instanceOf(ErrorResponse.class));
 
-            maybeJob = JobQueue.pop();
-            assertFalse(maybeJob.isPresent());
+            maybeJob = JobQueue.popMany(1000, 10000);
+            assertTrue(maybeJob.isEmpty());
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(235561234);
             assertFalse(getJobResponse.job().isPresent());
@@ -172,8 +171,8 @@ public class WebConsoleTest {
             assertTrue(app.isPresent());
             assertThat(app.get().appName, is("foobar"));
         }
-        maybeJob = JobQueue.pop();
-        assertFalse(maybeJob.isPresent());
+        maybeJob = JobQueue.popMany(10000, 10000);
+        assertTrue(maybeJob.isEmpty());
 
         {
             // You know, these spaces are to be normalized
@@ -191,10 +190,10 @@ public class WebConsoleTest {
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(sres.job.id());
             Assert.assertEquals(sres.job.cmd(), getJobResponse.job().get().cmd());
 
-            maybeJob = JobQueue.pop();
-            assertTrue(maybeJob.isPresent());
-            assertThat(maybeJob.get().cmd(), is(cmd));
-            assertThat(maybeJob.get().appid(), is("foobar"));
+            maybeJob = JobQueue.popMany(10000, 10000);
+            assertFalse(maybeJob.isEmpty());
+            assertThat(maybeJob.get(0).cmd(), is(cmd));
+            assertThat(maybeJob.get(0).appid(), is("foobar"));
         }
         webClient.unload("foobar");
         webClient.disconnect();
@@ -204,8 +203,8 @@ public class WebConsoleTest {
     @Test
     public void runFail() throws Exception {
         JobQueue.clear();
-        Optional<Job> maybeJob = JobQueue.pop();
-        assertFalse(maybeJob.isPresent());
+        List<Job> maybeJob = JobQueue.popMany(10000, 10000);
+        assertTrue(maybeJob.isEmpty());
 
         assertTrue(webClient.connect());
 
@@ -216,8 +215,8 @@ public class WebConsoleTest {
             Job done = webClient.run(job);
             assertNull(done);
 
-            maybeJob = JobQueue.pop();
-            assertFalse(maybeJob.isPresent());
+            maybeJob = JobQueue.popMany(10000, 10000);
+            assertTrue(maybeJob.isEmpty());
         }
     }
 
