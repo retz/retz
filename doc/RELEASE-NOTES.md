@@ -5,6 +5,7 @@
 * This is a release for debug build: log output of server and client are
   both in debug level.
 * Several debug log around WebSocket PING/PONG is added
+* Add 'help' subcommand to client CLI
 
 ## 0.0.14
 
