@@ -16,11 +16,11 @@
  */
 package io.github.retz.executor;
 
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,26 +88,12 @@ public class RetzExecutor implements Executor {
         Resource resource = ResourceConstructor.decode(task.getResourcesList());
         LOG.info("Resource: {}", resource.toString());
 
-        if (resource.cpu() < 0.99) {
-            LOG.error("Too small CPU ({}) assigned for task {}",
-                    resource.cpu(), resource.memMB(), task.getTaskId());
-            taskFail(task, driver);
-            return;
-        }
-
-        LocalProcessManager.startTask(task, (int)resource.cpu(), resource.memMB());
+        LocalProcessManager.startTask(task, (int) resource.cpu(), resource.memMB());
 
         // Reuse, don't stop or Agent automatically kills this process
         //driver.stop();
     }
 
-    private void taskFail(Protos.TaskInfo task, ExecutorDriver driver) {
-        Protos.TaskStatus.Builder b = Protos.TaskStatus.newBuilder()
-                .setTaskId(task.getTaskId());
-        b.setState(Protos.TaskState.TASK_FAILED);
-        b.setMessage("-1");
-        driver.sendStatusUpdate(b.build());
-    }
 
     @Override
     public void shutdown(ExecutorDriver driver) {

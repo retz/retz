@@ -20,6 +20,9 @@ package io.github.retz.executor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.google.protobuf.ByteString;
+import io.github.retz.cli.TimestampHelper;
+import io.github.retz.protocol.JobResult;
 import io.github.retz.protocol.MetaJob;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
@@ -49,8 +52,7 @@ public class LocalProcessManager implements Runnable {
     private Map<String, LocalProcess> processes = new ConcurrentHashMap<>();
     private ExecutorDriver driver;
 
-    // REVIEW: This initializer should be static one.
-    {
+    static {
         MAPPER.registerModule(new Jdk8Module());
     }
 
@@ -137,15 +139,25 @@ public class LocalProcessManager implements Runnable {
                 .setTaskId(p.getTaskInfo().getTaskId())
                 .setMessage("started")
                 .setState(Protos.TaskState.TASK_RUNNING);
+
         driver.sendStatusUpdate(builder.build());
     }
 
     public void killed(Protos.TaskInfo task) {
         Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder()
                 .setTaskId(task.getTaskId())
-                .setMessage("-42")
+                .setMessage("killed")
                 .setState(Protos.TaskState.TASK_KILLED);
         CPUManager.get().free(task.getTaskId().getValue());
+
+        JobResult jobResult = new JobResult(task.getTaskId().getValue(), -42,
+                TimestampHelper.now(), "Job was killed");
+        try {
+            builder.setData(ByteString.copyFrom(MAPPER.writeValueAsBytes(jobResult)));
+        } catch (JsonProcessingException e) {
+            LOG.error("Couldn't serialize JobResult {}: {}", jobResult, e.toString());
+        }
+
         driver.sendStatusUpdate(builder.build());
     }
 
@@ -165,6 +177,9 @@ public class LocalProcessManager implements Runnable {
             CPUManager.get().free(task.getTaskId().getValue());
             int status = localProcess.handle();
 
+            JobResult jobResult = new JobResult(task.getTaskId().getValue(),
+                    status, TimestampHelper.now(), "");
+
             Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder()
                     .setTaskId(task.getTaskId());
 
@@ -175,7 +190,12 @@ public class LocalProcessManager implements Runnable {
                 LOG.error("Task {} failed", task.getTaskId().getValue());
                 builder.setState(Protos.TaskState.TASK_FAILED);
             }
-            builder.setMessage(Integer.toString(status));
+            builder.setMessage("finished");
+            try {
+                builder.setData(ByteString.copyFrom(MAPPER.writeValueAsBytes(jobResult)));
+            } catch (JsonProcessingException e) {
+                LOG.error("Couldn't serialize JobResult {}: {}", jobResult, e.toString());
+            }
             driver.sendStatusUpdate(builder.build());
         }
     }

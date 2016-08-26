@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -86,9 +87,14 @@ public class CommandRun implements SubCommand {
             if (result != null) {
                 Client.fetchJobResult(result, resultDir);
                 LOG.info("Job result files URL: {}", result.url());
+                LOG.info("Job {} finished in {} seconds and returned {}",
+                        job.cmd(), TimestampHelper.diffMillisec(result.finished(), result.started()) / 1000.0,
+                        result.result());
                 return result.result();
             }
 
+        } catch (ParseException e) {
+            LOG.error(e.toString());
         } catch (URISyntaxException e) {
             LOG.error(e.toString());
         } catch (ConnectException e) {

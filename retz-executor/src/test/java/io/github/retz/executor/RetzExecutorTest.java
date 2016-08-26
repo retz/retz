@@ -20,10 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.protobuf.ByteString;
 import io.github.retz.mesos.ResourceConstructor;
-import io.github.retz.protocol.Application;
-import io.github.retz.protocol.Job;
-import io.github.retz.protocol.MetaJob;
-import io.github.retz.protocol.Range;
+import io.github.retz.protocol.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
 import org.junit.After;
@@ -62,7 +59,7 @@ public class RetzExecutorTest {
 
     @After
     public void after() {
-
+        LocalProcessManager.stop();
         LocalProcessManager.join();
         folder.delete();
     }
@@ -129,11 +126,10 @@ public class RetzExecutorTest {
         assertTrue(new File(tempFilename).exists());
         Optional<Protos.TaskStatus> status = driver.getUpdatedStatus();
         assertTrue(status.isPresent());
-        assertThat(status.get().getMessage(), is("0"));
-
+        JobResult jobResult = mapper.readValue(status.get().getData().toByteArray(), JobResult.class);
+        assertThat(jobResult.result(), is(0));
         assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
-
         assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 

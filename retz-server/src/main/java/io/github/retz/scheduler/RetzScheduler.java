@@ -17,10 +17,13 @@
 package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.Job;
+import io.github.retz.protocol.JobResult;
 import io.github.retz.web.WebConsole;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
@@ -28,6 +31,7 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,8 +42,10 @@ public class RetzScheduler implements Scheduler {
     private MesosFrameworkLauncher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
+    private final ObjectMapper MAPPER = new ObjectMapper();
 
     public RetzScheduler(MesosFrameworkLauncher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
+        MAPPER.registerModule(new Jdk8Module());
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
@@ -357,44 +363,62 @@ public class RetzScheduler implements Scheduler {
 
     void finished(Protos.TaskStatus status) {
         Job job = JobQueue.finish(status.getTaskId().getValue());
-        int result = -42;
-        try {
-            result = Integer.parseInt(status.getMessage());
-            job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue()).get(), TimestampHelper.now(), result);
-            LOG.info("Job {} (id {}) has finished. State: {}",
-                    status.getTaskId().getValue(), job.id(), status.getState().name());
-            WebConsole.notifyFinished(job);
-        } catch (Exception e) {
-            String msg = String.format("Failed to parse message from executor: %s '%s'", e.toString(), status.getMessage());
+        if (status.hasData()) {
+
+            try {
+                JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
+                job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                        status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                        status.getExecutorId().getValue()).get(), jobResult.finished(), jobResult.result());
+                // Maybe put JobResult#reason() into Job#reason()
+                LOG.info("Job {} (id {}) has finished. State: {}",
+                        status.getTaskId().getValue(), job.id(), status.getState().name());
+                WebConsole.notifyFinished(job);
+            } catch (IOException e) {
+                String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
+                LOG.warn(msg);
+                LOG.warn("Exception: {}", e.toString());
+                job.killed(TimestampHelper.now(), msg);
+                WebConsole.notifyKilled(job);
+            }
+        } else {
+            String msg = String.format("Message from Mesos executor: %s", status.getMessage());
             LOG.warn(msg);
             job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
         }
     }
+
     void failed(Protos.TaskStatus status) {
 
         Job job = JobQueue.finish(status.getTaskId().getValue());
-        int result = -42;
-        try {
-            result = Integer.parseInt(status.getMessage());
-            job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue()).get(), TimestampHelper.now(), result);
-            LOG.info("Job {} (id {}) has been failed. State: {}",
-                    status.getTaskId().getValue(), job.id(), status.getState().name());
-            job.killed(TimestampHelper.now(), status.getState().name());
-            WebConsole.notifyKilled(job);
+        if (status.hasData()) {
+            try {
+                JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
+                job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                        status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                        status.getExecutorId().getValue()).get(), jobResult.finished(), jobResult.result());
+                LOG.info("Job {} (id {}) has been failed. State: {}",
+                        status.getTaskId().getValue(), job.id(), status.getState().name());
+                job.killed(TimestampHelper.now(), status.getReason().toString());
+                WebConsole.notifyKilled(job);
 
-        } catch (NumberFormatException e) {
-            String msg = String.format("Failed to parse message from executor: '%s'", status.getMessage());
+            } catch (IOException e) {
+                String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
+                LOG.warn(msg);
+                LOG.warn("Exception: {}", e.toString());
+                job.killed(TimestampHelper.now(), msg);
+                WebConsole.notifyKilled(job);
+            }
+
+        } else {
+            String msg = String.format("Message from Mesos executor: %s", status.getMessage());
             LOG.warn(msg);
-            LOG.warn("Exception: {}", e.toString());
             job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
         }
     }
+
     void kill(Job job, String reason) {
         LOG.warn(reason);
         job.killed(TimestampHelper.now(), reason);
