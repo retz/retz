@@ -1,5 +1,15 @@
 # Retz release notes
 
+## 0.0.16
+
+* This is another release for debug build: log output of server and client
+  are both in debug level.
+* Fix a bug that environment variables on 'run' and 'schedule' which
+  includes '=' in values were ignored. This bug has been resident since
+  0.0.13.
+* By cleaning up messaging from executor to scheduler, several messages
+  from executors does not generate unnecessary exception any more
+
 ## 0.0.15
 
 * This is a release for debug build: log output of server and client are
