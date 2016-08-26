@@ -91,9 +91,9 @@ public class Launcher {
     }
 
     private static void help(List<SubCommand> subCommands) {
-        LOG.error("Subcommands:");
+        LOG.info("Subcommands:");
         for (SubCommand subCommand : subCommands) {
-            LOG.error("\t{}\t{} ({})", subCommand.getName(),
+            LOG.info("\t{}\t{} ({})", subCommand.getName(),
                     subCommand.description(), subCommand.getClass().getName());
         }
     }
