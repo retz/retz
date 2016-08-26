@@ -40,7 +40,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 import static spark.Spark.awaitInitialization;
 
 public class WebConsoleTest {
@@ -87,7 +91,7 @@ public class WebConsoleTest {
 
     @Test
     public void connect() throws Exception {
-        assert webClient.connect();
+        assertTrue(webClient.connect());
         webClient.disconnect();
     }
 
@@ -96,42 +100,42 @@ public class WebConsoleTest {
      */
     @Test
     public void list() throws Exception {
-        assert webClient.connect();
+        assertTrue(webClient.connect());
         ListJobResponse res = (ListJobResponse) webClient.list(64);
-        assert res.queue().isEmpty();
-        assert res.running().isEmpty();
-        assert res.finished().isEmpty();
+        assertTrue(res.queue().isEmpty());
+        assertTrue(res.running().isEmpty());
+        assertTrue(res.finished().isEmpty());
         webClient.disconnect();
     }
 
     @Test
     public void loadApp() throws Exception {
         JobQueue.clear();
-        assert webClient.connect();
+        assertTrue(webClient.connect());
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Response res = webClient.load("foobar", new LinkedList<>(), Arrays.asList(files));
-            assert res instanceof LoadAppResponse;
-            assert res.status().equals("ok");
+            assertThat(res, instanceOf(LoadAppResponse.class));
+            assertThat(res.status(), is("ok"));
 
             Optional<Applications.Application> app = Applications.get("foobar");
-            assert app.isPresent();
-            assert app.get().appName.equals("foobar");
+            assertTrue(app.isPresent());
+            assertThat(app.get().appName, is("foobar"));
         }
 
         {
             ListAppResponse res = (ListAppResponse) webClient.listApp();
-            assert res.status().equals("ok");
+            assertThat(res.status(), is("ok"));
             System.err.println(res.applicationList().size());
             Application app = res.applicationList().get(0);
-            assert app.getAppid().equals("foobar");
+            assertThat(app.getAppid(), is("foobar"));
             System.out.println("================================" + res.applicationList());
             for (Application a : res.applicationList()) {
                 System.out.println("=========== app:" + a);
                 System.out.println("=========== app:" + a.getAppid());
                 System.out.println("=========== app:" + a.getFiles());
             }
-            assertEquals(1, res.applicationList().size());
+            assertThat(res.applicationList().size(), is(1));
         }
         webClient.unload("foobar");
         webClient.disconnect();
@@ -141,56 +145,56 @@ public class WebConsoleTest {
     public void schedule() throws Exception {
         JobQueue.clear();
         Optional<Job> maybeJob = JobQueue.pop();
-        assert !maybeJob.isPresent();
+        assertFalse(maybeJob.isPresent());
 
-        assert webClient.connect();
+        assertTrue(webClient.connect());
 
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
             Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(256, 0)));
-            assert res instanceof ErrorResponse;
+            assertThat(res, instanceOf(ErrorResponse.class));
 
             maybeJob = JobQueue.pop();
-            assert !maybeJob.isPresent();
+            assertFalse(maybeJob.isPresent());
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(235561234);
-            Assert.assertTrue(!getJobResponse.job().isPresent());
+            assertFalse(getJobResponse.job().isPresent());
         }
 
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Response res = webClient.load("foobar", new LinkedList<>(), Arrays.asList(files));
-            assert res instanceof LoadAppResponse;
-            assert res.status().equals("ok");
+            assertThat(res, instanceOf(LoadAppResponse.class));
+            assertThat(res.status(), is("ok"));
 
             Optional<Applications.Application> app = Applications.get("foobar");
-            assert app.isPresent();
-            assert app.get().appName.equals("foobar");
+            assertTrue(app.isPresent());
+            assertThat(app.get().appName, is("foobar"));
         }
         maybeJob = JobQueue.pop();
-        assert !maybeJob.isPresent();
+        assertFalse(maybeJob.isPresent());
 
         {
             // You know, these spaces are to be normalized
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
             Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(200, 0)));
-            assert res instanceof ScheduleResponse;
+            assertThat(res, instanceOf(ScheduleResponse.class));
             ScheduleResponse sres = (ScheduleResponse) res;
-            assert sres.job.scheduled() != null;
-            assert sres.job.id() >= 0;
+            assertNotNull(sres.job.scheduled());
+            assertThat(sres.job.id(), is(greaterThanOrEqualTo(0)));
             System.err.println(sres.job.scheduled());
 
             ListJobResponse listJobResponse = (ListJobResponse) webClient.list(64);
-            assert listJobResponse.queue().size() == 1;
+            assertThat(listJobResponse.queue().size(), is(1));
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(sres.job.id());
             Assert.assertEquals(sres.job.cmd(), getJobResponse.job().get().cmd());
 
             maybeJob = JobQueue.pop();
-            assert maybeJob.isPresent();
-            assert maybeJob.get().cmd().equals(cmd);
-            assert maybeJob.get().appid().equals("foobar");
+            assertTrue(maybeJob.isPresent());
+            assertThat(maybeJob.get().cmd(), is(cmd));
+            assertThat(maybeJob.get().appid(), is("foobar"));
         }
         webClient.unload("foobar");
         webClient.disconnect();
@@ -201,25 +205,25 @@ public class WebConsoleTest {
     public void runFail() throws Exception {
         JobQueue.clear();
         Optional<Job> maybeJob = JobQueue.pop();
-        assert !maybeJob.isPresent();
+        assertFalse(maybeJob.isPresent());
 
-        assert webClient.connect();
+        assertTrue(webClient.connect());
 
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
             Job job = new Job("foobar-nosuchapp", cmd, null, new Range(1, 0), new Range(256, 0));
             Job done = webClient.run(job);
-            assert done == null;
+            assertNull(done);
 
             maybeJob = JobQueue.pop();
-            assert !maybeJob.isPresent();
+            assertFalse(maybeJob.isPresent());
         }
     }
 
     @Test
     public void kill() throws Exception {
-        assert webClient.connect();
+        assertTrue(webClient.connect());
         KillResponse res = (KillResponse) webClient.kill(0);
         System.err.println(res.status());
         webClient.disconnect();
@@ -227,9 +231,9 @@ public class WebConsoleTest {
 
     @Test
     public void watch() throws Exception {
-        assert webClient.connect();
+        assertTrue(webClient.connect());
         webClient.startWatch((watchResponse) -> {
-            assert watchResponse instanceof WatchResponse;
+            assertThat(watchResponse,  instanceOf(WatchResponse.class));
             System.err.println(((WatchResponse) watchResponse).status());
             return false;
         });
@@ -245,26 +249,26 @@ public class WebConsoleTest {
         conn.setDoOutput(true);
         StringWriter writer = new StringWriter();
         IOUtils.copy(conn.getInputStream(), writer, "UTF-8");
-        assert "OK".equals(writer.toString());
+        assertThat(writer.toString(), is("OK"));
     }
 
     @Test
     public void status() throws Exception {
         Job job = new Job("fooapp", "foocmd", null, new Range(12000, 0), new Range(12000, 0));
         JobQueue.push(job);
-        assert webClient.connect();
+        assertTrue(webClient.connect());
 
         URL url = new URL("http://localhost:24301/status");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setDoOutput(true);
         Response res = mapper.readValue(conn.getInputStream(), Response.class);
-        assert res instanceof StatusResponse;
+        assertThat(res, instanceOf(StatusResponse.class));
         StatusResponse statusResponse = (StatusResponse) res;
 
         System.err.println(statusResponse.queueLength());
-        assert statusResponse.queueLength() == 1;
-        assert statusResponse.sessionLength() == 1;
+        assertThat(statusResponse.queueLength(), is(1));
+        assertThat(statusResponse.sessionLength(), is(1));
         webClient.disconnect();
     }
 }

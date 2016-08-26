@@ -27,7 +27,6 @@ import io.github.retz.protocol.Range;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -37,7 +36,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 
 /**
  * Created by kuenishi on 6/9/16.
@@ -70,24 +71,24 @@ public class RetzExecutorTest {
     public void run() {
         int startcpu = CPUManager.get().availableCPUCount();
 
-        assert driver.start() == Protos.Status.DRIVER_RUNNING;
+        assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
 
-        assert executor.getExecutorInfo() != null;
-        assert executor.getFrameworkInfo() != null;
-        assert executor.getSlaveInfo() != null;
+        assertNotNull(executor.getExecutorInfo());
+        assertNotNull(executor.getFrameworkInfo());
+        assertNotNull(executor.getSlaveInfo());
 
-        assert driver.stop() == Protos.Status.DRIVER_STOPPED;
+        assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
 
-        assertEquals(startcpu, CPUManager.get().availableCPUCount());
+        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     // TODO: make this kind of tests as quickchecky state machine test
     @Test
     public void fuzz() {
         int startcpu = CPUManager.get().availableCPUCount();
-        assert driver.start() == Protos.Status.DRIVER_RUNNING;
+        assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
 
         // check no exception thrown
         executor.disconnected(driver);
@@ -95,18 +96,18 @@ public class RetzExecutorTest {
         executor.shutdown(driver);
         executor.error(driver, "noooooooooooooooooooooooooooooop");
 
-        assertEquals(startcpu, CPUManager.get().availableCPUCount());
+        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     @Test
     public void launchTaskTest() throws IOException, InterruptedException {
         int startcpu = CPUManager.get().availableCPUCount();
-        assert driver.start() == Protos.Status.DRIVER_RUNNING;
+        assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
 
         String tempFilename = FilenameUtils.concat("/tmp", folder.newFile().getName());
         System.err.println("Temporary file: " + tempFilename);
-        assert !new File(tempFilename).exists();
+        assertFalse(new File(tempFilename).exists());
 
         Job job = new Job("appname", "touch " + tempFilename, null, new Range(1, 0), new Range(128, 0));
         Application app = new Application("appname", new LinkedList<>(), new LinkedList<>(), Optional.empty());
@@ -125,26 +126,26 @@ public class RetzExecutorTest {
             Thread.sleep(512);
         }
 
-        assert new File(tempFilename).exists();
+        assertTrue(new File(tempFilename).exists());
         Optional<Protos.TaskStatus> status = driver.getUpdatedStatus();
-        Assert.assertTrue(status.isPresent());
-        assertEquals("0", status.get().getMessage());
+        assertTrue(status.isPresent());
+        assertThat(status.get().getMessage(), is("0"));
 
-        assert driver.stop() == Protos.Status.DRIVER_STOPPED;
+        assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
 
-        assertEquals(startcpu, CPUManager.get().availableCPUCount());
+        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     @Test
     public void notEnough() throws IOException {
         int startcpu = CPUManager.get().availableCPUCount();
-        assert driver.start() == Protos.Status.DRIVER_RUNNING;
+        assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
 
         String tempFilename = FilenameUtils.concat("/tmp", folder.newFile().getName());
         System.err.println("Temporary file: " + tempFilename);
-        assert !new File(tempFilename).exists();
+        assertFalse(new File(tempFilename).exists());
 
         int cpus = 32;
         int memMB = 128;
@@ -162,21 +163,21 @@ public class RetzExecutorTest {
 
         executor.launchTask(driver, task);
 
-        assert !new File(tempFilename).exists();
+        assertFalse(new File(tempFilename).exists());
         Optional<Protos.TaskStatus> status = driver.getUpdatedStatus();
-        Assert.assertTrue(status.isPresent());
-        assertEquals(Protos.TaskState.TASK_KILLED, status.get().getState());
+        assertTrue(status.isPresent());
+        assertThat(status.get().getState(), is(Protos.TaskState.TASK_KILLED));
 
-        assert driver.stop() == Protos.Status.DRIVER_STOPPED;
+        assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
 
-        assertEquals(startcpu, CPUManager.get().availableCPUCount());
+        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     @Test
     public void invalidJsonOnLaunchTask() throws IOException {
         int startcpu = CPUManager.get().availableCPUCount();
-        assert driver.start() == Protos.Status.DRIVER_RUNNING;
+        assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
 
         String tempFilename = FilenameUtils.concat("/tmp", folder.newFile().getName());
@@ -199,14 +200,14 @@ public class RetzExecutorTest {
 
         executor.launchTask(driver, task);
 
-        assert !new File(tempFilename).exists();
+        assertFalse(new File(tempFilename).exists());
         Optional<Protos.TaskStatus> status = driver.getUpdatedStatus();
-        Assert.assertTrue(status.isPresent());
-        Assert.assertEquals(Protos.TaskState.TASK_KILLED, status.get().getState());
+        assertTrue(status.isPresent());
+        assertThat(status.get().getState(), is(Protos.TaskState.TASK_KILLED));
 
-        assert driver.stop() == Protos.Status.DRIVER_STOPPED;
+        assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
 
-        assertEquals(startcpu, CPUManager.get().availableCPUCount());
+        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 }

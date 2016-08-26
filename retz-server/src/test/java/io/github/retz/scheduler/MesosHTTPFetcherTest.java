@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
+
 /**
  * @doc JSON parsing test
  */
@@ -33,22 +37,23 @@ public class MesosHTTPFetcherTest {
 
         in = MesosHTTPFetcherTest.class.getResourceAsStream("/master-slaves.json");
         s = MesosHTTPFetcher.extractSlaveAddr(in, "6c751ae7-6856-4127-aea1-42f3a9210846-S0");
-        assert s.isPresent();
-        assert s.get().equals("127.0.0.1:5051");
+        assertTrue(s.isPresent());
+        assertThat(s.get(), is("127.0.0.1:5051"));
 
         in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-flags.json");
         s = MesosHTTPFetcher.extractSlaveBasePath(in);
-        assert s.isPresent();
-        assert s.get().equals("/tmp/mesos");
+        assertTrue(s.isPresent());
+        assertThat(s.get(), is("/tmp/mesos"));
 
         in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-state.json");
         s = MesosHTTPFetcher.extractContainerId(in, "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum");
-        assert s.isPresent();
-        assert s.get().equals("927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa");
+        assertTrue(s.isPresent());
+        assertThat(s.get(), is("927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa"));
 
         in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-state.json");
         s = MesosHTTPFetcher.extractDirectory(in, "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum");
-        assert s.isPresent();
-        assert s.get().equals("/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa");
+        assertTrue(s.isPresent());
+        assertThat(s.get(),
+                is("/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa"));
     }
 }

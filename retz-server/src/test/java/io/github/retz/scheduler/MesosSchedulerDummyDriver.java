@@ -23,7 +23,10 @@ import org.apache.mesos.SchedulerDriver;
 
 import java.util.*;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Created by kuenishi on 16/06/08.
@@ -39,10 +42,10 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
     List<Protos.OfferID> accepted;
     List<Protos.TaskInfo> tasks;
 
-    List<Protos.Resource> reserved;
-    List<Protos.Resource> volumes;
-
-    Map<Protos.OfferID, Protos.Offer> offers;
+//    List<Protos.Resource> reserved;
+//    List<Protos.Resource> volumes;
+//
+//    Map<Protos.OfferID, Protos.Offer> offers;
 
     MesosSchedulerDummyDriver(Scheduler scheduler,
                               Protos.FrameworkInfo frameworkInfo,
@@ -62,7 +65,7 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
                 .build();
         System.err.println(mesosMaster);
         String master[] = mesosMaster.split(":");
-        assert master.length == 2;
+        assertThat(master.length, is(2));
         this.masterInfo = Protos.MasterInfo.newBuilder()
                 .setHostname(master[0])
                 .setPort(Integer.parseInt(master[1]))
@@ -147,44 +150,46 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
     public Protos.Status acceptOffers(Collection<Protos.OfferID> offerIds,
                                       Collection<Protos.Offer.Operation> operations,
                                       Protos.Filters filters) {
-        this.accepted.addAll(offerIds);
-        for (Protos.OfferID id : offerIds) {
-            Protos.Offer.Builder ob = offers.get(id).toBuilder();
-
-
-            for (Protos.Offer.Operation op : operations) {
-                switch (op.getType().getNumber()) {
-                    case Protos.Offer.Operation.Type.LAUNCH_VALUE: {
-                        tasks.addAll(op.getLaunch().getTaskInfosList());
-                        break;
-                    }
-                    case Protos.Offer.Operation.Type.RESERVE_VALUE: {
-                        // TODO: aggregate against same principal/roles
-                        reserved.addAll(op.getReserve().getResourcesList());
-                        break;
-                    }
-                    case Protos.Offer.Operation.Type.CREATE_VALUE: {
-                        volumes.addAll(op.getCreate().getVolumesList());
-                        break;
-                    }
-                    case Protos.Offer.Operation.Type.DESTROY_VALUE: {
-                        for (Protos.Resource r : op.getDestroy().getVolumesList()) {
-                            volumes.remove(r);
-                        }
-                        break;
-                    }
-                    case Protos.Offer.Operation.Type.UNRESERVE_VALUE: {
-                        for (Protos.Resource r : op.getUnreserve().getResourcesList()) {
-                            reserved.remove(r);
-                        }
-                        break;
-                    }
-                    default:
-                        throw new AssertionError();
-                }
-            }
-        }
-        return Protos.Status.DRIVER_RUNNING;
+        // Shouldn't be used
+        throw new UnknownError();
+//        this.accepted.addAll(offerIds);
+//        for (Protos.OfferID id : offerIds) {
+//            Protos.Offer.Builder ob = offers.get(id).toBuilder();
+//
+//
+//            for (Protos.Offer.Operation op : operations) {
+//                switch (op.getType().getNumber()) {
+//                    case Protos.Offer.Operation.Type.LAUNCH_VALUE: {
+//                        tasks.addAll(op.getLaunch().getTaskInfosList());
+//                        break;
+//                    }
+//                    case Protos.Offer.Operation.Type.RESERVE_VALUE: {
+//                        // TODO: aggregate against same principal/roles
+//                        reserved.addAll(op.getReserve().getResourcesList());
+//                        break;
+//                    }
+//                    case Protos.Offer.Operation.Type.CREATE_VALUE: {
+//                        volumes.addAll(op.getCreate().getVolumesList());
+//                        break;
+//                    }
+//                    case Protos.Offer.Operation.Type.DESTROY_VALUE: {
+//                        for (Protos.Resource r : op.getDestroy().getVolumesList()) {
+//                            volumes.remove(r);
+//                        }
+//                        break;
+//                    }
+//                    case Protos.Offer.Operation.Type.UNRESERVE_VALUE: {
+//                        for (Protos.Resource r : op.getUnreserve().getResourcesList()) {
+//                            reserved.remove(r);
+//                        }
+//                        break;
+//                    }
+//                    default:
+//                        fail();
+//                }
+//            }
+//        }
+//        return Protos.Status.DRIVER_RUNNING;
     }
 
     public Protos.Status declineOffer(Protos.OfferID offerID, Protos.Filters filters) {

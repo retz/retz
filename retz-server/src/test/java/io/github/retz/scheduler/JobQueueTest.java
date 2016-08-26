@@ -18,9 +18,14 @@ package io.github.retz.scheduler;
 
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.Range;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Optional;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertTrue;
 
 public class JobQueueTest {
     @Test
@@ -28,7 +33,7 @@ public class JobQueueTest {
         Job job = new Job("a", "b", null, new Range(1000, 0), new Range(100000000, 0));
         JobQueue.push(job);
         Optional<Job> job2 = JobQueue.pop();
-        assert job2.isPresent();
-        assert job2.get().appid().equals(job.appid());
+        assertTrue(job2.isPresent());
+        assertThat(job2.get().appid(), is(job.appid()));
     }
 }

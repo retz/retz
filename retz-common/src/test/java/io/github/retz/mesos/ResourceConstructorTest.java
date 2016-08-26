@@ -19,6 +19,9 @@ package io.github.retz.mesos;
 import org.apache.mesos.Protos;
 import org.junit.Test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+
 public class ResourceConstructorTest {
     @Test
     public void decode() {
@@ -29,7 +32,8 @@ public class ResourceConstructorTest {
                 .addAllResources(ResourceConstructor.construct(3, 256))
                 .build();
         Resource r = ResourceConstructor.decode(task.getResourcesList());
-        assert (int)r.cpu() == 3;
-        assert r.memMB() == 256;
+        assertThat((int)r.cpu(), is(3));
+        assertThat(r.memMB(), is(256));
     }
+
 }
