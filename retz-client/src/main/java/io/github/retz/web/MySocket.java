@@ -30,33 +30,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/*
- * COMMENT: I know it's quite ugly :S and I"ll leave as it is for now
- *  1. Removed
- *  2. Message is not just a String, but has structured data like Job and Application
- *     (see com.asakusafw.retz.web.protocol or doc/ja/retz.md) - reasons for WebSocket
- *     and not simple HTTP consists of some:
- *     a. some APIs are asynchronous; remarkably thinking of use case of sending 'schedule'
- *        and waiting for its update like started/finished/failed - which cannot be done
- *        just with a pair of call/response.
- *     b. Also, which API is gonna be sync/async was not sure when I started
- *     c. Cost of TCP connection initiation and authentication, maintaining single TCP
- *        connection could be cheaper?
- *     d. WebSocket is the way cooler than vanilla HTTP and GUI is nice.
- *
- * REVIEW: It seems so complex.
- *   I think this only has three main features:
- *     1. session lifecycle management (onConnect/onClose)
- *       I think 'awaitConnect()' method and 'connectLatch' can be removed.
- *       WebSocketClient.connect() returns Future<Session>, and it provides await function as Future.get().
- *     2. synchronous RPC
- *       If each message is not identical (or no IDs), then I think just 'send(message:String):String' is enough.
- *       This sends message and just wait for response.
- *     3. asynchronous broadcast RPC result to subscriber(s)
- *       I think separating this class into RPC and subscribe instead if they are independent use cases.
- *       If you want to only subscribe messages, you can just use LinkedBlockingQueue<String> instead of
- *       the pair of CountDownLatch and bare String.
- */
 @WebSocket(
         maxTextMessageSize = Connection.MAX_PAYLOAD_SIZE,
         maxIdleTime = Connection.IDLE_TIMEOUT_SEC * 1000)
