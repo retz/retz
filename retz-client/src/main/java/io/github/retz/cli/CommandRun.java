@@ -28,7 +28,6 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 
 import static io.github.retz.protocol.Range.parseRange;
 
@@ -80,7 +79,6 @@ public class CommandRun implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
             Job result = webClient.run(job);
 
@@ -95,12 +93,8 @@ public class CommandRun implements SubCommand {
 
         } catch (ParseException e) {
             LOG.error(e.toString());
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

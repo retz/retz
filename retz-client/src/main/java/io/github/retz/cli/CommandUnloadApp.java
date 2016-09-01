@@ -16,9 +16,7 @@
  */
 package io.github.retz.cli;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import io.github.retz.protocol.LoadAppResponse;
 import io.github.retz.protocol.UnloadAppResponse;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
@@ -27,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 public class CommandUnloadApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUnloadApp.class);
@@ -53,18 +49,14 @@ public class CommandUnloadApp implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
 
             UnloadAppResponse res = (UnloadAppResponse) webClient.unload(appName);
             LOG.info(res.status());
             return 0;
 
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
+
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

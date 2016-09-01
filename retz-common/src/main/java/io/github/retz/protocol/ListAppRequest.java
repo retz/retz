@@ -16,9 +16,25 @@
  */
 package io.github.retz.protocol;
 
-/**
- * Created by kuenishi on 6/6/16.
- */
 public class ListAppRequest extends Request {
     public ListAppRequest(){}
+
+    @Override
+    public String resource() {
+        return "/apps";
+    }
+
+    @Override
+    public String method() {
+        return GET;
+    }
+
+    @Override
+    public boolean hasPayload() {
+        return false;
+    }
+
+    public static String resourcePattern() {
+        return "apps";
+    }
 }

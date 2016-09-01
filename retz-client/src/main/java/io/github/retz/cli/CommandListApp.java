@@ -16,11 +16,8 @@
  */
 package io.github.retz.cli;
 
-import com.beust.jcommander.JCommander;
 import io.github.retz.protocol.Application;
-import io.github.retz.protocol.Job;
 import io.github.retz.protocol.ListAppResponse;
-import io.github.retz.protocol.ListJobResponse;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class CommandListApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);
@@ -51,7 +45,6 @@ public class CommandListApp implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
 
             ListAppResponse r = (ListAppResponse) webClient.listApp(); // TODO: make this CLI argument
             for (Application a : r.applicationList()) {
@@ -60,12 +53,10 @@ public class CommandListApp implements SubCommand {
                         String.join(" ", a.getPersistentFiles()));
             }
             return 0;
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
+
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
+
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

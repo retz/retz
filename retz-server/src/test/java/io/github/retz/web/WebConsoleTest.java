@@ -73,7 +73,8 @@ public class WebConsoleTest {
         webConsole = new WebConsole(24301);
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
-        webClient = new Client("ws://localhost:24301/cui");
+        //webClient = new Client("ws://localhost:24301/cui");
+        webClient = new Client("localhost", 24301);
     }
 
     /**
@@ -88,18 +89,11 @@ public class WebConsoleTest {
         JobQueue.clear();
     }
 
-    @Test
-    public void connect() throws Exception {
-        assertTrue(webClient.connect());
-        webClient.disconnect();
-    }
-
     /**
      * @throws Exception if failed
      */
     @Test
     public void list() throws Exception {
-        assertTrue(webClient.connect());
         ListJobResponse res = (ListJobResponse) webClient.list(64);
         assertTrue(res.queue().isEmpty());
         assertTrue(res.running().isEmpty());
@@ -110,7 +104,6 @@ public class WebConsoleTest {
     @Test
     public void loadApp() throws Exception {
         JobQueue.clear();
-        assertTrue(webClient.connect());
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Response res = webClient.load("foobar", new LinkedList<>(), Arrays.asList(files));
@@ -145,8 +138,6 @@ public class WebConsoleTest {
         JobQueue.clear();
         List<Job> maybeJob = JobQueue.popMany(10000, 10000);
         assertTrue(maybeJob.isEmpty());
-
-        assertTrue(webClient.connect());
 
         {
             // Job request without app must fail
@@ -206,8 +197,6 @@ public class WebConsoleTest {
         List<Job> maybeJob = JobQueue.popMany(10000, 10000);
         assertTrue(maybeJob.isEmpty());
 
-        assertTrue(webClient.connect());
-
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
@@ -222,15 +211,13 @@ public class WebConsoleTest {
 
     @Test
     public void kill() throws Exception {
-        assertTrue(webClient.connect());
-        KillResponse res = (KillResponse) webClient.kill(0);
+        Response res = webClient.kill(0);
         System.err.println(res.status());
         webClient.disconnect();
     }
 
     @Test
     public void watch() throws Exception {
-        assertTrue(webClient.connect());
         webClient.startWatch((watchResponse) -> {
             assertThat(watchResponse,  instanceOf(WatchResponse.class));
             System.err.println(((WatchResponse) watchResponse).status());
@@ -255,7 +242,6 @@ public class WebConsoleTest {
     public void status() throws Exception {
         Job job = new Job("fooapp", "foocmd", null, new Range(12000, 0), new Range(12000, 0));
         JobQueue.push(job);
-        assertTrue(webClient.connect());
 
         URL url = new URL("http://localhost:24301/status");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -267,7 +253,7 @@ public class WebConsoleTest {
 
         System.err.println(statusResponse.queueLength());
         assertThat(statusResponse.queueLength(), is(1));
-        assertThat(statusResponse.sessionLength(), is(1));
+        assertThat(statusResponse.sessionLength(), is(0));
         webClient.disconnect();
     }
 }

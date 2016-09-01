@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.17
+
+* Migrate most of RPCs on WebSocket to plain HTTP request-response style
+
 ## 0.0.16
 
 * This is another release for debug build: log output of server and client

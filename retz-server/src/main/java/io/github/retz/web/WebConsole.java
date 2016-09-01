@@ -16,13 +16,14 @@
  */
 package io.github.retz.web;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +37,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.github.retz.scheduler.JobQueue.getAll;
 import static spark.Spark.*;
+
 
 public final class WebConsole {
     private static final Logger LOG = LoggerFactory.getLogger(WebConsole.class);
@@ -48,21 +49,125 @@ public final class WebConsole {
     private Thread clientMonitorThread;
     private ClientMonitor clientMonitor;
 
-    {
+    static {
         MAPPER.registerModule(new Jdk8Module());
     }
 
     public WebConsole(int port) {
         port(port);
         staticFileLocation("/public");
+
+        // APIs to be in WebSocket: watch, run
         webSocket("/cui", ConsoleWebSocketHandler.class);
         webSocketIdleTimeoutMillis(Connection.IDLE_TIMEOUT_SEC * 1000);
+
+        // APIs to be in vanilla HTTP
         get("/ping", (req, res) -> "OK");
         get("/status", WebConsole::status);
+
+        // /jobs GET -> list
+        get(ListJobRequest.resourcePattern(), (req, res) -> {
+            LOG.info("jobs");
+            //io.github.retz.protocol.Request request = MAPPER.readValue(req.bodyAsBytes(), io.github.retz.protocol.Request.class);
+            ListJobRequest listJobRequest = new ListJobRequest(64);
+            ListJobResponse listJobResponse = WebConsole.list(listJobRequest.limit());
+            listJobResponse.ok();
+            res.status(200);
+            res.type("application/json");
+            return MAPPER.writeValueAsString(listJobResponse);
+        });
+        // /job  PUT -> schedule, GET -> get-job, DELETE -> kill
+        get(GetJobRequest.resourcePattern(), (req, res) -> {
+            int id = Integer.parseInt(req.params(":id"));
+            LOG.info("job id={}", id);
+            //io.github.retz.protocol.Request request = MAPPER.readValue(req.bodyAsBytes(), io.github.retz.protocol.Request.class);
+            Optional<Job> job = WebConsole.getJob(id);
+            GetJobResponse getJobResponse = new GetJobResponse(job);
+            getJobResponse.ok();
+            res.status(200);
+            res.type("application/json");
+            return MAPPER.writeValueAsString(getJobResponse);
+        });
+
+        put(ScheduleRequest.resourcePattern(), (req, res) -> {
+            LOG.info("/job");
+            ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
+            if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
+                Job job = scheduleRequest.job();
+                job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
+
+                JobQueue.push(job);
+
+                //if (scheduleRequest.doWatch()) {
+                // LOG.warn("Currently there is no async response for SparkJava, which means 'run' command consumes single...");
+                //}
+                ScheduleResponse scheduleResponse = new ScheduleResponse(job);
+                scheduleResponse.ok();
+                LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
+                //respond(user, scheduleResponse);
+
+                res.status(200);
+                res.type("application/json");
+                return MAPPER.writeValueAsString(scheduleResponse);
+                //broadcast("scheduled", job, "ok");
+
+            } else {
+                ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
+                res.status(403);
+                res.type("application/json");
+                return MAPPER.writeValueAsString(response);
+            }
+        });
+
+        delete(KillRequest.resourcePattern(), (req, res) -> {
+            res.status(501);
+            KillResponse response = new KillResponse();
+            response.status("kill not supported yet.");
+            return MAPPER.writeValueAsString(response);
+        });
+
+        // /apps GET -> list-app
+        get(ListAppRequest.resourcePattern(), (req, res) -> {
+            ListAppResponse response = new ListAppResponse(WebConsole.listApps());
+            response.ok();
+            return MAPPER.writeValueAsString(response);
+        });
+
+        // /app  PUT -> load, GET -> list-app, DELETE -> unload-app
+        put(LoadAppRequest.resourcePattern(), (req, res) -> {
+            LOG.info("/app");
+
+            LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
+            LOG.info("app id={}", loadAppRequest.application().getAppid());
+            boolean result = WebConsole.load(loadAppRequest.application());
+            if (result) {
+                res.status(200);
+                LoadAppResponse response = new LoadAppResponse();
+                response.ok();
+                return MAPPER.writeValueAsString(response);
+            } else {
+                res.status(400);
+                res.type("application/json");
+                return MAPPER.writeValueAsString(new ErrorResponse("cannot load application"));
+            }
+        });
+
+        delete(UnloadAppRequest.resourcePattern(), (req, res) -> {
+            //UnloadAppRequest unloadAppRequest = MAPPER.readValue(req.bodyAsBytes(), UnloadAppRequest.class);
+            String appname = req.params(":name");
+            LOG.info("deleting app {}", appname);
+            WebConsole.unload(appname);
+            UnloadAppResponse response = new UnloadAppResponse();
+            response.ok();
+            return MAPPER.writeValueAsString(response);
+        });
+
         clientMonitor = new ClientMonitor(Connection.KEEPALIVE_INTERVAL_SEC);  // I won't make this configurable until it's needed
+
         clientMonitorThread = new Thread(clientMonitor);
         clientMonitorThread.setName("ClientMonitor");
         clientMonitorThread.start();
+
         init();
     }
 
@@ -102,8 +207,7 @@ public final class WebConsole {
         Spark.stop();
     }
 
-    public static ListJobResponse list(int limit)
-    {
+    public static ListJobResponse list(int limit) {
         List<Job> queue = JobQueue.getAll();
         List<Job> running = new LinkedList<>();
         for (Map.Entry<String, Job> entry : JobQueue.getRunning().entrySet()) {

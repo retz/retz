@@ -29,7 +29,6 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutionException;
 
 import static io.github.retz.protocol.Range.parseRange;
 
@@ -78,7 +77,6 @@ public class CommandSchedule implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
             Response res = webClient.schedule(job);
             if (res instanceof ScheduleResponse) {
@@ -89,12 +87,8 @@ public class CommandSchedule implements SubCommand {
                 LOG.error("Error: " + res.status());
                 return -1;
             }
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

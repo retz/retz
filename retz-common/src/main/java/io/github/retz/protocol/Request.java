@@ -29,10 +29,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
         @Type(name = "schedule", value = ScheduleRequest.class),
         @Type(name = "get-job", value = GetJobRequest.class),
         @Type(name = "kill", value = KillRequest.class),
-        @Type(name = "watch", value = WatchRequest.class),
+        //@Type(name = "watch", value = WatchRequest.class),
         @Type(name = "load-app", value = LoadAppRequest.class),
         @Type(name = "unload-app", value = UnloadAppRequest.class),
         @Type(name = "list-app", value = ListAppRequest.class)
 })
 public abstract class Request {
+    public static final String PUT = "PUT";
+    public static final String GET = "GET";
+    public static final String DELETE = "DELETE";
+    public abstract String resource();
+    public abstract String method();
+    public abstract boolean hasPayload();
 }

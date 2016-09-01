@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.util.concurrent.ExecutionException;
 
 public class CommandGetJob implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetJob.class);
@@ -58,7 +57,7 @@ public class CommandGetJob implements SubCommand {
 
             LOG.info("Fetching job detail id={}", id);
 
-            webClient.connect();
+            //webClient.connect();
 
             Response res = webClient.getJob(id);
             if (res instanceof GetJobResponse) {
@@ -81,12 +80,8 @@ public class CommandGetJob implements SubCommand {
                 LOG.error("Error: {}", errorResponse.status());
             }
 
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

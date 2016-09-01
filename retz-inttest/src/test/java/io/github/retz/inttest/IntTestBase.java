@@ -49,6 +49,7 @@ public class IntTestBase {
     // To execute tests parallel, names and ports should be dynamic.
     // It's not necessary to name containers, except manual cleanup.
     public static final String CONTAINER_NAME = "retz-inttest-ertpqgh34jv9air";
+    public static final String RETZ_HOST = "127.0.0.1";
     public static final int RETZ_PORT = 19090;
 
     // Probably better to make log and downloading directories for testc ases.
@@ -98,10 +99,6 @@ public class IntTestBase {
     @AfterClass
     public static void cleanupContainer() throws Exception {
         container.close();
-    }
-
-    public static String retzServerUri() {
-        return "ws://127.0.0.1:" + Integer.toString(RETZ_PORT) + "/cui";
     }
 
     private static void removeIfExists(DockerClient dockerClient, String containerName) throws InterruptedException {
@@ -192,11 +189,11 @@ public class IntTestBase {
                     () -> {return ps();});
             waitFor(
                     () -> {
-                        Client client = new Client(IntTestBase.retzServerUri());
-                        return client.connect();
+                        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
+                        return true;
                     },
                     "WS connection could not be established, timed out.",
-                    () -> {return "retz-server URI: " + IntTestBase.retzServerUri();});
+                    () -> {return "retz-server URI: " + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT;});
         }
 
         private void waitFor(Callable<Boolean> validator, String errorMessage,

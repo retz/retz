@@ -19,9 +19,7 @@ package io.github.retz.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
-import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.eclipse.jetty.websocket.api.Session;
@@ -35,7 +33,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConsoleWebSocketHandler {
     private static final Logger LOG = LoggerFactory.getLogger(ConsoleWebSocketHandler.class);
 
+    // TODO: duplicate set of sessions; remove
     private static final Set<Session> SESSIONS = new ConcurrentHashSet<>();
     private static final Set<Session> WATCHERS = new ConcurrentHashSet<>();
     private static final Map<Integer, Session> JOB_WATCHERS = new ConcurrentHashMap<>();
@@ -132,6 +130,12 @@ public class ConsoleWebSocketHandler {
     public void onConnect(Session user) throws Exception {
         LOG.info("Connect from {}", user.getLocalAddress().getHostString());
         SESSIONS.add(user);
+
+        LOG.info("{} started watching", user.getRemoteAddress().getHostString());
+        WatchResponse res = new WatchResponse("start", null);
+        res.status("Start watching");
+        WATCHERS.add(user);
+        respond(user, res);
     }
 
     @OnWebSocketClose
@@ -156,33 +160,8 @@ public class ConsoleWebSocketHandler {
 
     @OnWebSocketMessage
     public void onMessage(Session user, String message) throws IOException, InterruptedException {
-        LOG.info("Command: {}", message);
-        Request req = null;
-        try {
-            req = MAPPER.readValue(message, Request.class);
-        } catch (IOException e) {
-            respond(user, new ErrorResponse("Invalid command: " + e.toString()));
-            return;
-        } catch (NullPointerException e) {
-            LOG.error("NullPointerException: {}", user);
-            e.printStackTrace();
-            respond(user, new ErrorResponse("NullPointerException"));
-            return;
-        }
-
-        if (req instanceof ListJobRequest) {
-            ListJobRequest listJobRequest = (ListJobRequest) req;
-            ListJobResponse res = WebConsole.list(listJobRequest.limit());
-            res.ok();
-            LOG.info("Command: list -> {}", res.queue());
-            respond(user, res);
-
-        } else if (req instanceof KillRequest) {
-            KillResponse res = new KillResponse();
-            res.status("kill not supported yet.");
-            respond(user, res);
-
-        } else if (req instanceof ScheduleRequest) {
+    /*
+        if (req instanceof ScheduleRequest) {
             ScheduleRequest scheduleRequest = (ScheduleRequest) req;
             if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
                 Job job = scheduleRequest.job();
@@ -204,48 +183,9 @@ public class ConsoleWebSocketHandler {
                 ErrorResponse res = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
                 respond(user, res);
             }
+*/
 
-        } else if (req instanceof GetJobRequest) {
-            GetJobRequest getJobRequest = (GetJobRequest)req;
-            Optional<Job> job = WebConsole.getJob(getJobRequest.id());
-            respond(user, new GetJobResponse(job));
 
-        } else if (req instanceof WatchRequest) {
-            WatchResponse res = new WatchResponse("start", null);
-            res.status("Start watching");
-            WATCHERS.add(user);
-            respond(user, res);
-
-        } else if (req instanceof LoadAppRequest) {
-            LoadAppRequest loadAppRequest = (LoadAppRequest) req;
-            LoadAppResponse res = new LoadAppResponse();
-            boolean result = WebConsole.load(loadAppRequest.application());
-            if (result) {
-                res.ok();
-                respond(user, res);
-            } else {
-                respond(user, new ErrorResponse("cannot load application"));
-            }
-
-        } else if (req instanceof ListAppRequest) {
-            ListAppResponse res = new ListAppResponse(WebConsole.listApps());
-            res.ok();
-            respond(user, res);
-
-        } else if (req instanceof UnloadAppRequest) {
-            UnloadAppRequest unloadAppRequest = (UnloadAppRequest) req;
-            WebConsole.unload(unloadAppRequest.appid());
-            UnloadAppResponse res = new UnloadAppResponse();
-            res.ok();
-            respond(user, res);
-
-        } else
-
-        {
-            // XXXXX: Cannot reach here
-            LOG.error("unknown request: {}", req.getClass().getName());
-            throw new AssertionError();
-        }
         return;
     }
 

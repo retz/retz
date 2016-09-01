@@ -35,4 +35,23 @@ public class KillRequest extends Request {
     public int id() {
         return id;
     }
+
+    @Override
+    public String resource() {
+        return "/job/" + id;
+    }
+
+    @Override
+    public String method() {
+        return DELETE;
+    }
+
+    @Override
+    public boolean hasPayload() {
+        return false;
+    }
+
+    public static String resourcePattern() {
+        return "/job/:id";
+    }
 }

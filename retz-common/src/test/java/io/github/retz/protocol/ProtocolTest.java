@@ -121,11 +121,6 @@ public class ProtocolTest {
             KillRequest kreq = (KillRequest) req;
             assertThat(kreq.id(), is(2));
         }
-        {
-            String json = "{\"command\":\"watch\"}";
-            Request req = mapper.readValue(json, Request.class);
-            assertThat(req, instanceOf(WatchRequest.class));
-        }
     }
 
     @Test

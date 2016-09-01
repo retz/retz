@@ -40,4 +40,23 @@ public class ScheduleRequest extends Request {
     public boolean doWatch() {
         return doWatch;
     }
+
+    @Override
+    public String resource() {
+        return "/job";
+    }
+
+    @Override
+    public String method() {
+        return PUT;
+    }
+
+    @Override
+    public boolean hasPayload() {
+        return true;
+    }
+
+    public static String resourcePattern() {
+        return "/job";
+    }
 }

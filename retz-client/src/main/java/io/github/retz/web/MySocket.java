@@ -95,16 +95,6 @@ public class MySocket {
         throw new TimeoutException();
     }
 
-    public synchronized boolean sendRequest(String msg) throws IOException {
-        if (this.requestLatch.getCount() > 0) {
-            session.getRemote().sendString(msg);
-            return true;
-        } else {
-            // Request is being sent or the socket is already closed
-            return false;
-        }
-    }
-
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
         synchronized (this) {
@@ -151,6 +141,7 @@ public class MySocket {
 
     @OnWebSocketMessage
     public void onMessage(String msg) {
+        LOG.info("message: {}", msg);
         synchronized (this) {
             response = msg;
         }

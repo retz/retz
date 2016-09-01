@@ -36,4 +36,21 @@ public class UnloadAppRequest extends Request {
         return appid;
     }
 
+    @Override
+    public String resource() {
+        return "/app/" + appid;
+    }
+
+    @Override
+    public String method() {
+        return DELETE;
+    }
+
+    @Override
+    public boolean hasPayload() {
+        return false;
+    }
+    public static String resourcePattern() {
+        return "/app/:name";
+    }
 }

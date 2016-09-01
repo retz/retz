@@ -31,4 +31,23 @@ public class ListJobRequest extends Request {
     public int limit() {
         return limit;
     }
+
+    @Override
+    public String resource() {
+        return "/jobs";
+    }
+
+    @Override
+    public String method() {
+        return GET;
+    }
+
+    @Override
+    public boolean hasPayload() {
+        return false;
+    }
+
+    public static String resourcePattern() {
+        return "/jobs";
+    }
 }

@@ -28,9 +28,6 @@ import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-
-import static java.util.Optional.ofNullable;
 
 public class CommandLoadApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandLoadApp.class);
@@ -73,7 +70,6 @@ public class CommandLoadApp implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
 
             Optional<Integer> maybeDisk;
             if (disk == 0 || disk < 0) {
@@ -86,12 +82,9 @@ public class CommandLoadApp implements SubCommand {
                     persistentFiles, files, maybeDisk);
             LOG.info(r.status());
             return 0;
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
+
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

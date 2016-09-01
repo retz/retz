@@ -27,7 +27,6 @@ import java.net.ConnectException;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 public class CommandList implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandList.class);
@@ -46,7 +45,6 @@ public class CommandList implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
 
             ListJobResponse r = (ListJobResponse) webClient.list(64); // TODO: make this CLI argument
             List<Job> jobs = new LinkedList<>();
@@ -80,12 +78,8 @@ public class CommandList implements SubCommand {
                 LOG.info(line);
             }
             return 0;
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

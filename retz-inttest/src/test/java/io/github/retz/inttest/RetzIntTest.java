@@ -43,8 +43,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void listAppTest() throws Exception {
-        Client client = new Client(retzServerUri());
-        assertTrue(client.connect());
+        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
         ListAppResponse response = (ListAppResponse) client.listApp();
         assertThat(response.status(), is("ok"));
         assertThat(response.applicationList().size(), is(0));
@@ -57,8 +56,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void runAppTest() throws Exception {
-        Client client = new Client(retzServerUri());
-        assertTrue(client.connect());
+        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load("echo-app", Arrays.asList(),
                         Arrays.asList("file:///spawn_retz_server.sh"), null);
@@ -98,9 +96,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void scheduleAppTest() throws Exception {
-        try (Client client = new Client(retzServerUri())) {
-
-            assertTrue(client.connect());
+        try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
             LoadAppResponse loadRes =
                     (LoadAppResponse) client.load("echo2",
                             Arrays.asList(),

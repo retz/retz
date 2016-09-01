@@ -392,11 +392,39 @@ Asakusa on M3BP ジョブは、なるべく少ない並列数で実行しつつ�
 `/ping` は、サーバーが起動していれば `OK` という2文字をBodyにして `200 OK` を応答する。
 `/status` は、スケジューラおよびWebSocketサーバーの各種統計値を返す。
 
-#### WebSocket プロトコル
+#### HTTP プロトコル
 
-`retz` サブコマンドのうち、 `list` `kill` `schedule` `watch` はサーバー
-のURL `ws://hostname:9090/cui` とWebSocketを介して通信する。ここではそ
+
+* `GET /job/:id` behind `get-job` subcommand
+
+* `PUT /job` behind `schedule` `run` subcommand
+
+Request: `{"command":"schedule", "job":Job, "doWatch":false}`
+Response: `{"status":"ok", "job":Job1}` or `{"status":"queue full"}`
+
+* `DELETE /job/:id` behind `kill` subcommand
+
+**Note: not implemented yet**
+
+Request: `{"command":"kill", "id":24}`
+Response: `{"status":"ok"}` or `{"status":"not found"}`
+
+* `GET /jobs` behind `list` command
+
+Request: `{"command": "list"}`
+Response: `{"status":"ok", "queue": [ Job0, Job1, .... ]}`
+
+* `GET /apps` behind `list-app` command
+* `PUT /app/:name` behind `load-app` command
+* `DELETE /app/:name` behind `unload-app` command
+
+* `watch` via WebSocket, behind `watch` command
+
+`watch` はサーバーのURL `ws://hostname:9090/cui` とWebSocketを介して通信する。ここではそ
 の通信仕様を定義する。
+
+Request: `{"commnd":"watch"}`
+Response: `{"status":"ok", "event":Event, "job":Job}}`
 
 * `Job`
 
@@ -413,29 +441,5 @@ Asakusa on M3BP ジョブは、なるべく少ない並列数で実行しつつ�
 }
 ```
 
-* `list`
-
-Request: `{"command": "list"}`
-Response: `{"status":"ok", "queue": [ Job0, Job1, .... ]}`
-
-* `kill`
-
-Request: `{"command":"kill", "id":24}`
-Response: `{"status":"ok"}` or `{"status":"not found"}`
-
-* `schedule`
-
-Request: `{"command":"schedule", "job":Job}`
-Response: `{"status":"ok", "job":Job1}` or `{"status":"queue full"}`
-
-* `watch`
-
-Request: `{"commnd":"watch"}`
-Response: `{"status":"ok", "event":Event, "job":Job}}`
 
 Event: `started` `killed` `scheduled` `finished`
-
-
-* `load-app`
-* `unload-app`
-* `list-app`

@@ -16,8 +16,6 @@
  */
 package io.github.retz.cli;
 
-import com.beust.jcommander.JCommander;
-import io.github.retz.protocol.UnloadAppResponse;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URISyntaxException;
-import java.util.concurrent.ExecutionException;
 
 public class CommandWatch implements SubCommand{
     static final Logger LOG = LoggerFactory.getLogger(CommandWatch.class);
@@ -46,7 +43,7 @@ public class CommandWatch implements SubCommand{
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-            webClient.connect();
+           // webClient.connect();
 
             webClient.startWatch((watchResponse -> {
                 StringBuilder b = new StringBuilder()
@@ -78,12 +75,8 @@ public class CommandWatch implements SubCommand{
             }));
             return 0;
 
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (ExecutionException e) {
-            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }
