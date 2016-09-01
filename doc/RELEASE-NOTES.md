@@ -1,6 +1,10 @@
 # Retz release notes
 
-## 0.0.17
+## 0.0.18
+
+* Retry of compromised 0.0.17 release
+
+## 0.0.17 (not release and no tag)
 
 * Migrate most of RPCs on WebSocket to plain HTTP request-response style
 
