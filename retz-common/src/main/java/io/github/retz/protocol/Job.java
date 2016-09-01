@@ -35,6 +35,7 @@ public class Job {
     private int id; // TODO This becomes 0 when the JSON property is absent...
     private String url;
     private String reason;
+    private int retry; // How many retry now we have
 
     private final String appid;
     private String name;
@@ -69,6 +70,7 @@ public class Job {
         this.memMB = memMB;
         this.gpu = new Range(0, 0);
         this.state = CREATED;
+        this.retry = 0;
     }
 
     public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, Range gpu) {
@@ -88,6 +90,7 @@ public class Job {
                @JsonProperty(value = "id", required = true) int id,
                @JsonProperty("url") String url,
                @JsonProperty("reason") String reason,
+               @JsonProperty("retry") int retry,
                @JsonProperty(value = "appid", required = true) String appid,
                @JsonProperty(value = "name") String name,
                @JsonProperty("cpu") Range cpu,
@@ -104,6 +107,7 @@ public class Job {
         this.id = id;
         this.url = url;
         this.reason = reason;
+        this.retry = retry;
         this.appid = appid;
         this.name = (name != null) ? name : appid;
         this.cpu = cpu;
@@ -158,6 +162,11 @@ public class Job {
         return reason;
     }
 
+    @JsonGetter("retry")
+    public int retry() {
+        return retry;
+    }
+
     @JsonGetter("appid")
     public String appid() {
         return appid;
@@ -206,6 +215,10 @@ public class Job {
     public void setStarted(String now) {
         this.started = now;
         this.state = STARTED;
+    }
+
+    public void doRetry() {
+        this.retry++;
     }
 
     public void finished(String url, String now, int result) {

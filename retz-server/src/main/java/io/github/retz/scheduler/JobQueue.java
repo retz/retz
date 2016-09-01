@@ -16,6 +16,7 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.StatusResponse;
 import org.slf4j.Logger;
@@ -55,6 +56,7 @@ public class JobQueue {
     public static int issueJobId() {
         return COUNTER.getAndIncrement(); // Just have to be unique
     }
+
     public static void push(Job job) throws InterruptedException {
         // TODO: set a cap of queue
         BlockingQueue<Job> queue = get();
@@ -67,7 +69,7 @@ public class JobQueue {
         int totalMem = 0;
         List<Job> ret = new LinkedList<>();
         Job job;
-        while (totalCpu <= cpu && totalMem <= memMB){
+        while (totalCpu <= cpu && totalMem <= memMB) {
             job = get().peek();
             if (job == null) {
                 break;
@@ -86,17 +88,17 @@ public class JobQueue {
     }
 
     public synchronized static Optional<Job> getJob(int id) {
-        for(Job job : get()) {
+        for (Job job : get()) {
             if (id == job.id()) {
                 return Optional.of(job);
             }
         }
-        for(Map.Entry<String, Job> entry : RUNNING.entrySet()) {
+        for (Map.Entry<String, Job> entry : RUNNING.entrySet()) {
             if (id == entry.getValue().id()) {
                 return Optional.of(entry.getValue());
             }
         }
-        for(Job job : FINISHED) {
+        for (Job job : FINISHED) {
             if (id == job.id()) {
                 return Optional.of(job);
             }
@@ -117,7 +119,7 @@ public class JobQueue {
     }
 
     public synchronized static void recoverRunning() {
-        for(Iterator<Map.Entry<String, Job>> it = RUNNING.entrySet().iterator(); it.hasNext();) {
+        for (Iterator<Map.Entry<String, Job>> it = RUNNING.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<String, Job> entry = it.next();
             try {
                 push(entry.getValue());
@@ -129,6 +131,23 @@ public class JobQueue {
         }
     }
 
+    public static Job retry(String taskId, int threshold) {
+        Job job = RUNNING.remove(taskId);
+        if (job.retry() > threshold) {
+            LOG.warn("Giving up {}th retry of job(id={})", threshold, job.id());
+            FINISHED.add(job);
+            return job;
+        }
+        job.doRetry();
+        try {
+            push(job);
+        } catch (InterruptedException e) {
+            // TODO: kill
+            LOG.warn("Retry failed: {}", e.toString());
+        }
+        return job;
+
+    }
     public static Job finish(String taskId) {
         Job job = RUNNING.remove(taskId);
         FINISHED.add(job);

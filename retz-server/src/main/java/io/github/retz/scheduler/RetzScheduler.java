@@ -340,12 +340,16 @@ public class RetzScheduler implements Scheduler {
             }
             case Protos.TaskState.TASK_ERROR_VALUE:
             case Protos.TaskState.TASK_FAILED_VALUE:
-            case Protos.TaskState.TASK_KILLED_VALUE:
-            case Protos.TaskState.TASK_KILLING_VALUE:
-            case Protos.TaskState.TASK_LOST_VALUE: {
+            case Protos.TaskState.TASK_KILLED_VALUE: {
                 failed(status);
                 break;
             }
+            case Protos.TaskState.TASK_LOST_VALUE: {
+                retry(status);
+                break;
+            }
+            case Protos.TaskState.TASK_KILLING_VALUE:
+                break;
             case Protos.TaskState.TASK_RUNNING_VALUE:
                 break;
             case Protos.TaskState.TASK_STAGING_VALUE:
@@ -358,6 +362,20 @@ public class RetzScheduler implements Scheduler {
         }
     }
 
+    // Maybe Retry
+    void retry(Protos.TaskStatus status) {
+        int threshold = 5;
+        Job job = JobQueue.retry(status.getTaskId().getValue(), threshold);
+        if (job.retry() > threshold) {
+            String msg = String.format("Giving up Job retry: %d / id=%d", threshold, job.id());
+            LOG.warn(msg);
+            job.killed(TimestampHelper.now(), msg);
+            WebConsole.notifyKilled(job);
+        } else {
+            LOG.info("Scheduled retry ({}) of Job(taskId={})", status.getTaskId());
+        }
+
+    }
     void finished(Protos.TaskStatus status) {
         Job job = JobQueue.finish(status.getTaskId().getValue());
         if (status.hasData()) {
