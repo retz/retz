@@ -171,7 +171,10 @@ public class Client implements AutoCloseable {
             conn.setRequestMethod("GET");
             conn.setDoOutput(false);
             byte[] buffer = {'n', 'g'};
-            conn.getInputStream().read(buffer, 0, 2);
+            int s = conn.getInputStream().read(buffer, 0, 2);
+            if (s < 0) {
+                return false;
+            }
             String msg = new String(buffer, StandardCharsets.UTF_8);
             LOG.info(msg);
             return "OK".equals(msg);
