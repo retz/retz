@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -155,6 +156,35 @@ public class Client implements AutoCloseable {
         }
     }
 
+    public boolean ping() throws IOException {
+        URL url;
+        try {
+            // TODO: make this switchable on http/https
+            url = new URL("http://" + host + ":" + port + "/ping");
+            LOG.debug("Pinging {}", url);
+        } catch (MalformedURLException e) {
+            return false;
+        }
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setDoOutput(false);
+            byte[] buffer = {'n', 'g'};
+            conn.getInputStream().read(buffer, 0, 2);
+            String msg = new String(buffer, StandardCharsets.UTF_8);
+            LOG.info(msg);
+            return "OK".equals(msg);
+        } catch (IOException e) {
+            LOG.debug(e.toString());
+            return false;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
     public Response list(int limit) throws IOException {
         return rpc(new ListJobRequest(limit));
     }
@@ -218,7 +248,7 @@ public class Client implements AutoCloseable {
         try {
             // TODO: make this switchable on http/https
             url = new URL("http://" + host + ":" + port + req.resource());
-            LOG.info(" connecting {}", url);
+            LOG.debug("Connecting {}", url);
         } catch (MalformedURLException e) {
             return new ErrorResponse(e.toString());
         }

@@ -16,6 +16,7 @@
  */
 package io.github.retz.inttest;
 
+import io.github.retz.protocol.WatchResponse;
 import io.github.retz.web.Client;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
@@ -189,8 +190,9 @@ public class IntTestBase {
                     () -> {return ps();});
             waitFor(
                     () -> {
-                        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
-                        return true;
+                        try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
+                            return client.ping();
+                        }
                     },
                     "WS connection could not be established, timed out.",
                     () -> {return "retz-server URI: " + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT;});

@@ -44,6 +44,8 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void listAppTest() throws Exception {
         Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
+        Response res = client.listApp();
+        System.out.println(res.status());
         ListAppResponse response = (ListAppResponse) client.listApp();
         assertThat(response.status(), is("ok"));
         assertThat(response.applicationList().size(), is(0));
