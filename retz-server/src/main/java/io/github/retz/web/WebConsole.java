@@ -67,7 +67,7 @@ public final class WebConsole {
 
         // /jobs GET -> list
         get(ListJobRequest.resourcePattern(), (req, res) -> {
-            LOG.info("jobs");
+            LOG.debug("list jobs");
             //io.github.retz.protocol.Request request = MAPPER.readValue(req.bodyAsBytes(), io.github.retz.protocol.Request.class);
             ListJobRequest listJobRequest = new ListJobRequest(64);
             ListJobResponse listJobResponse = WebConsole.list(listJobRequest.limit());
@@ -79,7 +79,7 @@ public final class WebConsole {
         // /job  PUT -> schedule, GET -> get-job, DELETE -> kill
         get(GetJobRequest.resourcePattern(), (req, res) -> {
             int id = Integer.parseInt(req.params(":id"));
-            LOG.info("job id={}", id);
+            LOG.debug("get job id={}", id);
             //io.github.retz.protocol.Request request = MAPPER.readValue(req.bodyAsBytes(), io.github.retz.protocol.Request.class);
             Optional<Job> job = WebConsole.getJob(id);
             GetJobResponse getJobResponse = new GetJobResponse(job);
@@ -90,7 +90,6 @@ public final class WebConsole {
         });
 
         put(ScheduleRequest.resourcePattern(), (req, res) -> {
-            LOG.info("/job");
             ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
             if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
                 Job job = scheduleRequest.job();
@@ -135,7 +134,7 @@ public final class WebConsole {
 
         // /app  PUT -> load, GET -> list-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
-            LOG.info("/app");
+            LOG.debug(LoadAppRequest.resourcePattern());
 
             LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
             LOG.info("app id={}", loadAppRequest.application().getAppid());
@@ -163,7 +162,6 @@ public final class WebConsole {
         });
 
         clientMonitor = new ClientMonitor(Connection.KEEPALIVE_INTERVAL_SEC);  // I won't make this configurable until it's needed
-
         clientMonitorThread = new Thread(clientMonitor);
         clientMonitorThread.setName("ClientMonitor");
         clientMonitorThread.start();
