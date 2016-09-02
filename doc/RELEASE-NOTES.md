@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.21
+
+* Add a workaroudn where a NullPointerException kills the whole service
+
 ## 0.0.20
 
 * Change all WebSocket communication asynchronous to prevent Mesos scheduler
