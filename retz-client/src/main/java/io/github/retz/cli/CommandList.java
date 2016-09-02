@@ -16,8 +16,10 @@
  */
 package io.github.retz.cli;
 
+import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.Job;
 import io.github.retz.protocol.ListJobResponse;
+import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +47,12 @@ public class CommandList implements SubCommand {
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-
-            ListJobResponse r = (ListJobResponse) webClient.list(64); // TODO: make this CLI argument
+            Response res = webClient.list(64); // TODO: make this CLI argument
+            if (res instanceof ErrorResponse) {
+                LOG.info(res.status());
+                return -1;
+            }
+            ListJobResponse r = (ListJobResponse) res;
             List<Job> jobs = new LinkedList<>();
             jobs.addAll(r.queue());
             jobs.addAll(r.running());
