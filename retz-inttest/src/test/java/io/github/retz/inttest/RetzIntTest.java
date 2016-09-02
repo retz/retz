@@ -73,6 +73,7 @@ public class RetzIntTest extends IntTestBase {
                 new Properties(), new Range(1, 2), new Range(128, 256));
         Job runRes = client.run(job);
         assertThat(runRes.result(), is(RES_OK));
+        assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
         String baseUrl = baseUrl(runRes);
         String toDir = "build/log/";
@@ -118,7 +119,7 @@ public class RetzIntTest extends IntTestBase {
             int jobNum = argvList.size();
             for (Integer i : argvList) {
                 Job job = new Job("echo2", "echo.sh " + i.toString(),
-                        new Properties(), new Range(1, 1), new Range(32, 256));
+                        new Properties(), new Range(1, 1), new Range(32, 128));
 
                 ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
                 assertThat(scheduleResponse.status(), is("ok"));
@@ -173,6 +174,9 @@ public class RetzIntTest extends IntTestBase {
                         + ": Finished=" + listJobResponse.finished().size()
                         + ", Running=" + listJobResponse.running().size()
                         + ", Scheduled=" + listJobResponse.queue().size());
+                for( Job finished : listJobResponse.finished()) {
+                    assertThat(finished.retry(), is(0));
+                }
             }
             assertThat(finishedJobs.size(), is(jobNum));
 
