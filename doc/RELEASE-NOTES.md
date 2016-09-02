@@ -1,5 +1,11 @@
 # Retz release notes
 
+## 0.0.20
+
+* Change all WebSocket communication asynchronous to prevent Mesos scheduler
+  thread callback from being blocked by WebSocket communication, especially
+  sending broadcast message from server to clients
+
 ## 0.0.19
 
 * Add retry in case of task got LOST
