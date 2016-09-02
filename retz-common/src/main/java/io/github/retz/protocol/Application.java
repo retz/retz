@@ -21,21 +21,25 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class Application {
     private String appid;
     private List<String> persistentFiles;
+    private List<String> largeFiles;
     private List<String> files;
     private Optional<Integer> diskMB;
 
     @JsonCreator
     public Application(@JsonProperty(value = "appid", required = true) String appid,
                        @JsonProperty("persistentFiles") List<String> persistentFiles,
+                       @JsonProperty("largeFiles") List<String> largeFiles,
                        @JsonProperty("files") List<String> files,
                        @JsonProperty("diskMB") Optional<Integer> diskMB) {
-        this.appid = appid;
+        this.appid = Objects.requireNonNull(appid);
         this.persistentFiles = persistentFiles;
+        this.largeFiles = largeFiles;
         this.files = files;
         this.diskMB = diskMB;
     }
@@ -48,7 +52,11 @@ public class Application {
     @JsonGetter("persistentFiles")
     public List<String> getPersistentFiles() {
         return persistentFiles;
+    }
 
+    @JsonGetter("largeFiles")
+    public List<String> getLargeFiles() {
+        return largeFiles;
     }
 
     @JsonGetter("files")

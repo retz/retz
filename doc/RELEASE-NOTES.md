@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.0.19
+
+* Add retry in case of task got LOST
+* Add new '-L' option on `load-app`: '-F' used to require agents to cache
+  files, but it is replaced by '-L' ('--large-file'), and '-F' is for
+  files that shouldn't be cached (like program files for try-'n-error!)
+
 ## 0.0.18
 
 * Retry of compromised 0.0.17 release

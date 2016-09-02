@@ -16,15 +16,11 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.mesos.Resource;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -48,10 +44,12 @@ public class Applications {
 
     public static boolean load(io.github.retz.protocol.Application app) {
         Application application = new Application();
-        application.appName = app.getAppid();
-        application.persistentFiles = app.getPersistentFiles();
-        application.appFiles = app.getFiles();
-        application.diskMB = app.getDiskMB();
+        // TODO: eliminate all Applications$Application objects and use protocol.Application
+        application.appName = Objects.requireNonNull(app.getAppid());
+        application.persistentFiles = Objects.requireNonNull(app.getPersistentFiles());
+        application.largeFiles = Objects.requireNonNull(app.getLargeFiles());
+        application.appFiles = Objects.requireNonNull(app.getFiles());
+        application.diskMB = Objects.requireNonNull(app.getDiskMB());
 
         DICTIONARY.putIfAbsent(application.appName, application);
         return true;
@@ -59,7 +57,7 @@ public class Applications {
 
     public static io.github.retz.protocol.Application encodable(Application app) {
         io.github.retz.protocol.Application encodable = new io.github.retz.protocol.Application(
-                app.appName, app.persistentFiles, app.appFiles, app.diskMB);
+                app.appName, app.persistentFiles, app.largeFiles, app.appFiles, app.diskMB);
         return encodable;
     }
 
@@ -87,6 +85,7 @@ public class Applications {
     public static class Application {
         public String appName;
         public List<String> persistentFiles;
+        public List<String> largeFiles;
         public List<String> appFiles;
         public Optional<Integer> diskMB;
 
@@ -103,6 +102,9 @@ public class Applications {
                     .addUris(Protos.CommandInfo.URI.newBuilder().setValue(RetzScheduler.getJarUri()).setCache(false)); // In production, set this true
 
             for (String file : appFiles) {
+                commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
+            }
+            for (String file : largeFiles) {
                 commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
             }
 

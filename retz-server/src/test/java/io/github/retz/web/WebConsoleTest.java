@@ -106,7 +106,7 @@ public class WebConsoleTest {
         JobQueue.clear();
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Response res = webClient.load("foobar", new LinkedList<>(), Arrays.asList(files));
+            Response res = webClient.load("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files));
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 
@@ -154,7 +154,7 @@ public class WebConsoleTest {
 
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Response res = webClient.load("foobar", new LinkedList<>(), Arrays.asList(files));
+            Response res = webClient.load("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files));
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 

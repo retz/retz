@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -35,11 +34,14 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
 
-    @Parameter(names = {"-F", "--file"}, description = "Asakusa Application environment files")
+    @Parameter(names = {"-F", "--file"}, description = "Smaller files")
     List<String> files = new LinkedList<>();
     //"http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
 
-    @Parameter(names = {"-P","--persistent"}, description = "Asakusa Application environment persistent files")
+    @Parameter(names = {"-L", "--large-file"}, description = "Large files that will be cached at agents")
+    List<String> largeFiles = new LinkedList<>();
+
+    @Parameter(names = {"-P","--persistent"}, description = "Persistent files")
     private List<String> persistentFiles = new LinkedList<>();
      // ("http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
 
@@ -79,7 +81,7 @@ public class CommandLoadApp implements SubCommand {
             }
 
             LoadAppResponse r = (LoadAppResponse) webClient.load(appName,
-                    persistentFiles, files, maybeDisk);
+                    persistentFiles, largeFiles, files, maybeDisk);
             LOG.info(r.status());
             return 0;
 

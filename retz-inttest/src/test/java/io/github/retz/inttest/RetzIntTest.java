@@ -60,8 +60,8 @@ public class RetzIntTest extends IntTestBase {
     public void runAppTest() throws Exception {
         Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
         LoadAppResponse loadRes =
-                (LoadAppResponse) client.load("echo-app", Arrays.asList(),
-                        Arrays.asList("file:///spawn_retz_server.sh"), null);
+                (LoadAppResponse) client.load("echo-app", Arrays.asList(),  Arrays.asList(),
+                        Arrays.asList("file:///spawn_retz_server.sh"));
         assertThat(loadRes.status(), is("ok"));
 
         ListAppResponse listRes = (ListAppResponse) client.listApp();
@@ -103,7 +103,7 @@ public class RetzIntTest extends IntTestBase {
                     (LoadAppResponse) client.load("echo2",
                             Arrays.asList(),
                             Arrays.asList(),
-                            null);
+                            Arrays.asList());
             assertThat(loadRes.status(), is("ok"));
 
             ListAppResponse listRes = (ListAppResponse) client.listApp();
@@ -162,6 +162,12 @@ public class RetzIntTest extends IntTestBase {
                 }
                 Thread.sleep(1000);
 
+                Response res = client.list(64);
+                if (! (res instanceof ListJobResponse)) {
+                    ErrorResponse errorResponse = (ErrorResponse) res;
+                    System.err.println("Error: " + errorResponse.status());
+                    continue;
+                }
                 ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
                 System.err.println(TimestampHelper.now()
                         + ": Finished=" + listJobResponse.finished().size()

@@ -100,6 +100,7 @@ Retzクライアントは、 `retz-client` というパッケージをいくつ�
 ```sh
 $ retz-client load-app --name your-app-name \
    -P [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
+   -L [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
    -F [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
    -disk 2048
 $ retz-client unload-app --name your-app-name
@@ -141,7 +142,10 @@ Executor が終了してからしばらくは残るが、GC時に削除される
 * Pro: HDFS/S3 など多様なプロトコルに対応している
 * Con: ジョブ実行時に毎回解凍するので、あまり大きいと実行時間に影響する
 
-2. `-P` オプションを使って、 アプリケーション開始時に永続領域を確保し、
+2. `-L` オプションを使って、Mesosが実行時にダウンロードおよび展開する
+* ファイルがMesos agent 上でキャッシュされる以外は、 `-F` と同様
+
+3. `-P` オプションを使って、 アプリケーション開始時に永続領域を確保し、
   そこにファイルを展開する
 * [Persistent Volumes](http://mesos.apache.org/documentation/latest/persistent-volume/)
 * データはRetzがアプリケーション用に確保したAgent上の永続領域に保存さ

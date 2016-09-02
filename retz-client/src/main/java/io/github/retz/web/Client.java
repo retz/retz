@@ -230,12 +230,13 @@ public class Client implements AutoCloseable {
         return rpc(new KillRequest(id));
     }
 
-    public Response load(String appid, List<String> persistentFiles, List<String> files, Optional<Integer> diskMB) throws IOException {
-        return rpc(new LoadAppRequest(new Application(appid, persistentFiles, files, diskMB)));
+    public Response load(String appid, List<String> persistentFiles, List<String> largeFiles,
+                         List<String> files, Optional<Integer> diskMB) throws IOException {
+        return rpc(new LoadAppRequest(new Application(appid, persistentFiles, largeFiles, files, diskMB)));
     }
 
-    public Response load(String appid, List<String> persistentFiles, List<String> files) throws IOException {
-        return load(appid, persistentFiles, files, Optional.empty());
+    public Response load(String appid, List<String> persistentFiles, List<String> largeFiles, List<String> files) throws IOException {
+        return load(appid, persistentFiles, largeFiles, files, Optional.empty());
     }
 
     public Response listApp() throws IOException {

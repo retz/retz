@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 
 public class CommandListApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);
@@ -46,11 +45,12 @@ public class CommandListApp implements SubCommand {
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
 
-            ListAppResponse r = (ListAppResponse) webClient.listApp(); // TODO: make this CLI argument
+            ListAppResponse r = (ListAppResponse) webClient.listApp();
             for (Application a : r.applicationList()) {
-                LOG.info("Application {}: fetch: {} persistent ({} MB): {}", a.getAppid(),
-                        String.join(" ", a.getFiles()), a.getDiskMB(),
-                        String.join(" ", a.getPersistentFiles()));
+                LOG.info("Application {}: fetch: {} / {} / persistent ({} MB): {}", a.getAppid(),
+                        String.join(" ", a.getFiles()),
+                        String.join(" ", a.getLargeFiles()),
+                        a.getDiskMB(), String.join(" ", a.getPersistentFiles()));
             }
             return 0;
 

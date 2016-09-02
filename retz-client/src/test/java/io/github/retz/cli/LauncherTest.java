@@ -49,7 +49,8 @@ public class LauncherTest {
 
         {
             String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t",
-                    "-F", "file://foo/bar/baz", "-F", "http://example.com/example.tar.gz"};
+                    "-F", "file://foo/bar/baz", "-F", "http://example.com/example.tar.gz",
+                    "-L", "file://large", "--large-file", "file://large2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("load-app", conf.commander.getParsedCommand());
             assertEquals("load-app", conf.getParsedSubCommand().getName());
@@ -58,6 +59,8 @@ public class LauncherTest {
             assertFalse(command.files.isEmpty());
             assertEquals("file://foo/bar/baz", command.files.get(0));
             assertEquals("http://example.com/example.tar.gz", command.files.get(1));
+            assertEquals("file://large", command.largeFiles.get(0));
+            assertEquals("file://large2", command.largeFiles.get(1));
         }
         // TODO: add more pattern tests
     }
@@ -78,7 +81,7 @@ public class LauncherTest {
     public void pairParserTest() {
         String[] envs = {"k=v", "a=b", "FOOBAR='LOOK_AT ME DONT'", "wat", "empty=", "=not"};
         Properties props = SubCommand.parseKeyValuePairs(Arrays.asList(envs));
-        for(Map.Entry<Object, Object> e : props.entrySet()) {
+        for (Map.Entry<Object, Object> e : props.entrySet()) {
             System.err.println(e.getKey() + " = " + e.getValue());
         }
         assertEquals(4, props.size());

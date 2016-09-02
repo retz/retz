@@ -230,7 +230,7 @@ public final class WebConsole {
         List<Applications.Application> list = Applications.getAll();
         LOG.debug("currently {} applications", list.size());
         return list.stream()
-                .map(app -> new Application(app.appName, app.persistentFiles, app.appFiles, app.diskMB))
+                .map(app -> new Application(app.appName, app.persistentFiles, app.largeFiles, app.appFiles, app.diskMB))
                 .collect(Collectors.toList());
     }
 
