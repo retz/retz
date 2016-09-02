@@ -22,6 +22,7 @@ import io.github.retz.web.Client;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -33,7 +34,8 @@ import java.util.stream.IntStream;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 /**
  * Simple integration test cases for retz-server / -executor.
@@ -100,59 +102,19 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void scheduleAppTest() throws Exception {
         try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
-            LoadAppResponse loadRes =
-                    (LoadAppResponse) client.load("echo2",
-                            Arrays.asList(),
-                            Arrays.asList(),
-                            Arrays.asList());
-            assertThat(loadRes.status(), is("ok"));
+            loadSimpleApp(client, "echo2");
 
-            ListAppResponse listRes = (ListAppResponse) client.listApp();
-            assertThat(listRes.status(), is("ok"));
-            List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
-            assertIncludes(appNameList, "echo2");
-
-            List<EchoJob> echoJobs = new LinkedList<>();
             List<EchoJob> finishedJobs = new LinkedList<>();
             List<Integer> argvList = IntStream.rangeClosed(0, 32).boxed().collect(Collectors.toList());
             argvList.addAll(Arrays.asList(42, 63, 64, 127, 128, 151, 192, 255));
             int jobNum = argvList.size();
-            for (Integer i : argvList) {
-                Job job = new Job("echo2", "echo.sh " + i.toString(),
-                        new Properties(), new Range(1, 1), new Range(32, 128));
+            List<EchoJob> echoJobs = scheduleEchoJobs(client, "echo2", "echo.sh ", argvList);
 
-                ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
-                assertThat(scheduleResponse.status(), is("ok"));
-
-                Job scheduledJob = scheduleResponse.job();
-                echoJobs.add(new EchoJob(i.intValue(), scheduledJob));
-            }
             assertThat(echoJobs.size(), is(jobNum));
 
             for (int i = 0; i < 16; i++) {
-                List<EchoJob> toRemove = new LinkedList<>();
-                for (EchoJob echoJob : echoJobs) {
-                    Response response = client.getJob(echoJob.job.id());
-                    if (response instanceof GetJobResponse) {
-                        GetJobResponse getJobResponse = (GetJobResponse) client.getJob(echoJob.job.id());
-                        // System.err.println(echoJob.job.id() + " => " + getJobResponse.job().get().result());
-                        if (getJobResponse.job().isPresent()) {
-                            if (getJobResponse.job().get().result() == echoJob.argv) {
-                                toRemove.add(echoJob);
-                                assertThat(catStdout(getJobResponse.job().get()),
-                                        is(Integer.toString(echoJob.argv) + "\n"));
-                            } else {
-                                assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
-                                                + ", Message: " + getJobResponse.job().get().reason(),
-                                        getJobResponse.job().get().finished());
+                List<EchoJob> toRemove = toRemove(client, echoJobs, true);
 
-                            }
-                        }
-                    } else {
-                        ErrorResponse errorResponse = (ErrorResponse) response;
-                        System.err.println(echoJob.job.id() + ": " + errorResponse.status());
-                    }
-                }
                 if (!toRemove.isEmpty()) {
                     i = 0;
                 }
@@ -185,9 +147,116 @@ public class RetzIntTest extends IntTestBase {
             assertThat(listJobResponse.running().size(), is(0));
             assertThat(listJobResponse.queue().size(), is(0));
 
-            UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
+            UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo2");
             assertThat(unloadRes.status(), is("ok"));
+        }
+    }
 
+    private void loadSimpleApp(Client client, String appName) throws IOException {
+        LoadAppResponse loadRes =
+                (LoadAppResponse) client.load(appName,
+                        Arrays.asList(),
+                        Arrays.asList(),
+                        Arrays.asList());
+        assertThat(loadRes.status(), is("ok"));
+
+        ListAppResponse listRes = (ListAppResponse) client.listApp();
+        assertThat(listRes.status(), is("ok"));
+        List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
+        assertIncludes(appNameList, appName);
+    }
+
+    private List<EchoJob> scheduleEchoJobs(Client client, String appName, String cmdPrefix, List<Integer> argvList) throws IOException {
+        List<EchoJob> echoJobs = new LinkedList<>();
+        for (Integer i : argvList) {
+            Job job = new Job(appName, cmdPrefix + i.toString(),
+                    new Properties(), new Range(1, 1), new Range(32, 32));
+
+            ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
+            assertThat(scheduleResponse.status(), is("ok"));
+
+            Job scheduledJob = scheduleResponse.job();
+            echoJobs.add(new EchoJob(i.intValue(), scheduledJob));
+        }
+        return echoJobs;
+    }
+    private List<EchoJob> toRemove(Client client, List<EchoJob> echoJobs, boolean checkRetval) throws IOException, Exception {
+        List<EchoJob> toRemove = new LinkedList<>();
+        for (EchoJob echoJob : echoJobs) {
+            Response response = client.getJob(echoJob.job.id());
+            if (response instanceof GetJobResponse) {
+                GetJobResponse getJobResponse = (GetJobResponse) client.getJob(echoJob.job.id());
+                // System.err.println(echoJob.job.id() + " => " + getJobResponse.job().get().result());
+                if (getJobResponse.job().isPresent()) {
+                    if (getJobResponse.job().get().state() == Job.JobState.FINISHED
+                            || getJobResponse.job().get().state() == Job.JobState.KILLED) {
+                        toRemove.add(echoJob);
+                        assertThat(catStdout(getJobResponse.job().get()),
+                                is(Integer.toString(echoJob.argv) + "\n"));
+                    } else if (checkRetval){
+                        assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
+                                        + ", Message: " + getJobResponse.job().get().reason(),
+                                getJobResponse.job().get().finished());
+                    }
+                }
+            } else {
+                ErrorResponse errorResponse = (ErrorResponse) response;
+                System.err.println(echoJob.job.id() + ": " + errorResponse.status());
+            }
+        }
+        return toRemove;
+    }
+
+    @Test
+    public void scheduleAppTest2() throws Exception {
+        try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
+            loadSimpleApp(client, "echo3");
+
+            List<EchoJob> finishedJobs = new LinkedList<>();
+            List<Integer> argvList = IntStream.rangeClosed(0, 32).boxed().collect(Collectors.toList());
+            argvList.addAll(Arrays.asList(42, 63, 64, 127, 128, 151, 192, 255));
+            int jobNum = argvList.size();
+            List<EchoJob> echoJobs = scheduleEchoJobs(client, "echo3", "echo ", argvList);
+            assertThat(echoJobs.size(), is(jobNum));
+
+            for (int i = 0; i < 16; i++) {
+                List<EchoJob> toRemove = toRemove(client, echoJobs, false);
+                if (!toRemove.isEmpty()) {
+                    i = 0;
+                }
+                echoJobs.removeAll(toRemove);
+                finishedJobs.addAll(toRemove);
+                if (echoJobs.isEmpty()) {
+                    break;
+                }
+                Thread.sleep(1000);
+
+                Response res = client.list(64);
+                if (! (res instanceof ListJobResponse)) {
+                    ErrorResponse errorResponse = (ErrorResponse) res;
+                    System.err.println("Error: " + errorResponse.status());
+                    continue;
+                }
+                ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
+                System.err.println(TimestampHelper.now()
+                        + ": Finished=" + listJobResponse.finished().size()
+                        + ", Running=" + listJobResponse.running().size()
+                        + ", Scheduled=" + listJobResponse.queue().size());
+                for( Job finished : listJobResponse.finished()) {
+                    assertThat(finished.retry(), is(0));
+                    assertThat(finished.state(), is(Job.JobState.FINISHED));
+                    assertThat(finished.result(), is(RES_OK));
+                }
+            }
+            assertThat(finishedJobs.size(), is(jobNum));
+
+            ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
+            assertThat(listJobResponse.finished().size(), greaterThanOrEqualTo(finishedJobs.size()));
+            assertThat(listJobResponse.running().size(), is(0));
+            assertThat(listJobResponse.queue().size(), is(0));
+
+            UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo3");
+            assertThat(unloadRes.status(), is("ok"));
         }
     }
 
