@@ -133,6 +133,10 @@ public class JobQueue {
 
     public static Job retry(String taskId, int threshold) {
         Job job = RUNNING.remove(taskId);
+        if (job == null) {
+            LOG.warn("Job {} is somehow lost", taskId); // TODO: how do we seek where the heck this Job is?
+            return null;
+        }
         if (job.retry() > threshold) {
             LOG.warn("Giving up {}th retry of job(id={})", threshold, job.id());
             FINISHED.add(job);
@@ -150,12 +154,20 @@ public class JobQueue {
     }
     public static Job finish(String taskId) {
         Job job = RUNNING.remove(taskId);
+        if (job == null) {
+            LOG.warn("Job {} is somehow lost", taskId); // TODO: how do we seek where the heck this Job is?
+            return null;
+        }
         FINISHED.add(job);
         return job;
     }
 
     public static Job kill(String taskId) {
         Job job = RUNNING.remove(taskId);
+        if (job == null) {
+            LOG.warn("Job {} is somehow lost", taskId); // TODO: how do we seek where the heck this Job is?
+            return null;
+        }
         FINISHED.add(job);
         return job;
     }

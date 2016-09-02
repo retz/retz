@@ -366,6 +366,9 @@ public class RetzScheduler implements Scheduler {
     void retry(Protos.TaskStatus status) {
         int threshold = 5;
         Job job = JobQueue.retry(status.getTaskId().getValue(), threshold);
+        if (job == null) {
+            return;
+        }
         String reason = "";
         try {
             JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
@@ -382,12 +385,13 @@ public class RetzScheduler implements Scheduler {
             LOG.info("Scheduled retry {}/{} of Job(taskId={}), reason='{}'",
                     job.retry(), threshold, status.getTaskId(), reason);
         }
-
     }
     void finished(Protos.TaskStatus status) {
         Job job = JobQueue.finish(status.getTaskId().getValue());
+        if (job == null) {
+            return;
+        }
         if (status.hasData()) {
-
             try {
                 JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
                 job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
@@ -414,7 +418,10 @@ public class RetzScheduler implements Scheduler {
 
     void failed(Protos.TaskStatus status) {
 
-        Job job = JobQueue.finish(status.getTaskId().getValue());
+        Job job = JobQueue.kill(status.getTaskId().getValue());
+        if (job == null) {
+            return;
+        }
         if (status.hasData()) {
             try {
                 JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
@@ -442,6 +449,7 @@ public class RetzScheduler implements Scheduler {
         }
     }
 
+    // Use this in case Job is not in RUNNING
     void kill(Job job, String reason) {
         LOG.warn(reason);
         job.killed(TimestampHelper.now(), reason);
