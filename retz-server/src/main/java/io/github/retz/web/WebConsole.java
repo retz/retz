@@ -103,7 +103,6 @@ public final class WebConsole {
                 ScheduleResponse scheduleResponse = new ScheduleResponse(job);
                 scheduleResponse.ok();
                 LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
-                //respond(user, scheduleResponse);
 
                 res.status(200);
                 res.type("application/json");

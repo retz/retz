@@ -32,9 +32,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @WebSocket
 public class ConsoleWebSocketHandler {
@@ -67,13 +71,21 @@ public class ConsoleWebSocketHandler {
 
     private static void broadcast(String msg) {
         LOG.info("Broadcasting {}", msg);
+        //List<Future<Void>> results = new LinkedList<>();
         for (Session s : WATCHERS) {
-            try {
-                s.getRemote().sendString(msg);
-            } catch (IOException e) {
-                LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.toString());
-            }
+            //results.add(s.getRemote().sendStringByFuture(msg));
+            s.getRemote().sendStringByFuture(msg);
+
         }
+        /*
+        for (Future<Void> f : results) {
+            try {
+                f.get();  // TODO: do we really need this wait?
+            } catch (InterruptedException e) {
+            } catch (ExecutionException e) {
+                   LOG.warn("cannot send broadcast: {}", e.getCause().toString());
+            }
+        }*/
     }
 
     public static void sendPingAll() {
@@ -111,15 +123,15 @@ public class ConsoleWebSocketHandler {
             mapper.registerModule(new Jdk8Module());
             try {
                 String json = mapper.writeValueAsString(res);
-                s.getRemote().sendString(json);
+
+                // When this notification failed
+                s.getRemote().sendStringByFuture(json);
 
                 if (update.equals("finished") || update.equals("killed")) {
                     JOB_WATCHERS.remove(job.id());
                 }
             } catch (JsonProcessingException e) {
                 LOG.error("Cannot encode Job {}: {}", job, e.toString());
-            } catch (IOException e) {
-                LOG.warn("Cannot send {} to {}", update, s.getRemoteAddress());
             } catch (WebSocketException e) {
                 LOG.error("Client were disconnected: {}", e.toString());
             }
@@ -192,7 +204,7 @@ public class ConsoleWebSocketHandler {
     private <ResType extends Response> void respond(Session user, ResType res) throws IOException {
         String json = MAPPER.writeValueAsString(res);
         if (json.length() <= Connection.MAX_PAYLOAD_SIZE) {
-            user.getRemote().sendString(json);
+            user.getRemote().sendStringByFuture(json);
         } else {
             String msg = String.format("%s: Payload JSON is larger than max size supported in client (%d > %d).",
                     res.getClass().getName(), json.length(), Connection.MAX_PAYLOAD_SIZE);
