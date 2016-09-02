@@ -366,13 +366,20 @@ public class RetzScheduler implements Scheduler {
     void retry(Protos.TaskStatus status) {
         int threshold = 5;
         Job job = JobQueue.retry(status.getTaskId().getValue(), threshold);
+        String reason = "";
+        try {
+            JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
+            reason = jobResult.reason();
+        } catch (IOException e) {
+        }
         if (job.retry() > threshold) {
-            String msg = String.format("Giving up Job retry: %d / id=%d", threshold, job.id());
+            String msg = String.format("Giving up Job retry: %d / id=%d, last reason='%s'", threshold, job.id(), reason);
             LOG.warn(msg);
             job.killed(TimestampHelper.now(), msg);
             WebConsole.notifyKilled(job);
         } else {
-            LOG.info("Scheduled retry ({}) of Job(taskId={})", status.getTaskId());
+            //TODO: warning?
+            LOG.info("Scheduled retry ({}) of Job(taskId={}), reason='{}'", status.getTaskId(), reason);
         }
 
     }
