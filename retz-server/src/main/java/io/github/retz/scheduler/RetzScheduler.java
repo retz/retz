@@ -379,7 +379,8 @@ public class RetzScheduler implements Scheduler {
             WebConsole.notifyKilled(job);
         } else {
             //TODO: warning?
-            LOG.info("Scheduled retry ({}) of Job(taskId={}), reason='{}'", status.getTaskId(), reason);
+            LOG.info("Scheduled retry {}/{} of Job(taskId={}), reason='{}'",
+                    job.retry(), threshold, status.getTaskId(), reason);
         }
 
     }
