@@ -383,7 +383,7 @@ public class RetzScheduler implements Scheduler {
         } else {
             //TODO: warning?
             LOG.info("Scheduled retry {}/{} of Job(taskId={}), reason='{}'",
-                    job.retry(), threshold, status.getTaskId(), reason);
+                    job.retry(), threshold, status.getTaskId().getValue(), reason);
         }
     }
     void finished(Protos.TaskStatus status) {
