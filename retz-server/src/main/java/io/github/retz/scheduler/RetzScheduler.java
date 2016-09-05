@@ -239,7 +239,7 @@ public class RetzScheduler implements Scheduler {
                         .setName("retz-task-name-" + job.name())
                         .setTaskId("retz-task-id-" + id)
                         .setExecutor(executorInfo);
-                
+
                 try {
                     tb.setJob(job, Applications.encodable(app.get()));
                 } catch (JsonProcessingException e) {
@@ -365,8 +365,8 @@ public class RetzScheduler implements Scheduler {
     // Maybe Retry
     void retry(Protos.TaskStatus status) {
         int threshold = 5;
-        Job job = JobQueue.retry(status.getTaskId().getValue(), threshold);
-        if (job == null) {
+        Optional<Job> maybeJob = JobQueue.popFromRunning(status.getTaskId().getValue());
+        if (!maybeJob.isPresent()) {
             return;
         }
         String reason = "";
@@ -377,22 +377,24 @@ public class RetzScheduler implements Scheduler {
             } catch (IOException e) {
             }
         }
-        if (job.retry() > threshold) {
-            String msg = String.format("Giving up Job retry: %d / id=%d, last reason='%s'", threshold, job.id(), reason);
-            LOG.warn(msg);
-            job.killed(TimestampHelper.now(), msg);
-            WebConsole.notifyKilled(job);
+        if (maybeJob.get().retry() > threshold) {
+            String msg = String.format("Giving up Job retry: %d / id=%d, last reason='%s'", threshold, maybeJob.get().id(), reason);
+            kill(maybeJob.get(), msg);
         } else {
             //TODO: warning?
+            JobQueue.retry(maybeJob.get());
             LOG.info("Scheduled retry {}/{} of Job(taskId={}), reason='{}'",
-                    job.retry(), threshold, status.getTaskId().getValue(), reason);
+                    maybeJob.get().retry(), threshold, status.getTaskId().getValue(), reason);
         }
     }
+
     void finished(Protos.TaskStatus status) {
-        Job job = JobQueue.finish(status.getTaskId().getValue());
-        if (job == null) {
+        Optional<Job> maybeJob = JobQueue.popFromRunning(status.getTaskId().getValue());
+        if (!maybeJob.isPresent()) {
             return;
         }
+        Job job = maybeJob.get();
+
         if (status.hasData()) {
             try {
                 JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
@@ -402,28 +404,26 @@ public class RetzScheduler implements Scheduler {
                 // Maybe put JobResult#reason() into Job#reason()
                 LOG.info("Job {} (id {}) has finished. State: {}",
                         status.getTaskId().getValue(), job.id(), status.getState().name());
+                JobQueue.finished(job);
                 WebConsole.notifyFinished(job);
             } catch (IOException e) {
                 String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
-                LOG.warn(msg);
                 LOG.warn("Exception: {}", e.toString());
-                job.killed(TimestampHelper.now(), msg);
-                WebConsole.notifyKilled(job);
+                kill(job, msg);
             }
         } else {
             String msg = String.format("Message from Mesos executor: %s", status.getMessage());
-            LOG.warn(msg);
-            job.killed(TimestampHelper.now(), msg);
-            WebConsole.notifyKilled(job);
+            kill(job, msg);
         }
     }
 
     void failed(Protos.TaskStatus status) {
-
-        Job job = JobQueue.kill(status.getTaskId().getValue());
-        if (job == null) {
+        Optional<Job> maybeJob = JobQueue.popFromRunning(status.getTaskId().getValue());
+        if (!maybeJob.isPresent()) {
             return;
         }
+        Job job = maybeJob.get();
+
         if (status.hasData()) {
             try {
                 JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
@@ -432,30 +432,24 @@ public class RetzScheduler implements Scheduler {
                         status.getExecutorId().getValue()).get(), jobResult.finished(), jobResult.result());
                 LOG.info("Job {} (id {}) has been failed. State: {}",
                         status.getTaskId().getValue(), job.id(), status.getState().name());
-                job.killed(TimestampHelper.now(), status.getReason().toString());
-                WebConsole.notifyKilled(job);
+                kill(job, status.getReason().toString());
 
             } catch (IOException e) {
                 String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
-                LOG.warn(msg);
                 LOG.warn("Exception: {}", e.toString());
-                job.killed(TimestampHelper.now(), msg);
-                WebConsole.notifyKilled(job);
+                kill(job, msg);
             }
 
         } else {
             String msg = String.format("Message from Mesos executor: %s", status.getMessage());
-            LOG.warn(msg);
-            job.killed(TimestampHelper.now(), msg);
-            WebConsole.notifyKilled(job);
+            kill(job, msg);
         }
     }
 
-    // Use this in case Job is not in RUNNING
     void kill(Job job, String reason) {
         LOG.warn(reason);
         job.killed(TimestampHelper.now(), reason);
-        JobQueue.kill(job);
+        JobQueue.finished(job);
         WebConsole.notifyKilled(job);
     }
 

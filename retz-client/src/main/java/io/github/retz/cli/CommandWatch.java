@@ -43,7 +43,6 @@ public class CommandWatch implements SubCommand{
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
-           // webClient.connect();
 
             webClient.startWatch((watchResponse -> {
                 StringBuilder b = new StringBuilder()

@@ -17,7 +17,9 @@
 package io.github.retz.cli;
 
 import com.beust.jcommander.Parameter;
+import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.LoadAppResponse;
+import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,9 +82,14 @@ public class CommandLoadApp implements SubCommand {
                 maybeDisk = Optional.of(disk);
             }
 
-            LoadAppResponse r = (LoadAppResponse) webClient.load(appName,
+            Response r = webClient.load(appName,
                     persistentFiles, largeFiles, files, maybeDisk);
+
             LOG.info(r.status());
+
+            if (r instanceof ErrorResponse) {
+                return -1;
+            }
             return 0;
 
         } catch (ConnectException e) {

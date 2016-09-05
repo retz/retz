@@ -17,6 +17,8 @@
 package io.github.retz.cli;
 
 import com.beust.jcommander.Parameter;
+import io.github.retz.protocol.ErrorResponse;
+import io.github.retz.protocol.Response;
 import io.github.retz.protocol.UnloadAppResponse;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
@@ -50,8 +52,11 @@ public class CommandUnloadApp implements SubCommand {
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
 
-            UnloadAppResponse res = (UnloadAppResponse) webClient.unload(appName);
+            Response res = webClient.unload(appName);
             LOG.info(res.status());
+            if (res instanceof ErrorResponse) {
+                return -1;
+            }
             return 0;
 
 

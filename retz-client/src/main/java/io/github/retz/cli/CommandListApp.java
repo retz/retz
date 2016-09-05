@@ -17,13 +17,16 @@
 package io.github.retz.cli;
 
 import io.github.retz.protocol.Application;
+import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.ListAppResponse;
+import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.List;
 
 public class CommandListApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);
@@ -45,7 +48,14 @@ public class CommandListApp implements SubCommand {
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
 
-            ListAppResponse r = (ListAppResponse) webClient.listApp();
+            Response res = webClient.listApp();
+
+            if (res instanceof ErrorResponse) {
+                LOG.info(res.status());
+                return -1;
+            }
+            ListAppResponse r = (ListAppResponse) res;
+
             for (Application a : r.applicationList()) {
                 LOG.info("Application {}: fetch: {} / {} / persistent ({} MB): {}", a.getAppid(),
                         String.join(" ", a.getFiles()),
