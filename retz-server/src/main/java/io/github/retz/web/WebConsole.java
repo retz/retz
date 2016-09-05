@@ -97,9 +97,6 @@ public final class WebConsole {
 
                 JobQueue.push(job);
 
-                //if (scheduleRequest.doWatch()) {
-                // LOG.warn("Currently there is no async response for SparkJava, which means 'run' command consumes single...");
-                //}
                 ScheduleResponse scheduleResponse = new ScheduleResponse(job);
                 scheduleResponse.ok();
                 LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
@@ -107,9 +104,9 @@ public final class WebConsole {
                 res.status(200);
                 res.type("application/json");
                 return MAPPER.writeValueAsString(scheduleResponse);
-                //broadcast("scheduled", job, "ok");
 
             } else {
+                LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
                 ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
                 res.status(403);
                 res.type("application/json");
