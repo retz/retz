@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.22
+
+* Add server side handler on WebSocketException
+
 ## 0.0.21
 
 * Add workaround where a NullPointerException kills the whole service
