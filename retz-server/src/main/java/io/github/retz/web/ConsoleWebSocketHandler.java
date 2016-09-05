@@ -69,23 +69,24 @@ public class ConsoleWebSocketHandler {
         }
     }
 
+    // TODO: I'm afraid of all race condition touching sessions
     private static void broadcast(String msg) {
         LOG.info("Broadcasting {}", msg);
-        //List<Future<Void>> results = new LinkedList<>();
+        List<Session> badSessions = new LinkedList<>();
         for (Session s : WATCHERS) {
             //results.add(s.getRemote().sendStringByFuture(msg));
-            s.getRemote().sendStringByFuture(msg);
-
-        }
-        /*
-        for (Future<Void> f : results) {
             try {
-                f.get();  // TODO: do we really need this wait?
-            } catch (InterruptedException e) {
-            } catch (ExecutionException e) {
-                   LOG.warn("cannot send broadcast: {}", e.getCause().toString());
+                s.getRemote().sendStringByFuture(msg);
+            } catch (RuntimeException e) {
+                LOG.info(e.toString());
+                badSessions.add(s);
             }
-        }*/
+        }
+        // Fire all bad sessions
+        WATCHERS.removeAll(badSessions);
+        for (Session s : badSessions) {
+            s.close();
+        }
     }
 
     public static void sendPingAll() {
