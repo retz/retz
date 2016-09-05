@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.23
+
+* Improve WebSocket disconnect handling
+
 ## 0.0.22
 
 * Add server side handler on WebSocketException

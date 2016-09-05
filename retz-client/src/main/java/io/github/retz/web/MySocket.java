@@ -114,7 +114,7 @@ public class MySocket {
 
     @OnWebSocketMessage
     public void onMessage(String msg) {
-        LOG.info("message: {}", msg);
+        LOG.debug("message: {}", msg);
         synchronized (this) {
             response = msg;
         }

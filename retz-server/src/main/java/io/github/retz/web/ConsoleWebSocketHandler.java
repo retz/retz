@@ -99,6 +99,10 @@ public class ConsoleWebSocketHandler {
                 LOG.warn("cannot send to {}: {}", s.getRemoteAddress().getHostName(), e.toString());
                 s.close();
                 WATCHERS.remove(s);
+            } catch (WebSocketException e) {
+                LOG.error("Client were disconnected: {}", e.toString());
+                s.close();
+                WATCHERS.remove(s);
             }
         }
         for (Map.Entry<Integer, Session> watcher : JOB_WATCHERS.entrySet()) {
@@ -110,9 +114,12 @@ public class ConsoleWebSocketHandler {
                 LOG.warn("cannot send to {}: {}", watcher.getValue().getRemoteAddress().getHostName(), e.toString());
                 watcher.getValue().close();
                 JOB_WATCHERS.remove(watcher.getKey());
+            } catch (WebSocketException e) {
+                LOG.error("Client were disconnected: {}", e.toString());
+                watcher.getValue().close();
+                JOB_WATCHERS.remove(watcher.getKey());
             }
         }
-
     }
 
     public static void notify(String update, Job job) {
@@ -205,7 +212,12 @@ public class ConsoleWebSocketHandler {
     private <ResType extends Response> void respond(Session user, ResType res) throws IOException {
         String json = MAPPER.writeValueAsString(res);
         if (json.length() <= Connection.MAX_PAYLOAD_SIZE) {
-            user.getRemote().sendStringByFuture(json);
+            try {
+                user.getRemote().sendStringByFuture(json);
+            } catch (WebSocketException e) {
+                LOG.error("Client were disconnected: {}", e.toString());
+                user.close();
+            }
         } else {
             String msg = String.format("%s: Payload JSON is larger than max size supported in client (%d > %d).",
                     res.getClass().getName(), json.length(), Connection.MAX_PAYLOAD_SIZE);
