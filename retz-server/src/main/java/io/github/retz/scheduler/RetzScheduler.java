@@ -370,10 +370,12 @@ public class RetzScheduler implements Scheduler {
             return;
         }
         String reason = "";
-        try {
-            JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
-            reason = jobResult.reason();
-        } catch (IOException e) {
+        if (status.hasData()) {
+            try {
+                JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
+                reason = jobResult.reason();
+            } catch (IOException e) {
+            }
         }
         if (job.retry() > threshold) {
             String msg = String.format("Giving up Job retry: %d / id=%d, last reason='%s'", threshold, job.id(), reason);
