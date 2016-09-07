@@ -74,6 +74,7 @@ public class Client implements AutoCloseable {
             catHTTPFile(job.url(), "stdout");
             LOG.info("==== Printing stderr of remote executor ====");
             catHTTPFile(job.url(), "stderr");
+
             if (statHTTPFile(job.url(), "stdout-" + job.id())) {
                 LOG.info("==== Printing stdout-{} of remote executor ====", job.id());
                 catHTTPFile(job.url(), "stdout-" + job.id());
@@ -95,7 +96,7 @@ public class Client implements AutoCloseable {
     }
 
     public static boolean statHTTPFile(String url, String name) {
-        String addr = url.replace("files/browse", "files/download") + "/" + name;
+        String addr = url.replace("files/browse", "files/download") + "%2F" + name;
 
         HttpURLConnection conn = null;
         try {
@@ -120,18 +121,19 @@ public class Client implements AutoCloseable {
     }
 
     public static void catHTTPFile(String url, String name, OutputStream out) {
-        String addr = url.replace("files/browse", "files/download") + "/" + name;
+        String addr = url.replace("files/browse", "files/download") + "%2F" + name;
 
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(addr).openConnection();
+            conn.setDoOutput(true);
             conn.setRequestMethod("GET");
         } catch (IOException e) {
             LOG.error("Failed to fetch {}: {}", addr, e.toString());
             return;
         }
-        conn.setDoOutput(true);
-
+        //String s = conn.getHeaderField("Content-length");
+        //LOG.info("Content-length: {}", s);
         try (InputStream input = conn.getInputStream()) {
             byte[] buffer = new byte[65536];
             int bytesRead = 0;
@@ -139,14 +141,21 @@ public class Client implements AutoCloseable {
                 out.write(buffer, 0, bytesRead);
             }
         } catch (IOException e) {
-            LOG.error("Cannot fetch file {}: {}", url, e.toString());
+            // Somehow this happens even HTTP was correct
+            LOG.debug("Cannot fetch file {}: {}", addr, e.toString());
+            // Just retry until your stack get stuck; thanks to SO:33340848
+            // and to that crappy HttpURLConnection
+            catHTTPFile(url, name, out);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
-        conn.disconnect();
     }
 
     public static void fetchHTTPFile(String url, String name, String dir) {
         boolean _res = new File(dir).mkdir();
-        String addr = url.replace("files/browse", "files/download") + "/" + name;
+        String addr = url.replace("files/browse", "files/download") + "%2F" + name;
         String localfile = FilenameUtils.concat(dir, name);
         LOG.info("Downloading {} as {}", addr, localfile);
         try {
@@ -244,6 +253,7 @@ public class Client implements AutoCloseable {
                 if (watchResponse.job() == null) {
                     return null;
                 } else if (scheduleResponse.job().id() == watchResponse.job().id()) {
+                    LOG.info("{}: id={}", watchResponse.event(), watchResponse.job().id());
                     if (watchResponse.job().state() == Job.JobState.FINISHED) {
                         return watchResponse.job();
                     } else if (watchResponse.job().state() == Job.JobState.KILLED) {
@@ -325,7 +335,7 @@ public class Client implements AutoCloseable {
                 LOG.error("failed to connect to host");
                 return null;
             } else {
-                LOG.info("Connected to the host");
+                LOG.info("Connected to the host. Start waiting for response..");
             }
         } catch (Exception e) {
             LOG.error(e.toString());
@@ -336,7 +346,7 @@ public class Client implements AutoCloseable {
             String json;
             try {
                 json = socket.awaitResponse();
-                LOG.info(json);
+                LOG.debug("WaitForResponse started: {}", json);
             } catch (InterruptedException e) {
                 continue;
             }
