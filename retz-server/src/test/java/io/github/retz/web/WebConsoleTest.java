@@ -114,9 +114,9 @@ public class WebConsoleTest {
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 
-            Optional<Applications.Application> app = Applications.get("foobar");
+            Optional<Application> app = Applications.get("foobar");
             assertTrue(app.isPresent());
-            assertThat(app.get().appName, is("foobar"));
+            assertThat(app.get().getAppid(), is("foobar"));
         }
 
         {
@@ -162,9 +162,9 @@ public class WebConsoleTest {
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 
-            Optional<Applications.Application> app = Applications.get("foobar");
+            Optional<Application> app = Applications.get("foobar");
             assertTrue(app.isPresent());
-            assertThat(app.get().appName, is("foobar"));
+            assertThat(app.get().getAppid(), is("foobar"));
         }
         maybeJob = JobQueue.popMany(10000, 10000);
         assertTrue(maybeJob.isEmpty());

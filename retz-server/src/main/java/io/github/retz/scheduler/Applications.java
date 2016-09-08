@@ -17,12 +17,16 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.mesos.Resource;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Container;
 import io.github.retz.protocol.data.DockerContainer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -44,24 +48,13 @@ public class Applications {
                 .collect(Collectors.toList()));
     }
 
-    public static boolean load(io.github.retz.protocol.data.Application app) {
-        Application application = new Application();
-        // TODO: eliminate all Applications$Application objects and use protocol.Application
-        application.appName = Objects.requireNonNull(app.getAppid());
-        application.persistentFiles = Objects.requireNonNull(app.getPersistentFiles());
-        application.largeFiles = Objects.requireNonNull(app.getLargeFiles());
-        application.appFiles = Objects.requireNonNull(app.getFiles());
-        application.diskMB = Objects.requireNonNull(app.getDiskMB());
-        application.container = Objects.requireNonNull(app.container());
-
-        DICTIONARY.putIfAbsent(application.appName, application);
+    public static boolean load(Application application) {
+        DICTIONARY.putIfAbsent(application.getAppid(), application);
         return true;
     }
 
-    public static io.github.retz.protocol.data.Application encodable(Application app) {
-        io.github.retz.protocol.data.Application encodable = new io.github.retz.protocol.data.Application(
-                app.appName, app.persistentFiles, app.largeFiles, app.appFiles, app.diskMB, app.container);
-        return encodable;
+    public static Application encodable(Application app) {
+        return app;
     }
 
     public static void unload(String appName) {
@@ -77,8 +70,8 @@ public class Applications {
 
     public static List<Application> needsPersistentVolume(Resource resource, String role) {
         List<Application> apps = DICTIONARY.entrySet().stream()
-                .filter(entry -> !entry.getValue().persistentFiles.isEmpty())
-                .filter(entry -> entry.getValue().diskMB.isPresent())
+                .filter(entry -> !entry.getValue().getPersistentFiles().isEmpty())
+                .filter(entry -> entry.getValue().getDiskMB().isPresent())
                 .filter(entry -> !resource.volumes().containsKey(entry.getValue().toVolumeId(role)))
                 .map(entry -> entry.getValue())
                 .collect(Collectors.toList());
@@ -86,66 +79,55 @@ public class Applications {
     }
 
 
-    public static class Application {
-        public String appName;
-        public List<String> persistentFiles;
-        public List<String> largeFiles;
-        public List<String> appFiles;
-        public Optional<Integer> diskMB;
-        public Container container;
+    public static Protos.ContainerInfo appToContainerInfo(Application application) {
+        Container container = application.container();
+        DockerContainer c = (DockerContainer) container;
+        return Protos.ContainerInfo.newBuilder().setDocker(
+                Protos.ContainerInfo.DockerInfo.newBuilder()
+                        .setImage(c.image()))
+                .setType(Protos.ContainerInfo.Type.DOCKER)
+                .build();
+    }
 
-        public Protos.ContainerInfo toContainerInfo() {
-            DockerContainer c = (DockerContainer) container;
-            return Protos.ContainerInfo.newBuilder().setDocker(
-                    Protos.ContainerInfo.DockerInfo.newBuilder()
-                            .setImage(c.image()))
-                    .setType(Protos.ContainerInfo.Type.DOCKER)
-                    .build();
+    public static Protos.CommandInfo appToCommandInfo(Application application, String command) {
+        Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
+                .setShell(true)
+                .setValue(command);
+
+        for (String file : application.getFiles()) {
+            commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
         }
-        
-        public Protos.CommandInfo toCommandInfo(String command) {
-            Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
-                    .setShell(true)
-                    .setValue(command);
-
-            for (String file : appFiles) {
-                commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
-            }
-            for (String file : largeFiles) {
-                commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
-            }
-            return commandInfoBuilder.build();
+        for (String file : application.getLargeFiles()) {
+            commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
         }
+        return commandInfoBuilder.build();
+    }
 
-        public Protos.ExecutorInfo toExecutorInfo(Protos.FrameworkID frameworkID) {
+    public static Protos.ExecutorInfo appToExecutorInfo(Application application, Protos.FrameworkID frameworkID) {
 
-            String jarFile = FilenameUtils.getName(RetzScheduler.getJarUri());
-            String cmd = "java -jar " + jarFile;
-            Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
-                    .setEnvironment(Protos.Environment.newBuilder()
-                            .addVariables(Protos.Environment.Variable.newBuilder()
-                                    .setName("ASAKUSA_HOME").setValue(".").build()))
-                    .setValue(cmd)
-                    .setShell(true)
-                    .addUris(Protos.CommandInfo.URI.newBuilder().setValue(RetzScheduler.getJarUri()).setCache(false)); // In production, set this true
+        String jarFile = FilenameUtils.getName(RetzScheduler.getJarUri());
+        String cmd = "java -jar " + jarFile;
+        Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
+                .setEnvironment(Protos.Environment.newBuilder()
+                        .addVariables(Protos.Environment.Variable.newBuilder()
+                                .setName("ASAKUSA_HOME").setValue(".").build()))
+                .setValue(cmd)
+                .setShell(true)
+                .addUris(Protos.CommandInfo.URI.newBuilder().setValue(RetzScheduler.getJarUri()).setCache(false)); // In production, set this true
 
-            for (String file : appFiles) {
-                commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
-            }
-            for (String file : largeFiles) {
-                commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
-            }
-
-            Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
-                    .setCommand(commandInfoBuilder.build())
-                    .setExecutorId(Protos.ExecutorID.newBuilder().setValue(appName).build())
-                    .setFrameworkId(frameworkID)
-                    .build();
-            return executorInfo;
+        for (String file : application.getFiles()) {
+            commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
+        }
+        for (String file : application.getLargeFiles()) {
+            commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
         }
 
-        public String toVolumeId(String role) {
-            return io.github.retz.protocol.data.Application.toVolumeId(appName);
-        }
+        Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
+                .setCommand(commandInfoBuilder.build())
+                .setExecutorId(Protos.ExecutorID.newBuilder().setValue(application.getAppid()).build())
+                .setFrameworkId(frameworkID)
+                .build();
+        return executorInfo;
     }
 }
+

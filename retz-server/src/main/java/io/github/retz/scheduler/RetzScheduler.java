@@ -22,6 +22,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;
 import io.github.retz.protocol.data.MesosContainer;
@@ -128,26 +129,26 @@ public class RetzScheduler implements Scheduler {
 
             SetMap commands = new SetMap();
 
-            List<Applications.Application> apps = Applications.needsPersistentVolume(resource, frameworkInfo.getRole());
-            for (Applications.Application a : apps) {
+            List<Application> apps = Applications.needsPersistentVolume(resource, frameworkInfo.getRole());
+            for (Application a : apps) {
                 LOG.debug("Application {}: {} {} volume: {} {}MB",
-                        a.appName, String.join(" ", a.persistentFiles),
-                        String.join(" ", a.appFiles), a.toVolumeId(frameworkInfo.getRole()), a.diskMB);
+                        a.getAppid(), String.join(" ", a.getPersistentFiles()),
+                        String.join(" ", a.getFiles()), a.toVolumeId(frameworkInfo.getRole()), a.getDiskMB());
             }
             int reservedSpace = resource.reservedDiskMB();
             LOG.debug("Number of volumes: {}, reserved space: {}", resource.volumes().size(), reservedSpace);
 
-            for (Applications.Application app : apps) {
+            for (Application app : apps) {
 
-                String volumeId = app.toVolumeId(frameworkInfo.getRole());
-                LOG.debug("Application {} needs {} MB persistent volume", app.appName, app.diskMB);
-                if (reservedSpace < app.diskMB.get()) {
+                String volumeId = app.toVolumeId();
+                LOG.debug("Application {} needs {} MB persistent volume", app.getAppid(), app.getDiskMB());
+                if (reservedSpace < app.getDiskMB().get()) {
                     // If enough space is not reserved, then reserve
                     // TODO: how it must behave when we only have too few space to reserve
-                    Protos.Resource.Builder rb = baseResourceBuilder(app.diskMB.get() - reservedSpace);
+                    Protos.Resource.Builder rb = baseResourceBuilder(app.getDiskMB().get() - reservedSpace);
 
                     LOG.info("Reserving resource with principal={}, role={}, app={}",
-                            frameworkInfo.getPrincipal(), frameworkInfo.getRole(), app.appName);
+                            frameworkInfo.getPrincipal(), frameworkInfo.getRole(), app.getAppid());
                     operations.add(Protos.Offer.Operation.newBuilder()
                             .setType(Protos.Offer.Operation.Type.RESERVE)
                             .setReserve(Protos.Offer.Operation.Reserve.newBuilder()
@@ -156,8 +157,8 @@ public class RetzScheduler implements Scheduler {
                             .build());
                 } else if (!resource.volumes().containsKey(volumeId)) {
                     // We have enough space to reserve, then do it
-                    Protos.Resource.Builder rb = baseResourceBuilder(app.diskMB.get());
-                    LOG.info("Creating {} MB volume {} for application {}", app.diskMB, volumeId, app.appName);
+                    Protos.Resource.Builder rb = baseResourceBuilder(app.getDiskMB().get());
+                    LOG.info("Creating {} MB volume {} for application {}", app.getDiskMB(), volumeId, app.getAppid());
                     operations.add(Protos.Offer.Operation.newBuilder()
                             .setType(Protos.Offer.Operation.Type.CREATE)
                             .setCreate(Protos.Offer.Operation.Create.newBuilder().addVolumes(
@@ -167,10 +168,10 @@ public class RetzScheduler implements Scheduler {
                                                     .setId(volumeId))
                                             .setVolume(Protos.Volume.newBuilder()
                                                     .setMode(Protos.Volume.Mode.RW)
-                                                    .setContainerPath(app.appName + "-home")))
+                                                    .setContainerPath(app.getAppid() + "-home")))
                                             .build())
                             ).build());
-                    reservedSpace -= app.diskMB.get();
+                    reservedSpace -= app.getDiskMB().get();
                 }
             }
 
@@ -208,7 +209,7 @@ public class RetzScheduler implements Scheduler {
             List<Job> jobs = JobQueue.popMany((int) resource.cpu(), resource.memMB());
             // Assign tasks if it has enough CPU/Memory
             for (Job job : jobs) {
-                Optional<Applications.Application> app = Applications.get(job.appid());
+                Optional<Application> app = Applications.get(job.appid());
 
                 if (!app.isPresent()) {
                     String reason = String.format("Application %s does not exist any more. Cancel.", job.appid());
@@ -249,8 +250,8 @@ public class RetzScheduler implements Scheduler {
                 }
 
                 String volumeId = app.get().toVolumeId(frameworkInfo.getRole());
-                if (app.get().diskMB.isPresent() && resource.volumes().containsKey(volumeId)) {
-                    LOG.debug("getting {}, diskMB {}", volumeId, app.get().diskMB.get());
+                if (app.get().getDiskMB().isPresent() && resource.volumes().containsKey(volumeId)) {
+                    LOG.debug("getting {}, diskMB {}", volumeId, app.get().getDiskMB().get());
                     Protos.Resource res = resource.volumes().get(volumeId);
                     LOG.debug("name:{}, role:{}, path:{}, size:{}, principal:{}",
                             res.getName(), res.getRole(), res.getDisk().getVolume().getContainerPath(),
@@ -271,9 +272,9 @@ public class RetzScheduler implements Scheduler {
                 WebConsole.notifyStarted(job);
 
                 // This shouldn't be a List nor a set, but a Map
-                List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.get().appName, new LinkedList<>());
+                List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.get().getAppid(), new LinkedList<>());
                 slaves.add(offer.getSlaveId());
-                this.slaves.put(app.get().appName, slaves);
+                this.slaves.put(app.get().getAppid(), slaves);
 
                 JobQueue.start(taskId.getValue(), job);
 
@@ -394,11 +395,11 @@ public class RetzScheduler implements Scheduler {
             return;
         }
         Job job = maybeJob.get();
-        Optional<Applications.Application> maybeApp = Applications.get(job.appid());
+        Optional<Application> maybeApp = Applications.get(job.appid());
         if (maybeApp.isPresent()) {
             int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
             String finished = TimestampHelper.now();
-            if (maybeApp.get().container instanceof MesosContainer) { // Which means it ran with RetzExecutor
+            if (maybeApp.get().container() instanceof MesosContainer) { // Which means it ran with RetzExecutor
                 if (status.hasData()) {
                     try {
                         JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);

@@ -27,6 +27,9 @@ import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.github.retz.scheduler.Applications.appToCommandInfo;
+import static io.github.retz.scheduler.Applications.appToContainerInfo;
+
 public class TaskBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(TaskBuilder.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -80,22 +83,22 @@ public class TaskBuilder {
         return this;
     }
 
-    public TaskBuilder setExecutor(Job job, Applications.Application application, Protos.FrameworkID frameworkId)
+    public TaskBuilder setExecutor(Job job, Application application, Protos.FrameworkID frameworkId)
             throws JsonProcessingException
     {
-        if (application.container instanceof MesosContainer) {
-            Protos.ExecutorInfo executorInfo = application.toExecutorInfo(frameworkId);
+        if (application.container() instanceof MesosContainer) {
+            Protos.ExecutorInfo executorInfo = Applications.appToExecutorInfo(application, frameworkId);
             builder.setExecutor(executorInfo);
             this.setJob(job, Applications.encodable(application));
 
-        } else if (application.container instanceof DockerContainer) {
-            Protos.CommandInfo commandInfo = application.toCommandInfo(job.cmd());
+        } else if (application.container() instanceof DockerContainer) {
+            Protos.CommandInfo commandInfo = appToCommandInfo(application, job.cmd());
             builder.setCommand(commandInfo);
-            Protos.ContainerInfo containerInfo = application.toContainerInfo();
+            Protos.ContainerInfo containerInfo = appToContainerInfo(application);
             builder.setContainer(containerInfo);
 
         } else {
-            LOG.error("Unknown container: {}", application.container);
+            LOG.error("Unknown container: {}", application.container());
             throw new AssertionError();
         }
 

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.Connection;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
@@ -38,7 +37,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
@@ -226,11 +224,7 @@ public final class WebConsole {
     }
 
     public static List<Application> listApps() {
-        List<Applications.Application> list = Applications.getAll();
-        LOG.debug("currently {} applications", list.size());
-        return list.stream()
-                .map(app -> new Application(app.appName, app.persistentFiles, app.largeFiles, app.appFiles, app.diskMB, app.container))
-                .collect(Collectors.toList());
+        return Applications.getAll();
     }
 
     public static void unload(String appName) {

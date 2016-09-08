@@ -55,11 +55,20 @@ public class CommandListApp implements SubCommand {
             }
             ListAppResponse r = (ListAppResponse) res;
 
+
             for (Application a : r.applicationList()) {
-                LOG.info("Application {}: fetch: {} / {} / persistent ({} MB): {}", a.getAppid(),
-                        String.join(" ", a.getFiles()),
-                        String.join(" ", a.getLargeFiles()),
-                        a.getDiskMB(), String.join(" ", a.getPersistentFiles()));
+                StringBuilder persistent = new StringBuilder();
+                if (! a.getPersistentFiles().isEmpty()) {
+                    persistent.append("persistent")
+                            .append("(").append(a.getDiskMB().get()).append("MB):files=")
+                            .append(String.join(",", a.getPersistentFiles()));
+                }
+                LOG.info("Application name={}: container={}: files={}/{}: {}",
+                        a.getAppid(),
+                        a.container().getClass().getSimpleName(),
+                        String.join(",", a.getFiles()),
+                        String.join(",", a.getLargeFiles()),
+                        persistent.toString());
             }
             return 0;
 
