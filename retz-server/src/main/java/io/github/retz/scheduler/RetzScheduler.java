@@ -22,8 +22,9 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
-import io.github.retz.protocol.Job;
-import io.github.retz.protocol.JobResult;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.JobResult;
+import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.web.WebConsole;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
@@ -233,15 +234,14 @@ public class RetzScheduler implements Scheduler {
                 String id = Integer.toString(job.id());
                 // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                 // (esp ASAKUSA_HOME env)
-                Protos.ExecutorInfo executorInfo = app.get().toExecutorInfo(frameworkInfo.getId());
                 TaskBuilder tb = new TaskBuilder()
                         .setOffer(resource, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
                         .setName("retz-task-name-" + job.name())
-                        .setTaskId("retz-task-id-" + id)
-                        .setExecutor(executorInfo);
+                        .setTaskId("retz-task-id-" + id);
+                //.setApplication(app.get(), frameworkInfo.getId());
 
                 try {
-                    tb.setJob(job, Applications.encodable(app.get()));
+                    tb.setExecutor(job, app.get(), frameworkInfo.getId()); //Applications.encodable(app.get()));
                 } catch (JsonProcessingException e) {
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
                     kill(job, reason);
@@ -394,26 +394,39 @@ public class RetzScheduler implements Scheduler {
             return;
         }
         Job job = maybeJob.get();
-
-        if (status.hasData()) {
-            try {
-                JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
-                job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                        status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                        status.getExecutorId().getValue()).get(), jobResult.finished(), jobResult.result());
-                // Maybe put JobResult#reason() into Job#reason()
-                LOG.info("Job {} (id {}) has finished. State: {}",
-                        status.getTaskId().getValue(), job.id(), status.getState().name());
-                JobQueue.finished(job);
-                WebConsole.notifyFinished(job);
-            } catch (IOException e) {
-                String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
-                LOG.warn("Exception: {}", e.toString());
-                kill(job, msg);
+        Optional<Applications.Application> maybeApp = Applications.get(job.appid());
+        if (maybeApp.isPresent()) {
+            int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
+            String finished = TimestampHelper.now();
+            if (maybeApp.get().container instanceof MesosContainer) { // Which means it ran with RetzExecutor
+                if (status.hasData()) {
+                    try {
+                        JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
+                        ret = jobResult.result();
+                        finished = jobResult.finished();
+                    } catch (IOException e) {
+                        String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
+                        LOG.warn("Exception: {}", e.toString());
+                        kill(job, msg);
+                        return;
+                    }
+                } else {
+                    String msg = String.format("Message from Mesos executor: %s", status.getMessage());
+                    kill(job, msg);
+                    return;
+                }
             }
+            job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue()).get(), finished, ret);
+            // Maybe put JobResult#reason() into Job#reason()
+            LOG.info("Job {} (id {}) has finished. State: {}",
+                    status.getTaskId().getValue(), job.id(), status.getState().name());
+            JobQueue.finished(job);
+            WebConsole.notifyFinished(job);
+
         } else {
-            String msg = String.format("Message from Mesos executor: %s", status.getMessage());
-            kill(job, msg);
+            // Race between application unload and task finish; Urashima-taro fairy tale.
         }
     }
 
@@ -430,8 +443,8 @@ public class RetzScheduler implements Scheduler {
                 job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
                         status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                         status.getExecutorId().getValue()).get(), jobResult.finished(), jobResult.result());
-                LOG.info("Job {} (id {}) has been failed. State: {}",
-                        status.getTaskId().getValue(), job.id(), status.getState().name());
+                LOG.info("Job {} (id {}) has been failed. State: {}, Reason: {}",
+                        status.getTaskId().getValue(), job.id(), status.getState().name(), status.getReason());
                 kill(job, status.getReason().toString());
 
             } catch (IOException e) {
@@ -441,7 +454,7 @@ public class RetzScheduler implements Scheduler {
             }
 
         } else {
-            String msg = String.format("Message from Mesos executor: %s", status.getMessage());
+            String msg = String.format("Message from Mesos executor: %s:%s", status.getMessage(), status.getReason().toString());
             kill(job, msg);
         }
     }

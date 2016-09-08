@@ -160,6 +160,15 @@ Executor が終了してからしばらくは残るが、GC時に削除される
 * Pro: 永続化されており、入出力データの受け渡しにも使える（かもしれない、要検証）
 * Con: ひとつのVolumeについては、同時に1つしかジョブを実行することができない
 
+4. `--container` オプションを使って、コンテナ上で実行する
+* [Containerizers](http://mesos.apache.org/documentation/latest/containerizer/)
+* Mesos Agent に `--containerizers=docker` 等の記入が必要
+* `--container docker --image ubuntu:latest [--argv a,b,c,d] [--force-pull]` と指定
+* Pro: Dockerレポジトリに動作を依存することになる。独自レポジトリを管理し、 Mesos
+  Agent の引数に設定する必要がある。
+* Con: `-F` `-L` 等でファイルを解凍するときのオーバーヘッドがなく、 `-P` のように
+  複雑なライフサイクルを考慮する必要がない
+
 ジョブが投入され、リソースが確保されると、 Mesos Agentが必要なファイル
 を指定された場所から取得し、 Retz Executor が Mesos Agent から `fork,
 exec` される。その結果は切り離されたディレクトリに保存される。

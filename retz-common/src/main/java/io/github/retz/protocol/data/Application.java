@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.protocol;
+package io.github.retz.protocol.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -31,17 +31,21 @@ public class Application {
     private List<String> files;
     private Optional<Integer> diskMB;
 
+    private Container container;
+
     @JsonCreator
     public Application(@JsonProperty(value = "appid", required = true) String appid,
                        @JsonProperty("persistentFiles") List<String> persistentFiles,
                        @JsonProperty("largeFiles") List<String> largeFiles,
                        @JsonProperty("files") List<String> files,
-                       @JsonProperty("diskMB") Optional<Integer> diskMB) {
+                       @JsonProperty("diskMB") Optional<Integer> diskMB,
+                       @JsonProperty("container") Container container) {
         this.appid = Objects.requireNonNull(appid);
         this.persistentFiles = persistentFiles;
         this.largeFiles = largeFiles;
         this.files = files;
         this.diskMB = diskMB;
+        this.container = (container != null) ? container : new MesosContainer();
     }
 
     @JsonGetter("appid")
@@ -67,6 +71,15 @@ public class Application {
     @JsonGetter("diskMB")
     public Optional<Integer> getDiskMB() {
         return diskMB;
+    }
+
+    @JsonGetter("container")
+    public Container container() {
+        return container;
+    }
+
+    public void setContainer(Container c) {
+        container = Objects.requireNonNull(c);
     }
 
     public String toVolumeId() {

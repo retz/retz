@@ -14,12 +14,30 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.protocol;
+package io.github.retz.protocol.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class KillResponse extends Response {
+public class MetaJob {
+    private final Job job;
+    private final Application app;
+
     @JsonCreator
-    public KillResponse() {
+    public MetaJob(@JsonProperty(value = "job", required = true) Job job,
+                   @JsonProperty("app") Application app) {
+        this.job = job;
+        this.app = app;
+    }
+
+    @JsonGetter("job")
+    public Job getJob() {
+        return job;
+    }
+
+    @JsonGetter("app")
+    public Application getApp() {
+        return app;
     }
 }

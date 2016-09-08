@@ -14,12 +14,26 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.protocol;
+package io.github.retz.protocol.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class KillResponse extends Response {
+import java.util.Objects;
+
+public class DockerContainer extends Container {
+
+    private String image;
+
     @JsonCreator
-    public KillResponse() {
+    public DockerContainer(@JsonProperty(value = "image", required = true) String image) {
+        this.image = Objects.requireNonNull(image);
     }
+
+    @JsonGetter("image")
+    public String image() {
+        return image;
+    }
+
 }

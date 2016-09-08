@@ -19,6 +19,7 @@ package io.github.retz.protocol;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.retz.protocol.data.Application;
 
 public class LoadAppRequest extends Request {
     private Application application;

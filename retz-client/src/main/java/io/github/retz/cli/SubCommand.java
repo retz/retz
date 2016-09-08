@@ -46,6 +46,5 @@ public interface SubCommand {
             }
         }
         return props;
-
     }
 }

@@ -14,15 +14,16 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.protocol;
+package io.github.retz.protocol.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Properties;
 
-import static io.github.retz.protocol.Job.JobState.*;
+import static io.github.retz.protocol.data.Job.JobState.*;
 
 public class Job {
     private final String cmd;
@@ -98,13 +99,13 @@ public class Job {
                @JsonProperty("gpu") Range gpu,
                @JsonProperty("trustPVFiles") boolean trustPVFiles,
                @JsonProperty("state") JobState state) {
-        this.cmd = cmd;
+        this.cmd = Objects.requireNonNull(cmd);
         this.scheduled = scheduled;
         this.started = started;
         this.finished = finished;
         this.props = props;
         this.result = result;
-        this.id = id;
+        this.id = Objects.requireNonNull(id);
         this.url = url;
         this.reason = reason;
         this.retry = retry;
@@ -114,7 +115,7 @@ public class Job {
         this.memMB = memMB;
         this.gpu = gpu;
         this.trustPVFiles = trustPVFiles;
-        this.state = state;
+        this.state = Objects.requireNonNull(state);
     }
 
     @JsonGetter("cmd")

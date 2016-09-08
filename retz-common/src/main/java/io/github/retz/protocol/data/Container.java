@@ -14,12 +14,17 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.protocol;
+package io.github.retz.protocol.data;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-public class KillResponse extends Response {
-    @JsonCreator
-    public KillResponse() {
-    }
+@JsonTypeInfo(property = "type",
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY)
+@JsonSubTypes({
+        @JsonSubTypes.Type(name = "mesos", value = MesosContainer.class),
+        @JsonSubTypes.Type(name = "docker", value = DockerContainer.class)
+})
+public class Container {
 }

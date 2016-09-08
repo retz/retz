@@ -27,17 +27,18 @@ import java.util.Properties;
 import static org.junit.Assert.*;
 
 public class LauncherTest {
+    static final String PROPERTY_FILE = "src/test/resources/retz.properties";
     @Test
     public void parseLoadAppTest() throws IOException, URISyntaxException {
         {
-            String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t"};
+            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertNotNull(conf);
             assertEquals("load-app", conf.commander.getParsedCommand());
         }
 
         {
-            String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t", "-F", "file://foo/bar/baz"};
+            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t", "-F", "file://foo/bar/baz"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("load-app", conf.commander.getParsedCommand());
             assertEquals("load-app", conf.getParsedSubCommand().getName());
@@ -45,10 +46,11 @@ public class LauncherTest {
             CommandLoadApp command = (CommandLoadApp) conf.getParsedSubCommand();
             assertFalse(command.files.isEmpty());
             assertEquals("file://foo/bar/baz", command.files.get(0));
+            assertEquals("mesos", command.container);
         }
 
         {
-            String[] argv = {"-C", "src/test/resources/retz.properties", "load-app", "-A", "t",
+            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t",
                     "-F", "file://foo/bar/baz", "-F", "http://example.com/example.tar.gz",
                     "-L", "file://large", "--large-file", "file://large2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
@@ -61,6 +63,36 @@ public class LauncherTest {
             assertEquals("http://example.com/example.tar.gz", command.files.get(1));
             assertEquals("file://large", command.largeFiles.get(0));
             assertEquals("file://large2", command.largeFiles.get(1));
+            assertEquals("mesos", command.container);
+        }
+
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t",
+                    "--container", "docker", "--image", "ubuntu:latest"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("load-app", conf.commander.getParsedCommand());
+            assertEquals("load-app", conf.getParsedSubCommand().getName());
+            assertTrue(conf.getParsedSubCommand() instanceof CommandLoadApp);
+            CommandLoadApp command = (CommandLoadApp) conf.getParsedSubCommand();
+            assertEquals("docker", command.container);
+            assertEquals("ubuntu:latest", command.image);
+        }
+
+
+    }
+
+    @Test
+    public void parseScheduleTest() throws IOException, URISyntaxException {
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("schedule", conf.getParsedSubCommand().getName());
+        }
+
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("schedule", conf.getParsedSubCommand().getName());
         }
         // TODO: add more pattern tests
     }
@@ -68,7 +100,7 @@ public class LauncherTest {
     @Test
     public void parseRunTest() throws IOException, URISyntaxException {
         {
-            String[] argv = {"-C", "src/test/resources/retz.properties", "run", "-A", "t",
+            String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t",
                     "-cmd", "uname -a", "-E", "a=b", "-cpu", "2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("run", conf.commander.getParsedCommand());

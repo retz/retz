@@ -16,8 +16,7 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.cli.TimestampHelper;
-import io.github.retz.protocol.Job;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.StatusResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

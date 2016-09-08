@@ -16,6 +16,7 @@
  */
 package io.github.retz.protocol;
 
+import io.github.retz.protocol.data.Range;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

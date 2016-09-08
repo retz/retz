@@ -16,16 +16,13 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.protocol.Application;
-import io.github.retz.protocol.Job;
-import io.github.retz.protocol.MetaJob;
-import io.github.retz.protocol.Range;
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.protobuf.ByteString;
+import io.github.retz.mesos.Resource;
+import io.github.retz.mesos.ResourceConstructor;
+import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,12 +80,30 @@ public class TaskBuilder {
         return this;
     }
 
-    public TaskBuilder setExecutor(Protos.ExecutorInfo e) {
-        builder.setExecutor(e);
+    public TaskBuilder setExecutor(Job job, Applications.Application application, Protos.FrameworkID frameworkId)
+            throws JsonProcessingException
+    {
+        if (application.container instanceof MesosContainer) {
+            Protos.ExecutorInfo executorInfo = application.toExecutorInfo(frameworkId);
+            builder.setExecutor(executorInfo);
+            this.setJob(job, Applications.encodable(application));
+
+        } else if (application.container instanceof DockerContainer) {
+            Protos.CommandInfo commandInfo = application.toCommandInfo(job.cmd());
+            builder.setCommand(commandInfo);
+            Protos.ContainerInfo containerInfo = application.toContainerInfo();
+            builder.setContainer(containerInfo);
+
+        } else {
+            LOG.error("Unknown container: {}", application.container);
+            throw new AssertionError();
+        }
+
         return this;
     }
 
-    public TaskBuilder setJob(Job job, Application app) throws JsonProcessingException {
+    // Only available at RetzExecutor
+    private TaskBuilder setJob(Job job, Application app) throws JsonProcessingException {
         MetaJob metaJob = new MetaJob(job, app);
         String json = TaskBuilder.MAPPER.writeValueAsString(metaJob);
         builder.setData(ByteString.copyFromUtf8(json));

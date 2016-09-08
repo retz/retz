@@ -16,8 +16,8 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.protocol.Job;
-import io.github.retz.protocol.Range;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.Range;
 import org.junit.Test;
 
 import java.util.List;

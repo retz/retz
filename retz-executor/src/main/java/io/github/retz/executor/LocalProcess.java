@@ -18,7 +18,7 @@ package io.github.retz.executor;
 
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
-import io.github.retz.protocol.MetaJob;
+import io.github.retz.protocol.data.MetaJob;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

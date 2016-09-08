@@ -2,6 +2,7 @@
 
 ## 0.0.23
 
+* Add Docker image execution support
 * Improve WebSocket disconnect handling
 
 ## 0.0.22

@@ -17,13 +17,17 @@
   - name: start mesos master
     service: name=mesos-master state=restarted
 
-  - name: install mesos-slave isolation file
+  - name: install mesos-agent isolation file
     copy: src=isolation
           dest=/etc/mesos-slave/isolation
 
-  - name: install mesos-slave cgroups file
+  - name: install mesos-agent cgroups file
     copy: src=cgroups_enable_cfs
           dest=/etc/mesos-slave/cgroups_enable_cfs
+
+  - name: install mesos-agent containerizers
+    copy: src=containerizers
+          dest=/etc/mesos-slave/containerizers
 
   - name: start mesos slave
     service: name=mesos-slave state=restarted

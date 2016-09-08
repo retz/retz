@@ -19,7 +19,7 @@ package io.github.retz.cli;
 import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.GetJobResponse;
-import io.github.retz.protocol.Job;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 
 public class CommandGetJob implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetJob.class);

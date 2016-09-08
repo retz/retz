@@ -17,7 +17,7 @@
 package io.github.retz.cli;
 
 import io.github.retz.protocol.ErrorResponse;
-import io.github.retz.protocol.Job;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.ListJobResponse;
 import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
 

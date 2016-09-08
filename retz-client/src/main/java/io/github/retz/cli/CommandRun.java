@@ -17,19 +17,18 @@
 package io.github.retz.cli;
 
 import com.beust.jcommander.Parameter;
-import io.github.retz.protocol.Job;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Properties;
 
-import static io.github.retz.protocol.Range.parseRange;
+import static io.github.retz.protocol.data.Range.parseRange;
 
 public class CommandRun implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandRun.class);

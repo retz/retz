@@ -192,6 +192,11 @@ JSON here
 
 # FAQ
 
+## Q. Dockerized application で `Message from Mesos executor: Abnormal executor termination` が出る
+
+Mesos Agent の `containerizers` オプションに `docker` が含まれていない。
+`/etc/mesos-slave/containerizers` に `mesos,docker` などと書くとよい。
+
 ## Q. `pip install ansible` で `ImportError: No module named markupsafe` が出る
 
 [Jinja2](https://github.com/ansible/ansible/issues/13570) の問題と思われる

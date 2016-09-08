@@ -16,7 +16,7 @@
  */
 package io.github.retz.cli;
 
-import io.github.retz.protocol.Application;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.ListAppResponse;
 import io.github.retz.protocol.Response;
@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.List;
 
 public class CommandListApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);

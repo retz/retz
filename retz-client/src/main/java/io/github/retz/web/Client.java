@@ -19,6 +19,9 @@ package io.github.retz.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.MesosContainer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.jetty.websocket.api.Session;
@@ -34,6 +37,7 @@ import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -70,15 +74,44 @@ public class Client implements AutoCloseable {
             catHTTPFile(job.url(), "stdout");
             LOG.info("==== Printing stderr of remote executor ====");
             catHTTPFile(job.url(), "stderr");
-            LOG.info("==== Printing stdout-{} of remote executor ====", job.id());
-            catHTTPFile(job.url(), "stdout-" + job.id());
-            LOG.info("==== Printing stderr-{} of remote executor ====", job.id());
-            catHTTPFile(job.url(), "stderr-" + job.id());
+            if (statHTTPFile(job.url(), "stdout-" + job.id())) {
+                LOG.info("==== Printing stdout-{} of remote executor ====", job.id());
+                catHTTPFile(job.url(), "stdout-" + job.id());
+            }
+            if (statHTTPFile(job.url(), "stderr-" + job.id())) {
+                LOG.info("==== Printing stderr-{} of remote executor ====", job.id());
+                catHTTPFile(job.url(), "stderr-" + job.id());
+            }
         } else {
             fetchHTTPFile(job.url(), "stdout", resultDir);
             Client.fetchHTTPFile(job.url(), "stderr", resultDir);
-            Client.fetchHTTPFile(job.url(), "stdout-" + job.id(), resultDir);
-            Client.fetchHTTPFile(job.url(), "stderr-" + job.id(), resultDir);
+            if (statHTTPFile(job.url(), "stdout-" + job.id())) {
+                Client.fetchHTTPFile(job.url(), "stdout-" + job.id(), resultDir);
+            }
+            if (statHTTPFile(job.url(), "stderr-" + job.id())) {
+                Client.fetchHTTPFile(job.url(), "stderr-" + job.id(), resultDir);
+            }
+        }
+    }
+
+    public static boolean statHTTPFile(String url, String name) {
+        String addr = url.replace("files/browse", "files/download") + "/" + name;
+
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(addr).openConnection();
+            conn.setRequestMethod("HEAD");
+            conn.setDoOutput(false);
+            LOG.debug(conn.getResponseMessage());
+            return conn.getResponseCode() == 200 ||
+                    conn.getResponseCode() == 204;
+        } catch (IOException e) {
+            LOG.debug("Failed to fetch {}: {}", addr, e.toString());
+            return false;
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
@@ -177,7 +210,7 @@ public class Client implements AutoCloseable {
             }
             String msg = new String(buffer, StandardCharsets.UTF_8);
             LOG.info(msg);
-            return "OK".equals(msg);
+            return "OK" .equals(msg);
         } catch (IOException e) {
             LOG.debug(e.toString());
             return false;
@@ -206,6 +239,7 @@ public class Client implements AutoCloseable {
         // The latter is expected to be before the former, otherwise this function waits forever
         if (res instanceof ScheduleResponse) {
             ScheduleResponse scheduleResponse = (ScheduleResponse) res;
+            LOG.info("Job scheduled: id={}", scheduleResponse.job().id());
             Job result = waitForResponse(watchResponse -> {
                 if (watchResponse.job() == null) {
                     return null;
@@ -216,7 +250,7 @@ public class Client implements AutoCloseable {
                         return watchResponse.job();
                     }
                 }
-                LOG.info("keep waiting");
+                LOG.debug("keep waiting");
                 return null; // keep waiting
             });
             return result;
@@ -230,9 +264,13 @@ public class Client implements AutoCloseable {
         return rpc(new KillRequest(id));
     }
 
+    public Response load(Application application) throws IOException {
+        return rpc(new LoadAppRequest(Objects.requireNonNull(application)));
+    }
+
     public Response load(String appid, List<String> persistentFiles, List<String> largeFiles,
                          List<String> files, Optional<Integer> diskMB) throws IOException {
-        return rpc(new LoadAppRequest(new Application(appid, persistentFiles, largeFiles, files, diskMB)));
+        return rpc(new LoadAppRequest(new Application(appid, persistentFiles, largeFiles, files, diskMB, new MesosContainer())));
     }
 
     public Response load(String appid, List<String> persistentFiles, List<String> largeFiles, List<String> files) throws IOException {
@@ -264,7 +302,7 @@ public class Client implements AutoCloseable {
             if (req.hasPayload()) {
                 mapper.writeValue(conn.getOutputStream(), req);
             }
-            return mapper.readValue(conn.getInputStream(), io.github.retz.protocol.Response.class);
+            return mapper.readValue(conn.getInputStream(), Response.class);
         } catch (IOException e) {
             LOG.debug(e.toString());
             return new ErrorResponse(e.toString());

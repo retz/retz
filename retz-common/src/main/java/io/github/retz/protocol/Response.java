@@ -17,6 +17,7 @@
 package io.github.retz.protocol;
 
 import com.fasterxml.jackson.annotation.*;
+import io.github.retz.protocol.*;
 
 @JsonTypeInfo(property = "command",
         use = JsonTypeInfo.Id.NAME,

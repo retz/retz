@@ -21,6 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.Connection;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
@@ -226,7 +229,7 @@ public final class WebConsole {
         List<Applications.Application> list = Applications.getAll();
         LOG.debug("currently {} applications", list.size());
         return list.stream()
-                .map(app -> new Application(app.appName, app.persistentFiles, app.largeFiles, app.appFiles, app.diskMB))
+                .map(app -> new Application(app.appName, app.persistentFiles, app.largeFiles, app.appFiles, app.diskMB, app.container))
                 .collect(Collectors.toList());
     }
 

@@ -19,14 +19,12 @@ package io.github.retz.cli;
 import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.Response;
-import io.github.retz.protocol.UnloadAppResponse;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.URISyntaxException;
 
 public class CommandUnloadApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUnloadApp.class);

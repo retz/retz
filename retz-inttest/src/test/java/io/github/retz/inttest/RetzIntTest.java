@@ -18,6 +18,9 @@ package io.github.retz.inttest;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.Range;
+import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
 import org.junit.Test;
 
