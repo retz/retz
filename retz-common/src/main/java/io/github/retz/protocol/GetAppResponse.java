@@ -19,36 +19,18 @@ package io.github.retz.protocol;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.retz.protocol.data.Application;
 
-public class KillRequest extends Request {
-    private int id;
+public class GetAppResponse extends Response {
+    private Application application;
 
     @JsonCreator
-    public KillRequest(@JsonProperty("id") int id) {
-        this.id = id;
+    public GetAppResponse(@JsonProperty(value = "application", required = true) Application app) {
+        this.application = app;
     }
 
-    @JsonGetter
-    public int id() {
-        return id;
-    }
-
-    @Override
-    public String resource() {
-        return "/job/" + id;
-    }
-
-    @Override
-    public String method() {
-        return DELETE;
-    }
-
-    @Override
-    public boolean hasPayload() {
-        return false;
-    }
-
-    public static String resourcePattern() {
-        return "/job/:id";
+    @JsonGetter("application")
+    public Application application() {
+        return application;
     }
 }

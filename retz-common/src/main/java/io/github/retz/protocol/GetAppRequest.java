@@ -20,27 +20,27 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class KillRequest extends Request {
-    private int id;
+public class GetAppRequest extends Request {
+    private String appid;
 
     @JsonCreator
-    public KillRequest(@JsonProperty("id") int id) {
-        this.id = id;
+    public GetAppRequest(@JsonProperty(value = "appid", required = true) String appName) {
+        appid = appName;
     }
 
-    @JsonGetter
-    public int id() {
-        return id;
+    @JsonGetter("appid")
+    public String appid() {
+        return appid;
     }
 
     @Override
     public String resource() {
-        return "/job/" + id;
+        return "/app/" + appid;
     }
 
     @Override
     public String method() {
-        return DELETE;
+        return GET;
     }
 
     @Override
@@ -49,6 +49,6 @@ public class KillRequest extends Request {
     }
 
     public static String resourcePattern() {
-        return "/job/:id";
+        return "/app/:name";
     }
 }

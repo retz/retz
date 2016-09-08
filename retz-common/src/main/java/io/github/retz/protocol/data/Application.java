@@ -97,5 +97,21 @@ public class Application {
                 .append(appId);
         return sb.toString();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder persistent = new StringBuilder();
+        if (! getPersistentFiles().isEmpty()) {
+            persistent.append("persistent")
+                    .append("(").append(getDiskMB().get()).append("MB):files=")
+                    .append(String.join(",", getPersistentFiles()));
+        }
+        return String.format("Application name=%s: container=%s: files=%s/%s: %s",
+                getAppid(),
+                container().getClass().getSimpleName(),
+                String.join(",", getFiles()),
+                String.join(",", getLargeFiles()),
+                persistent.toString());
+    }
 }
 

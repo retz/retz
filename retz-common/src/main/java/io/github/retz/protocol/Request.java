@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
         @Type(name = "schedule", value = ScheduleRequest.class),
         @Type(name = "get-job", value = GetJobRequest.class),
         @Type(name = "kill", value = KillRequest.class),
-        //@Type(name = "watch", value = WatchRequest.class),
+        @Type(name = "get-app", value = GetAppRequest.class),
         @Type(name = "load-app", value = LoadAppRequest.class),
         @Type(name = "unload-app", value = UnloadAppRequest.class),
         @Type(name = "list-app", value = ListAppRequest.class)

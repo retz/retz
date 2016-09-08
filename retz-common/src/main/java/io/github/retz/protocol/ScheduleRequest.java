@@ -21,14 +21,16 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.retz.protocol.data.Job;
 
+import java.util.Objects;
+
 public class ScheduleRequest extends Request {
-    private Job job; // TODO: this cannot be NULL
+    private Job job;
     private boolean doWatch;
 
     @JsonCreator
     public ScheduleRequest(@JsonProperty(value = "job", required = true) Job job,
                            @JsonProperty("doWatch") boolean doWatch) {
-        this.job = job;
+        this.job = Objects.requireNonNull(job);
         this.doWatch = doWatch;
     }
 

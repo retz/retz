@@ -103,6 +103,7 @@ $ retz-client load-app --name your-app-name \
    -L [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
    -F [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
    -disk 2048
+$ retz-client get-app -A your-app-name
 $ retz-client unload-app --name your-app-name
 $ retz-client list-app
 ```

@@ -23,7 +23,6 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
-import io.github.retz.protocol.Response;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.MesosFrameworkLauncher;
@@ -165,6 +164,12 @@ public class WebConsoleTest {
             Optional<Application> app = Applications.get("foobar");
             assertTrue(app.isPresent());
             assertThat(app.get().getAppid(), is("foobar"));
+
+            res = webClient.getApp("foobar");
+            assertThat(res, instanceOf(GetAppResponse.class));
+            GetAppResponse getAppResponse = (GetAppResponse)res;
+            assertThat(getAppResponse.application().getAppid(), is("foobar"));
+            assertThat(getAppResponse.application().getFiles().size(), is(1));
         }
         maybeJob = JobQueue.popMany(10000, 10000);
         assertTrue(maybeJob.isEmpty());
@@ -189,6 +194,11 @@ public class WebConsoleTest {
             assertFalse(maybeJob.isEmpty());
             assertThat(maybeJob.get(0).cmd(), is(cmd));
             assertThat(maybeJob.get(0).appid(), is("foobar"));
+        }
+
+        {
+            Response res = webClient.getApp("no such app");
+            assertThat(res, instanceOf(ErrorResponse.class));
         }
         webClient.unload("foobar");
         webClient.disconnect();

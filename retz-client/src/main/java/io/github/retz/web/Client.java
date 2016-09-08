@@ -264,6 +264,10 @@ public class Client implements AutoCloseable {
         return rpc(new KillRequest(id));
     }
 
+    public Response getApp(String appid) throws IOException {
+        return rpc(new GetAppRequest(appid));
+    }
+
     public Response load(Application application) throws IOException {
         return rpc(new LoadAppRequest(Objects.requireNonNull(application)));
     }

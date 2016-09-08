@@ -16,10 +16,11 @@
  */
 package io.github.retz.cli;
 
-import io.github.retz.protocol.data.Application;
+import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.ErrorResponse;
-import io.github.retz.protocol.ListAppResponse;
+import io.github.retz.protocol.GetAppResponse;
 import io.github.retz.protocol.Response;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,43 +28,43 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ConnectException;
 
-public class CommandListApp implements SubCommand {
-    static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);
+public class CommandGetApp implements SubCommand {
+    static final Logger LOG = LoggerFactory.getLogger(CommandGetApp.class);
+
+    @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
+    private String appName;
 
     @Override
     public String description() {
-        return "List all loaded applications";
+        return "Get an application details";
     }
 
     @Override
     public String getName() {
-        return "list-app";
+        return "get-app";
     }
 
     @Override
     public int handle(FileConfiguration fileConfig) {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
+
         try (Client webClient = new Client(fileConfig.getUri().getHost(),
                 fileConfig.getUri().getPort())) {
 
-            Response res = webClient.listApp();
-
+            Response res = webClient.getApp(appName);
+            LOG.info(res.status());
             if (res instanceof ErrorResponse) {
-                LOG.info(res.status());
                 return -1;
-            }
-            ListAppResponse r = (ListAppResponse) res;
-
-
-            for (Application a : r.applicationList()) {
-                LOG.info(a.toString());
+            } else if (res instanceof GetAppResponse) {
+                GetAppResponse getAppResponse = (GetAppResponse) res;
+                Application app = getAppResponse.application();
+                LOG.info(app.toString());
             }
             return 0;
 
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
-
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }

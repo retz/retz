@@ -1,18 +1,18 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.web;
 
@@ -86,12 +86,14 @@ public final class WebConsole {
             GetJobResponse getJobResponse = new GetJobResponse(job);
             getJobResponse.ok();
             res.status(200);
+            //    res.status(404)  if job is present...
             res.type("application/json");
             return MAPPER.writeValueAsString(getJobResponse);
         });
 
         put(ScheduleRequest.resourcePattern(), (req, res) -> {
             ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
+            res.type("application/json");
             if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
                 Job job = scheduleRequest.job();
                 job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
@@ -102,15 +104,13 @@ public final class WebConsole {
                 scheduleResponse.ok();
                 LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
 
-                res.status(200);
-                res.type("application/json");
+                res.status(201);
                 return MAPPER.writeValueAsString(scheduleResponse);
 
             } else {
                 LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
                 ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
-                res.status(403);
-                res.type("application/json");
+                res.status(404);
                 return MAPPER.writeValueAsString(response);
             }
         });
@@ -129,13 +129,14 @@ public final class WebConsole {
             return MAPPER.writeValueAsString(response);
         });
 
-        // /app  PUT -> load, GET -> list-app, DELETE -> unload-app
+        // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
             LOG.debug(LoadAppRequest.resourcePattern());
 
             LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
             LOG.info("app id={}", loadAppRequest.application().getAppid());
             boolean result = WebConsole.load(loadAppRequest.application());
+
             if (result) {
                 res.status(200);
                 LoadAppResponse response = new LoadAppResponse();
@@ -143,13 +144,28 @@ public final class WebConsole {
                 return MAPPER.writeValueAsString(response);
             } else {
                 res.status(400);
-                res.type("application/json");
                 return MAPPER.writeValueAsString(new ErrorResponse("cannot load application"));
             }
         });
 
+        get(GetAppRequest.resourcePattern(), (req, res) -> {
+            String appname = req.params(":name");
+            LOG.info("deleting app {}", appname);
+            Optional<Application> maybeApp = Applications.get(appname);
+            res.type("application/json");
+            if (maybeApp.isPresent()) {
+                res.status(200);
+                GetAppResponse getAppResponse = new GetAppResponse(maybeApp.get());
+                getAppResponse.ok();
+                return MAPPER.writeValueAsString(getAppResponse);
+            } else {
+                ErrorResponse response = new ErrorResponse("No such application: " + appname);
+                res.status(404);
+                return MAPPER.writeValueAsString(response);
+            }
+        });
+
         delete(UnloadAppRequest.resourcePattern(), (req, res) -> {
-            //UnloadAppRequest unloadAppRequest = MAPPER.readValue(req.bodyAsBytes(), UnloadAppRequest.class);
             String appname = req.params(":name");
             LOG.info("deleting app {}", appname);
             WebConsole.unload(appname);

@@ -17,7 +17,6 @@
 package io.github.retz.protocol;
 
 import com.fasterxml.jackson.annotation.*;
-import io.github.retz.protocol.*;
 
 @JsonTypeInfo(property = "command",
         use = JsonTypeInfo.Id.NAME,
@@ -28,6 +27,7 @@ import io.github.retz.protocol.*;
         @JsonSubTypes.Type(name = "get-job", value = GetJobResponse.class),
         @JsonSubTypes.Type(name = "kill", value = KillResponse.class),
         @JsonSubTypes.Type(name = "watch", value = WatchResponse.class),
+        @JsonSubTypes.Type(name = "get-app", value = GetAppResponse.class),
         @JsonSubTypes.Type(name = "load-app", value = LoadAppResponse.class),
         @JsonSubTypes.Type(name = "unload-app", value = UnloadAppResponse.class),
         @JsonSubTypes.Type(name = "list-app", value = ListAppResponse.class),
