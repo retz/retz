@@ -228,7 +228,7 @@ $ /opt/retz-client/bin/retz-client [-C <configfile>] <command> [command args]
 
 ```sh
 $ retz-client list
-$ retz-client kill <jobid>
+$ retz-client kill -id <jobid>
 $ retz-client schedule OPTIONS
 $ retz-client run OPTIONS
 $ retz-client schedule -file <list of batches in a text file>

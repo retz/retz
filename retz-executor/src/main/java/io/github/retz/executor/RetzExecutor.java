@@ -75,7 +75,8 @@ public class RetzExecutor implements Executor {
 
     @Override
     public void killTask(ExecutorDriver driver, Protos.TaskID taskId) {
-        LOG.warn("RetzExecutor#killTask callback is not available yet");
+        LOG.info("RetzExecutor#killTask called on {}", taskId.getValue());
+        LocalProcessManager.killTask(taskId);
     }
 
     @Override

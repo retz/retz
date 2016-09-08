@@ -1,18 +1,18 @@
 /**
- * Retz
- * Copyright (C) 2016 Nautilus Technologies, Inc.
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Retz
+ *    Copyright (C) 2016 Nautilus Technologies, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
 package io.github.retz.web;
 
@@ -26,6 +26,7 @@ import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
+import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,9 +117,12 @@ public final class WebConsole {
         });
 
         delete(KillRequest.resourcePattern(), (req, res) -> {
-            res.status(501);
+            LOG.info("kill", req.params(":id"));
+            int id = Integer.parseInt(req.params(":id")); // or 400 when failed?
+            WebConsole.kill(id);
+            res.status(200);
             KillResponse response = new KillResponse();
-            response.status("kill not supported yet.");
+            response.ok();
             return MAPPER.writeValueAsString(response);
         });
 
@@ -233,6 +237,33 @@ public final class WebConsole {
     // Search job from JobQueue with matching id
     public static Optional<Job> getJob(int id) {
         return JobQueue.getJob(id);
+    }
+
+    public static boolean kill(int id) {
+        if (! driver.isPresent()) {
+            LOG.error("Driver is not present; this setup should be wrong");
+            return false;
+        }
+        Optional<Job> maybeJob = JobQueue.cancel(id);
+        if (maybeJob.isPresent()) {
+            LOG.info("Job id={} was in the queue and canceled.", id);
+            notifyKilled(maybeJob.get());
+            maybeJob.get().killed(TimestampHelper.now(), "Canceled by user");
+            JobQueue.finished(maybeJob.get());
+            return true;
+        }
+        // There's a slight pitfall between cancel above and kill below where
+        // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
+        // Then this protocol returns false for sure.
+        for (Map.Entry<String, Job> e : JobQueue.getRunning().entrySet()) {
+            if (e.getValue().id() == id) {
+                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(e.getKey()).build();
+                Protos.Status status = driver.get().killTask(taskId);
+                LOG.info("Job id={} was running and killed.");
+                return status == Protos.Status.DRIVER_RUNNING;
+            }
+        }
+        return false;
     }
 
     public static boolean load(Application app) {

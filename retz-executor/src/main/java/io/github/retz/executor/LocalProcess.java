@@ -44,11 +44,11 @@ public class LocalProcess {
         this.assigned = assigned;
     }
 
-    public Protos.TaskInfo getTaskInfo() {
+    public synchronized Protos.TaskInfo getTaskInfo() {
         return task;
     }
 
-    public boolean start() {
+    public synchronized boolean start() {
 
         String path = ".";
         Resource resource = ResourceConstructor.decode(task.getResourcesList());
@@ -107,7 +107,10 @@ public class LocalProcess {
         return true;
     }
 
-    public boolean poll() throws InterruptedException {
+    public synchronized void kill() {
+        p.destroy();
+    }
+    public synchronized boolean poll() throws InterruptedException {
         boolean ret = p.waitFor(0, TimeUnit.SECONDS);
         end = System.currentTimeMillis();
         if (ret)

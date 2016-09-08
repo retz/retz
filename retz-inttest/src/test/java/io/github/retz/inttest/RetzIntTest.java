@@ -20,7 +20,6 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
-import io.github.retz.protocol.Response;
 import io.github.retz.web.Client;
 import org.junit.Test;
 
@@ -39,6 +38,7 @@ import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Simple integration test cases for retz-server / -executor.
@@ -65,7 +65,7 @@ public class RetzIntTest extends IntTestBase {
     public void runAppTest() throws Exception {
         Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
         LoadAppResponse loadRes =
-                (LoadAppResponse) client.load("echo-app", Arrays.asList(),  Arrays.asList(),
+                (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(),
                         Arrays.asList("file:///spawn_retz_server.sh"));
         assertThat(loadRes.status(), is("ok"));
 
@@ -103,6 +103,51 @@ public class RetzIntTest extends IntTestBase {
     }
 
     @Test
+    public void killAppTest() throws Exception {
+        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
+        LoadAppResponse loadRes =
+                (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList());
+        assertThat(loadRes.status(), is("ok"));
+
+        ListAppResponse listRes = (ListAppResponse) client.listApp();
+        assertThat(listRes.status(), is("ok"));
+        List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
+        assertIncludes(appNameList, "echo-app");
+        Job job = new Job("echo-app", "sleep 60", new Properties(), new Range(1, 1), new Range(32, 32));
+        Response response = client.schedule(job);
+        assertThat(response, instanceOf(ScheduleResponse.class));
+        ScheduleResponse scheduleResponse = (ScheduleResponse) response;
+        int id = scheduleResponse.job().id();
+        System.err.println(id);
+
+        {
+            response = client.getJob(id);
+            assertThat(response, instanceOf(GetJobResponse.class));
+            GetJobResponse getJobResponse = (GetJobResponse) response;
+            //depending on the timing, like if the test is relatively slow, this could be JobState.STARTED
+            assertTrue(getJobResponse.job().isPresent());
+            assertThat(getJobResponse.job().get().state(), is(Job.JobState.QUEUED));
+        }
+        {
+            response = client.kill(id);
+            System.err.println(response.status());
+            assertThat(response, instanceOf(KillResponse.class));
+        }
+        {
+            response = client.getJob(id);
+            assertThat(response, instanceOf(GetJobResponse.class));
+            GetJobResponse getJobResponse = (GetJobResponse) response;
+            Thread.sleep(10000);
+            assertThat(getJobResponse.job().get().state(), is(Job.JobState.KILLED));
+        }
+
+        UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
+        assertThat(unloadRes.status(), is("ok"));
+
+        client.close();
+    }
+
+    @Test
     public void scheduleAppTest() throws Exception {
         try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
             loadSimpleApp(client, "echo2");
@@ -129,7 +174,7 @@ public class RetzIntTest extends IntTestBase {
                 Thread.sleep(1000);
 
                 Response res = client.list(64);
-                if (! (res instanceof ListJobResponse)) {
+                if (!(res instanceof ListJobResponse)) {
                     ErrorResponse errorResponse = (ErrorResponse) res;
                     System.err.println("Error: " + errorResponse.status());
                     continue;
@@ -139,7 +184,7 @@ public class RetzIntTest extends IntTestBase {
                         + ": Finished=" + listJobResponse.finished().size()
                         + ", Running=" + listJobResponse.running().size()
                         + ", Scheduled=" + listJobResponse.queue().size());
-                for( Job finished : listJobResponse.finished()) {
+                for (Job finished : listJobResponse.finished()) {
                     assertThat(finished.retry(), is(0));
                 }
             }
@@ -183,6 +228,7 @@ public class RetzIntTest extends IntTestBase {
         }
         return echoJobs;
     }
+
     private List<EchoJob> toRemove(Client client, List<EchoJob> echoJobs, boolean checkRetval) throws IOException, Exception {
         List<EchoJob> toRemove = new LinkedList<>();
         for (EchoJob echoJob : echoJobs) {
@@ -196,7 +242,7 @@ public class RetzIntTest extends IntTestBase {
                         toRemove.add(echoJob);
                         assertThat(catStdout(getJobResponse.job().get()),
                                 is(Integer.toString(echoJob.argv) + "\n"));
-                    } else if (checkRetval){
+                    } else if (checkRetval) {
                         assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
                                         + ", Message: " + getJobResponse.job().get().reason(),
                                 getJobResponse.job().get().finished());
@@ -235,7 +281,7 @@ public class RetzIntTest extends IntTestBase {
                 Thread.sleep(1000);
 
                 Response res = client.list(64);
-                if (! (res instanceof ListJobResponse)) {
+                if (!(res instanceof ListJobResponse)) {
                     ErrorResponse errorResponse = (ErrorResponse) res;
                     System.err.println("Error: " + errorResponse.status());
                     continue;
@@ -245,7 +291,7 @@ public class RetzIntTest extends IntTestBase {
                         + ": Finished=" + listJobResponse.finished().size()
                         + ", Running=" + listJobResponse.running().size()
                         + ", Scheduled=" + listJobResponse.queue().size());
-                for( Job finished : listJobResponse.finished()) {
+                for (Job finished : listJobResponse.finished()) {
                     assertThat(finished.retry(), is(0));
                     assertThat(finished.state(), is(Job.JobState.FINISHED));
                     assertThat(finished.result(), is(RES_OK));

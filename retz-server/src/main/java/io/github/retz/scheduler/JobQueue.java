@@ -62,6 +62,15 @@ public class JobQueue {
         queue.put(job);
     }
 
+    public synchronized static Optional<Job> cancel(int id) {
+        for (Job job : get()) {
+            if (job.id() == id) {
+                get().removeIf(j -> j.id() == id);
+                return Optional.of(job);
+            }
+        }
+        return Optional.empty();
+    }
     // @doc take as much jobs as in the max cpu/memMB
     public synchronized static List<Job> popMany(int cpu, int memMB) {
         int totalCpu = 0;

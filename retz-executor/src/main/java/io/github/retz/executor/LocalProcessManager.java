@@ -116,6 +116,11 @@ public class LocalProcessManager implements Runnable {
         }
     }
 
+    public static synchronized void killTask(Protos.TaskID taskId) {
+        LocalProcess process = MANAGER.processes.get(taskId.getValue());
+        process.kill();
+    }
+
     public static void stop () {
         running.set(false);
     }

@@ -75,7 +75,11 @@ public class CommandList implements SubCommand {
                     } catch (java.text.ParseException e) {
                     }
                 }
-                formatter.feed(Integer.toString(job.id()), job.state().toString(), job.appid(), job.cmd(), Integer.toString(job.result()), duration,
+                String result = "-";
+                if (job.state() == Job.JobState.FINISHED ||  job.state() == Job.JobState.KILLED) {
+                    result = Integer.toString(job.result());
+                }
+                formatter.feed(Integer.toString(job.id()), job.state().toString(), job.appid(), job.cmd(), result, duration,
                         job.scheduled(), job.started(), job.finished(), reason);
             }
             LOG.info(formatter.titles());
