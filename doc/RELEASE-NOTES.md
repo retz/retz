@@ -2,6 +2,7 @@
 
 ## 0.0.23
 
+* Update Mesos library to 1.0.1
 * Add 'kill' subcommand and protocol to kill a job
 * Add 'get-app' subcommand and protocol to get application details
 * Add Docker image execution support
