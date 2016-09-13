@@ -50,8 +50,8 @@ public class CommandSchedule implements SubCommand {
     @Parameter(names = "-mem", description = "Range of size of RAM(MB) assigned to the job")
     private String mem;
 
-    @Parameter(names = "-gpu", description = "Range of GPU cards assigned to the job in Range")
-    private String gpu;
+    @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job in Range")
+    private String gpu = "0";
 
     @Parameter(names = "-trustpvfiles", description = "Whether to trust decompressed files in persistent volume from -P option")
     private boolean trustPVFiles = false;
@@ -71,7 +71,7 @@ public class CommandSchedule implements SubCommand {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         Job job = new Job(appName, remoteCmd,
-                envProps, parseRange(cpu, "1"), parseRange(mem, "32"), parseRange(gpu, "0"));
+                envProps, parseRange(cpu, "1"), parseRange(mem, "32"), Integer.parseInt(gpu));
         job.setTrustPVFiles(trustPVFiles);
 
         try (Client webClient = new Client(fileConfig.getUri().getHost(),

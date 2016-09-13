@@ -221,10 +221,10 @@ public class RetzScheduler implements Scheduler {
                             job.appid(), job.cmd());
                     kill(job, reason);
                     continue;
-                } else if (!conf.fileConfig.useGPU() && job.gpu().getMin() > 0) {
+                } else if (!conf.fileConfig.useGPU() && job.gpu() > 0) {
                     // TODO: this should be checked before enqueuing to JobQueue
                     String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
-                            job.id(), job.appid(), job.gpu().getMin());
+                            job.id(), job.appid(), job.gpu());
                     kill(job, reason);
                     continue;
                 } else {

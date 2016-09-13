@@ -250,7 +250,7 @@ $ retz-client config
   ブは通常、Mesosに与えられたCPU数または、ここで指定した最大値を実行時に設定する。
 * `-mem <posint>-[<posint>]` [opt default=512-] in MB ジョブを実行可能なメモリ量の範囲。ジョ
   ブは通常、Mesosに与えられたRAM量または、ここで指定した最大値を実行時に利用する。
-* `-gpu <posint>-[<posint>]` [opt default=0-0] ジョブを実行可能なGPUの枚数。
+* `-gpu <posint>` [opt default=0] ジョブを実行可能なGPUの枚数。
   これを有効にするためには、サーバーの設定ファイルで `retz.gpu=true` を設定しておかなければならない。
 * `-trustpvfiles` Persistent Volumes 上に展開されているファイルが完全であると信用する
 * `-id <jobid>` ジョブの状態を表示する。`-R <dir>` を `run` と同様に指定することで、結果をローカルに取得できる

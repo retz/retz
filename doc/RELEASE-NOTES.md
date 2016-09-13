@@ -2,6 +2,7 @@
 
 ## 0.0.24
 
+* Change type of `-gpu` argument of CLI from range to integer
 * Replace Docker containerizer with unified containerizer using Docker:
   this changes Mesos Agent setup requirement as to add
   `--image_providers=docker` and

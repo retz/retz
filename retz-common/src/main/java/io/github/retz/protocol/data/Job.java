@@ -42,7 +42,7 @@ public class Job {
     private String name;
     private final Range cpu;
     private final Range memMB;
-    private Range gpu;
+    private int gpu;
 
     /**
      * State diagram:
@@ -69,16 +69,15 @@ public class Job {
         assert (cpu.getMin() > 0 && memMB.getMin() >= 32);
         this.cpu = cpu;
         this.memMB = memMB;
-        this.gpu = new Range(0, 0);
+        this.gpu = 0;
         this.state = CREATED;
         this.retry = 0;
     }
 
-    public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, Range gpu) {
+    public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, int gpu) {
         this(appName, cmd, props, cpu, memMB);
-        if (gpu != null ) {
-            this.gpu = gpu;
-        }
+        this.gpu = Objects.requireNonNull(gpu);
+
     }
 
     @JsonCreator
@@ -96,7 +95,7 @@ public class Job {
                @JsonProperty(value = "name") String name,
                @JsonProperty("cpu") Range cpu,
                @JsonProperty("memMB") Range memMB,
-               @JsonProperty("gpu") Range gpu,
+               @JsonProperty("gpu") int gpu,
                @JsonProperty("trustPVFiles") boolean trustPVFiles,
                @JsonProperty("state") JobState state) {
         this.cmd = Objects.requireNonNull(cmd);
@@ -189,7 +188,7 @@ public class Job {
     }
 
     @JsonGetter("gpu")
-    public Range gpu() {
+    public int gpu() {
         return gpu;
     }
 
