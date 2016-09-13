@@ -126,8 +126,8 @@ public class Client implements AutoCloseable {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setDoOutput(true);
             conn.setRequestMethod("GET");
+            conn.setDoOutput(true);
         } catch (IOException e) {
             LOG.error("Failed to fetch {}: {}", addr, e.toString());
             return;
@@ -147,9 +147,7 @@ public class Client implements AutoCloseable {
             // and to that crappy HttpURLConnection
             catHTTPFile(url, name, out);
         } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
+            conn.disconnect();
         }
     }
 
