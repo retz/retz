@@ -1,5 +1,14 @@
 # Retz release notes
 
+## 0.0.24
+
+* Replace Docker containerizer with unified containerizer using Docker:
+  this changes Mesos Agent setup requirement as to add
+  `--image_providers=docker` and
+  `--isolation=docker/runtime,filesystem/linux` in addition to existing
+  configuration. See Mesos document [on containers](https://github.com/apache/mesos/blob/master/docs/container-image.md)
+  and [on GPU with Docker](https://github.com/apache/mesos/blob/master/docs/gpu-support.md#minimal-setup-with-support-for-docker-containers)
+
 ## 0.0.23
 
 * Update Mesos library to 1.0.1

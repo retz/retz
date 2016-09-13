@@ -82,10 +82,20 @@ public class Applications {
     public static Protos.ContainerInfo appToContainerInfo(Application application) {
         Container container = application.container();
         DockerContainer c = (DockerContainer) container;
+        /*
         return Protos.ContainerInfo.newBuilder().setDocker(
                 Protos.ContainerInfo.DockerInfo.newBuilder()
                         .setImage(c.image()))
                 .setType(Protos.ContainerInfo.Type.DOCKER)
+                .build();
+                */
+        return Protos.ContainerInfo.newBuilder().setMesos(
+                Protos.ContainerInfo.MesosInfo.newBuilder()
+                        .setImage(Protos.Image.newBuilder()
+                                .setType(Protos.Image.Type.DOCKER)
+                                .setDocker(Protos.Image.Docker.newBuilder()
+                                        .setName(c.image()))))
+                .setType(Protos.ContainerInfo.Type.MESOS)
                 .build();
     }
 
