@@ -41,8 +41,7 @@ public class CommandWatch implements SubCommand{
     public int handle(FileConfiguration fileConfig) {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
-        try (Client webClient = new Client(fileConfig.getUri().getHost(),
-                fileConfig.getUri().getPort())) {
+        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
 
             webClient.startWatch((watchResponse -> {
                 StringBuilder b = new StringBuilder()

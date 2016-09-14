@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -49,16 +51,31 @@ import java.util.function.Predicate;
 public class Client implements AutoCloseable {
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
     private final ObjectMapper mapper;
+    private final String scheme;
     private final String host;
     private final int port;
     private WebSocketClient wsclient = null;
     private MySocket socket = null;
 
-    public Client(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public Client(URI uri) {
+        this.scheme = uri.getScheme();
+        this.host = uri.getHost();
+        this.port = uri.getPort();
         this.mapper = new ObjectMapper();
         this.mapper.registerModule(new Jdk8Module());
+    }
+
+    public Client(URI uri, boolean checkCert) {
+        this(uri);
+        if (!checkCert) {
+            try {
+                WrongTrustManager.disableTLS();
+            } catch (NoSuchAlgorithmException e) {
+                throw new AssertionError(e.toString());
+            } catch (KeyManagementException e) {
+                throw new AssertionError(e.toString());
+            }
+        }
     }
 
     public static void fetchJobResult(Job job, String resultDir) {
@@ -199,10 +216,10 @@ public class Client implements AutoCloseable {
     public boolean ping() throws IOException {
         URL url;
         try {
-            // TODO: make this switchable on http/https
-            url = new URL("http://" + host + ":" + port + "/ping");
+            url = new URL(scheme + "://" + host + ":" + port + "/ping");
             LOG.debug("Pinging {}", url);
         } catch (MalformedURLException e) {
+            LOG.error(e.toString());
             return false;
         }
         HttpURLConnection conn = null;
@@ -217,7 +234,7 @@ public class Client implements AutoCloseable {
             }
             String msg = new String(buffer, StandardCharsets.UTF_8);
             LOG.info(msg);
-            return "OK" .equals(msg);
+            return "OK".equals(msg);
         } catch (IOException e) {
             LOG.debug(e.toString());
             return false;
@@ -300,8 +317,7 @@ public class Client implements AutoCloseable {
     private <ReqType extends Request> Response rpc(ReqType req) throws IOException {
         URL url;
         try {
-            // TODO: make this switchable on http/https
-            url = new URL("http://" + host + ":" + port + req.resource());
+            url = new URL(scheme + "://" + host + ":" + port + req.resource());
             LOG.debug("Connecting {}", url);
         } catch (MalformedURLException e) {
             return new ErrorResponse(e.toString());

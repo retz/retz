@@ -42,10 +42,9 @@ public class CommandList implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) {
-        LOG.debug("Configuration: {}", fileConfig.toString());
+        LOG.info("Configuration: {}", fileConfig.toString());
 
-        try (Client webClient = new Client(fileConfig.getUri().getHost(),
-                fileConfig.getUri().getPort())) {
+        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
             Response res = webClient.list(64); // TODO: make this CLI argument
             if (res instanceof ErrorResponse) {
                 LOG.info(res.status());

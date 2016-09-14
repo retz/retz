@@ -25,6 +25,8 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -48,7 +50,8 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void listAppTest() throws Exception {
-        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        Client client = new Client(uri);
         Response res = client.listApp();
         System.out.println(res.status());
         ListAppResponse response = (ListAppResponse) client.listApp();
@@ -63,7 +66,8 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void runAppTest() throws Exception {
-        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        Client client = new Client(uri);
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(),
                         Arrays.asList("file:///spawn_retz_server.sh"));
@@ -104,7 +108,8 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void killAppTest() throws Exception {
-        Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        Client client = new Client(uri);
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList());
         assertThat(loadRes.status(), is("ok"));
@@ -149,7 +154,9 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void scheduleAppTest() throws Exception {
-        try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
+        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+
+        try (Client client = new Client(uri)) {
             loadSimpleApp(client, "echo2");
 
             List<EchoJob> finishedJobs = new LinkedList<>();
@@ -258,7 +265,8 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void scheduleAppTest2() throws Exception {
-        try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
+        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        try (Client client = new Client(uri)) {
             loadSimpleApp(client, "echo3");
 
             List<EchoJob> finishedJobs = new LinkedList<>();

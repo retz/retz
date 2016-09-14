@@ -41,6 +41,13 @@ public class FileConfiguration {
     static final String SCHEDULE_RESULTS = "retz.results";
     static final String SCHEDULE_RETRY = "retz.retry";
 
+    // If BIND_ADDRESS is for SSL, these will be used for both server and client
+    static final String KEYSTORE_FILE = "retz.tls.keystore.file";
+    static final String KEYSTORE_PASS = "retz.tls.keystore.pass";
+    static final String TRUSTSTORE_FILE = "retz.tls.truststore.file";
+    static final String TRUSTSTORE_PASS = "retz.tls.truststore.pass";
+    static final String CHECK_CERT = "retz.tls.insecure";
+
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
 
@@ -49,6 +56,7 @@ public class FileConfiguration {
     private final Properties properties;
     private final URI uri;
     private final boolean useGPU;
+    private final boolean checkCert;
 
     public FileConfiguration(String path) throws IOException, URISyntaxException {
         this(new File(path));
@@ -77,6 +85,11 @@ public class FileConfiguration {
             LOG.error("retz.bind must not use well known port, or just too large: {}", uri.getPort());
             throw new IllegalArgumentException();
         }
+        if (isTLS()) {
+            LOG.info("Checking Keystores .. {}", properties.getProperty(KEYSTORE_FILE));
+            Objects.requireNonNull(properties.getProperty(KEYSTORE_FILE));
+            Objects.requireNonNull(properties.getProperty(KEYSTORE_PASS));
+        }
 
         String gpu = properties.getProperty(USE_GPU, "false");
         if (gpu.equals("true")) {
@@ -85,6 +98,14 @@ public class FileConfiguration {
             useGPU = false;
         } else {
             throw new IllegalArgumentException(USE_GPU + "must be boolean");
+        }
+
+        // Flag name is 'insecure' but this must be treated as right name
+        String insecure = properties.getProperty(CHECK_CERT, "false");
+        if (insecure.equals("true")) {
+            this.checkCert = false;
+        } else {
+            this.checkCert = true;
         }
 
         LOG.info("Mesos master={}, principal={}, role={}", getMesosMaster(), getPrincipal(), getRole());
@@ -98,6 +119,24 @@ public class FileConfiguration {
         return uri;
     }
 
+    public boolean isTLS() {
+        return uri.getScheme().equals("https");
+    }
+    public boolean checkCert() {
+        return checkCert;
+    }
+    public String getKeystoreFile() {
+        return properties.getProperty(KEYSTORE_FILE);
+    }
+    public String getKeystorePass() {
+        return properties.getProperty(KEYSTORE_PASS);
+    }
+    public String getTruststoreFile() {
+        return properties.getProperty(TRUSTSTORE_FILE);
+    }
+    public String getTruststorePass() {
+        return properties.getProperty(TRUSTSTORE_PASS);
+    }
     public String getPrincipal() {
         // Principal is required to reserve volumes
         String principal = properties.getProperty(MESOS_PRINCIPAL, DEFAULT_MESOS_PRINCIPAL);
@@ -125,6 +164,7 @@ public class FileConfiguration {
         return new StringBuffer()
                 .append("[uri=").append(uri)
                 .append(", props=").append(properties)
+                .append(", checkCert=").append(checkCert)
                 .append("]")
                 .toString();
     }

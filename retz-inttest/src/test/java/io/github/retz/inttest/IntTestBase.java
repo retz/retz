@@ -34,6 +34,7 @@ import org.junit.BeforeClass;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -180,6 +181,8 @@ public class IntTestBase {
             );
 
             startServers();
+            URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+            System.err.println(uri.toASCIIString());
             waitFor(
                     () -> {
                         String res = ps();
@@ -190,12 +193,15 @@ public class IntTestBase {
                     () -> {return ps();});
             waitFor(
                     () -> {
-                        try (Client client = new Client(IntTestBase.RETZ_HOST, IntTestBase.RETZ_PORT)) {
+                        try (Client client = new Client(uri)) {
                             return client.ping();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return false;
                         }
                     },
-                    "WS connection could not be established, timed out.",
-                    () -> {return "retz-server URI: " + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT;});
+                    "HTTP connection could not be established, timed out.",
+                    () -> {return "retz-server URI: " + uri;});
         }
 
         private void waitFor(Callable<Boolean> validator, String errorMessage,

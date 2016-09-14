@@ -19,6 +19,7 @@ package io.github.retz.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
@@ -55,8 +56,17 @@ public final class WebConsole {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    public WebConsole(int port) {
-        port(port);
+    public WebConsole(FileConfiguration config) {
+
+        if (config.isTLS()) {
+            LOG.info("HTTPS enabled. Keystore file={}, keystore pass={} chars, Truststore file={}, Truststorepass={} chars",
+                    config.getKeystoreFile(), config.getKeystorePass().length(),
+                    config.getTruststoreFile(), "(not printed)");
+            secure(config.getKeystoreFile(), config.getKeystorePass(), config.getTruststoreFile(), config.getTruststorePass());
+        } else {
+            LOG.info("HTTPS disabled. Scheme: {}", config.getUri().getScheme());
+        }
+        port(config.getUri().getPort());
         staticFileLocation("/public");
 
         // APIs to be in WebSocket: watch, run

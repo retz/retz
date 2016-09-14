@@ -74,8 +74,7 @@ public class CommandSchedule implements SubCommand {
                 envProps, parseRange(cpu, "1"), parseRange(mem, "32"), Integer.parseInt(gpu));
         job.setTrustPVFiles(trustPVFiles);
 
-        try (Client webClient = new Client(fileConfig.getUri().getHost(),
-                fileConfig.getUri().getPort())) {
+        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
             Response res = webClient.schedule(job);
             if (res instanceof ScheduleResponse) {

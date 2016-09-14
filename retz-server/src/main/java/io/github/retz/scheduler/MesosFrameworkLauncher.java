@@ -39,6 +39,9 @@ public final class MesosFrameworkLauncher {
         Configuration conf;
         try {
             conf = parseConfiguration(argv);
+            if (conf.fileConfig.isTLS()) {
+                LOG.warn("Make sure a valid certificate is being used or RetzExecutor may not work.");
+            }
         } catch (ParseException e) {
             LOG.error(e.toString());
             return -1;
@@ -73,11 +76,10 @@ public final class MesosFrameworkLauncher {
         LOG.info("Mesos scheduler started: {}", status.name());
 
         // Start web server
-        int port = conf.getPort();
-        WebConsole webConsole = new WebConsole(port);
+        WebConsole webConsole = new WebConsole(conf.fileConfig);
         WebConsole.setScheduler(scheduler);
         WebConsole.setDriver(driver);
-        LOG.info("Web console has started with port {}", port);
+        LOG.info("Web console has started with port {}", conf.getPort());
 
         // Stop them all
         // Wait for Mesos framework stop
@@ -149,6 +151,10 @@ public final class MesosFrameworkLauncher {
 
         public String getMesosMaster() {
             return fileConfig.getMesosMaster();
+        }
+
+        public FileConfiguration getFileConfig() {
+            return fileConfig;
         }
 
     }

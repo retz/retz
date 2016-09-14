@@ -47,8 +47,7 @@ public class CommandUnloadApp implements SubCommand {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
 
-        try (Client webClient = new Client(fileConfig.getUri().getHost(),
-                fileConfig.getUri().getPort())) {
+        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
 
             Response res = webClient.unload(appName);
             LOG.info(res.status());

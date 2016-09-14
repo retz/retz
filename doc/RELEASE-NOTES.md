@@ -2,6 +2,10 @@
 
 ## 0.0.24
 
+* Add TLS to connection between client and server. Make sure that the
+  server is using valid certificate, or Mesos fetcher cannot fetch
+  RetzExecutor jar file and no job cannot be run. In that case only
+  Docker executor may work (use `--container docker` to load application).
 * Change type of `-gpu` argument of CLI from range to integer
 * Replace Docker containerizer with unified containerizer using Docker:
   this changes Mesos Agent setup requirement as to add

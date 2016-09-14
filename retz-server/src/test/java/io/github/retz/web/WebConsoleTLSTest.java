@@ -49,7 +49,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static spark.Spark.awaitInitialization;
 
-public class WebConsoleTest {
+public class WebConsoleTLSTest {
     private WebConsole webConsole;
     private Client webClient;
     private ObjectMapper mapper;
@@ -67,18 +67,19 @@ public class WebConsoleTest {
                 .setName(RetzScheduler.FRAMEWORK_NAME)
                 .build();
 
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz.properties");
+        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
         MesosFrameworkLauncher.Configuration conf = new MesosFrameworkLauncher.Configuration(new FileConfiguration(in));
 
         mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
 
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
-        config = new FileConfiguration("src/test/resources/retz.properties");
+        //config = new FileConfiguration("src/test/resources/retz-tls.properties");
+        config = conf.getFileConfig();
         webConsole = new WebConsole(config);
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
-        webClient = new Client(config.getUri());
+        webClient = new Client(config.getUri(), config.checkCert());
     }
 
     /**
