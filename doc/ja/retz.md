@@ -297,6 +297,9 @@ retz.key = deadbeef
 retz.secret = cafebabe
 retz.schedule.results = /path/to/dir/
 retz.schedule.retry = 5
+retz.tls.keystore.file = path/to/retz-dev.jks
+retz.tls.keystore.pass = retz-dev
+retz.tls.insecure = true
 ```
 
 いま有効なのは以下のものである:
@@ -307,6 +310,9 @@ retz.schedule.retry = 5
 * `retz.mesos.role` - Mesos 上でのRetzのRoleを指定する。デフォルトは `*`
 * `retz.mesos.principal` - Mesos 上でのRetzのPrincipalを指定する。デフォルトは空
 * `retz.bind` - Retz が listen するTCPのポート番号およびアドレスを `http://localhost:9090` などと指定する。省略不可
+* `retz.tls.keystore.file`
+* `retz.tls.keystore.pass`
+* `retz.tls.insecure`
 
 これらが正しく設定されているかどうかは、 `retz-client -C
 path/to/retz.properties config` を実行する。
