@@ -100,7 +100,11 @@ public class CommandLoadApp implements SubCommand {
         }
         Application application = new Application(appName, persistentFiles, largeFiles, files, maybeDisk, c);
 
-        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
+        try (Client webClient = Client.newBuilder(fileConfig.getUri())
+                .enableAuthentication(fileConfig.authenticationEnabled())
+                .setAuthenticator(fileConfig.getAuthenticator())
+                .checkCert(fileConfig.checkCert())
+                .build()) {
 
             Response r = webClient.load(application);
 

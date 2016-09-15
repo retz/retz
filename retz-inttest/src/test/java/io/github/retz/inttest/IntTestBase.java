@@ -16,8 +16,6 @@
  */
 package io.github.retz.inttest;
 
-import io.github.retz.protocol.WatchResponse;
-import io.github.retz.web.Client;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -28,7 +26,10 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import io.github.retz.cli.FileConfiguration;
+import io.github.retz.web.Client;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.ByteArrayOutputStream;
@@ -41,6 +42,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * Base class for Retz integration testing.
@@ -58,6 +61,15 @@ public class IntTestBase {
     private static String hostBuildDir;
 
     private static ClosableContainer container;
+
+    protected FileConfiguration config;
+
+    @Before
+    public void loadConfig() throws Exception {
+        config = new FileConfiguration("src/test/resources/retz.properties");
+        assertEquals(RETZ_HOST, config.getUri().getHost());
+        assertEquals(RETZ_PORT, config.getUri().getPort());
+    }
 
     @BeforeClass
     public static void setupContainer() throws Exception {
@@ -193,7 +205,7 @@ public class IntTestBase {
                     () -> {return ps();});
             waitFor(
                     () -> {
-                        try (Client client = new Client(uri)) {
+                        try (Client client = Client.newBuilder(uri).enableAuthentication(false).build()) {
                             return client.ping();
                         } catch (Exception e) {
                             e.printStackTrace();

@@ -16,6 +16,7 @@
  */
 package io.github.retz.cli;
 
+import io.github.retz.auth.Authenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,11 +34,19 @@ public class FileConfiguration {
 
     static final String MESOS_LOC_KEY = "retz.mesos";
     static final String BIND_ADDRESS = "retz.bind";
-    static final String QUEUE_MAX = "retz.queue.max";
     static final String MESOS_ROLE = "retz.mesos.role";
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
     static final String USE_GPU = "retz.gpu";
-    static final String ACCESS_SECRET = "retz.secret";
+
+    // Authentication enabled by default
+    static final String AUTHENTICATION = "retz.authentication";
+
+    // In server, these are for admins; while in clients, these are for each user
+    static final String ACCESS_KEY = "retz.access.key";
+    static final String ACCESS_SECRET = "retz.access.secret";
+
+    // Not yet used
+    static final String QUEUE_MAX = "retz.queue.max";
     static final String SCHEDULE_RESULTS = "retz.results";
     static final String SCHEDULE_RETRY = "retz.retry";
 
@@ -56,6 +65,7 @@ public class FileConfiguration {
     private final Properties properties;
     private final URI uri;
     private final boolean useGPU;
+    private final boolean authenticationEnabled;
     private final boolean checkCert;
 
     public FileConfiguration(String path) throws IOException, URISyntaxException {
@@ -98,6 +108,20 @@ public class FileConfiguration {
             useGPU = false;
         } else {
             throw new IllegalArgumentException(USE_GPU + "must be boolean");
+        }
+
+        String authentication = properties.getProperty(AUTHENTICATION, "true");
+        authenticationEnabled = ! authentication.equals("false");
+        if (authenticationEnabled) {
+            LOG.info("Authentication enabled");
+            if (properties.getProperty(ACCESS_SECRET) == null
+                    || properties.getProperty(ACCESS_KEY) == null) {
+                LOG.error("Both {} and {} should be present in your configuration file",
+                        ACCESS_KEY, ACCESS_SECRET);
+                throw new IllegalArgumentException("Authentication info lacking");
+            }
+        } else {
+            LOG.warn("Authentication is disabled");
         }
 
         // Flag name is 'insecure' but this must be treated as right name
@@ -153,6 +177,18 @@ public class FileConfiguration {
 
     public String getUserName() {
         return properties.getProperty(USER_NAME, System.getProperty("user.name"));
+    }
+
+    public boolean authenticationEnabled() {
+        return authenticationEnabled;
+    }
+    public Authenticator getAuthenticator() {
+        String key = properties.getProperty(ACCESS_KEY);
+        String secret = properties.getProperty(ACCESS_SECRET);
+        if (key == null || secret == null) {
+            return null;
+        }
+        return new Authenticator(key, secret);
     }
 
     public boolean useGPU() {

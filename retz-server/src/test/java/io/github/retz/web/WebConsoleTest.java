@@ -83,7 +83,13 @@ public class WebConsoleTest {
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
 
-        webClient = new Client(config.getUri(), config.checkCert());
+        System.err.println(config.authenticationEnabled());
+        System.err.println(config.toString());
+        webClient = Client.newBuilder(config.getUri()).
+                enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .checkCert(config.checkCert())
+                .build();
     }
 
     /**
@@ -249,7 +255,11 @@ public class WebConsoleTest {
 
     @Test
     public void ping() throws IOException {
-        Client c = new Client(config.getUri(), config.checkCert());
+        Client c = Client.newBuilder(config.getUri())
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .checkCert(config.checkCert())
+                .build();
         assertTrue(c.ping());
     }
 

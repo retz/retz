@@ -26,7 +26,6 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -38,9 +37,7 @@ import java.util.stream.IntStream;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Simple integration test cases for retz-server / -executor.
@@ -51,7 +48,10 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void listAppTest() throws Exception {
         URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
-        Client client = new Client(uri);
+        Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build();
         Response res = client.listApp();
         System.out.println(res.status());
         ListAppResponse response = (ListAppResponse) client.listApp();
@@ -67,7 +67,10 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void runAppTest() throws Exception {
         URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
-        Client client = new Client(uri);
+        Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build();
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(),
                         Arrays.asList("file:///spawn_retz_server.sh"));
@@ -107,9 +110,12 @@ public class RetzIntTest extends IntTestBase {
     }
 
     @Test
-    public void killAppTest() throws Exception {
+    public void killTest() throws Exception {
         URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
-        Client client = new Client(uri);
+        Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build();
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList());
         assertThat(loadRes.status(), is("ok"));
@@ -156,7 +162,10 @@ public class RetzIntTest extends IntTestBase {
     public void scheduleAppTest() throws Exception {
         URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
 
-        try (Client client = new Client(uri)) {
+        try (Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
             loadSimpleApp(client, "echo2");
 
             List<EchoJob> finishedJobs = new LinkedList<>();
@@ -208,11 +217,13 @@ public class RetzIntTest extends IntTestBase {
     }
 
     private void loadSimpleApp(Client client, String appName) throws IOException {
-        LoadAppResponse loadRes =
-                (LoadAppResponse) client.load(appName,
-                        Arrays.asList(),
-                        Arrays.asList(),
-                        Arrays.asList());
+        Response res = client.load(appName,
+                Arrays.asList(),
+                Arrays.asList(),
+                Arrays.asList());
+
+        assertTrue(res.status(), res instanceof LoadAppResponse);
+        LoadAppResponse loadRes = (LoadAppResponse) res;
         assertThat(loadRes.status(), is("ok"));
 
         ListAppResponse listRes = (ListAppResponse) client.listApp();
@@ -266,7 +277,10 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void scheduleAppTest2() throws Exception {
         URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
-        try (Client client = new Client(uri)) {
+        try (Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
             loadSimpleApp(client, "echo3");
 
             List<EchoJob> finishedJobs = new LinkedList<>();

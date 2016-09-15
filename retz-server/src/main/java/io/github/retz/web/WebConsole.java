@@ -19,6 +19,7 @@ package io.github.retz.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.auth.Authenticator;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
@@ -35,6 +36,7 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,47 @@ public final class WebConsole {
         // APIs to be in WebSocket: watch, run
         webSocket("/cui", ConsoleWebSocketHandler.class);
         webSocketIdleTimeoutMillis(Connection.IDLE_TIMEOUT_SEC * 1000);
+
+        before((req, res) -> {
+            // TODO: authenticator must be per each user and single admin user
+            Optional<Authenticator> authenticator = Optional.ofNullable(config.getAuthenticator());
+            String verb = req.requestMethod();
+            String md5 = req.headers("content-md5");
+            if (md5 == null) {
+                md5 = "";
+            }
+            String date = req.headers("date");
+            String resource = new URI(req.url()).getPath();
+
+            LOG.debug("req={}, res={}", req, res);
+            // These don't require authentication to simplify operation
+            if ("/ping".equals(resource) || "/status".equals(resource)
+                    || "/cui".equals(resource) // TODO: this is special exception; in future this must be removed...
+                    || resource.equals(RetzScheduler.getJarPath())) {
+                return;
+            }
+
+            String givenSignature =req.headers(Authenticator.AUTHORIZATION);
+            LOG.debug("Signature from client: {}", givenSignature);
+
+            if (authenticator.isPresent()) {
+                Optional<Authenticator.AuthHeaderValue> authHeaderValue = Authenticator.parseHeaderValue(givenSignature);
+                if (!authHeaderValue.isPresent()) {
+                    halt(401, "Bad Authorization header: " + givenSignature);
+                }
+
+                if (!authenticator.get().authenticate(verb, md5, date, resource,
+                        authHeaderValue.get().key(), authHeaderValue.get().signature())) {
+                    String string2sign = authenticator.get().string2sign(verb, md5, date, resource);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
+                                authenticator.get().signature(verb, md5, date, resource),
+                                authHeaderValue.get().signature());
+                    }
+                    halt(401, "Authentication failed. String to sign: " + string2sign);
+                }
+            }
+        });
 
         // APIs to be in vanilla HTTP
         get("/ping", (req, res) -> "OK");

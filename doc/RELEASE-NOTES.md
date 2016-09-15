@@ -2,6 +2,13 @@
 
 ## 0.0.25
 
+* Simple client-server authentication support: only for single user.
+  As a special exception, commands that use WebSocket connection does
+  not require authentication (it just does not work). Authentication is
+  enabled by default. To secure application usage, Set your own pair of
+  `retz.access.key` and `retz.access.secret`, which accepts arbitrary ASCII
+  string. To disable authentication, in both client and server, just
+  explicitly set `retz.authentication = false`. 
 * Remove too strong message at client on accessing server with HTTP
 
 ## 0.0.24
@@ -10,6 +17,8 @@
   server is using valid certificate, or Mesos fetcher cannot fetch
   RetzExecutor jar file and no job cannot be run. In that case only
   Docker executor may work (use `--container docker` to load application).
+  (Note: when TLS enabled 'run' and 'watch' does not work well as it is
+  still using 'ws://' protocol)
 * Change type of `-gpu` argument of CLI from range to integer
 * Replace Docker containerizer with unified containerizer using Docker:
   this changes Mesos Agent setup requirement as to add

@@ -18,6 +18,8 @@ package io.github.retz.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.auth.Authenticator;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
@@ -46,6 +48,9 @@ import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.eclipse.jetty.util.security.Credential.MD5.digest;
+
 
 // WebSocket client to Retz service
 public class Client implements AutoCloseable {
@@ -56,17 +61,23 @@ public class Client implements AutoCloseable {
     private final int port;
     private WebSocketClient wsclient = null;
     private MySocket socket = null;
+    private final Optional<io.github.retz.auth.Authenticator> authenticator;
 
-    public Client(URI uri) {
+    protected Client(URI uri, Optional<Authenticator> authenticator) {
         this.scheme = uri.getScheme();
         this.host = uri.getHost();
         this.port = uri.getPort();
         this.mapper = new ObjectMapper();
         this.mapper.registerModule(new Jdk8Module());
+        this.authenticator = authenticator;
     }
 
-    public Client(URI uri, boolean checkCert) {
-        this(uri);
+    protected Client(URI uri) {
+        this(uri, Optional.empty());
+    }
+
+    protected Client(URI uri, Optional<Authenticator> authenticator, boolean checkCert) {
+        this(uri, authenticator);
         if (uri.getScheme().equals("https") && !checkCert) {
             try {
                 WrongTrustManager.disableTLS();
@@ -183,6 +194,7 @@ public class Client implements AutoCloseable {
     }
 
     private boolean connect() throws IOException, ExecutionException, URISyntaxException, Exception {
+        // TODO: this does not work for SSL
         URI uri = new URI(String.format("ws://%s:%d/cui", host, port));
         this.socket = new MySocket();
         this.wsclient = new WebSocketClient();
@@ -327,9 +339,29 @@ public class Client implements AutoCloseable {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod(req.method());
             conn.setDoOutput(req.hasPayload());
+
+            String md5 = "";
+            String payload = "";
             if (req.hasPayload()) {
-                mapper.writeValue(conn.getOutputStream(), req);
+                payload = mapper.writeValueAsString(req);
+                md5 = digest(payload);
+                conn.setRequestProperty("Content-MD5", md5);
+                conn.setRequestProperty("Content-Length", Integer.toString(payload.length()));
             }
+
+            String date = TimestampHelper.now();
+            conn.setRequestProperty("Date", date);
+
+            if (authenticator.isPresent()) {
+                String signature = authenticator.get().buildHeaderValue(req.method(), md5, date, req.resource());
+                conn.setRequestProperty(Authenticator.AUTHORIZATION, signature);
+            }
+
+            if (req.hasPayload()) {
+                //mapper.writeValue(conn.getOutputStream(), req);
+                conn.getOutputStream().write(payload.getBytes(UTF_8));
+            }
+
             return mapper.readValue(conn.getInputStream(), Response.class);
         } catch (IOException e) {
             LOG.debug(e.toString());
@@ -388,5 +420,9 @@ public class Client implements AutoCloseable {
             }
         });
 
+    }
+
+    public static ClientBuilder newBuilder(URI uri) {
+        return new ClientBuilder(uri);
     }
 }

@@ -41,29 +41,38 @@ public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
     private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
     private static String jarUri;
+    private static final String JAR_FILENAME;
+    private static final String JAR_PATH;
     private MesosFrameworkLauncher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
     private final ObjectMapper MAPPER = new ObjectMapper();
+
+    static {
+        // TODO: stop hard coding and get the file name in more generic way
+        // COMMENT: I put the trick in build.gradle, saving the exact jar file name as resource bundle
+        // REVIEW: http://www.eclipse.org/aether/ (not surveyed yet)
+        // REVIEW: https://github.com/airlift/resolver (used in presto?)
+        ResourceBundle labels = ResourceBundle.getBundle("ExecutorJarFile");
+        JAR_FILENAME = labels.getString("filename");
+        JAR_PATH = "/" + JAR_FILENAME;
+        LOG.info("Executor jar file name to distribute: {}", JAR_FILENAME);
+    }
 
     public RetzScheduler(MesosFrameworkLauncher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
         MAPPER.registerModule(new Jdk8Module());
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
-
-        // TODO: stop hard coding and get the file name in more generic way
-        // COMMENT: I put the trick in build.gradle, saving the exact jar file name as resource bundle
-        // REVIEW: http://www.eclipse.org/aether/ (not surveyed yet)
-        // REVIEW: https://github.com/airlift/resolver (used in presto?)
-        ResourceBundle labels = ResourceBundle.getBundle("ExecutorJarFile");
-        String filename = labels.getString("filename");
-        LOG.info("Executor jar file name to distribute: {}", filename);
-        RetzScheduler.setJarUri(conf.fileConfig.getUri() + "/" + filename);
+        RetzScheduler.setJarUri(conf.fileConfig.getUri() + JAR_PATH);
     }
 
     public static String getJarUri() {
         return jarUri;
+    }
+
+    public static String getJarPath() {
+        return JAR_PATH;
     }
 
     public static void setJarUri(String uri) {

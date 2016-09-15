@@ -41,7 +41,11 @@ public class CommandWatch implements SubCommand{
     public int handle(FileConfiguration fileConfig) {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
-        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
+        try (Client webClient = Client.newBuilder(fileConfig.getUri())
+                .enableAuthentication(fileConfig.authenticationEnabled())
+                .setAuthenticator(fileConfig.getAuthenticator())
+                .checkCert(fileConfig.checkCert())
+                .build()) {
 
             webClient.startWatch((watchResponse -> {
                 StringBuilder b = new StringBuilder()

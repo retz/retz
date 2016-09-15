@@ -44,7 +44,12 @@ public class CommandList implements SubCommand {
     public int handle(FileConfiguration fileConfig) {
         LOG.info("Configuration: {}", fileConfig.toString());
 
-        try (Client webClient = new Client(fileConfig.getUri(), fileConfig.checkCert())) {
+        try (Client webClient = Client.newBuilder(fileConfig.getUri())
+                .enableAuthentication(fileConfig.authenticationEnabled())
+                .setAuthenticator(fileConfig.getAuthenticator())
+                .checkCert(fileConfig.checkCert())
+                .build()) {
+
             Response res = webClient.list(64); // TODO: make this CLI argument
             if (res instanceof ErrorResponse) {
                 LOG.info(res.status());
