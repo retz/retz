@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.25
+
+* Remove too strong message at client on accessing server with HTTP
+
 ## 0.0.24
 
 * Add TLS to connection between client and server. Make sure that the

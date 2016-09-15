@@ -32,7 +32,7 @@ public class WrongTrustManager implements X509TrustManager {
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
 
     static void disableTLS() throws NoSuchAlgorithmException, KeyManagementException {
-        LOG.warn("**DANGER ZONE**: you are disabling TLS certificate check, or set 'retz.tls.insecure = false' at config file.");
+        LOG.warn("DANGER ZONE: TLS certificate check is disabled. Set 'retz.tls.insecure = false' at config file to supress this message.");
         TrustManager[] trustAllCerts = new TrustManager[]{new WrongTrustManager()};
 
         // Install the all-trusting trust manager

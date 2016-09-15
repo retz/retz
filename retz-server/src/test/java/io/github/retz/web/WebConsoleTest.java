@@ -82,6 +82,7 @@ public class WebConsoleTest {
         webConsole = new WebConsole(config);
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
+
         webClient = new Client(config.getUri(), config.checkCert());
     }
 

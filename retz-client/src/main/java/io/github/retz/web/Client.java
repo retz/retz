@@ -67,7 +67,7 @@ public class Client implements AutoCloseable {
 
     public Client(URI uri, boolean checkCert) {
         this(uri);
-        if (!checkCert) {
+        if (uri.getScheme().equals("https") && !checkCert) {
             try {
                 WrongTrustManager.disableTLS();
             } catch (NoSuchAlgorithmException e) {
