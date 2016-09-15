@@ -33,9 +33,9 @@ public final class MesosFrameworkLauncher {
     public static void main(String... argv) {
         System.exit(run(argv));
     }
-
+    
     public static int run(String... argv) {
-
+	
         Configuration conf;
         try {
             conf = parseConfiguration(argv);
@@ -48,8 +48,7 @@ public final class MesosFrameworkLauncher {
         } catch (IOException e) {
             LOG.error(e.toString());
             return -1;
-        }
-
+	}	
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
@@ -89,7 +88,7 @@ public final class MesosFrameworkLauncher {
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }
 
-    private static Protos.FrameworkInfo buildFrameworkInfo(Configuration conf) {
+    public static Protos.FrameworkInfo buildFrameworkInfo(Configuration conf) {
         String userName = conf.fileConfig.getUserName();
 
         Protos.FrameworkInfo.Builder fwBuilder = Protos.FrameworkInfo.newBuilder()
