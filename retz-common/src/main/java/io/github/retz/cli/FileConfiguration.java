@@ -43,7 +43,8 @@ public class FileConfiguration {
 
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
-
+    static final String ZK_SERVERS = "retz.zk.servers";
+    
     static final String DEFAULT_MESOS_PRINCIPAL = "retz";
 
     private final Properties properties;
@@ -86,7 +87,7 @@ public class FileConfiguration {
         } else {
             throw new IllegalArgumentException(USE_GPU + "must be boolean");
         }
-
+	
         LOG.info("Mesos master={}, principal={}, role={}", getMesosMaster(), getPrincipal(), getRole());
     }
 
@@ -120,6 +121,10 @@ public class FileConfiguration {
         return useGPU;
     }
 
+    public String getZkServers() {
+	return properties.getProperty(ZK_SERVERS);
+    }
+    
     @Override
     public String toString() {
         return new StringBuffer()
