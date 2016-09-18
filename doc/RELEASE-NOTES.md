@@ -2,6 +2,23 @@
 
 ## 0.0.25
 
+* Move from WebSocket to HTTP polling at 'run' subcommand.
+* Add 'get-file' and 'list-files' subcommand.
+* Simplify 'get-job' as to get summary of a job; getting stdout and stderr
+  is moved to 'get-file'.
+* Remove '-R' option from 'run' subcommand, instead it prints stdout of
+  a remote job to local standard output. This is based on polling, as it
+  may be replaces with combination of 'schedule' and 'get-file' with '--poll'
+  option. Currently, polling interval starts with 1 second and increases
+  up to 32 seconds unless any update comes up. Any update will reset the
+  interval to initial interval.
+* Remove direct communication between clients and Mesos servers, which is
+  now relayed by Retz server with `GetFileRequest` and `ListFilesRequest`
+  protocol - now Retz clients only talks with Retz server via single
+  HTTP(S) route.
+* Updates from Mesos master on Task status are more up to date on states
+  managed inside Retz server - which still does not have complete
+  correspondence.
 * Simple client-server authentication support: only for single user.
   As a special exception, commands that use WebSocket connection does
   not require authentication (it just does not work). Authentication is
@@ -9,7 +26,7 @@
   `retz.access.key` and `retz.access.secret`, which accepts arbitrary ASCII
   string. To disable authentication, in both client and server, just
   explicitly set `retz.authentication = false`. 
-* Remove too strong message at client on accessing server with HTTP
+* Remove too strong message at client on accessing server with HTTP.
 
 ## 0.0.24
 

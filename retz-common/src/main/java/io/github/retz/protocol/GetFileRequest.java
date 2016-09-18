@@ -23,12 +23,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.Optional;
 
-public class GetJobRequest extends Request {
+public class GetFileRequest extends Request {
     private int id;
+    private String file;
+    private int offset;
+    private int length;
 
     @JsonCreator
-    public GetJobRequest(@JsonProperty(value = "id", required = true) int id) {
+    public GetFileRequest(@JsonProperty(value = "id", required = true) int id,
+                          @JsonProperty(value = "file", required = true) String file,
+                          @JsonProperty(value = "offset") int offset,
+                          @JsonProperty(value = "length") int length) {
         this.id = id;
+        this.file = Objects.requireNonNull(file);
+        this.offset = offset;
+        this.length = length;
     }
 
     @JsonGetter("id")
@@ -36,9 +45,30 @@ public class GetJobRequest extends Request {
         return id;
     }
 
+    @JsonGetter("file")
+    public String file() {
+        return file;
+    }
+
+    @JsonGetter("offset")
+    public int offset() {
+        return offset;
+    }
+
+    @JsonGetter("length")
+    public int length() {
+        return length;
+    }
+
     @Override
     public String resource() {
-        return "/job/" + id;
+        StringBuilder builder = new StringBuilder("/job/")
+                .append(id)
+                .append("/file/").append(file)
+                .append("?offset=").append(offset)
+                .append("&length=").append(length);
+
+        return builder.toString();
     }
 
     @Override
@@ -52,6 +82,6 @@ public class GetJobRequest extends Request {
     }
 
     public static String resourcePattern() {
-        return "/job/:id";
+        return "/job/:id/file/:file";
     }
 }

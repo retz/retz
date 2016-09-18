@@ -277,8 +277,7 @@ public class RetzScheduler implements Scheduler {
                         .build();
 
                 Protos.TaskID taskId = task.getTaskId();
-                job.setStarted(TimestampHelper.now());
-                WebConsole.notifyStarted(job);
+                //job.starting(TimestampHelper.now());
 
                 // This shouldn't be a List nor a set, but a Map
                 List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.get().getAppid(), new LinkedList<>());
@@ -361,6 +360,7 @@ public class RetzScheduler implements Scheduler {
             case Protos.TaskState.TASK_KILLING_VALUE:
                 break;
             case Protos.TaskState.TASK_RUNNING_VALUE:
+                started(status);
                 break;
             case Protos.TaskState.TASK_STAGING_VALUE:
                 break;
@@ -476,6 +476,16 @@ public class RetzScheduler implements Scheduler {
         WebConsole.notifyKilled(job);
     }
 
+    void started(Protos.TaskStatus status) {
+        Job job = JobQueue.getRunning().get(status.getTaskId().getValue());
+        if (job == null) {
+            return;
+        }
+        job.started(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                status.getExecutorId().getValue()).get(), TimestampHelper.now());
+        WebConsole.notifyStarted(job);
+    }
 
     private Protos.Resource.Builder baseResourceBuilder(int diskMB) {
         return Protos.Resource.newBuilder()

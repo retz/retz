@@ -14,30 +14,32 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.protocol;
+package io.github.retz.protocol.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.retz.protocol.data.DirEntry;
-import io.github.retz.protocol.data.FileContent;
-import io.github.retz.protocol.data.Job;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-public class GetJobResponse extends Response {
-    private Optional<Job> job;
+// A JSON data structure return but Mesos file API '/files/read'
+// See http://mesos.apache.org/documentation/latest/endpoints/files/read/
+public class FileContent {
+    private String data;
+    private int offset;
 
     @JsonCreator
-    public GetJobResponse(@JsonProperty("job") Optional<Job> job) {
-        this.job = Objects.requireNonNull(job);
+    public FileContent(@JsonProperty(value = "data", required = true) String data,
+                       @JsonProperty(value = "offset", required = true) int offset) {
+        this.data = data;
+        this.offset = offset;
     }
 
-    @JsonGetter("job")
-    public Optional<Job> job() {
-        return job;
+    @JsonGetter("data")
+    public String data() {
+        return data;
+    }
+
+    @JsonGetter("offset")
+    public int offset() {
+        return offset;
     }
 }

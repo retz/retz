@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
 import io.github.retz.scheduler.Applications;
@@ -206,6 +207,12 @@ public class WebConsoleTest {
             assertFalse(maybeJob.isEmpty());
             assertThat(maybeJob.get(0).cmd(), is(cmd));
             assertThat(maybeJob.get(0).appid(), is("foobar"));
+
+            ListFilesResponse listFilesResponse = (ListFilesResponse) webClient.listFiles(sres.job.id(), "$MESOS_SANDBOX");
+            assertTrue(listFilesResponse.entries().isEmpty());
+
+            GetFileResponse getFileResponse = (GetFileResponse)webClient.getFile(sres.job.id(), "stdout", 0, 20000);
+            assertFalse(getFileResponse.file().isPresent());
         }
 
         {

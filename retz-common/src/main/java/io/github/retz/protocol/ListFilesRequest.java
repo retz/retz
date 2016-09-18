@@ -21,14 +21,18 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
-import java.util.Optional;
 
-public class GetJobRequest extends Request {
+public class ListFilesRequest extends Request {
+    public static final String DEFAULT_SANDBOX_PATH = "$MESOS_SANDBOX";
+
     private int id;
+    private String path;
 
     @JsonCreator
-    public GetJobRequest(@JsonProperty(value = "id", required = true) int id) {
+    public ListFilesRequest(@JsonProperty(value = "id", required = true) int id,
+                            @JsonProperty(value = "path", required = true) String dir) {
         this.id = id;
+        this.path = Objects.requireNonNull(dir);
     }
 
     @JsonGetter("id")
@@ -36,9 +40,17 @@ public class GetJobRequest extends Request {
         return id;
     }
 
+    @JsonGetter("path")
+    public String path() {
+        return path;
+    }
+
     @Override
     public String resource() {
-        return "/job/" + id;
+        StringBuilder builder = new StringBuilder("/job/")
+                .append(id)
+                .append("/path/").append(path);
+        return builder.toString();
     }
 
     @Override
@@ -52,6 +64,6 @@ public class GetJobRequest extends Request {
     }
 
     public static String resourcePattern() {
-        return "/job/:id";
+        return "/job/:id/path/:path";
     }
 }

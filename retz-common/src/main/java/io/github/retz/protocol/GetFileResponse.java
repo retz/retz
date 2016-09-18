@@ -28,16 +28,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class GetJobResponse extends Response {
+public class GetFileResponse extends Response {
     private Optional<Job> job;
+    private Optional<FileContent> file;
 
     @JsonCreator
-    public GetJobResponse(@JsonProperty("job") Optional<Job> job) {
+    public GetFileResponse(@JsonProperty("job") Optional<Job> job,
+                           @JsonProperty("file") Optional<FileContent> file) {
         this.job = Objects.requireNonNull(job);
+        this.file = Objects.requireNonNull(file);
     }
 
     @JsonGetter("job")
     public Optional<Job> job() {
         return job;
+    }
+
+    @JsonGetter("file")
+    public Optional<FileContent> file() {
+        return file;
     }
 }

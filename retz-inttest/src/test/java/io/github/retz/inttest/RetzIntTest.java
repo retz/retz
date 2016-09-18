@@ -21,6 +21,7 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
 import io.github.retz.web.Client;
+import io.github.retz.web.ClientHelper;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -87,15 +88,15 @@ public class RetzIntTest extends IntTestBase {
         assertThat(runRes.result(), is(RES_OK));
         assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
-        String baseUrl = baseUrl(runRes);
         String toDir = "build/log/";
         // These downloaded files are not inspected now, useful for debugging test cases, maybe
-        Client.fetchHTTPFile(baseUrl, "stdout", toDir);
-        Client.fetchHTTPFile(baseUrl, "stderr", toDir);
-        Client.fetchHTTPFile(baseUrl, "stdout-" + runRes.id(), toDir);
-        Client.fetchHTTPFile(baseUrl, "stderr-" + runRes.id(), toDir);
 
-        String actualText = catStdout(runRes);
+        ClientHelper.getWholeFile(client, runRes.id(), "stdout", toDir);
+        ClientHelper.getWholeFile(client, runRes.id(), "stderr", toDir);
+        ClientHelper.getWholeFile(client, runRes.id(), "stdout-" + runRes.id(), toDir);
+        ClientHelper.getWholeFile(client, runRes.id(), "stderr-" + runRes.id(), toDir);
+
+        String actualText = catStdout(client, runRes);
         assertEquals(echoText + "\n", actualText);
 
         ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
@@ -258,7 +259,7 @@ public class RetzIntTest extends IntTestBase {
                     if (getJobResponse.job().get().state() == Job.JobState.FINISHED
                             || getJobResponse.job().get().state() == Job.JobState.KILLED) {
                         toRemove.add(echoJob);
-                        assertThat(catStdout(getJobResponse.job().get()),
+                        assertThat(catStdout(client, getJobResponse.job().get()),
                                 is(Integer.toString(echoJob.argv) + "\n"));
                     } else if (checkRetval) {
                         assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
@@ -331,10 +332,9 @@ public class RetzIntTest extends IntTestBase {
         }
     }
 
-    private String catStdout(Job job) throws Exception {
+    private String catStdout(Client c, Job job) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        String baseUrl = baseUrl(job);
-        Client.catHTTPFile(baseUrl, "stdout-" + job.id(), out);
+        ClientHelper.getWholeFile(c, job.id(), "stdout-" + job.id(), true, out);
         return out.toString(String.valueOf(StandardCharsets.UTF_8));
     }
 

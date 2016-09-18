@@ -19,8 +19,8 @@ package io.github.retz.cli;
 import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.GetJobResponse;
-import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.Response;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +33,6 @@ public class CommandGetJob implements SubCommand {
 
     @Parameter(names = "-id", description = "Job ID whose state and details you want", required = true)
     private int id;
-
-    @Parameter(names = {"-R", "--resultdir"}, description = "Directory to save job results")
-    private String resultDir;
 
     @Override
     public String description() {
@@ -59,8 +56,6 @@ public class CommandGetJob implements SubCommand {
 
             LOG.info("Fetching job detail id={}", id);
 
-            //webClient.connect();
-
             Response res = webClient.getJob(id);
             if (res instanceof GetJobResponse) {
                 GetJobResponse getJobResponse = (GetJobResponse) res;
@@ -68,10 +63,10 @@ public class CommandGetJob implements SubCommand {
                 if (getJobResponse.job().isPresent()) {
                     Job job = getJobResponse.job().get();
 
+                    // TODO: print full job spec here
                     LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
-                    LOG.info("\tstarted={}, finished={}, result={}", job.started(), job.finished(), job.result());
-
-                    Client.fetchJobResult(job, resultDir);
+                    LOG.info("\tstarted={}, finished={}, state={}", job.started(), job.finished(), job.state());
+                    LOG.info("return value={}, reason={}", job.result(), job.reason());
                     return 0;
 
                 } else {

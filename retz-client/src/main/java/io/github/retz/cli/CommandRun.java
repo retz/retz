@@ -17,8 +17,11 @@
 package io.github.retz.cli;
 
 import com.beust.jcommander.Parameter;
+import io.github.retz.protocol.Response;
+import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
+import io.github.retz.web.ClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.text.ParseException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import static io.github.retz.protocol.data.Range.parseRange;
@@ -55,9 +59,6 @@ public class CommandRun implements SubCommand {
     @Parameter(names = "-trustpvfiles", description = "Whether to trust decompressed files in persistent volume from -P option")
     private boolean trustPVFiles = false;
 
-    @Parameter(names = {"-R", "--resultdir"}, description = "Directory to save job results")
-    private String resultDir;
-
     @Override
     public String description() {
         return "Schedule and watch a job";
@@ -83,16 +84,31 @@ public class CommandRun implements SubCommand {
                 .build()) {
 
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
-            Job result = webClient.run(job);
+            //Job running = webClient.run(job);
+            Response res = webClient.schedule(job);
 
-            if (result != null) {
-                Client.fetchJobResult(result, resultDir);
-                LOG.info("Job result files URL: {}", result.url());
-                LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
-                        result.id(), job.cmd(), TimestampHelper.diffMillisec(result.finished(), result.started()) / 1000.0,
-                        result.result());
-                return result.result();
+            if (!(res instanceof ScheduleResponse)) {
+                LOG.error(res.status());
+                return -1;
             }
+            Job scheduled = ((ScheduleResponse) res).job();
+            LOG.info("job {} scheduled", scheduled.id(), scheduled.state());
+
+            Job running = ClientHelper.waitForStart(scheduled, webClient);
+            LOG.info("job {} started: {}", running.id(), running.state());
+
+            String filename = ClientHelper.maybeGetStdout(running.id(), webClient);
+
+            LOG.info("============ {} in job {} sandbox start ===========", filename, running.id());
+            Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), filename, true, System.out);
+            LOG.info("============ {} of job {} sandbox end ===========", filename, running.id());
+            LOG.info("{} {}", finished.get().state(), finished.get().finished());
+
+            if (finished.isPresent())
+            LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
+                    running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
+                    finished.get().result());
+            return running.result();
 
         } catch (ParseException e) {
             LOG.error(e.toString());

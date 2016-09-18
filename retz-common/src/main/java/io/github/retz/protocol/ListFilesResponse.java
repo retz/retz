@@ -28,16 +28,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class GetJobResponse extends Response {
+public class ListFilesResponse extends Response {
     private Optional<Job> job;
+    private List<DirEntry> entries;
 
     @JsonCreator
-    public GetJobResponse(@JsonProperty("job") Optional<Job> job) {
+    public ListFilesResponse(@JsonProperty("job") Optional<Job> job,
+                             @JsonProperty("entries") List<DirEntry> entries) {
         this.job = Objects.requireNonNull(job);
+        this.entries = (entries == null)? new LinkedList<>() : entries;
     }
 
     @JsonGetter("job")
     public Optional<Job> job() {
         return job;
+    }
+
+    @JsonGetter("entries")
+    public List<DirEntry> entries() {
+        return entries;
     }
 }

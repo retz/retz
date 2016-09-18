@@ -50,7 +50,7 @@ public class Job {
      *                    |              +--------&gt; [KILLED]
      *                    +----------------------------^
      */
-    public enum JobState {
+    public enum JobState { // TODO: define correspondce against Mesos Task status
         CREATED,
         QUEUED,
         STARTED,
@@ -212,15 +212,15 @@ public class Job {
         this.state = QUEUED;
     }
 
-    public void setStarted(String now) {
-        this.started = now;
-        this.state = STARTED;
-    }
-
     public void doRetry() {
         this.retry++;
     }
 
+    public void started(String url, String now) {
+        this.url = url;
+        this.started = now;
+        this.state = STARTED;
+    }
     public void finished(String url, String now, int result) {
         this.url = url;
         this.finished = now;

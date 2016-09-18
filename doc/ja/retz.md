@@ -233,6 +233,8 @@ $ retz-client schedule OPTIONS
 $ retz-client run OPTIONS
 $ retz-client schedule -file <list of batches in a text file>
 $ retz-client get-job -id <jobid>
+$ retz-client get-file -id <jobid> --fetch <filename> --poll -R -
+$ retz-client list-files -id <jobid> --path <path> -R -
 $ retz-client watch
 $ retz-client config
 ```
@@ -279,7 +281,8 @@ $ retz-client schedule -A asakusa \
 * **Known Issue** YAESSを使ってホームディレクトリからの相対パスで読ま
   せる場合は、 `-E YAESS_OPTS='-Duser.home=.'` などとカレントディレク
   トリを指定すること。理由は不明だが、 `$HOME` が指定されても無視され
-  ることがわかっている。
+  ることがわかっている。 (Mesos がいくつかの Containerizer 上で `HOME` を
+  上書きしている模様)
 
 #### 設定ファイル
 
@@ -331,14 +334,11 @@ path/to/retz.properties config` を実行する。
 
 といったふうに、 `retz-client schedule` の引数を列挙する。
 
+TODO: ワークフローとして定義できるようにした方がよいかもしれない
+
 #### 再実行
 
-基本的にはMesosはジョブの再実行を行わず結果を通知するだけである。再実
-行回数は設定ファイルに書く（Job毎に設定するのはTODO?）
-
-Retz は失敗の通知をうけて何度か再実行を試みる（TODO: 再実行は実装されていない）。
-
-結果は Retz に通知されるので、 M3BP のジョブを再スケジュールする [要検討]
+基本的にはMesosはジョブの再実行を行わず結果を通知するだけである。　Retz は失敗の通知をうけて何度か再実行を試みる。
 
 #### 結果の収集
 
@@ -346,9 +346,11 @@ Retz は失敗の通知をうけて何度か再実行を試みる（TODO: 再実
 保存する）が、M3BPジョブの標準出力、標準エラー出力はジョブ終了後に、指
 定のアドレスへアクセスする。アドレスはサーバーのログに表示される。
 
-また、 `run` サブコマンドを利用した場合は `-R <dir>` を引数に指定する
+また、 `run` サブコマンドを利用した場合は標準出力がそのまま表示される。
+その他、サンドボックス内のファイルを一覧するには `list-files` を、そのファイルを
+取得するには `get-file` を利用する。いずれも、 `-R <dir>` を引数に指定する
 ことで、Executorの標準出力および標準エラー出力をローカルに保存すること
-ができる。
+ができる。　TODO: ディレクトリを指定して再帰的にファイルを取得する
 
 #### 耐障害性
 
@@ -415,7 +417,15 @@ Asakusa on M3BP ジョブは、なるべく少ない並列数で実行しつつ�
 #### HTTP プロトコル
 
 
+`Authorization` ヘッダに認証情報を記述できる。 `retz.access.key` と
+`retz.access.secret` を用いた署名を組み合わせて、サーバーとクライアントで
+署名を検証する。
+
 * `GET /job/:id` behind `get-job` subcommand
+
+* `GET /job/:id/file/:file` behind `get-file` subcommand
+
+* `GET /job/:id/path/:path` behind `list-files` subcommand
 
 * `PUT /job` behind `schedule` `run` subcommand
 
@@ -423,8 +433,6 @@ Request: `{"command":"schedule", "job":Job, "doWatch":false}`
 Response: `{"status":"ok", "job":Job1}` or `{"status":"queue full"}`
 
 * `DELETE /job/:id` behind `kill` subcommand
-
-**Note: not implemented yet**
 
 Request: `{"command":"kill", "id":24}`
 Response: `{"status":"ok"}` or `{"status":"not found"}`
