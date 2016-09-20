@@ -21,7 +21,8 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-    
+import java.util.Optional;
+
 
 public class CuratorClient implements Closeable, LeaderSelectorListener {
     
@@ -32,7 +33,7 @@ public class CuratorClient implements Closeable, LeaderSelectorListener {
     private static CountDownLatch leaderLatch = new CountDownLatch(1);
     private static CountDownLatch closeLatch = new CountDownLatch(1);
     private static MesosFrameworkLauncher.Configuration conf;
-    private static int memberNum, quorum;
+    private static int memberNum, quorum;    
     
     private CuratorClient() {
 	this.client = CuratorFrameworkFactory.builder().connectString("localhost:2180")
@@ -83,10 +84,10 @@ public class CuratorClient implements Closeable, LeaderSelectorListener {
     public boolean awaitLeadership() throws InterruptedException {
 	return leaderLatch.await(3000, TimeUnit.MILLISECONDS);
     }
-
+    
     @Override
     public void takeLeadership(CuratorFramework client) throws Exception {
-
+	
 	LOG.info("Leadership taken");
 	leaderLatch.countDown();
 	
@@ -152,6 +153,26 @@ public class CuratorClient implements Closeable, LeaderSelectorListener {
 	closeLatch.countDown();
 	this.leaderSelector.close();
 	this.client.close();
+    }
+
+    public Optional<Protos.FrameworkID> getFrameworkId() {
+	try {
+	    LOG.info("Fetching the stored frameworkId");
+	    byte[] frameworkIdData = this.client.getData().forPath("/id");
+	    Protos.FrameworkID frameworkId = Protos.FrameworkID.newBuilder().setValue(new String(frameworkIdData)).build();
+	    return Optional.of(frameworkId);
+	} catch (Exception e) {
+	    LOG.error(e.toString());
+	    return Optional.empty();
+	}
+    }
+    
+    public void storeFrameworkId(Protos.FrameworkID frameworkId) {
+	try {
+	    this.client.create().forPath("/id", frameworkId.getValue().getBytes());
+	} catch (Exception e) {
+	    // Do nothing
+	}
     }
     
     public static int run(String... argv) {	

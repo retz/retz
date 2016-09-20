@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 public final class MesosFrameworkLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosFrameworkLauncher.class);
@@ -106,7 +107,13 @@ public final class MesosFrameworkLauncher {
                     .setType(Protos.FrameworkInfo.Capability.Type.GPU_RESOURCES)
                     .build());
         }
-
+	
+	Optional<Protos.FrameworkID> frameworkId = CuratorClient.getInstance().getFrameworkId();
+	if (frameworkId.isPresent()) {
+	    LOG.info("Attempting to re-register with frameworkId: {}", frameworkId.get().getValue());
+	    fwBuilder.setId(frameworkId.get());
+	}
+	
         LOG.info("Connecting to Mesos master {} as {}", conf.getMesosMaster(), userName);
         return fwBuilder.build();
     }
