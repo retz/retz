@@ -37,7 +37,7 @@ public class ClientHelper {
 
     public static void getWholeFile(Client c, int id, String filename, String resultDir) {
         String path = resultDir + "/" + filename;
-        try(FileOutputStream out = new FileOutputStream(path)) {
+        try (FileOutputStream out = new FileOutputStream(path)) {
             getWholeFile(c, id, filename, false, out);
         } catch (FileNotFoundException e) {
             LOG.error(e.toString());
@@ -45,6 +45,7 @@ public class ClientHelper {
             LOG.error(e.toString());
         }
     }
+
     // Gets whole file until the job finishes and streams out to 'out'!!!
     public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out) throws IOException {
         int offset = 0;
@@ -138,8 +139,15 @@ public class ClientHelper {
 
     public static Job waitForStart(Job job, Client c) throws IOException {
         Job current = job;
+        int interval = INITAL_INTERVAL_MSEC;
         while (current.state() == Job.JobState.QUEUED) {
-            maybeSleep(1024);
+            maybeSleep(interval);
+            if (interval < MAX_INTERVAL_MSEC) {
+                interval = interval * 2;
+            } else {
+                interval = MAX_INTERVAL_MSEC;
+            }
+
             Response res = c.getJob(job.id());
             if (res instanceof GetJobResponse) {
                 GetJobResponse getJobResponse = (GetJobResponse) res;
