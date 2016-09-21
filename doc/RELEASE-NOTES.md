@@ -2,6 +2,9 @@
 
 ## 0.0.25
 
+* Add '-U' and '--user' option to 'load-app' to change user name in
+  executor; sometimes it is convenient to run as root. Besides, it is
+  not allowed to be root in RetzExecutor.
 * Move from WebSocket to HTTP polling at 'run' subcommand.
 * Add 'get-file' and 'list-files' subcommand.
 * Simplify 'get-job' as to get summary of a job; getting stdout and stderr

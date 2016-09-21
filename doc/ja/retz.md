@@ -102,7 +102,7 @@ $ retz-client load-app --name your-app-name \
    -P [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
    -L [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
    -F [hdfs|http|https]://path/to/assembly.tgz[,http://example.com/another-file] \
-   -disk 2048
+   -disk 2048 [--user your-user-name]
 $ retz-client get-app -A your-app-name
 $ retz-client unload-app --name your-app-name
 $ retz-client list-app
@@ -246,7 +246,7 @@ $ retz-client config
 * `-A --application your-app-name ` [opt] 登録したアプリケーション名。
   これがない場合は、 `CommandExecutor` が使用される。
 * `-E key=value` 環境変数を設定する。
-* `-R <directory>` 標準出力などのファイルをローカルにコピーするディレクトリを指定する（ `run` のみ）
+* `-R <directory>` 標準出力などのファイルをローカルにコピーするディレクトリを指定する（ `get-file` のみ）
 * `-N --name <jobname>` [opt default=retz-task-name-<app-name>]
 * `-cpu <posint>-[<posint>]` [opt default=1-] ジョブを実行可能なCPU数の範囲。ジョ
   ブは通常、Mesosに与えられたCPU数または、ここで指定した最大値を実行時に設定する。

@@ -24,6 +24,7 @@ import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
@@ -103,7 +104,7 @@ public final class WebConsole {
 
             LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
 
-            String givenSignature =req.headers(Authenticator.AUTHORIZATION);
+            String givenSignature = req.headers(Authenticator.AUTHORIZATION);
             LOG.debug("Signature from client: {}", givenSignature);
 
             if (authenticator.isPresent()) {
@@ -191,9 +192,18 @@ public final class WebConsole {
         // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
             LOG.debug(LoadAppRequest.resourcePattern());
+            res.type("application/json");
 
             LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
             LOG.debug("app id={}", loadAppRequest.application().getAppid());
+
+            if (!(loadAppRequest.application().container() instanceof DockerContainer)) {
+                if (loadAppRequest.application().getUser().isPresent() &&
+                        loadAppRequest.application().getUser().get().equals("root")) {
+                    res.status(400);
+                    return MAPPER.writeValueAsString(new ErrorResponse("root user is only allowed with Docker container"));
+                }
+            }
             boolean result = WebConsole.load(loadAppRequest.application());
 
             if (result) {
@@ -290,7 +300,7 @@ public final class WebConsole {
     }
 
     public static boolean kill(int id) {
-        if (! driver.isPresent()) {
+        if (!driver.isPresent()) {
             LOG.error("Driver is not present; this setup should be wrong");
             return false;
         }

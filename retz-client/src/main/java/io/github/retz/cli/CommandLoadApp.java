@@ -46,9 +46,12 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = {"-L", "--large-file"}, description = "Large files that will be cached at agents")
     List<String> largeFiles = new LinkedList<>();
 
-    @Parameter(names = {"-P","--persistent"}, description = "Persistent files")
+    @Parameter(names = {"-P", "--persistent"}, description = "Persistent files")
     private List<String> persistentFiles = new LinkedList<>();
-     // ("http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
+    // ("http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
+
+    @Parameter(names = {"-U", "--user"}, description = "User name to run task")
+    private String user;
 
     @Parameter(names = "-disk", description = "Disk size for persistent volume in MB")
     private int disk = 0;
@@ -89,6 +92,10 @@ public class CommandLoadApp implements SubCommand {
             }
             c = new DockerContainer(image);
         } else {
+            if ("root".equals(user)) {
+                LOG.error("Root user is only allowed at Docker containerizer");
+                return -1;
+            }
             c = new MesosContainer();
         }
 
@@ -98,7 +105,8 @@ public class CommandLoadApp implements SubCommand {
         } else {
             maybeDisk = Optional.of(disk);
         }
-        Application application = new Application(appName, persistentFiles, largeFiles, files, maybeDisk, c);
+        Application application = new Application(appName, persistentFiles, largeFiles, files, maybeDisk,
+                Optional.ofNullable(user), c);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())

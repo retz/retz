@@ -104,6 +104,9 @@ public class Applications {
                 .setShell(true)
                 .setValue(command);
 
+        if (application.getUser().isPresent()) {
+            commandInfoBuilder.setUser(application.getUser().get());
+        }
         for (String file : application.getFiles()) {
             commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
         }
@@ -125,6 +128,9 @@ public class Applications {
                 .setShell(true)
                 .addUris(Protos.CommandInfo.URI.newBuilder().setValue(RetzScheduler.getJarUri()).setCache(false)); // In production, set this true
 
+        if (application.getUser().isPresent()) {
+            commandInfoBuilder.setUser(application.getUser().get());
+        }
         for (String file : application.getFiles()) {
             commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
         }

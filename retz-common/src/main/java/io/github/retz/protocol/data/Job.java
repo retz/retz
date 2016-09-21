@@ -77,7 +77,6 @@ public class Job {
     public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, int gpu) {
         this(appName, cmd, props, cpu, memMB);
         this.gpu = Objects.requireNonNull(gpu);
-
     }
 
     @JsonCreator

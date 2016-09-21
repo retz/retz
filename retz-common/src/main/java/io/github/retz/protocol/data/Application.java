@@ -30,6 +30,7 @@ public class Application {
     private List<String> largeFiles;
     private List<String> files;
     private Optional<Integer> diskMB;
+    private Optional<String> user;
 
     private Container container;
 
@@ -39,12 +40,14 @@ public class Application {
                        @JsonProperty("largeFiles") List<String> largeFiles,
                        @JsonProperty("files") List<String> files,
                        @JsonProperty("diskMB") Optional<Integer> diskMB,
+                       @JsonProperty("user") Optional<String> user,
                        @JsonProperty("container") Container container) {
         this.appid = Objects.requireNonNull(appid);
         this.persistentFiles = persistentFiles;
         this.largeFiles = largeFiles;
         this.files = files;
         this.diskMB = diskMB;
+        this.user = user;
         this.container = (container != null) ? container : new MesosContainer();
     }
 
@@ -71,6 +74,11 @@ public class Application {
     @JsonGetter("diskMB")
     public Optional<Integer> getDiskMB() {
         return diskMB;
+    }
+
+    @JsonGetter("user")
+    public Optional<String> getUser() {
+        return user;
     }
 
     @JsonGetter("container")
@@ -106,8 +114,13 @@ public class Application {
                     .append("(").append(getDiskMB().get()).append("MB):files=")
                     .append(String.join(",", getPersistentFiles()));
         }
-        return String.format("Application name=%s: container=%s: files=%s/%s: %s",
+        String maybeUser = "";
+        if (user.isPresent()) {
+            maybeUser = "user=" + user.get();
+        }
+        return String.format("Application name=%s: %s container=%s: files=%s/%s: %s",
                 getAppid(),
+                maybeUser,
                 container().getClass().getSimpleName(),
                 String.join(",", getFiles()),
                 String.join(",", getLargeFiles()),

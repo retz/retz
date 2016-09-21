@@ -96,7 +96,8 @@ public class RetzSchedulerTest {
     //TODO: @Test
     public void launch() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(), Arrays.asList(files), Optional.empty(), new MesosContainer()));
+        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
+                Arrays.asList(files), Optional.empty(), Optional.empty(), new MesosContainer()));
         Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
         JobQueue.push(job);
 
@@ -138,7 +139,8 @@ public class RetzSchedulerTest {
     @Test
     public void notEnough() throws InterruptedException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(), Arrays.asList(files), Optional.empty(), new MesosContainer()));
+        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
+                Arrays.asList(files), Optional.empty(), Optional.empty(), new MesosContainer()));
         Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
         JobQueue.push(job);
 
@@ -161,7 +163,8 @@ public class RetzSchedulerTest {
     // TODO: @Test
     public void slaveFail() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(), Arrays.asList(files), Optional.empty(), new MesosContainer()));
+        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
+                Arrays.asList(files), Optional.empty(), Optional.empty(), new MesosContainer()));
         Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
         JobQueue.push(job);
 
