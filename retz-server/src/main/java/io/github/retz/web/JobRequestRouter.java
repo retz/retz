@@ -77,7 +77,7 @@ public class JobRequestRouter {
         int length = Integer.parseInt(req.queryParams("length"));
         Optional<Job> job = JobQueue.getJob(id);
 
-        LOG.info("get-file: id={}, path={}, offset={}, length={}", id, file, offset, length);
+        LOG.debug("get-file: id={}, path={}, offset={}, length={}", id, file, offset, length);
         res.type("application/json");
 
         Optional<FileContent> fileContent;
@@ -159,7 +159,7 @@ public class JobRequestRouter {
     }
 
     private static String fetchHTTP(String addr, int retry) throws MalformedURLException, IOException {
-        LOG.info("Fetching {}", addr);
+        LOG.debug("Fetching {}", addr);
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(addr).openConnection();
