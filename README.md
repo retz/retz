@@ -37,6 +37,7 @@ Edit `/opt/retz-server/etc/retz.properties` according to your environment:
   be > 1024)
 * `retz.mesos.principal = retz` - Mesos principal name
 * `retz.mesos.role = retz` - Role name in Mesos
+* `retz.mesos.secret.file` - A file path containing mesos authentication secret (optional, no line breaks allowed in the file)
 
 Retz is a program that runs just in foreground. To start Retz in
 console, type

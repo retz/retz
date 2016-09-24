@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.io.FileInputStream;
+import com.google.protobuf.ByteString;
 
 public final class MesosFrameworkLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosFrameworkLauncher.class);
@@ -55,10 +57,28 @@ public final class MesosFrameworkLauncher {
 
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
+        Protos.Credential credential = null;
+
+        if(conf.fileConfig.hasSecretFile()) {
+            try {
+                credential = Protos.Credential.newBuilder()
+                        .setPrincipal(conf.fileConfig.getPrincipal())
+                        .setSecretBytes(ByteString.readFrom(new FileInputStream(conf.fileConfig.getSecretFile())))
+                        .build();
+            } catch (Exception e) {
+                LOG.error("Cannot read secret file: {}", e.toString());
+                return -1;
+            }
+        }
+
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
         MesosSchedulerDriver driver = null;
         try {
-            driver = new MesosSchedulerDriver(scheduler, fw, conf.getMesosMaster());
+            if(credential == null) {
+                driver = new MesosSchedulerDriver(scheduler, fw, conf.getMesosMaster());
+            } else {
+                driver = new MesosSchedulerDriver(scheduler, fw, conf.getMesosMaster(),credential);
+            }
         } catch (Exception e) {
             LOG.error("Cannot start Mesos scheduler: {}", e.toString());
             return -1;

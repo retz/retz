@@ -36,6 +36,7 @@ public class FileConfiguration {
     static final String BIND_ADDRESS = "retz.bind";
     static final String MESOS_ROLE = "retz.mesos.role";
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
+    static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
     static final String USE_GPU = "retz.gpu";
 
     // Authentication enabled by default
@@ -168,6 +169,12 @@ public class FileConfiguration {
             return DEFAULT_MESOS_PRINCIPAL;
         }
         return principal;
+    }
+    public boolean hasSecretFile() {
+        return getSecretFile() != null;
+    }
+    public String getSecretFile()  {
+        return properties.getProperty(MESOS_SECRET_FILE);
     }
 
     public String getRole() {
