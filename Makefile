@@ -1,4 +1,4 @@
-.PHONY: test build clean inttest rpm deb dist javadoc license
+.PHONY: test build clean inttest rpm deb dist javadoc license client-jar
 
 GRADLE=./gradlew
 
@@ -27,3 +27,6 @@ rpm:
 
 deb:
 	$(GRADLE) --refresh-dependencies buildDeb
+
+client-jar:
+	$(GRADLE) :retz-client:shadowJar
