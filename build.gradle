@@ -99,16 +99,19 @@ project(':retz-executor') {
     mainClassName = 'io.github.retz.executor.MesosExecutorLauncher'
 }
 
-def makePropertyFile(jarFileName, basedir, testType) {
+def makePropertyFile(jarFileName, basedir, testType, name, version) {
     // A kludge workaround for clean build which don't have build/resources/main
     // where property file creation fails
     def subdir = new File(basedir, "/resources/${testType}")
     subdir.mkdirs();
 
+    def serverName = "${name}-${version} (${gitVersion()})"
+
     // Bundle correctly corresponding file name; See RetzScheduler.setJarUri
     def prop = new Properties()
-    def propFile = new File("${basedir}/resources/${testType}/ExecutorJarFile.properties")
-    prop.setProperty("filename", jarFileName)
+    def propFile = new File("${basedir}/resources/${testType}/retz-server.properties")
+    prop.setProperty("jarfilename", jarFileName)
+    prop.setProperty("servername", serverName)
     propFile.createNewFile()
     prop.store(propFile.newWriter(), null)
 }
@@ -163,11 +166,11 @@ project(':retz-server') {
     def executorJarFile = project(":retz-executor").shadowJar.archiveName
 
     task processResources.doLast {
-        makePropertyFile(executorJarFile, "${buildDir}", "main")
+        makePropertyFile(executorJarFile, "${buildDir}", "main", project.name, project.version)
     }
 
     task processTestResources.doLast {
-        makePropertyFile(executorJarFile, "${buildDir}", "test")
+        makePropertyFile(executorJarFile, "${buildDir}", "test", project.name, project.version)
     }
 
     run {

@@ -37,11 +37,15 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.jar.Manifest;
 
 import static spark.Spark.*;
 
@@ -77,6 +81,8 @@ public final class WebConsole {
         webSocketIdleTimeoutMillis(Connection.IDLE_TIMEOUT_SEC * 1000);
 
         before((req, res) -> {
+            res.header("Server", RetzScheduler.HTTP_SERVER_NAME);
+
             // TODO: authenticator must be per each user and single admin user
             Optional<Authenticator> authenticator = Optional.ofNullable(config.getAuthenticator());
             String verb = req.requestMethod();
@@ -93,16 +99,16 @@ public final class WebConsole {
             } else {
                 resource = new URI(req.url()).getPath();
             }
+            LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
 
             LOG.debug("req={}, res={}, resource=", req, res, resource);
             // These don't require authentication to simplify operation
             if ("/ping".equals(resource) || "/status".equals(resource)
                     || "/cui".equals(resource) // TODO: this is special exception; in future this must be removed...
+                    || "/".equals(resource)
                     || resource.equals(RetzScheduler.getJarPath())) {
                 return;
             }
-
-            LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
 
             String givenSignature = req.headers(Authenticator.AUTHORIZATION);
             LOG.debug("Signature from client: {}", givenSignature);
@@ -124,6 +130,12 @@ public final class WebConsole {
                     halt(401, "Authentication failed. String to sign: " + string2sign);
                 }
             }
+        });
+
+        after((req, res) -> {
+            LOG.debug("{} {} {} {} from {} {}",
+                    res.raw().getStatus(),
+                    req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
         });
 
         // APIs to be in vanilla HTTP

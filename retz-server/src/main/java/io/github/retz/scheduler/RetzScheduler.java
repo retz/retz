@@ -47,16 +47,20 @@ public class RetzScheduler implements Scheduler {
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
     private final ObjectMapper MAPPER = new ObjectMapper();
+    public static final String HTTP_SERVER_NAME;
 
     static {
         // TODO: stop hard coding and get the file name in more generic way
         // COMMENT: I put the trick in build.gradle, saving the exact jar file name as resource bundle
         // REVIEW: http://www.eclipse.org/aether/ (not surveyed yet)
         // REVIEW: https://github.com/airlift/resolver (used in presto?)
-        ResourceBundle labels = ResourceBundle.getBundle("ExecutorJarFile");
-        JAR_FILENAME = labels.getString("filename");
+        ResourceBundle labels = ResourceBundle.getBundle("retz-server");
+        JAR_FILENAME = labels.getString("jarfilename");
         JAR_PATH = "/" + JAR_FILENAME;
         LOG.info("Executor jar file name to distribute: {}", JAR_FILENAME);
+
+        HTTP_SERVER_NAME = labels.getString("servername");
+        LOG.info("Server name in HTTP(S) header: {}", HTTP_SERVER_NAME);
     }
 
     public RetzScheduler(MesosFrameworkLauncher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
