@@ -108,7 +108,7 @@ public final class MesosFrameworkLauncher {
                     .build());
         }
 	
-	Optional<Protos.FrameworkID> frameworkId = CuratorClient.getInstance().getFrameworkId();
+	Optional<Protos.FrameworkID> frameworkId = CuratorClient.getFrameworkId();
 	if (frameworkId.isPresent()) {
 	    LOG.info("Attempting to re-register with frameworkId: {}", frameworkId.get().getValue());
 	    fwBuilder.setId(frameworkId.get());

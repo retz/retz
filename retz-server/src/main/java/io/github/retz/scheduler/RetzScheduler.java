@@ -107,7 +107,7 @@ public class RetzScheduler implements Scheduler {
     public void registered(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) {
         LOG.info("Connected to master {}; Framework ID: {}", masterInfo.getHostname(), frameworkId.getValue());
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
-	CuratorClient.getInstance().storeFrameworkId(frameworkId);
+	CuratorClient.storeFrameworkId(frameworkId);
     }
 
     @Override
