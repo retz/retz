@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.io.FileInputStream;
 import com.google.protobuf.ByteString;
+import java.util.Objects;
 
 public final class MesosFrameworkLauncher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosFrameworkLauncher.class);
@@ -162,6 +163,9 @@ public final class MesosFrameworkLauncher {
         FileConfiguration fileConfig;
 
         public Configuration(FileConfiguration fileConfig) {
+            Objects.requireNonNull(fileConfig, "File configuration cannot be null");
+            Objects.requireNonNull(fileConfig.getMesosMaster(), "Mesos master location cannot be empty");
+
             this.fileConfig = fileConfig;
         }
 

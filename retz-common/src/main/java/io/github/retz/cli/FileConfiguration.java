@@ -84,7 +84,6 @@ public class FileConfiguration {
         properties.load(in);
         in.close();
 
-        Objects.requireNonNull(properties.getProperty(MESOS_LOC_KEY), "Mesos master location cannot be empty");
         Objects.requireNonNull(properties.getProperty(BIND_ADDRESS), "Host and port are required");
 
         uri = new URI(properties.getProperty(BIND_ADDRESS));
