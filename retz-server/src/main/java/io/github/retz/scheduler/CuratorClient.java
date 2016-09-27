@@ -1,8 +1,5 @@
 package io.github.retz.scheduler;
 
-import io.github.retz.web.WebConsole;
-import io.github.retz.web.WebConsoleForReplica;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.*;
@@ -10,18 +7,20 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
-import org.apache.curator.framework.recipes.leader.Participant;
-import org.apache.curator.framework.state.ConnectionState;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
+import org.apache.zookeeper.CreateMode;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.Optional;
 
 
 public class CuratorClient implements Closeable {
@@ -34,23 +33,23 @@ public class CuratorClient implements Closeable {
     private static CountDownLatch closeLatch = new CountDownLatch(1);
     private static MesosFrameworkLauncher.Configuration conf;
     private static int memberNum, quorum;    
+    private static List<io.github.retz.web.master.Client> webClientsForMaster =
+	new ArrayList<io.github.retz.web.master.Client>();
     
     
-    public static void startZk() {
-	client.start();
-    }
-
     public static void bootstrap() throws Exception {
 	try {
 	    byte[] quorumData = client.getData().forPath("/config/quorum");
 	    byte[] memberNumData = client.getData().forPath("/config/memberNum");
 	    quorum = ByteBuffer.wrap(quorumData).getInt();
 	    memberNum = ByteBuffer.wrap(memberNumData).getInt();
-	    LOG.info("quorum: {}, memberNum: {}", quorum, memberNum);
+	    LOG.info("quorum: {}, memberNum: {}", quorum, memberNum);	 
 	} catch (Exception e) {
-	    LOG.error(e.toString());       	   
-	    byte[] quorumData = ByteBuffer.allocate(4).putInt(3).array();
-	    byte[] memberNumData = ByteBuffer.allocate(4).putInt(5).array();
+	    LOG.error(e.toString());
+	    quorum = 2;
+	    memberNum = 2;
+	    byte[] quorumData = ByteBuffer.allocate(4).putInt(quorum).array();
+	    byte[] memberNumData = ByteBuffer.allocate(4).putInt(memberNum).array();
 	    client.create().creatingParentsIfNeeded().forPath("/config/quorum", quorumData);
 	    client.create().creatingParentsIfNeeded().forPath("/config/memberNum", memberNumData);	    
 	}
@@ -66,11 +65,23 @@ public class CuratorClient implements Closeable {
 	    runForReplica();
 	}
     }
-        
+    
     public static void runForMaster() throws Exception {
 	
 	LOG.info("Leadership taken");
 	leaderLatch.countDown();
+	
+	LOG.info("Waiting for the number of running retz-server reaches quorum");
+	while (client.getChildren().forPath("/members/replicas").size() + 1 < quorum) {
+	    Thread.sleep(3000);
+	}
+	LOG.info("Quorum({}) retz-server is running", quorum);
+	
+	for (String replica : client.getChildren().forPath("/members/replicas")) {
+	    LOG.info("replica: {}", replica);
+	    URI uri = new URI("http://" + replica);
+	    webClientsForMaster.add(new io.github.retz.web.master.Client(uri.getHost(), uri.getPort()));
+	}       
 	
 	Protos.FrameworkInfo fw = MesosFrameworkLauncher.buildFrameworkInfo(conf);
 	
@@ -82,7 +93,7 @@ public class CuratorClient implements Closeable {
 	    LOG.error("Cannot start Mesos scheduler: {}", e.toString());
 	    System.exit(-1);
 	}
-
+	
 	Protos.Status status = driver.start();
 
 	if (status != Protos.Status.DRIVER_RUNNING) {
@@ -94,11 +105,11 @@ public class CuratorClient implements Closeable {
 
 	// Start web server
 	int port = conf.getPort();
-	WebConsole webConsole = new WebConsole(port);
-	WebConsole.setScheduler(scheduler);
-	WebConsole.setDriver(driver);
+	io.github.retz.web.master.WebConsole webConsole = new io.github.retz.web.master.WebConsole(port);
+	io.github.retz.web.master.WebConsole.setScheduler(scheduler);
+	io.github.retz.web.master.WebConsole.setDriver(driver);
 	LOG.info("Web console has started with port {}", port);
-
+	
 	// Stop them all
 	// Wait for Mesos framework stop
 	status = driver.join();
@@ -109,7 +120,13 @@ public class CuratorClient implements Closeable {
 
     public static void runForReplica() {
 	LOG.info("I am a replica");
-	WebConsoleForReplica webConsoleForReplica = new WebConsoleForReplica(9091);
+	try {
+	    client.create().creatingParentsIfNeeded()
+		.withMode(CreateMode.EPHEMERAL).forPath("/members/replicas/localhost:9091");
+	} catch (Exception e) {
+	    LOG.error(e.toString());
+	}
+	io.github.retz.web.replica.WebConsole webConsole = new io.github.retz.web.replica.WebConsole(9091);
     }
     
     @Override
@@ -143,7 +160,7 @@ public class CuratorClient implements Closeable {
     public static int run(String... argv) { 
 	try {
 	    conf = MesosFrameworkLauncher.parseConfiguration(argv);
-	    startZk();
+	    client.start();
 	    bootstrap();
 	    startMasterSelection();
 	    closeLatch.await();
