@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.0.27
+
+* Major clean up moving from on-memory data structure utilizing java.util.concurrent
+  to data structure based on relational model and transactions using JDBC.
+  Currently primary database is H2 Database - on moving to other database
+  it will require change on connection pooling.
+
 ## 0.0.26
 
 * Add 'retz.exectutor.java' to server configuration file for more flexible

@@ -122,6 +122,11 @@ public class Authenticator {
                 .append(resource).append("\n")
                 .toString();
     }
+
+    public String getKey() {
+        return KEY;
+    }
+
     @Override
     public String toString() {
         return KEY + ":" + SECRET_KEY_SPEC.toString();

@@ -93,7 +93,7 @@ public class TaskBuilder {
         if (application.container() instanceof MesosContainer) {
             Protos.ExecutorInfo executorInfo = Applications.appToExecutorInfo(java, application, frameworkId);
             builder.setExecutor(executorInfo);
-            this.setJob(job, Applications.encodable(application));
+            this.setJob(job, application);
 
         } else if (application.container() instanceof DockerContainer) {
             Protos.CommandInfo commandInfo = appToCommandInfo(application, job.cmd());

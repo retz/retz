@@ -16,64 +16,75 @@
  */
 package io.github.retz.scheduler;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.retz.mesos.Resource;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Container;
 import io.github.retz.protocol.data.DockerContainer;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class Applications {
-
-    private static final Map<String, Application> DICTIONARY = new ConcurrentHashMap<>();
-
-    private static Map<String, Application> get() {
-        return DICTIONARY;
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(Applications.class);
 
     public static Optional<Application> get(String appName) {
-        return Optional.ofNullable(get().get(appName));
+        try {
+            return Database.getApplication(appName);
+        } catch (IOException e){
+            LOG.error(e.toString());
+            return Optional.empty();
+        }
     }
 
     public static List<String> volumes(String role) {
-        return (DICTIONARY.entrySet().stream()
-                .map(entry -> entry.getValue().toVolumeId(role))
-                .collect(Collectors.toList()));
+        try {
+            return (Database.getAllApplications().stream()
+                    .map(entry -> entry.toVolumeId(role))
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            LOG.error("Volumes could not be found {}: returning empty list ..", e.toString());
+            return new LinkedList<>();
+        }
     }
 
     public static boolean load(Application application) {
-        DICTIONARY.putIfAbsent(application.getAppid(), application);
-        return true;
-    }
-
-    public static Application encodable(Application app) {
-        return app;
+        try {
+            return Database.addApplication(application);
+        } catch (JsonProcessingException e) {
+            return false; // Maybe this must be handled inside addApplication...
+        }
     }
 
     public static void unload(String appName) {
-        get().remove(appName);
         // Volumes are destroyed lazily
+        LOG.info("deleting {}", appName);
+        Database.safeDeleteApplication(appName);
     }
 
     public static List<Application> getAll() {
-        List<Application> apps = new LinkedList<>();
-        apps.addAll(get().values());
-        return apps;
+        try {
+            return Database.getAllApplications();
+        } catch (IOException e) {
+            LOG.error(e.toString());
+            return new LinkedList<>();
+        }
     }
 
+    // TODO: this might be very heavy proportional to number of applications, which could be
+    // cut out to another thread, or even remove persistent volume support?
     public static List<Application> needsPersistentVolume(Resource resource, String role) {
-        List<Application> apps = DICTIONARY.entrySet().stream()
-                .filter(entry -> !entry.getValue().getPersistentFiles().isEmpty())
-                .filter(entry -> entry.getValue().getDiskMB().isPresent())
-                .filter(entry -> !resource.volumes().containsKey(entry.getValue().toVolumeId(role)))
-                .map(entry -> entry.getValue())
+        List<Application> apps = getAll().stream()
+                .filter(entry -> !entry.getPersistentFiles().isEmpty())
+                .filter(entry -> entry.getDiskMB().isPresent())
+                .filter(entry -> !resource.volumes().containsKey(entry.toVolumeId(role)))
                 .collect(Collectors.toList());
         return apps;
     }
@@ -82,13 +93,7 @@ public class Applications {
     public static Protos.ContainerInfo appToContainerInfo(Application application) {
         Container container = application.container();
         DockerContainer c = (DockerContainer) container;
-        /*
-        return Protos.ContainerInfo.newBuilder().setDocker(
-                Protos.ContainerInfo.DockerInfo.newBuilder()
-                        .setImage(c.image()))
-                .setType(Protos.ContainerInfo.Type.DOCKER)
-                .build();
-                */
+
         return Protos.ContainerInfo.newBuilder().setMesos(
                 Protos.ContainerInfo.MesosInfo.newBuilder()
                         .setImage(Protos.Image.newBuilder()

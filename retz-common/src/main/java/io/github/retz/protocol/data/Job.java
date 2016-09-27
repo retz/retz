@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 import static io.github.retz.protocol.data.Job.JobState.*;
@@ -39,10 +40,12 @@ public class Job {
     private int retry; // How many retry now we have
 
     private final String appid;
-    private String name;
+    private String name; // TODO: make this configurable;
     private final Range cpu;
     private final Range memMB;
     private int gpu;
+
+    private String taskId; // TaskId assigned by Mesos (or other scheduler)
 
     /**
      * State diagram:
@@ -53,6 +56,7 @@ public class Job {
     public enum JobState { // TODO: define correspondce against Mesos Task status
         CREATED,
         QUEUED,
+        STARTING,
         STARTED,
         FINISHED,
         KILLED,
@@ -95,6 +99,7 @@ public class Job {
                @JsonProperty("cpu") Range cpu,
                @JsonProperty("memMB") Range memMB,
                @JsonProperty("gpu") int gpu,
+               @JsonProperty("taskId") String taskId,
                @JsonProperty("trustPVFiles") boolean trustPVFiles,
                @JsonProperty("state") JobState state) {
         this.cmd = Objects.requireNonNull(cmd);
@@ -108,10 +113,11 @@ public class Job {
         this.reason = reason;
         this.retry = retry;
         this.appid = appid;
-        this.name = (name != null) ? name : appid;
+        this.name = name;
         this.cpu = cpu;
         this.memMB = memMB;
         this.gpu = gpu;
+        this.taskId = taskId;
         this.trustPVFiles = trustPVFiles;
         this.state = Objects.requireNonNull(state);
     }
@@ -191,6 +197,11 @@ public class Job {
         return gpu;
     }
 
+    @JsonGetter("taskId")
+    public String taskId() {
+        return taskId;
+    }
+
     @JsonGetter("trustPVFiles")
     public boolean trustPVFiles() {
         return trustPVFiles;
@@ -212,25 +223,75 @@ public class Job {
     }
 
     public void doRetry() {
+        this.state = QUEUED;
         this.retry++;
     }
 
-    public void started(String url, String now) {
-        this.url = url;
+    public void starting(String taskId, Optional<String> maybeUrl, String now) {
         this.started = now;
+        this.taskId = taskId;
+        if (maybeUrl.isPresent()) {
+            this.url = maybeUrl.get();
+        }
+        this.state = STARTING;
+    }
+    public void started(String taskId, Optional<String> maybeUrl, String now) {
+        this.started = now;
+        this.taskId = taskId;
+        if (maybeUrl.isPresent()) {
+            this.url = maybeUrl.get();
+        }
         this.state = STARTED;
     }
-    public void finished(String url, String now, int result) {
-        this.url = url;
+    public void finished(String now, Optional<String> url, int result) {
         this.finished = now;
         this.result = result;
+        if (url.isPresent()) {
+            this.url = url.get();
+        }
         this.state = FINISHED;
     }
 
-    public void killed(String now, String reason) {
+    public void killed(String now, Optional<String> maybeUrl, String reason) {
         this.finished = now;
         this.reason = reason;
+        if (maybeUrl.isPresent()) {
+            this.url = maybeUrl.get();
+        }
         this.state = KILLED;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("{")
+                .append("id=").append(id)
+                .append(", name=").append(name)
+                .append(", appid=").append(appid)
+                .append(", cmd=").append(cmd)
+                .append(", env=").append(props)
+                .append(", cpus=").append(cpu)
+                .append(", mem=").append(memMB);
+
+        if (gpu > 0) {
+            sb.append(", gpu=").append(gpu);
+        }
+        if (scheduled != null) {
+            sb.append(", scheduled=").append(scheduled);
+        }
+        if (started != null) {
+            sb.append(", started=").append(started);
+        }
+        if (finished != null) {
+            sb.append(", finished=").append(finished);
+        }
+        sb.append(", state=").append(state);
+        if (state == FINISHED) {
+            sb.append(", result=").append(result);
+        }
+        if (result != 0){
+            sb.append(", reason=").append(reason);
+        }
+            sb.append("}");
+        return sb.toString();
+    }
 }

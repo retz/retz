@@ -19,11 +19,9 @@ package io.github.retz.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.protocol.*;
-import io.github.retz.protocol.Connection;
+import io.github.retz.protocol.StatusResponse;
+import io.github.retz.protocol.WatchResponse;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.Response;
-import io.github.retz.scheduler.JobQueue;
 import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketException;
@@ -158,7 +156,7 @@ public class ConsoleWebSocketHandler {
         WatchResponse res = new WatchResponse("start", null);
         res.status("Start watching");
         WATCHERS.add(user);
-        respond(user, res);
+        //respond(user, res);
     }
 
     @OnWebSocketClose
@@ -210,25 +208,6 @@ public class ConsoleWebSocketHandler {
 
 
         return;
-    }
-
-    private <ResType extends Response> void respond(Session user, ResType res) throws IOException {
-        String json = MAPPER.writeValueAsString(res);
-        if (json.length() <= Connection.MAX_PAYLOAD_SIZE) {
-            try {
-                user.getRemote().sendStringByFuture(json);
-            } catch (WebSocketException e) {
-                LOG.error("Client were disconnected: {}", e.toString());
-                user.close();
-            }
-        } else {
-            String msg = String.format("%s: Payload JSON is larger than max size supported in client (%d > %d).",
-                    res.getClass().getName(), json.length(), Connection.MAX_PAYLOAD_SIZE);
-            LOG.warn(msg);
-            JobQueue.compact();
-            ErrorResponse eres = new ErrorResponse(msg);
-            respond(user, eres);
-        }
     }
 
     public static void setStatus(StatusResponse statusResponse) {

@@ -68,7 +68,9 @@ subprojects {
         strictCheck true
         ext.year = '2016'
         ext.name = 'Nautilus Technologies, Inc.'
+
         exclude "**/*.json"
+        include "**/*.sql"
     }
 }
 
@@ -136,6 +138,8 @@ project(':retz-server') {
 
         compile 'com.sparkjava:spark-core:2.3'
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
+
+        compile 'com.h2database:h2:1.4.+'
 
         testCompile project(":retz-client")
     }

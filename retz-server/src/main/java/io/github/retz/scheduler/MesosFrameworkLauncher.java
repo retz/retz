@@ -45,6 +45,7 @@ public final class MesosFrameworkLauncher {
             if (conf.fileConfig.isTLS()) {
                 LOG.warn("Make sure a valid certificate is being used or RetzExecutor may not work.");
             }
+            Database.init(conf.getFileConfig());
         } catch (ParseException e) {
             LOG.error(e.toString());
             return -1;
@@ -108,6 +109,7 @@ public final class MesosFrameworkLauncher {
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());
 
         webConsole.stop(); // Stop web server
+        Database.stop();
 
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }

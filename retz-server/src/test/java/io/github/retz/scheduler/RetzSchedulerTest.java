@@ -21,10 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.mesos.ResourceConstructor;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.protocol.data.Range;
+import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.junit.After;
 import org.junit.Before;
@@ -124,9 +121,9 @@ public class RetzSchedulerTest {
             System.err.println(r.getScalar().getValue());
         }
 
-        assertThat(JobQueue.getRunning().size(), is(1));
+        assertThat(JobQueue.countRunning(), is(1));
         driver.dummyTaskStarted();
-        assertThat(JobQueue.getRunning().size(), is(1));
+        assertThat(JobQueue.countRunning(), is(1));
 
         // TODO: introduce DI to skip URL fetch
         //driver.dummyTaskFinish();
@@ -139,6 +136,7 @@ public class RetzSchedulerTest {
     @Test
     public void notEnough() throws InterruptedException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
+        Database.addUser(new User("Deadbeef", "cafebabe", true));
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer()));
         Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
@@ -192,13 +190,13 @@ public class RetzSchedulerTest {
             System.err.println(r.getScalar().getValue());
         }
 
-        assertThat(JobQueue.getRunning().size(), is(1));
+        assertThat(JobQueue.countRunning(), is(1));
         driver.dummyTaskStarted();
-        assertThat(JobQueue.getRunning().size(), is(1));
+        assertThat(JobQueue.countRunning(), is(1));
 
         // Simulate slave failure to test task re-assign
         scheduler.slaveLost(driver, slaveID);
-        assertThat(JobQueue.getRunning().size(), is(0));
+        assertThat(JobQueue.countRunning(), is(0));
 
         // TODO: introduce
         //driver.dummyTaskFinish();

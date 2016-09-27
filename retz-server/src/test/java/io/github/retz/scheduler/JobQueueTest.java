@@ -16,23 +16,67 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.cli.FileConfiguration;
+import io.github.retz.cli.TimestampHelper;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.Range;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 
 public class JobQueueTest {
+    @Before
+    public void before() throws Exception {
+        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
+
+        FileConfiguration config = new FileConfiguration(in);
+        Database.init(config);
+    }
+    @After
+    public void after() throws Exception {
+        Database.stop();
+    }
     @Test
-    public void q() throws InterruptedException {
+    public void q() throws InterruptedException, IOException {
+        Application app = new Application("a", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+        Applications.load(app);
         Job job = new Job("a", "b", null, new Range(1000, 0), new Range(100000000, 0));
+        job.schedule(0, TimestampHelper.now());
         JobQueue.push(job);
-        List<Job> job2 = JobQueue.popMany(1001, 100000001);
-        assertFalse(job2.isEmpty());
-        assertThat(job2.get(0).appid(), is(job.appid()));
+        {
+            List<Job> job2 = JobQueue.findFit(1001, 100000001);
+            for (Job j : job2) {
+                System.err.println(job.appid() + job.name());
+            }
+            System.err.println(job2.size());
+            assertFalse(job2.isEmpty());
+            assertThat(job2.get(0).appid(), is(job.appid()));
+            JobQueue.starting(job2.get(0), Optional.empty(), "foobar-taskid");
+
+            Optional<Job> j = Database.getJobFromTaskId("foobar-taskid");
+            assertTrue(j.isPresent());
+        }
+
+        {
+            JobQueue.started("foobar-taskid", Optional.empty());
+            List<Job> fit = JobQueue.findFit(1000, 100000000);
+            assertTrue(fit.isEmpty());
+            assertThat(JobQueue.countRunning(), is(1));
+        }
+
     }
 }

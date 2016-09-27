@@ -1,18 +1,18 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.scheduler;
 
@@ -26,8 +26,6 @@ import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;
-import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.web.WebConsole;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
@@ -136,7 +134,8 @@ public class RetzScheduler implements Scheduler {
 
         for (Protos.Offer offer : offers) {
             // Check if simultaneous jobs exceeded its limit
-            int running = JobQueue.getRunning().size();
+            //int running = JobQueue.getRunning().size();
+            int running = JobQueue.countRunning();
             if (running >= conf.fileConfig.getMaxSimultaneousJobs()) {
                 LOG.warn("Number of concurrently running jobs has reached its limit: {} >= {} ({})",
                         running, conf.fileConfig.getMaxSimultaneousJobs(), FileConfiguration.MAX_SIMULTANEOUS_JOBS);
@@ -227,26 +226,31 @@ public class RetzScheduler implements Scheduler {
             }
 
             Resource assigned = new Resource(0, 0, 0);
-            List<Job> jobs = JobQueue.popMany((int) resource.cpu(), resource.memMB());
+            List<Job> jobs = JobQueue.findFit((int) resource.cpu(), resource.memMB());
+
+            LOG.debug("{} jobs found for fit {}/{}", jobs.size(), resource.cpu(), resource.memMB());
             // Assign tasks if it has enough CPU/Memory
             for (Job job : jobs) {
                 Optional<Application> app = Applications.get(job.appid());
 
                 if (!app.isPresent()) {
                     String reason = String.format("Application %s does not exist any more. Cancel.", job.appid());
-                    kill(job, reason);
+                    //kill(job, reason);
+                    JobQueue.cancel(job.id(), reason);
                     continue;
                 }
                 if (commands.hasEntry(job.appid(), job.cmd())) {
                     String reason = String.format("Same command is going to be scheduled in single executor; skipping %s '%s'",
                             job.appid(), job.cmd());
-                    kill(job, reason);
+                    //kill(job, reason);
+                    JobQueue.cancel(job.id(), reason);
                     continue;
                 } else if (!conf.fileConfig.useGPU() && job.gpu() > 0) {
                     // TODO: this should be checked before enqueuing to JobQueue
                     String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
                             job.id(), job.appid(), job.gpu());
-                    kill(job, reason);
+                    //kill(job, reason);
+                    JobQueue.cancel(job.id(), reason);
                     continue;
                 } else {
                     commands.add(job.appid(), job.cmd());
@@ -266,7 +270,8 @@ public class RetzScheduler implements Scheduler {
                     tb.setExecutor(job, app.get(), frameworkInfo.getId()); //Applications.encodable(app.get()));
                 } catch (JsonProcessingException e) {
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
-                    kill(job, reason);
+                    //kill(job, reason);
+                    JobQueue.cancel(job.id(), reason);
                     continue;
                 }
 
@@ -296,13 +301,13 @@ public class RetzScheduler implements Scheduler {
                 slaves.add(offer.getSlaveId());
                 this.slaves.put(app.get().getAppid(), slaves);
 
-                JobQueue.start(taskId.getValue(), job);
+                JobQueue.starting(job, Optional.empty(), taskId.getValue());
 
                 operations.add(Protos.Offer.Operation.newBuilder()
                         .setType(Protos.Offer.Operation.Type.LAUNCH)
                         .setLaunch(launch).build());
-                LOG.info("Task {} is to be ran as '{}' with {} at Slave {}",
-                        taskId.getValue(), job.cmd(), tb.getAssigned().toString(), offer.getSlaveId().getValue());
+                LOG.info("Job {}(task {}) is to be ran as '{}' with {} at Slave {}",
+                        job.id(), taskId.getValue(), job.cmd(), tb.getAssigned().toString(), offer.getSlaveId().getValue());
 
             }
 
@@ -349,12 +354,14 @@ public class RetzScheduler implements Scheduler {
 
         // TODO: remove **ONLY** tasks that is running on the failed slave
         // REVIEW: :+1:
-        JobQueue.recoverRunning();
+        //JobQueue.recoverRunning();
+        // TODO: reimplement with RDBMS clean query
+        throw new AssertionError("Not implemented yet");
     }
 
     @Override
     public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus status) {
-        LOG.info("Status update of task {}: {}", status.getTaskId().getValue(), status.getState().name());
+        LOG.info("Status update of task {}: {} / {}", status.getTaskId().getValue(), status.getState().name(), status.getMessage());
 
         switch (status.getState().getNumber()) {
             case Protos.TaskState.TASK_FINISHED_VALUE: {
@@ -380,6 +387,12 @@ public class RetzScheduler implements Scheduler {
                 break;
             case Protos.TaskState.TASK_STARTING_VALUE:
                 LOG.debug("Task {} starting", status.getTaskId().getValue());
+                Optional<Job> job = JobQueue.getFromTaskId(status.getTaskId().getValue());
+                if (job.isPresent()) {
+                    JobQueue.starting(job.get(), MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                            status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                            status.getExecutorId().getValue()), status.getTaskId().getValue());
+                }
                 break;
             default:
                 break;
@@ -388,11 +401,6 @@ public class RetzScheduler implements Scheduler {
 
     // Maybe Retry
     void retry(Protos.TaskStatus status) {
-        int threshold = 5;
-        Optional<Job> maybeJob = JobQueue.popFromRunning(status.getTaskId().getValue());
-        if (!maybeJob.isPresent()) {
-            return;
-        }
         String reason = "";
         if (status.hasData()) {
             try {
@@ -401,104 +409,44 @@ public class RetzScheduler implements Scheduler {
             } catch (IOException e) {
             }
         }
-        if (maybeJob.get().retry() > threshold) {
-            String msg = String.format("Giving up Job retry: %d / id=%d, last reason='%s'", threshold, maybeJob.get().id(), reason);
-            kill(maybeJob.get(), msg);
-        } else {
-            //TODO: warning?
-            JobQueue.retry(maybeJob.get());
-            LOG.info("Scheduled retry {}/{} of Job(taskId={}), reason='{}'",
-                    maybeJob.get().retry(), threshold, status.getTaskId().getValue(), reason);
-        }
+        JobQueue.retry(status.getTaskId().getValue(), reason);
     }
 
     void finished(Protos.TaskStatus status) {
-        Optional<Job> maybeJob = JobQueue.popFromRunning(status.getTaskId().getValue());
-        if (!maybeJob.isPresent()) {
-            return;
-        }
-        Job job = maybeJob.get();
-        Optional<Application> maybeApp = Applications.get(job.appid());
-        if (maybeApp.isPresent()) {
-            int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
-            String finished = TimestampHelper.now();
-            if (maybeApp.get().container() instanceof MesosContainer) { // Which means it ran with RetzExecutor
-                if (status.hasData()) {
-                    try {
-                        JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
-                        ret = jobResult.result();
-                        finished = jobResult.finished();
-                    } catch (IOException e) {
-                        String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
-                        LOG.warn("Exception: {}", e.toString());
-                        kill(job, msg);
-                        return;
-                    }
-                } else {
-                    String msg = String.format("Message from Mesos executor: %s", status.getMessage());
-                    kill(job, msg);
-                    return;
-                }
-            }
-            job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue()).get(), finished, ret);
-            // Maybe put JobResult#reason() into Job#reason()
-            LOG.info("Job {} (id {}) has finished. State: {}",
-                    status.getTaskId().getValue(), job.id(), status.getState().name());
-            JobQueue.finished(job);
-            WebConsole.notifyFinished(job);
+        Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                status.getExecutorId().getValue());
 
-        } else {
-            // Race between application unload and task finish; Urashima-taro fairy tale.
-        }
-    }
-
-    void failed(Protos.TaskStatus status) {
-        Optional<Job> maybeJob = JobQueue.popFromRunning(status.getTaskId().getValue());
-        if (!maybeJob.isPresent()) {
-            return;
-        }
-        Job job = maybeJob.get();
-
+        int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
+        String finished = TimestampHelper.now();
         if (status.hasData()) {
             try {
                 JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
-                job.finished(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                        status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                        status.getExecutorId().getValue()).get(), jobResult.finished(), jobResult.result());
-                LOG.info("Job {} (id {}) has been failed. State: {}, Reason: {}",
-                        status.getTaskId().getValue(), job.id(), status.getState().name(), status.getReason());
-                kill(job, status.getReason().toString());
-
+                ret = jobResult.result();
+                finished = jobResult.finished();
             } catch (IOException e) {
-                String msg = String.format("Data from Executor is not JSON: '%s'", status.getData().toString());
-                LOG.warn("Exception: {}", e.toString());
-                kill(job, msg);
+                LOG.error("Exception: {}", e.toString());
             }
-
-        } else {
-            String msg = String.format("Message from Mesos executor: %s:%s", status.getMessage(), status.getReason().toString());
-            kill(job, msg);
         }
+        JobQueue.finished(status.getTaskId().getValue(), maybeUrl, ret, finished);
+        // notify watchers?
     }
 
-    void kill(Job job, String reason) {
-        LOG.warn(reason);
-        job.killed(TimestampHelper.now(), reason);
-        JobQueue.finished(job);
-        WebConsole.notifyKilled(job);
+    void failed(Protos.TaskStatus status) {
+        Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                status.getExecutorId().getValue());
+
+        JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
     }
 
     void started(Protos.TaskStatus status) {
-        Job job = JobQueue.getRunning().get(status.getTaskId().getValue());
-        if (job == null) {
-            return;
-        }
-        job.started(MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+        Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
                 status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                status.getExecutorId().getValue()).get(), TimestampHelper.now());
-        WebConsole.notifyStarted(job);
+                status.getExecutorId().getValue());
+
+        JobQueue.started(status.getTaskId().getValue(), maybeUrl);
+        //WebConsole.notifyStarted(job);
     }
 
     private Protos.Resource.Builder baseResourceBuilder(int diskMB) {

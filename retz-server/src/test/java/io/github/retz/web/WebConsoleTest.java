@@ -20,15 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.DirEntry;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.Range;
-import io.github.retz.scheduler.Applications;
-import io.github.retz.scheduler.JobQueue;
-import io.github.retz.scheduler.MesosFrameworkLauncher;
-import io.github.retz.scheduler.RetzScheduler;
-import org.apache.commons.io.IOUtils;
+import io.github.retz.protocol.data.*;
+import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.junit.After;
 import org.junit.Assert;
@@ -37,7 +30,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
@@ -83,6 +75,7 @@ public class WebConsoleTest {
         webConsole = new WebConsole(config);
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
+        Database.init(config);
 
         System.err.println(config.authenticationEnabled());
         System.err.println(config.toString());
@@ -103,6 +96,7 @@ public class WebConsoleTest {
         webClient.disconnect();
         webConsole.stop();
         JobQueue.clear();
+        Database.stop();
     }
 
     /**
@@ -122,28 +116,22 @@ public class WebConsoleTest {
         JobQueue.clear();
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Response res = webClient.load("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files));
+            Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
+                    Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+            Response res = webClient.load(app);
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 
-            Optional<Application> app = Applications.get("foobar");
-            assertTrue(app.isPresent());
-            assertThat(app.get().getAppid(), is("foobar"));
+            Optional<Application> app2 = Applications.get(app.getAppid());
+            assertTrue(app2.isPresent());
+            assertThat(app2.get().getAppid(), is(app.getAppid()));
         }
 
         {
-            ListAppResponse res = (ListAppResponse) webClient.listApp();
+            GetAppResponse res = (GetAppResponse) webClient.getApp("foobar");
             assertThat(res.status(), is("ok"));
-            System.err.println(res.applicationList().size());
-            Application app = res.applicationList().get(0);
+            Application app = res.application();
             assertThat(app.getAppid(), is("foobar"));
-            System.out.println("================================" + res.applicationList());
-            for (Application a : res.applicationList()) {
-                System.out.println("=========== app:" + a);
-                System.out.println("=========== app:" + a.getAppid());
-                System.out.println("=========== app:" + a.getFiles());
-            }
-            assertThat(res.applicationList().size(), is(1));
         }
         webClient.unload("foobar");
         webClient.disconnect();
@@ -152,7 +140,7 @@ public class WebConsoleTest {
     @Test
     public void schedule() throws Exception {
         JobQueue.clear();
-        List<Job> maybeJob = JobQueue.popMany(10000, 10000);
+        List<Job> maybeJob = JobQueue.findFit(10000, 10000);
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -161,7 +149,7 @@ public class WebConsoleTest {
             Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(256, 0)));
             assertThat(res, instanceOf(ErrorResponse.class));
 
-            maybeJob = JobQueue.popMany(1000, 10000);
+            maybeJob = JobQueue.findFit(1000, 10000);
             assertTrue(maybeJob.isEmpty());
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(235561234);
@@ -170,21 +158,24 @@ public class WebConsoleTest {
 
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Response res = webClient.load("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files));
+            Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
+                    Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+            Response res = webClient.load(app);
+            System.err.println(res.status());
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 
-            Optional<Application> app = Applications.get("foobar");
-            assertTrue(app.isPresent());
-            assertThat(app.get().getAppid(), is("foobar"));
+            Optional<Application> app2 = Applications.get("foobar");
+            assertTrue(app2.isPresent());
+            assertThat(app2.get().getAppid(), is("foobar"));
 
             res = webClient.getApp("foobar");
             assertThat(res, instanceOf(GetAppResponse.class));
-            GetAppResponse getAppResponse = (GetAppResponse)res;
+            GetAppResponse getAppResponse = (GetAppResponse) res;
             assertThat(getAppResponse.application().getAppid(), is("foobar"));
             assertThat(getAppResponse.application().getFiles().size(), is(1));
         }
-        maybeJob = JobQueue.popMany(10000, 10000);
+        maybeJob = JobQueue.findFit(10000, 10000);
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -203,7 +194,7 @@ public class WebConsoleTest {
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(sres.job.id());
             Assert.assertEquals(sres.job.cmd(), getJobResponse.job().get().cmd());
 
-            maybeJob = JobQueue.popMany(10000, 10000);
+            maybeJob = JobQueue.findFit(10000, 10000);
             assertFalse(maybeJob.isEmpty());
             assertThat(maybeJob.get(0).cmd(), is(cmd));
             assertThat(maybeJob.get(0).appid(), is("foobar"));
@@ -211,7 +202,7 @@ public class WebConsoleTest {
             ListFilesResponse listFilesResponse = (ListFilesResponse) webClient.listFiles(sres.job.id(), "$MESOS_SANDBOX");
             assertTrue(listFilesResponse.entries().isEmpty());
 
-            GetFileResponse getFileResponse = (GetFileResponse)webClient.getFile(sres.job.id(), "stdout", 0, 20000);
+            GetFileResponse getFileResponse = (GetFileResponse) webClient.getFile(sres.job.id(), "stdout", 0, 20000);
             assertFalse(getFileResponse.file().isPresent());
         }
 
@@ -227,7 +218,7 @@ public class WebConsoleTest {
     @Test
     public void runFail() throws Exception {
         JobQueue.clear();
-        List<Job> maybeJob = JobQueue.popMany(10000, 10000);
+        List<Job> maybeJob = JobQueue.findFit(10000, 10000);
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -237,7 +228,7 @@ public class WebConsoleTest {
             Job done = webClient.run(job);
             assertNull(done);
 
-            maybeJob = JobQueue.popMany(10000, 10000);
+            maybeJob = JobQueue.findFit(10000, 10000);
             assertTrue(maybeJob.isEmpty());
         }
     }
@@ -252,7 +243,7 @@ public class WebConsoleTest {
     @Test
     public void watch() throws Exception {
         webClient.startWatch((watchResponse) -> {
-            assertThat(watchResponse,  instanceOf(WatchResponse.class));
+            assertThat(watchResponse, instanceOf(WatchResponse.class));
             System.err.println(((WatchResponse) watchResponse).status());
             return false;
         });
@@ -272,7 +263,12 @@ public class WebConsoleTest {
 
     @Test
     public void status() throws Exception {
-        Job job = new Job("fooapp", "foocmd", null, new Range(12000, 0), new Range(12000, 0));
+        User user = new User("deadbeef", "cafebabe", true);
+        Database.addUser(user);
+        Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                Optional.empty(), Optional.empty(), user.keyId(), new MesosContainer());
+        Database.addApplication(app);
+        Job job = new Job(app.getAppid(), "foocmd", null, new Range(12000, 0), new Range(12000, 0));
         JobQueue.push(job);
 
         URL url = new URL(config.getUri().toASCIIString() + "/status");

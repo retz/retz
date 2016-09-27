@@ -17,6 +17,7 @@
 package io.github.retz.cli;
 
 import io.github.retz.auth.Authenticator;
+import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,10 @@ public class FileConfiguration {
     static final String SCHEDULE_RESULTS = "retz.results";
     static final String SCHEDULE_RETRY = "retz.retry";
 
+    // Persistence
+    static final String DATABASE_URL = "retz.database.url";
+    static final String DEFAULT_DATABASE_URL = "jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1";
+
     // If BIND_ADDRESS is for SSL, these will be used for both server and client
     static final String KEYSTORE_FILE = "retz.tls.keystore.file";
     static final String KEYSTORE_PASS = "retz.tls.keystore.pass";
@@ -73,6 +78,7 @@ public class FileConfiguration {
     private final URI uri;
     private final int maxSimultaneousJobs;
     private final String mesosAgentJava;
+    private final String databaseURL;
     private final boolean useGPU;
     private final boolean authenticationEnabled;
     private final boolean checkCert;
@@ -147,9 +153,12 @@ public class FileConfiguration {
 
         mesosAgentJava = properties.getProperty(MESOS_AGENT_JAVA, "java");
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}",
+        databaseURL = properties.getProperty(DATABASE_URL, DEFAULT_DATABASE_URL);
+
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
-                MESOS_AGENT_JAVA, mesosAgentJava);
+                MESOS_AGENT_JAVA, mesosAgentJava,
+                DATABASE_URL, databaseURL);
     }
 
     public String getMesosMaster() {
@@ -210,6 +219,20 @@ public class FileConfiguration {
         return properties.getProperty(ACCESS_KEY, "");
     }
 
+    public User getUser() {
+        String key = properties.getProperty(ACCESS_KEY);
+        String secret = properties.getProperty(ACCESS_SECRET);
+        boolean enabled = true;
+        if (key == null) {
+            throw new RuntimeException("Key cannot be null...."); // TODO: authentication must be always enabled
+        }
+        if (secret == null) {
+            enabled = false;
+            secret = "";
+        }
+        return new User(key, secret, enabled);
+    }
+
     public Authenticator getAuthenticator() {
         String key = properties.getProperty(ACCESS_KEY);
         String secret = properties.getProperty(ACCESS_SECRET);
@@ -229,6 +252,10 @@ public class FileConfiguration {
 
     public String getMesosAgentJava() {
         return mesosAgentJava;
+    }
+
+    public String getDatabaseURL() {
+        return databaseURL;
     }
 
     @Override

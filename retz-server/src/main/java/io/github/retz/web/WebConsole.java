@@ -26,7 +26,9 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.User;
 import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.Database;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
 import org.apache.mesos.Protos;
@@ -37,15 +39,10 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.jar.Manifest;
 
 import static spark.Spark.*;
 
@@ -83,14 +80,6 @@ public final class WebConsole {
         before((req, res) -> {
             res.header("Server", RetzScheduler.HTTP_SERVER_NAME);
 
-            // TODO: authenticator must be per each user and single admin user
-            Optional<Authenticator> authenticator = Optional.ofNullable(config.getAuthenticator());
-            String verb = req.requestMethod();
-            String md5 = req.headers("content-md5");
-            if (md5 == null) {
-                md5 = "";
-            }
-            String date = req.headers("date");
             String resource;
 
             if (req.raw().getQueryString() != null) {
@@ -100,6 +89,20 @@ public final class WebConsole {
                 resource = new URI(req.url()).getPath();
             }
             LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
+
+            // TODO: authenticator must be per each user and single admin user
+            Optional<Authenticator> adminAuthenticator = Optional.ofNullable(config.getAuthenticator());
+            if (!adminAuthenticator.isPresent()) {
+                // No authentication required
+                return;
+            }
+
+            String verb = req.requestMethod();
+            String md5 = req.headers("content-md5");
+            if (md5 == null) {
+                md5 = "";
+            }
+            String date = req.headers("date");
 
             LOG.debug("req={}, res={}, resource=", req, res, resource);
             // These don't require authentication to simplify operation
@@ -113,22 +116,33 @@ public final class WebConsole {
             String givenSignature = req.headers(Authenticator.AUTHORIZATION);
             LOG.debug("Signature from client: {}", givenSignature);
 
-            if (authenticator.isPresent()) {
-                Optional<Authenticator.AuthHeaderValue> authHeaderValue = Authenticator.parseHeaderValue(givenSignature);
-                if (!authHeaderValue.isPresent()) {
-                    halt(401, "Bad Authorization header: " + givenSignature);
-                }
+            Optional<Authenticator.AuthHeaderValue> authHeaderValue = Authenticator.parseHeaderValue(givenSignature);
+            if (!authHeaderValue.isPresent()) {
+                halt(401, "Bad Authorization header: " + givenSignature);
+            }
 
-                if (!authenticator.get().authenticate(verb, md5, date, resource,
-                        authHeaderValue.get().key(), authHeaderValue.get().signature())) {
-                    String string2sign = authenticator.get().string2sign(verb, md5, date, resource);
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
-                                authenticator.get().signature(verb, md5, date, resource),
-                                authHeaderValue.get().signature());
-                    }
-                    halt(401, "Authentication failed. String to sign: " + string2sign);
+            Authenticator authenticator;
+            if (adminAuthenticator.get().getKey().equals(authHeaderValue.get().key())) {
+                // Admin
+                authenticator = adminAuthenticator.get();
+            } else {
+                // Not admin
+                Optional<User> u = Database.getUser(authHeaderValue.get().key());
+                if (!u.isPresent()) {
+                    halt(403, "No such user");
                 }
+                authenticator = new Authenticator(u.get().keyId(), u.get().secret());
+            }
+
+            if (!authenticator.authenticate(verb, md5, date, resource,
+                    authHeaderValue.get().key(), authHeaderValue.get().signature())) {
+                String string2sign = authenticator.string2sign(verb, md5, date, resource);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
+                            authenticator.signature(verb, md5, date, resource),
+                            authHeaderValue.get().signature());
+                }
+                halt(401, "Authentication failed. String to sign: " + string2sign);
             }
         });
 
@@ -301,14 +315,27 @@ public final class WebConsole {
     }
 
     public static ListJobResponse list(int limit) {
-        List<Job> queue = JobQueue.getAll();
+        List<Job> queue = new LinkedList<>(); //JobQueue.getAll();
         List<Job> running = new LinkedList<>();
-        for (Map.Entry<String, Job> entry : JobQueue.getRunning().entrySet()) {
-            running.add(entry.getValue());
-        }
         List<Job> finished = new LinkedList<>();
-        JobQueue.getAllFinished(finished, limit);
-
+        //JobQueue.getAllFinished(finished, limit);
+        for (Job job : JobQueue.getAll()) {
+            switch(job.state()) {
+                case QUEUED:
+                    queue.add(job);
+                    break;
+                case STARTING:
+                case STARTED:
+                    running.add(job);
+                    break;
+                case FINISHED:
+                case KILLED:
+                    finished.add(job);
+                    break;
+                default:
+                    LOG.error("Cannot be here: id={}, state={}", job.id(), job.state());
+            }
+        }
         return new ListJobResponse(queue, running, finished);
     }
 
@@ -317,24 +344,16 @@ public final class WebConsole {
             LOG.error("Driver is not present; this setup should be wrong");
             return false;
         }
-        Optional<Job> maybeJob = JobQueue.cancel(id);
-        if (maybeJob.isPresent()) {
-            LOG.info("Job id={} was in the queue and canceled.", id);
-            notifyKilled(maybeJob.get());
-            maybeJob.get().killed(TimestampHelper.now(), "Canceled by user");
-            JobQueue.finished(maybeJob.get());
-            return true;
-        }
+        Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
+
         // There's a slight pitfall between cancel above and kill below where
         // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
         // Then this protocol returns false for sure.
-        for (Map.Entry<String, Job> e : JobQueue.getRunning().entrySet()) {
-            if (e.getValue().id() == id) {
-                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(e.getKey()).build();
-                Protos.Status status = driver.get().killTask(taskId);
-                LOG.info("Job id={} was running and killed.");
-                return status == Protos.Status.DRIVER_RUNNING;
-            }
+        if (maybeTaskId.isPresent()) {
+            Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(maybeTaskId.get()).build();
+            Protos.Status status = driver.get().killTask(taskId);
+            LOG.info("Job id={} was running and killed.");
+            return status == Protos.Status.DRIVER_RUNNING;
         }
         return false;
     }

@@ -18,7 +18,9 @@ package io.github.retz.inttest;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.Range;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
@@ -29,10 +31,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -72,9 +71,10 @@ public class RetzIntTest extends IntTestBase {
                 .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build();
+        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList("file:///spawn_retz_server.sh"),
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
         LoadAppResponse loadRes =
-                (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(),
-                        Arrays.asList("file:///spawn_retz_server.sh"));
+                (LoadAppResponse) client.load(echoApp);
         assertThat(loadRes.status(), is("ok"));
 
         ListAppResponse listRes = (ListAppResponse) client.listApp();
@@ -117,8 +117,12 @@ public class RetzIntTest extends IntTestBase {
                 .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build();
-        LoadAppResponse loadRes =
-                (LoadAppResponse) client.load("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList());
+
+        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+        Response response = client.load(echoApp);
+        System.err.println(response.status());
+        LoadAppResponse loadRes = (LoadAppResponse) response;
         assertThat(loadRes.status(), is("ok"));
 
         ListAppResponse listRes = (ListAppResponse) client.listApp();
@@ -126,7 +130,7 @@ public class RetzIntTest extends IntTestBase {
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
         Job job = new Job("echo-app", "sleep 60", new Properties(), new Range(1, 1), new Range(32, 32));
-        Response response = client.schedule(job);
+        response = client.schedule(job);
         assertThat(response, instanceOf(ScheduleResponse.class));
         ScheduleResponse scheduleResponse = (ScheduleResponse) response;
         int id = scheduleResponse.job().id();
@@ -218,10 +222,9 @@ public class RetzIntTest extends IntTestBase {
     }
 
     private void loadSimpleApp(Client client, String appName) throws IOException {
-        Response res = client.load(appName,
-                Arrays.asList(),
-                Arrays.asList(),
-                Arrays.asList());
+        Application app = new Application(appName, Arrays.asList(),
+                Arrays.asList(), Arrays.asList(), Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+        Response res = client.load(app);
 
         assertTrue(res.status(), res instanceof LoadAppResponse);
         LoadAppResponse loadRes = (LoadAppResponse) res;
@@ -229,7 +232,7 @@ public class RetzIntTest extends IntTestBase {
 
         ListAppResponse listRes = (ListAppResponse) client.listApp();
         assertThat(listRes.status(), is("ok"));
-        List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
+        List<String> appNameList = listRes.applicationList().stream().map(a -> a.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, appName);
     }
 
