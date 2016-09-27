@@ -1,5 +1,11 @@
 # Retz release notes
 
+## 0.0.26
+
+* Add 'retz.max.running' to server configuration file. This number limits
+  number of simultaneously running jobs, to control Retz load to whole
+  Mesos cluster.
+
 ## 0.0.25
 
 * Add '-U' and '--user' option to 'load-app' to change user name in

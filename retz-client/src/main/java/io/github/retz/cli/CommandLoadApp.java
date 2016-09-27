@@ -105,8 +105,9 @@ public class CommandLoadApp implements SubCommand {
         } else {
             maybeDisk = Optional.of(disk);
         }
-        Application application = new Application(appName, persistentFiles, largeFiles, files, maybeDisk,
-                Optional.ofNullable(user), c);
+        Application application = new Application(appName,
+                persistentFiles, largeFiles, files, maybeDisk,
+                Optional.ofNullable(user), fileConfig.getAccessKey(),c);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())

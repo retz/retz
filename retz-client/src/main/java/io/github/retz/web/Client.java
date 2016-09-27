@@ -248,7 +248,7 @@ public class Client implements AutoCloseable {
     public Response load(String appid, List<String> persistentFiles, List<String> largeFiles,
                          List<String> files, Optional<Integer> diskMB) throws IOException {
         return rpc(new LoadAppRequest(new Application(appid, persistentFiles, largeFiles, files, diskMB,
-                Optional.empty(), new MesosContainer())));
+                Optional.empty(), "", new MesosContainer())));
     }
 
     public Response load(String appid, List<String> persistentFiles, List<String> largeFiles, List<String> files) throws IOException {

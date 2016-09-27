@@ -65,20 +65,21 @@ public class ProtocolTest {
             assertThat(job.result(), is(0));
         }
         {
-            String appString = "{\"appid\":\"my-one-of-42-apps\", \"files\":[\"http://example.com/app.tar.gz\"], \"container\":{\"type\":\"mesos\"} }";
+            String appString = "{\"appid\":\"my-one-of-42-apps\", \"files\":[\"http://example.com/app.tar.gz\"], \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\" }";
             Application app = mapper.readValue(appString, Application.class);
             assertThat(app.getAppid(), is("my-one-of-42-apps"));
             assertNotNull(app.getFiles());
             assertThat(app.getFiles().size(), is(1));
             assertFalse(app.getDiskMB().isPresent());
+            assertThat(app.getOwner(), is("deadbeef"));
         }
         {
-            String appString = "{\"appid\":\"foobar\",\"files\":[\"http://example.com:234/foobar/test.tar.gz\"], \"diskMB\":null, \"container\":{\"type\":\"mesos\"} }";
+            String appString = "{\"appid\":\"foobar\",\"files\":[\"http://example.com:234/foobar/test.tar.gz\"], \"diskMB\":null, \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\" }";
             Application app = mapper.readValue(appString, Application.class);
             assertFalse(app.getDiskMB().isPresent());
         }
         {
-            String metajobString = "{\"job\":{\"cmd\":\"touch /tmp/junit3807420247585460493.tmp\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":-1,\"id\":0,\"url\":null,\"appid\":\"appname\",\"name\":null,\"cpu\":{\"min\":1,\"max\":2147483647},\"memMB\":{\"min\":128,\"max\":2147483647},\"props\":null, \"state\":\"STARTED\"},\"app\":{\"appid\":\"appname\",\"persistentFiles\":[],\"files\":[],\"diskMB\":null, \"container\":{\"type\":\"mesos\"}}}";
+            String metajobString = "{\"job\":{\"cmd\":\"touch /tmp/junit3807420247585460493.tmp\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":-1,\"id\":0,\"url\":null,\"appid\":\"appname\",\"name\":null,\"cpu\":{\"min\":1,\"max\":2147483647},\"memMB\":{\"min\":128,\"max\":2147483647},\"props\":null, \"state\":\"STARTED\"},\"app\":{\"appid\":\"appname\",\"persistentFiles\":[],\"files\":[],\"diskMB\":null, \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\"}}";
             MetaJob metaJob = mapper.readValue(metajobString, MetaJob.class);
             assertNotNull(metaJob.getApp());
         }

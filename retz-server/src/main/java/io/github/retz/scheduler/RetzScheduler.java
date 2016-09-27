@@ -19,6 +19,7 @@ package io.github.retz.scheduler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
@@ -134,6 +135,13 @@ public class RetzScheduler implements Scheduler {
         // TODO TODO TODO: much more refinment on assigning resources
 
         for (Protos.Offer offer : offers) {
+            // Check if simultaneous jobs exceeded its limit
+            int running = JobQueue.getRunning().size();
+            if (running >= conf.fileConfig.getMaxSimultaneousJobs()) {
+                LOG.warn("Number of concurrently running jobs has reached its limit: {} >= {} ({})",
+                        running, conf.fileConfig.getMaxSimultaneousJobs(), FileConfiguration.MAX_SIMULTANEOUS_JOBS);
+                break;
+            }
 
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
             LOG.debug("Offer: {}", resource);
@@ -293,7 +301,9 @@ public class RetzScheduler implements Scheduler {
                 operations.add(Protos.Offer.Operation.newBuilder()
                         .setType(Protos.Offer.Operation.Type.LAUNCH)
                         .setLaunch(launch).build());
-                LOG.info("Task {} is to be ran as '{}' with {}", taskId.getValue(), job.cmd(), tb.getAssigned().toString());
+                LOG.info("Task {} is to be ran as '{}' with {} at Slave {}",
+                        taskId.getValue(), job.cmd(), tb.getAssigned().toString(), offer.getSlaveId().getValue());
+
             }
 
             if (jobs.isEmpty() && operations.isEmpty()) {
@@ -313,7 +323,7 @@ public class RetzScheduler implements Scheduler {
     @Override
     public void executorLost(SchedulerDriver driver, Protos.ExecutorID executorId, Protos.SlaveID slaveId,
                              int status) {
-        LOG.info("Executor stopped: {}", executorId.getValue());
+        LOG.info("Executor {} of slave {}  stopped: {}", executorId.getValue(), slaveId.getValue(), status);
 
         // TODO: do we really need to manage slaves?
         List<Protos.SlaveID> slaves = this.slaves.get(executorId.getValue());

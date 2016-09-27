@@ -108,7 +108,7 @@ public class RetzExecutorTest {
 
         Job job = new Job("appname", "touch " + tempFilename, null, new Range(1, 0), new Range(128, 0));
         Application app = new Application("appname", new LinkedList<>(), new LinkedList<>(), new LinkedList<>(),
-                Optional.empty(), Optional.empty(), new MesosContainer());
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
         MetaJob metaJob = new MetaJob(job, app);
         Protos.TaskInfo task = Protos.TaskInfo.newBuilder()
                 .setTaskId(Protos.TaskID.newBuilder().setValue("foobar-task").build())
@@ -147,7 +147,7 @@ public class RetzExecutorTest {
         int cpus = 32;
         int memMB = 128;
         Application app = new Application("some-app", new LinkedList<>(), new LinkedList<>(), new LinkedList<>(),
-                Optional.empty(), Optional.empty(), new MesosContainer());
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
         Job job = new Job("appname", "touch " + tempFilename, null, new Range(cpus, 0), new Range(memMB, 0));
         MetaJob metaJob = new MetaJob(job, app);
         Protos.TaskInfo task = Protos.TaskInfo.newBuilder()

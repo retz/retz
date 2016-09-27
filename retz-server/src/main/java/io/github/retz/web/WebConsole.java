@@ -206,8 +206,9 @@ public final class WebConsole {
             LOG.debug(LoadAppRequest.resourcePattern());
             res.type("application/json");
 
+            // TODO: check key from Authorization header matches a key in Application object
             LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
-            LOG.debug("app id={}", loadAppRequest.application().getAppid());
+            LOG.debug("app id={} with owner={}", loadAppRequest.application().getAppid(), loadAppRequest.application().getOwner());
 
             if (!(loadAppRequest.application().container() instanceof DockerContainer)) {
                 if (loadAppRequest.application().getUser().isPresent() &&
@@ -339,6 +340,7 @@ public final class WebConsole {
     }
 
     public static boolean load(Application app) {
+        LOG.info("Registering application name={} owner={}", app.getAppid(), app.getOwner());
         return Applications.load(app);
     }
 

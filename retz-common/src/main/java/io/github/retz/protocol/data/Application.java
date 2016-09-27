@@ -30,7 +30,10 @@ public class Application {
     private List<String> largeFiles;
     private List<String> files;
     private Optional<Integer> diskMB;
+    // User is just a String that specifies Unix user
     private Optional<String> user;
+    // Owner is Retz access key
+    private String owner;
 
     private Container container;
 
@@ -41,12 +44,14 @@ public class Application {
                        @JsonProperty("files") List<String> files,
                        @JsonProperty("diskMB") Optional<Integer> diskMB,
                        @JsonProperty("user") Optional<String> user,
+                       @JsonProperty("owner") String owner,
                        @JsonProperty("container") Container container) {
         this.appid = Objects.requireNonNull(appid);
         this.persistentFiles = persistentFiles;
         this.largeFiles = largeFiles;
         this.files = files;
         this.diskMB = diskMB;
+        this.owner = Objects.requireNonNull(owner);
         this.user = user;
         this.container = (container != null) ? container : new MesosContainer();
     }
@@ -79,6 +84,11 @@ public class Application {
     @JsonGetter("user")
     public Optional<String> getUser() {
         return user;
+    }
+
+    @JsonGetter("owner")
+    public String getOwner() {
+        return owner;
     }
 
     @JsonGetter("container")
@@ -118,8 +128,9 @@ public class Application {
         if (user.isPresent()) {
             maybeUser = "user=" + user.get();
         }
-        return String.format("Application name=%s: %s container=%s: files=%s/%s: %s",
+        return String.format("Application name=%s: owner=%s %s container=%s: files=%s/%s: %s",
                 getAppid(),
+                owner,
                 maybeUser,
                 container().getClass().getSimpleName(),
                 String.join(",", getFiles()),

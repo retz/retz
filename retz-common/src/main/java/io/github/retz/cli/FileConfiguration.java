@@ -35,7 +35,10 @@ public class FileConfiguration {
     static final String MESOS_LOC_KEY = "retz.mesos";
     static final String BIND_ADDRESS = "retz.bind";
     static final String MESOS_ROLE = "retz.mesos.role";
+
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
+    static final String DEFAULT_MESOS_PRINCIPAL = "retz";
+
     static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
     static final String USE_GPU = "retz.gpu";
 
@@ -46,6 +49,9 @@ public class FileConfiguration {
     static final String ACCESS_KEY = "retz.access.key";
     static final String ACCESS_SECRET = "retz.access.secret";
 
+    // System Limits
+    public static final String MAX_SIMULTANEOUS_JOBS = "retz.max.running";
+    static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "512";
     // Not yet used
     static final String QUEUE_MAX = "retz.queue.max";
     static final String SCHEDULE_RESULTS = "retz.results";
@@ -61,10 +67,9 @@ public class FileConfiguration {
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
 
-    static final String DEFAULT_MESOS_PRINCIPAL = "retz";
-
     private final Properties properties;
     private final URI uri;
+    private final int maxSimultaneousJobs;
     private final boolean useGPU;
     private final boolean authenticationEnabled;
     private final boolean checkCert;
@@ -132,7 +137,13 @@ public class FileConfiguration {
             this.checkCert = true;
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}", getMesosMaster(), getPrincipal(), getRole());
+        maxSimultaneousJobs = Integer.parseInt(properties.getProperty(MAX_SIMULTANEOUS_JOBS, DEFAULT_MAX_SIMULTANEOUS_JOBS));
+        if(maxSimultaneousJobs < 1) {
+            throw new IllegalArgumentException(MAX_SIMULTANEOUS_JOBS + " must be positive");
+        }
+
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}",
+                getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs);
     }
 
     public String getMesosMaster() {
@@ -188,6 +199,11 @@ public class FileConfiguration {
     public boolean authenticationEnabled() {
         return authenticationEnabled;
     }
+
+    public String getAccessKey() {
+        return properties.getProperty(ACCESS_KEY, "");
+    }
+
     public Authenticator getAuthenticator() {
         String key = properties.getProperty(ACCESS_KEY);
         String secret = properties.getProperty(ACCESS_SECRET);
@@ -201,6 +217,9 @@ public class FileConfiguration {
         return useGPU;
     }
 
+    public int getMaxSimultaneousJobs() {
+        return maxSimultaneousJobs;
+    }
     @Override
     public String toString() {
         return new StringBuffer()

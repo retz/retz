@@ -60,6 +60,8 @@ public class ConsoleWebSocketHandler {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
 
+        LOG.info("Broadcasting {} on Job({}) state={}", event, job.id(), job.state());
+
         WatchResponse res = new WatchResponse(event, job);
         res.status(status);
         try {
@@ -72,7 +74,7 @@ public class ConsoleWebSocketHandler {
 
     // TODO: I'm afraid of all race condition touching sessions
     private static void broadcast(String msg) {
-        LOG.info("Broadcasting {}", msg);
+        LOG.debug("Broadcasting {}", msg);
         List<Session> badSessions = new LinkedList<>();
         for (Session s : WATCHERS) {
             //results.add(s.getRemote().sendStringByFuture(msg));
