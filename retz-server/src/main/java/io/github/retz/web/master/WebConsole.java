@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.web;
+package io.github.retz.web.master;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +26,7 @@ import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.web.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;

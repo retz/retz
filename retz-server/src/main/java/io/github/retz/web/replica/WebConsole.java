@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.web;
+package io.github.retz.web.replica;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +26,7 @@ import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.web.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ import java.util.Optional;
 import static spark.Spark.*;
 
 
-public final class WebConsoleForReplica {
+public final class WebConsole {
     private static final Logger LOG = LoggerFactory.getLogger(WebConsole.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -53,7 +54,7 @@ public final class WebConsoleForReplica {
 	MAPPER.registerModule(new Jdk8Module());
     }
     
-    public WebConsoleForReplica(int port) {
+    public WebConsole(int port) {
         port(port);        
         staticFileLocation("/public");
 	
