@@ -5,6 +5,11 @@
 * Add 'retz.max.running' to server configuration file. This number limits
   number of simultaneously running jobs, to control Retz load to whole
   Mesos cluster.
+* Add 'Server:' header into response from Server to know right version
+  of client to use.
+* Implement framework authentication by adding 'retz.mesos.secret.file'
+  to server configuration file. This file gives Retz a creditial to
+  connect Mesos master.
 
 ## 0.0.25
 
