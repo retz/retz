@@ -67,7 +67,7 @@ public class FileConfiguration {
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
 
-    static final String MESOS_AGENT_JAVA = "retz.exectutor.java";
+    static final String MESOS_AGENT_JAVA = "retz.executor.java";
 
     private final Properties properties;
     private final URI uri;

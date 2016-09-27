@@ -42,6 +42,7 @@ public class FileConfigurationTest {
         assertEquals(config.getUri(), new URI("https://234.34.34.2:23452"));
         assertEquals(config.getKeystoreFile(), "path/to/keystore.jsk");
         assertEquals(config.getKeystorePass(), "foobar");
+        assertEquals("/cast/away/somewhere/java", config.getMesosAgentJava());
         assertFalse(config.checkCert());
         assertTrue(config.authenticationEnabled());
     }

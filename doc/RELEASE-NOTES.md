@@ -3,7 +3,9 @@
 ## 0.0.26
 
 * Add 'retz.exectutor.java' to server configuration file for more flexible
-  Java installation on Mesos Agents
+  Java installation on Mesos Agents. `TASK_FAILED` and log `Message from
+  Mesos executor: Executor terminated:REASON_EXECUTOR_TERMINATED` in Retz
+  server may indicate correct Java could not be found.
 * Add 'retz.max.running' to server configuration file. This number limits
   number of simultaneously running jobs, to control Retz load to whole
   Mesos cluster.
