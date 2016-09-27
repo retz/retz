@@ -256,7 +256,7 @@ public class RetzScheduler implements Scheduler {
                 String id = Integer.toString(job.id());
                 // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                 // (esp ASAKUSA_HOME env)
-                TaskBuilder tb = new TaskBuilder()
+                TaskBuilder tb = new TaskBuilder(conf.getFileConfig().getMesosAgentJava())
                         .setOffer(resource, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
                         .setName("retz-task-name-" + job.name())
                         .setTaskId("retz-task-id-" + id);

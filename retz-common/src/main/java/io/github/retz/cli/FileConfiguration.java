@@ -67,9 +67,12 @@ public class FileConfiguration {
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
 
+    static final String MESOS_AGENT_JAVA = "retz.exectutor.java";
+
     private final Properties properties;
     private final URI uri;
     private final int maxSimultaneousJobs;
+    private final String mesosAgentJava;
     private final boolean useGPU;
     private final boolean authenticationEnabled;
     private final boolean checkCert;
@@ -142,8 +145,11 @@ public class FileConfiguration {
             throw new IllegalArgumentException(MAX_SIMULTANEOUS_JOBS + " must be positive");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}",
-                getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs);
+        mesosAgentJava = properties.getProperty(MESOS_AGENT_JAVA, "java");
+
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}",
+                getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
+                MESOS_AGENT_JAVA, mesosAgentJava);
     }
 
     public String getMesosMaster() {
@@ -220,6 +226,11 @@ public class FileConfiguration {
     public int getMaxSimultaneousJobs() {
         return maxSimultaneousJobs;
     }
+
+    public String getMesosAgentJava() {
+        return mesosAgentJava;
+    }
+
     @Override
     public String toString() {
         return new StringBuffer()

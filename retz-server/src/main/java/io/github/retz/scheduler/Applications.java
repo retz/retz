@@ -116,10 +116,10 @@ public class Applications {
         return commandInfoBuilder.build();
     }
 
-    public static Protos.ExecutorInfo appToExecutorInfo(Application application, Protos.FrameworkID frameworkID) {
+    public static Protos.ExecutorInfo appToExecutorInfo(String java, Application application, Protos.FrameworkID frameworkID) {
 
         String jarFile = FilenameUtils.getName(RetzScheduler.getJarUri());
-        String cmd = "java -jar " + jarFile;
+        String cmd = java + " -jar " + jarFile;
         Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
                 .setEnvironment(Protos.Environment.newBuilder()
                         .addVariables(Protos.Environment.Variable.newBuilder()

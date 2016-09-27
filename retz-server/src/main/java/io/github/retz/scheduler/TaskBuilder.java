@@ -27,6 +27,8 @@ import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 import static io.github.retz.scheduler.Applications.appToCommandInfo;
 import static io.github.retz.scheduler.Applications.appToContainerInfo;
 
@@ -35,13 +37,15 @@ public class TaskBuilder {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private Resource assigned;
-
+    private String java;
     Protos.TaskInfo.Builder builder;
-    {
+
+    static {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    TaskBuilder() {
+    TaskBuilder(String java) {
+        this.java = Objects.requireNonNull(java);
         builder = Protos.TaskInfo.newBuilder();
     }
 
@@ -87,7 +91,7 @@ public class TaskBuilder {
             throws JsonProcessingException
     {
         if (application.container() instanceof MesosContainer) {
-            Protos.ExecutorInfo executorInfo = Applications.appToExecutorInfo(application, frameworkId);
+            Protos.ExecutorInfo executorInfo = Applications.appToExecutorInfo(java, application, frameworkId);
             builder.setExecutor(executorInfo);
             this.setJob(job, Applications.encodable(application));
 
