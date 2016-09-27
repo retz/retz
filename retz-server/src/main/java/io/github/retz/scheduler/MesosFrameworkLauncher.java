@@ -17,7 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
-import io.github.retz.web.WebConsole;
+import io.github.retz.web.master.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
@@ -34,7 +34,7 @@ public final class MesosFrameworkLauncher {
     public static void main(String... argv) {
         System.exit(run(argv));
     }
-    
+
     public static int run(String... argv) {
 	
         Configuration conf;

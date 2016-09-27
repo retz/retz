@@ -26,7 +26,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;
 import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.web.WebConsole;
+import io.github.retz.web.master.WebConsole;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
