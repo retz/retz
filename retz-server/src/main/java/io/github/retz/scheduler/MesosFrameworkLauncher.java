@@ -49,7 +49,7 @@ public final class MesosFrameworkLauncher {
         } catch (IOException e) {
             LOG.error(e.toString());
             return -1;
-	}	
+        }	
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
@@ -108,11 +108,11 @@ public final class MesosFrameworkLauncher {
                     .build());
         }
 	
-	Optional<Protos.FrameworkID> frameworkId = CuratorClient.getFrameworkId();
-	if (frameworkId.isPresent()) {
-	    LOG.info("Attempting to re-register with frameworkId: {}", frameworkId.get().getValue());
-	    fwBuilder.setId(frameworkId.get());
-	}
+        Optional<Protos.FrameworkID> frameworkId = CuratorClient.getFrameworkId();
+        if (frameworkId.isPresent()) {
+            LOG.info("Attempting to re-register with frameworkId: {}", frameworkId.get().getValue());
+            fwBuilder.setId(frameworkId.get());
+        }
 	
         LOG.info("Connecting to Mesos master {} as {}", conf.getMesosMaster(), userName);
         return fwBuilder.build();

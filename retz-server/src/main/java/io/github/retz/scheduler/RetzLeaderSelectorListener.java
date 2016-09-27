@@ -8,6 +8,6 @@ public class RetzLeaderSelectorListener extends LeaderSelectorListenerAdapter {
 
     @Override
     public void takeLeadership(CuratorFramework client) throws Exception {
-	CuratorClient.runForMaster();
+        CuratorClient.runForMaster();
     }
 }

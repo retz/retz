@@ -122,7 +122,7 @@ public class FileConfiguration {
     }
 
     public String getZkServers() {
-	return properties.getProperty(ZK_SERVERS);
+        return properties.getProperty(ZK_SERVERS);
     }
     
     @Override

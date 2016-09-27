@@ -51,7 +51,7 @@ public final class WebConsole {
     private ClientMonitor clientMonitor;    
     
     static {
-	MAPPER.registerModule(new Jdk8Module());
+        MAPPER.registerModule(new Jdk8Module());
     }
     
     public WebConsole(int port) {
@@ -68,66 +68,66 @@ public final class WebConsole {
 
         // /jobs GET -> list
         get(ListJobRequest.resourcePattern(), (req, res) -> {	    
-	    res.redirect("http://localhost:9090/jobs", 301);
-	    return null;
+            res.redirect("http://localhost:9090/jobs", 301);
+            return null;
         });
         // /job  PUT -> schedule, GET -> get-job, DELETE -> kill
         get(GetJobRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/job/" + req.params(":id"), 301); 
-	    return null;
+            res.redirect("http://localhost:9090/job/" + req.params(":id"), 301); 
+            return null;
         });
 
         put(ScheduleRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/job", 301);  
-	    return null;
+            res.redirect("http://localhost:9090/job", 301);  
+            return null;
         });
 
         delete(KillRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/job/" + req.params(":id"), 301);  
-	    return null;
-	});
+            res.redirect("http://localhost:9090/job/" + req.params(":id"), 301);  
+            return null;
+        });
 
         // /apps GET -> list-app
         get(ListAppRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/apps", 301);  	    
-	    return null;
+            res.redirect("http://localhost:9090/apps", 301);  	    
+            return null;
         });
 
         // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
-	    return null;
+            res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
+            return null;
         });
 
         get(GetAppRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
-	    return null;
+            res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
+            return null;
         });
 
         delete(UnloadAppRequest.resourcePattern(), (req, res) -> {
-	    res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
-	    return null;
+            res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
+            return null;
         });
 
         init();
     }
 
     public static String status(Request request, Response response) {
-	try {
-	    return MAPPER.writeValueAsString(new ErrorResponse("no scheduler set now"));
-	} catch (JsonProcessingException e) {
-	    // TODO: how can we return 503?
-	    return "fail";
-	}
+        try {
+            return MAPPER.writeValueAsString(new ErrorResponse("no scheduler set now"));
+        } catch (JsonProcessingException e) {
+            // TODO: how can we return 503?
+            return "fail";
+        }
     }
 
     public void stop() {
-	clientMonitor.stop();
-	try {
-	    clientMonitorThread.join();
-	} catch (InterruptedException e) {
-	    LOG.warn("Can't join client monitor thread: " + e.toString());
-	}	
+        clientMonitor.stop();
+        try {
+            clientMonitorThread.join();
+        } catch (InterruptedException e) {
+            LOG.warn("Can't join client monitor thread: " + e.toString());
+        }	
         Spark.stop();
     }
 
