@@ -24,6 +24,7 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.CuratorClient;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.web.*;
@@ -35,6 +36,7 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
+import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -67,48 +69,88 @@ public final class WebConsole {
         get("/status", WebConsole::status);
 
         // /jobs GET -> list
-        get(ListJobRequest.resourcePattern(), (req, res) -> {	    
-            res.redirect("http://localhost:9090/jobs", 301);
+        get(ListJobRequest.resourcePattern(), (req, res) -> {
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "/jobs", 301);
+            } else {
+                res.status(503);
+            }
             return null;
         });
         // /job  PUT -> schedule, GET -> get-job, DELETE -> kill
         get(GetJobRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/job/" + req.params(":id"), 301); 
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + req.params(":id"), 301); 
+            } else {
+                res.status(503);
+            }
             return null;
         });
 
         put(ScheduleRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/job", 301);  
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "/job", 301);  
+            } else {
+                res.status(503);
+            }
             return null;
         });
 
         delete(KillRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/job/" + req.params(":id"), 301);  
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "job/" + req.params(":id"), 301);  
+            } else {
+                res.status(503);
+            }
             return null;
         });
 
         // /apps GET -> list-app
         get(ListAppRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/apps", 301);  	    
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "/apps", 301);  
+            } else {
+                res.status(503);
+            }
             return null;
         });
 
         // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "/app/" + req.params(":name"), 301);  
+            } else {
+                res.status(503);
+            }
             return null;
         });
 
         get(GetAppRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "/app/" + req.params(":name"), 301);  
+            } else {
+                res.status(503);
+            }
             return null;
         });
 
         delete(UnloadAppRequest.resourcePattern(), (req, res) -> {
-            res.redirect("http://localhost:9090/app/" + req.params(":name"), 301);
+            Optional<URI> masterUri = CuratorClient.getMasterUri();
+            if (masterUri.isPresent()) {
+                res.redirect(masterUri.get().toString() + "/app/" + req.params(":name"), 301);  
+            } else {
+                res.status(503);
+            }            
             return null;
         });
-
+        
         init();
     }
 

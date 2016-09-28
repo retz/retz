@@ -1,5 +1,8 @@
 package io.github.retz.scheduler;
 
+import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Job;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.*;
@@ -71,6 +74,8 @@ public class CuratorClient implements Closeable {
         LOG.info("Leadership taken");
         leaderLatch.countDown();
     	
+        client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/members/master/localhost:" + conf.getPort());
+        
         LOG.info("Waiting for the number of running retz-server reaches quorum");
         while (client.getChildren().forPath("/members/replicas").size() + 1 < quorum) {
             Thread.sleep(3000);
@@ -154,6 +159,17 @@ public class CuratorClient implements Closeable {
         } catch (Exception e) {
             // Do nothing
         }
+    }
+    
+    public static Optional<URI> getMasterUri() {
+        try {
+            List<String> master = client.getChildren().forPath("/members/master");
+            assert master.size() == 1;
+            return Optional.of(new URI("http://" + master.get(0)));
+        } catch (Exception e) {
+            LOG.error(e.toString());
+        }
+        return Optional.empty();
     }
     
     public static int run(String... argv) { 
