@@ -113,7 +113,7 @@ public class Applications {
                                 .setName("ASAKUSA_HOME").setValue(".").build()))
                 .setValue(cmd)
                 .setShell(true)
-                .addUris(Protos.CommandInfo.URI.newBuilder().setValue(RetzScheduler.getJarUri()).setCache(false)); // In production, set this true
+                .addUris(Protos.CommandInfo.URI.newBuilder().setValue("http://localhost:9090/retz-executor-0.0.23-SNAPSHOT-all.jar").setCache(false)); // In production, set this true
 
         for (String file : application.getFiles()) {
             commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));

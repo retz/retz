@@ -106,9 +106,33 @@ public class Client implements AutoCloseable {
             }
         }
     }
-
-    public Response listApp() throws IOException {
-	return rpc(new ListAppRequest());
+   
+    public Response loadAppFromMaster(Application app) throws IOException {
+        return rpc(new LoadAppFromMasterRequest(app));
+    }
+    
+    public Response incCounter() throws IOException {
+        return rpc(new IncCounterRequest());
+    }
+    
+    public Response pushJobQueue(Job job) throws IOException {
+        return rpc(new PushJobQueueRequest(job));
+    }
+    
+    public Response popJobQueue() throws IOException {
+        return rpc(new PopJobQueueRequest());
+    }
+    
+    public Response putRunning(String taskId, Job job) throws IOException {
+        return rpc(new PutRunningRequest(taskId, job));
+    }
+    
+    public Response removeRunning(String taskId) throws IOException {
+        return rpc(new RemoveRunningRequest(taskId));
+    }
+    
+    public Response addFinished(Job job) throws IOException {
+        return rpc(new AddFinishedRequest(job));
     }
     
     private <ReqType extends Request> Response rpc(ReqType req) throws IOException {

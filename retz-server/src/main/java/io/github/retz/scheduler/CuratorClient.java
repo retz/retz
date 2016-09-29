@@ -1,7 +1,9 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.web.WebConsole;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +37,7 @@ public class CuratorClient implements Closeable {
     private static CountDownLatch leaderLatch = new CountDownLatch(1);
     private static CountDownLatch closeLatch = new CountDownLatch(1);
     private static MesosFrameworkLauncher.Configuration conf;
-    private static int memberNum, quorum;    
+    private static int memberNum, quorum;  
     private static List<io.github.retz.web.master.Client> webClientsForMaster =
 	new ArrayList<io.github.retz.web.master.Client>();
     
@@ -50,7 +52,7 @@ public class CuratorClient implements Closeable {
         } catch (Exception e) {
             LOG.error(e.toString());
             quorum = 2;
-            memberNum = 2;
+            memberNum = 3;
             byte[] quorumData = ByteBuffer.allocate(4).putInt(quorum).array();
             byte[] memberNumData = ByteBuffer.allocate(4).putInt(memberNum).array();
             client.create().creatingParentsIfNeeded().forPath("/config/quorum", quorumData);
@@ -59,7 +61,7 @@ public class CuratorClient implements Closeable {
     }
     
     public static void startMasterSelection() throws InterruptedException, Exception {
-        LOG.info("Starting master selection");	
+        LOG.info("Starting master selection");	       
         leaderSelector.start();
         if (!leaderLatch.await(3000, TimeUnit.MILLISECONDS)) {
             LOG.info("awaitLeadership is timedout");
@@ -73,20 +75,23 @@ public class CuratorClient implements Closeable {
         
         LOG.info("Leadership taken");
         leaderLatch.countDown();
-    	
+    	JobQueue.print();
+        try {
+            client.delete().forPath("/members/replicas/localhost:" + conf.getPort()); 
+        } catch (Exception e) {
+        }
         client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/members/master/localhost:" + conf.getPort());
         
-        LOG.info("Waiting for the number of running retz-server reaches quorum");
         while (client.getChildren().forPath("/members/replicas").size() + 1 < quorum) {
             Thread.sleep(3000);
         }
-        LOG.info("Quorum({}) retz-server is running", quorum);
+        LOG.info("{} retz-server is running", quorum);
     	
         for (String replica : client.getChildren().forPath("/members/replicas")) {
             LOG.info("replica: {}", replica);
             URI uri = new URI("http://" + replica);
             webClientsForMaster.add(new io.github.retz.web.master.Client(uri.getHost(), uri.getPort()));
-        }       
+        }
     	
         Protos.FrameworkInfo fw = MesosFrameworkLauncher.buildFrameworkInfo(conf);
     	
@@ -108,29 +113,23 @@ public class CuratorClient implements Closeable {
     	
         LOG.info("Mesos scheduler started: {}", status.name());
 
-    	// Start web server
-        int port = conf.getPort();
-        io.github.retz.web.master.WebConsole webConsole = new io.github.retz.web.master.WebConsole(port);
-        io.github.retz.web.master.WebConsole.setScheduler(scheduler);
-        io.github.retz.web.master.WebConsole.setDriver(driver);
-        LOG.info("Web console has started with port {}", port);
+        // Set scheduler and driver
+        io.github.retz.web.WebConsole.setScheduler(scheduler);
+        io.github.retz.web.WebConsole.setDriver(driver);
     	
     	// Stop them all
     	// Wait for Mesos framework stop
         status = driver.join();
-        LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());	
-    
-        webConsole.stop(); // Stop web server	
+        LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());	    
     }
 
     public static void runForReplica() {
         LOG.info("I am a replica");
         try {
-            client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/members/replicas/localhost:9091");
+            client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath("/members/replicas/localhost:" + conf.getPort());
         } catch (Exception e) {
             LOG.error(e.toString());
         }
-        io.github.retz.web.replica.WebConsole webConsole = new io.github.retz.web.replica.WebConsole(9091);
     }
     
     @Override
@@ -172,11 +171,113 @@ public class CuratorClient implements Closeable {
         return Optional.empty();
     }
     
+    public static void sendLoadAppFromMasterRequest(Application app) {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.loadAppFromMaster(app);
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
+    public static void sendIncCounterRequest() {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.incCounter();
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
+    public static void sendPushJobQueueRequest(Job job) {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.pushJobQueue(job);
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
+    public static void sendPopJobQueueRequest() {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.popJobQueue();
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
+    public static void sendPutRunningRequest(String taskId, Job job) {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.putRunning(taskId, job);
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
+    public static void sendRemoveRunningRequest(String taskId) {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.removeRunning(taskId);
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
+    public static void sendAddFinishedRequest(Job job) {
+        if (!leaderSelector.hasLeadership()) {
+            return;
+        }
+        for (io.github.retz.web.master.Client c : webClientsForMaster) {
+            try {
+                Response res = c.addFinished(job);
+                LOG.info(res.status());              
+            } catch (IOException e) {
+                LOG.error(e.toString());
+            }
+        }
+    }
+    
     public static int run(String... argv) { 
         try {
             conf = MesosFrameworkLauncher.parseConfiguration(argv);
             client.start();
             bootstrap();
+            // Start web server
+            int port = conf.getPort();
+            WebConsole webConsole = new WebConsole(port);
+            LOG.info("Web console has started with port {}", port);
             startMasterSelection();
             closeLatch.await();
             return 0;	    

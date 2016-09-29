@@ -52,12 +52,14 @@ public class JobQueue {
         return new ArrayList<>(get());
     }
 
-    public static int issueJobId() {
+    public synchronized static int issueJobId() {
+        CuratorClient.sendIncCounterRequest();
         return COUNTER.getAndIncrement(); // Just have to be unique
     }
 
     public static void push(Job job) throws InterruptedException {
         // TODO: set a cap of queue
+        CuratorClient.sendPushJobQueueRequest(job);
         BlockingQueue<Job> queue = get();
         queue.put(job);
     }
@@ -82,10 +84,12 @@ public class JobQueue {
             if (job == null) {
                 break;
             } else if (totalCpu + job.cpu().getMax() <= cpu && totalMem + job.memMB().getMax() <= memMB) {
+                CuratorClient.sendPopJobQueueRequest();
                 ret.add(get().remove());
                 totalCpu += job.cpu().getMax();
                 totalMem += job.memMB().getMax();
             } else if (totalCpu + job.cpu().getMin() < cpu && totalMem + job.memMB().getMin() < memMB) {
+                CuratorClient.sendPopJobQueueRequest();
                 ret.add(get().remove());
                 break;
             } else {
@@ -123,6 +127,7 @@ public class JobQueue {
     }
 
     public static void start(String taskId, Job job) {
+        CuratorClient.sendPutRunningRequest(taskId, job);
         RUNNING.put(taskId, job);
     }
 
@@ -140,6 +145,7 @@ public class JobQueue {
     }
 
     public static Optional<Job> popFromRunning(String taskId) {
+        CuratorClient.sendRemoveRunningRequest(taskId);
         return Optional.ofNullable(RUNNING.remove(taskId));
     }
     public static void retry(Job job) {
@@ -155,13 +161,18 @@ public class JobQueue {
 
     // Whether it's success, fail, or killed
     public static void finished(Job job) {
+        CuratorClient.sendAddFinishedRequest(job);
         FINISHED.add(job);
     }
 
+    public static AtomicInteger getCounter() {
+        return COUNTER;
+    }
+    
     public static Map<String, Job> getRunning() {
         return RUNNING;
     }
-
+    
     public static void getAllFinished(List<Job> list, int limit) {
         list.addAll(FINISHED);
     }
@@ -177,4 +188,16 @@ public class JobQueue {
     public static void setStatus(StatusResponse response) {
         response.setStatus(JobQueue.size(), RUNNING.size());
     }
+    
+    public static void print() {
+        LOG.info("COUNTER: {}", COUNTER);
+        LOG.info("JOB_QUEUE.size(): {}", get().size());        
+        String taskIds = new String();
+        for (String taskId : getRunning().keySet()) {
+            taskIds += taskId + ",";
+        }
+        LOG.info("RUNNING: {}", taskIds);
+        LOG.info("FINISHED.size(): {}", FINISHED.size());
+    }
+    
 }

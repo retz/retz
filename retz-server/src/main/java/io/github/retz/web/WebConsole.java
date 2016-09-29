@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.web.master;
+package io.github.retz.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +24,7 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.CuratorClient;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.web.*;
@@ -146,6 +147,7 @@ public final class WebConsole {
                 res.status(200);
                 LoadAppResponse response = new LoadAppResponse();
                 response.ok();
+                CuratorClient.sendLoadAppFromMasterRequest(loadAppRequest.application());
                 return MAPPER.writeValueAsString(response);
             } else {
                 res.status(400);
@@ -179,6 +181,84 @@ public final class WebConsole {
             return MAPPER.writeValueAsString(response);
         });
 
+        // For replica
+        // Load App from master
+        put(LoadAppFromMasterRequest.resourcePattern(), (req, res) -> {
+            LoadAppFromMasterRequest loadAppFromMasterRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppFromMasterRequest.class);
+            LOG.info("app id={}", loadAppFromMasterRequest.application().getAppid());
+            boolean result = WebConsole.load(loadAppFromMasterRequest.application());
+
+            if (result) {
+                res.status(200);
+                LoadAppFromMasterResponse response = new LoadAppFromMasterResponse();
+                response.ok();
+                return MAPPER.writeValueAsString(response);
+            } else {
+                res.status(400);
+                return MAPPER.writeValueAsString(new ErrorResponse("cannot load application"));
+            }
+        });
+        // Increment COUNTER
+        put(IncCounterRequest.resourcePattern(), (req, res) -> {
+            LOG.debug("IncCounterRequest");
+            int i = JobQueue.issueJobId();
+            IncCounterResponse incCounterResponse = new IncCounterResponse();
+            incCounterResponse.ok();
+            res.status(201);
+            return MAPPER.writeValueAsString(incCounterResponse);
+        });
+        
+        // Push job to JOB_QUEUE
+        put(PushJobQueueRequest.resourcePattern(), (req, res) -> {
+            PushJobQueueRequest pushJobQueueRequest = MAPPER.readValue(req.bodyAsBytes(), PushJobQueueRequest.class);
+            JobQueue.push(pushJobQueueRequest.job());
+            LOG.debug("PushJobQueueRequest");
+            PushJobQueueResponse pushJobQueueResponse = new PushJobQueueResponse();
+            pushJobQueueResponse.ok();
+            res.status(201);
+            return MAPPER.writeValueAsString(pushJobQueueResponse);
+        });        
+        // Pop job from JOB_QUEUE
+        put(PopJobQueueRequest.resourcePattern(), (req, res) -> {
+            LOG.debug("PopJobQueueRequest");
+            JobQueue.get().remove();
+            PopJobQueueResponse popJobQueueResponse = new PopJobQueueResponse();
+            popJobQueueResponse.ok();
+            res.status(201);
+            return MAPPER.writeValueAsString(popJobQueueResponse);
+        });
+        // Put (taskId, job) to RUNNING
+        put(PutRunningRequest.resourcePattern(), (req, res) -> {
+            LOG.debug("PutRunningRequest");
+            PutRunningRequest putRunningRequest = MAPPER.readValue(req.bodyAsBytes(), PutRunningRequest.class);
+            JobQueue.start(putRunningRequest.taskId(), putRunningRequest.job());
+            PutRunningResponse putRunningResponse = new PutRunningResponse();
+            putRunningResponse.ok();
+            res.status(201);
+            return MAPPER.writeValueAsString(putRunningResponse);
+        });
+        // Remove (taskId, job) from RUNNING
+        put(RemoveRunningRequest.resourcePattern(), (req, res) -> {
+            LOG.debug("RemoveRunningRequest");
+            RemoveRunningRequest removeRunningRequest = MAPPER.readValue(req.bodyAsBytes(), RemoveRunningRequest.class);
+            JobQueue.getRunning().remove(req.params("taskId"));
+            RemoveRunningResponse removeRunningResponse = new RemoveRunningResponse();
+            removeRunningResponse.ok();
+            res.status(201);
+            return MAPPER.writeValueAsString(removeRunningResponse);
+        });
+        // Add job to FINISHED
+        put(AddFinishedRequest.resourcePattern(), (req, res) -> {
+            LOG.debug("AddFinishedRequest");
+            AddFinishedRequest addFinishedRequest = MAPPER.readValue(req.bodyAsBytes(), AddFinishedRequest.class);
+            JobQueue.finished(addFinishedRequest.job());
+            AddFinishedResponse addFinishedResponse = new AddFinishedResponse();
+            addFinishedResponse.ok();
+            res.status(201);
+            return MAPPER.writeValueAsString(addFinishedResponse);
+        });
+
+        
         clientMonitor = new ClientMonitor(Connection.KEEPALIVE_INTERVAL_SEC);  // I won't make this configurable until it's needed
         clientMonitorThread = new Thread(clientMonitor);
         clientMonitorThread.setName("ClientMonitor");

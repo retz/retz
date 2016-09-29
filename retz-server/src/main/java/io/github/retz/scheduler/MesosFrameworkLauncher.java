@@ -17,7 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
-import io.github.retz.web.master.WebConsole;
+import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
@@ -96,7 +96,7 @@ public final class MesosFrameworkLauncher {
                 .setUser(userName)
                 .setName(RetzScheduler.FRAMEWORK_NAME)
                 .setWebuiUrl(conf.fileConfig.getUri().toASCIIString())
-                .setFailoverTimeout(0)
+                .setFailoverTimeout(100000)
                 .setCheckpoint(true)
                 .setPrincipal(conf.fileConfig.getPrincipal())
                 .setRole(conf.fileConfig.getRole());
@@ -107,7 +107,7 @@ public final class MesosFrameworkLauncher {
                     .setType(Protos.FrameworkInfo.Capability.Type.GPU_RESOURCES)
                     .build());
         }
-	
+        
         Optional<Protos.FrameworkID> frameworkId = CuratorClient.getFrameworkId();
         if (frameworkId.isPresent()) {
             LOG.info("Attempting to re-register with frameworkId: {}", frameworkId.get().getValue());
