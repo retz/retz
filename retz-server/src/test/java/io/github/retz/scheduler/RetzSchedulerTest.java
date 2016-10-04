@@ -95,7 +95,7 @@ public class RetzSchedulerTest {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer()));
-        Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
+        Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
 
         driver.start();
@@ -139,7 +139,7 @@ public class RetzSchedulerTest {
         Database.addUser(new User("Deadbeef", "cafebabe", true));
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer()));
-        Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
+        Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
 
         driver.start();
@@ -163,7 +163,7 @@ public class RetzSchedulerTest {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer()));
-        Job job = new Job("fooapp", "foocmd", null, new Range(2, 0), new Range(256, 0));
+        Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
 
         driver.start();

@@ -112,7 +112,7 @@ public class DatabaseTest {
 
         int id = -1;
         {
-            Job job = new Job(a.getAppid(), "uname -a", new Properties(), new Range(1, 0), new Range(32, 0));
+            Job job = new Job(a.getAppid(), "uname -a", new Properties(), 1, 32);
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
             Database.safeAddJob(job);
 

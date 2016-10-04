@@ -21,7 +21,6 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.protocol.data.Range;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +53,7 @@ public class JobQueueTest {
         Application app = new Application("a", Arrays.asList(), Arrays.asList(), Arrays.asList(),
                 Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
         Applications.load(app);
-        Job job = new Job("a", "b", null, new Range(1000, 0), new Range(100000000, 0));
+        Job job = new Job("a", "b", null, 1000, 100000000);
         job.schedule(0, TimestampHelper.now());
         JobQueue.push(job);
         {

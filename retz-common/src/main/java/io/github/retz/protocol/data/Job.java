@@ -41,8 +41,8 @@ public class Job {
 
     private final String appid;
     private String name; // TODO: make this configurable;
-    private final Range cpu;
-    private final Range memMB;
+    private final int cpu;
+    private final int memMB;
     private int gpu;
 
     private String taskId; // TaskId assigned by Mesos (or other scheduler)
@@ -66,11 +66,11 @@ public class Job {
 
     private boolean trustPVFiles = false;
 
-    public Job(String appName, String cmd, Properties props, Range cpu, Range memMB) {
+    public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
         this.appid = appName;
         this.cmd = cmd;
         this.props = props;
-        assert (cpu.getMin() > 0 && memMB.getMin() >= 32);
+        assert cpu > 0 && memMB >= 32;
         this.cpu = cpu;
         this.memMB = memMB;
         this.gpu = 0;
@@ -78,7 +78,7 @@ public class Job {
         this.retry = 0;
     }
 
-    public Job(String appName, String cmd, Properties props, Range cpu, Range memMB, int gpu) {
+    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int gpu) {
         this(appName, cmd, props, cpu, memMB);
         this.gpu = Objects.requireNonNull(gpu);
     }
@@ -96,8 +96,8 @@ public class Job {
                @JsonProperty("retry") int retry,
                @JsonProperty(value = "appid", required = true) String appid,
                @JsonProperty(value = "name") String name,
-               @JsonProperty("cpu") Range cpu,
-               @JsonProperty("memMB") Range memMB,
+               @JsonProperty("cpu") int cpu,
+               @JsonProperty("memMB") int memMB,
                @JsonProperty("gpu") int gpu,
                @JsonProperty("taskId") String taskId,
                @JsonProperty("trustPVFiles") boolean trustPVFiles,
@@ -114,7 +114,9 @@ public class Job {
         this.retry = retry;
         this.appid = appid;
         this.name = name;
+        assert cpu > 0;
         this.cpu = cpu;
+        assert memMB >= 32;
         this.memMB = memMB;
         this.gpu = gpu;
         this.taskId = taskId;
@@ -183,12 +185,12 @@ public class Job {
     }
 
     @JsonGetter("cpu")
-    public Range cpu() {
+    public int cpu() {
         return cpu;
     }
 
     @JsonGetter("memMB")
-    public Range memMB() {
+    public int memMB() {
         return memMB;
     }
 

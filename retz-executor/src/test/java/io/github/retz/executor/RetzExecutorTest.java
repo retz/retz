@@ -106,7 +106,7 @@ public class RetzExecutorTest {
         System.err.println("Temporary file: " + tempFilename);
         assertFalse(new File(tempFilename).exists());
 
-        Job job = new Job("appname", "touch " + tempFilename, null, new Range(1, 0), new Range(128, 0));
+        Job job = new Job("appname", "touch " + tempFilename, null, 1, 128);
         Application app = new Application("appname", new LinkedList<>(), new LinkedList<>(), new LinkedList<>(),
                 Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
         MetaJob metaJob = new MetaJob(job, app);
@@ -148,7 +148,7 @@ public class RetzExecutorTest {
         int memMB = 128;
         Application app = new Application("some-app", new LinkedList<>(), new LinkedList<>(), new LinkedList<>(),
                 Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
-        Job job = new Job("appname", "touch " + tempFilename, null, new Range(cpus, 0), new Range(memMB, 0));
+        Job job = new Job("appname", "touch " + tempFilename, null, cpus, memMB);
         MetaJob metaJob = new MetaJob(job, app);
         Protos.TaskInfo task = Protos.TaskInfo.newBuilder()
                 .setTaskId(Protos.TaskID.newBuilder().setValue("foobar-task").build())
@@ -184,7 +184,7 @@ public class RetzExecutorTest {
 
         int cpus = 1;
         int memMB = 128;
-        Job job = new Job("appname", "touch " + tempFilename, null, new Range(cpus, 0), new Range(memMB, 0));
+        Job job = new Job("appname", "touch " + tempFilename, null, cpus, memMB);
         Protos.TaskInfo task = Protos.TaskInfo.newBuilder()
                 .setTaskId(Protos.TaskID.newBuilder().setValue("foobar-task").build())
                 // Hereby injecting invalid message into data, which lead to a bug

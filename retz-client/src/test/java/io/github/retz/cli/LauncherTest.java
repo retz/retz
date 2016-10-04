@@ -106,6 +106,9 @@ public class LauncherTest {
             assertEquals("run", conf.commander.getParsedCommand());
             CommandRun command = (CommandRun) conf.getParsedSubCommand();
             assertEquals("a=b", command.envs.get(0));
+            assertEquals(2, command.cpu);
+            assertEquals(32, command.mem);
+            assertEquals(0, command.gpu);
         }
     }
 

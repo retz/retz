@@ -2,6 +2,7 @@
 
 ## 0.0.27
 
+* Remove Range from CUI and protocol
 * Major clean up moving from on-memory data structure utilizing java.util.concurrent
   to data structure based on relational model and transactions using JDBC.
   Currently primary database is H2 Database - on moving to other database

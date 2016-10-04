@@ -146,7 +146,7 @@ public class WebConsoleTest {
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(256, 0)));
+            Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 256));
             assertThat(res, instanceOf(ErrorResponse.class));
 
             maybeJob = JobQueue.findFit(1000, 10000);
@@ -181,7 +181,7 @@ public class WebConsoleTest {
         {
             // You know, these spaces are to be normalized
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Response res = webClient.schedule(new Job("foobar", cmd, null, new Range(1, 0), new Range(200, 0)));
+            Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 200));
             assertThat(res, instanceOf(ScheduleResponse.class));
             ScheduleResponse sres = (ScheduleResponse) res;
             assertNotNull(sres.job.scheduled());
@@ -224,7 +224,7 @@ public class WebConsoleTest {
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Job job = new Job("foobar-nosuchapp", cmd, null, new Range(1, 0), new Range(256, 0));
+            Job job = new Job("foobar-nosuchapp", cmd, null, 1, 256);
             Job done = webClient.run(job);
             assertNull(done);
 
@@ -268,7 +268,7 @@ public class WebConsoleTest {
         Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
                 Optional.empty(), Optional.empty(), user.keyId(), new MesosContainer());
         Database.addApplication(app);
-        Job job = new Job(app.getAppid(), "foocmd", null, new Range(12000, 0), new Range(12000, 0));
+        Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
         JobQueue.push(job);
 
         URL url = new URL(config.getUri().toASCIIString() + "/status");

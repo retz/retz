@@ -1,18 +1,18 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.inttest;
 
@@ -21,7 +21,6 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.protocol.data.Range;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.junit.Test;
@@ -82,8 +81,7 @@ public class RetzIntTest extends IntTestBase {
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
         String echoText = "hoge from echo-app via Retz!";
-        Job job = new Job("echo-app", "echo " + echoText,
-                new Properties(), new Range(1, 2), new Range(128, 256));
+        Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256);
         Job runRes = client.run(job);
         assertThat(runRes.result(), is(RES_OK));
         assertThat(runRes.state(), is(Job.JobState.FINISHED));
@@ -129,7 +127,7 @@ public class RetzIntTest extends IntTestBase {
         assertThat(listRes.status(), is("ok"));
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
-        Job job = new Job("echo-app", "sleep 60", new Properties(), new Range(1, 1), new Range(32, 32));
+        Job job = new Job("echo-app", "sleep 60", new Properties(), 1, 32);
         response = client.schedule(job);
         assertThat(response, instanceOf(ScheduleResponse.class));
         ScheduleResponse scheduleResponse = (ScheduleResponse) response;
@@ -239,8 +237,7 @@ public class RetzIntTest extends IntTestBase {
     private List<EchoJob> scheduleEchoJobs(Client client, String appName, String cmdPrefix, List<Integer> argvList) throws IOException {
         List<EchoJob> echoJobs = new LinkedList<>();
         for (Integer i : argvList) {
-            Job job = new Job(appName, cmdPrefix + i.toString(),
-                    new Properties(), new Range(1, 1), new Range(32, 32));
+            Job job = new Job(appName, cmdPrefix + i.toString(), new Properties(), 1, 32);
 
             ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
             assertThat(scheduleResponse.status(), is("ok"));

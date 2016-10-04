@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
-import static io.github.retz.protocol.data.Range.parseRange;
-
 public class CommandRun implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandRun.class);
 
@@ -47,14 +45,14 @@ public class CommandRun implements SubCommand {
             description = "Pairs of environment variable names and values, like '-E ASAKUSA_M3BP_OPTS='-Xmx32g' -E SPARK_CMD=path/to/spark-cmd'")
     List<String> envs;
 
-    @Parameter(names = "-cpu", description = "Range of CPU cores assigned to the job, like '2-'")
-    private String cpu;
+    @Parameter(names = "-cpu", description = "Number of CPU cores assigned to the job")
+    int cpu = 1;
 
-    @Parameter(names = "-mem", description = "Range of size of RAM(MB) assigned to the job")
-    private String mem;
+    @Parameter(names = "-mem", description = "Number of size of RAM(MB) assigned to the job")
+    int mem = 32;
 
-    @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job in Range")
-    private String gpu = "0";
+    @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job")
+    int gpu = 0;
 
     @Parameter(names = "-trustpvfiles", description = "Whether to trust decompressed files in persistent volume from -P option")
     private boolean trustPVFiles = false;
@@ -74,7 +72,7 @@ public class CommandRun implements SubCommand {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         Job job = new Job(appName, remoteCmd,
-                envProps, parseRange(cpu, "1"), parseRange(mem, "32"), Integer.parseInt(gpu));
+                envProps, cpu, mem, gpu);
         job.setTrustPVFiles(trustPVFiles);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
