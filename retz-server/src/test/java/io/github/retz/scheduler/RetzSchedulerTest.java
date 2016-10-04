@@ -50,7 +50,6 @@ public class RetzSchedulerTest {
         mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
 
-        JobQueue.clear();
         Protos.FrameworkInfo frameworkInfo = Protos.FrameworkInfo.newBuilder()
                 .setUser("")
                 .setName(RetzScheduler.FRAMEWORK_NAME)
@@ -59,6 +58,7 @@ public class RetzSchedulerTest {
         InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz.properties");
         MesosFrameworkLauncher.Configuration conf = new MesosFrameworkLauncher.Configuration(new FileConfiguration(in));
 
+        Database.init(conf.getFileConfig());
         scheduler = new RetzScheduler(conf, frameworkInfo);
         driver = new MesosSchedulerDummyDriver(scheduler, frameworkInfo, conf.getMesosMaster());
     }
@@ -66,6 +66,8 @@ public class RetzSchedulerTest {
     @After
     public void after() {
         driver.clear();
+        JobQueue.clear();
+        Database.stop();
     }
 
     @Test

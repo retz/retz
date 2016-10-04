@@ -23,7 +23,6 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.MesosContainer;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
@@ -35,7 +34,6 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -196,6 +194,7 @@ public class Client implements AutoCloseable {
                 if (getJobResponse.job().isPresent()) {
                     if (getJobResponse.job().get().state() == Job.JobState.FINISHED
                             || getJobResponse.job().get().state() == Job.JobState.KILLED) {
+
                         return getJobResponse.job().get();
                     } else {
                         try {

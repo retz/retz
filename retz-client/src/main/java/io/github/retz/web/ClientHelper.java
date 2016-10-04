@@ -33,7 +33,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ClientHelper {
     static final Logger LOG = LoggerFactory.getLogger(ClientHelper.class);
     static final int MAX_INTERVAL_MSEC = 32768;
-    static final int INITAL_INTERVAL_MSEC = 1024;
+    static final int INITAL_INTERVAL_MSEC = 512;
 
     public static void getWholeFile(Client c, int id, String filename, String resultDir) {
         String path = resultDir + "/" + filename;
@@ -66,10 +66,14 @@ public class ClientHelper {
 
             if (current.isPresent()) {
                 currentState = current.get().state();
+                if (currentState == Job.JobState.FINISHED || currentState == Job.JobState.KILLED) {
+                    return current;
+                }
             }
 
             if (poll) {
                 maybeSleep(interval);
+
                 if (bytesRead == 0) {
                     if (interval < MAX_INTERVAL_MSEC) {
                         interval = interval * 2;

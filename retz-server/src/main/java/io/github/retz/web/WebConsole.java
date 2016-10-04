@@ -1,18 +1,18 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.web;
 
@@ -39,6 +39,7 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.LinkedList;
 import java.util.List;
@@ -174,29 +175,7 @@ public final class WebConsole {
         // Get file list
         get(ListFilesRequest.resourcePattern(), JobRequestRouter::getPath);
 
-        put(ScheduleRequest.resourcePattern(), (req, res) -> {
-            ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
-            res.type("application/json");
-            if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
-                Job job = scheduleRequest.job();
-                job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
-
-                JobQueue.push(job);
-
-                ScheduleResponse scheduleResponse = new ScheduleResponse(job);
-                scheduleResponse.ok();
-                LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
-
-                res.status(201);
-                return MAPPER.writeValueAsString(scheduleResponse);
-
-            } else {
-                LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
-                ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
-                res.status(404);
-                return MAPPER.writeValueAsString(response);
-            }
-        });
+        put(ScheduleRequest.resourcePattern(), WebConsole::schedule);
 
         delete(KillRequest.resourcePattern(), (req, res) -> {
             LOG.info("kill", req.params(":id"));
@@ -320,7 +299,7 @@ public final class WebConsole {
         List<Job> finished = new LinkedList<>();
         //JobQueue.getAllFinished(finished, limit);
         for (Job job : JobQueue.getAll()) {
-            switch(job.state()) {
+            switch (job.state()) {
                 case QUEUED:
                     queue.add(job);
                     break;
@@ -377,46 +356,32 @@ public final class WebConsole {
         LOG.info("Stopped all executors invoked as {}", appName);
     }
 
-    public static void notifyStarted(Job job) {
-        broadcast(EventType.STARTED, job);
-        ConsoleWebSocketHandler.notify("started", job);
-    }
+    public static String schedule(Request req, Response res) throws IOException, InterruptedException {
+        ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
+        res.type("application/json");
+        if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
+            Job job = scheduleRequest.job();
+            job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
 
-    public static void notifyFinished(Job job) {
-        broadcast(EventType.FINISHED, job);
-        ConsoleWebSocketHandler.notify("finished", job);
-    }
+            JobQueue.push(job);
+            if (scheduler.isPresent() && driver.isPresent()) {
+                LOG.info("Trying invocation from offer stock");
+                scheduler.get().maybeInvokeNow(driver.get(), job);
+            }
 
-    public static void notifyKilled(Job job) {
-        broadcast(EventType.KILLED, job);
-        ConsoleWebSocketHandler.notify("killed", job);
-    }
+            ScheduleResponse scheduleResponse = new ScheduleResponse(job);
+            scheduleResponse.ok();
+            LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
 
-    // TODO: make this async with some global message queue
-    private static void broadcast(EventType eventType, Job job) {
-        switch (eventType) {
-            case STARTED:
-                ConsoleWebSocketHandler.broadcast("started", job, "ok");
-                break;
-            case SCHEDULED:
-                ConsoleWebSocketHandler.broadcast("scheduled", job, "ok");
-                break;
-            case KILLED:
-                ConsoleWebSocketHandler.broadcast("killed", job, "killed");
-                break;
-            case FINISHED:
-                ConsoleWebSocketHandler.broadcast("finished", job, "ok");
-                break;
-            default:
-                throw new AssertionError("Unknown EventType: " + eventType.toString());
+            res.status(201);
+            return MAPPER.writeValueAsString(scheduleResponse);
+
+        } else {
+            LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
+            ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
+            res.status(404);
+            return MAPPER.writeValueAsString(response);
         }
     }
-
-    private enum EventType {
-        STARTED,
-        SCHEDULED,
-        KILLED,
-        FINISHED
-    }
-
 }
+

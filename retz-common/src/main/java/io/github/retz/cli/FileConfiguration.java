@@ -30,6 +30,7 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Properties;
 
+// TODO: Most of items here have become server-specific. Move them out of common to server with proper abstraction
 public class FileConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(FileConfiguration.class);
 
@@ -53,8 +54,10 @@ public class FileConfiguration {
     // System Limits
     public static final String MAX_SIMULTANEOUS_JOBS = "retz.max.running";
     static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "512";
+    static final String MAX_STOCK_SIZE = "retz.max.stock";
+    static final String DEFAULT_MAX_STOCK_SIZE = "16";
     // Not yet used
-    static final String QUEUE_MAX = "retz.queue.max";
+    static final String QUEUE_MAX = "retz.max.queue";
     static final String SCHEDULE_RESULTS = "retz.results";
     static final String SCHEDULE_RETRY = "retz.retry";
 
@@ -250,6 +253,10 @@ public class FileConfiguration {
         return maxSimultaneousJobs;
     }
 
+    public int getMaxStockSize() {
+        return Integer.parseInt(properties.getProperty(MAX_STOCK_SIZE, DEFAULT_MAX_STOCK_SIZE));
+    }
+
     public String getMesosAgentJava() {
         return mesosAgentJava;
     }
@@ -263,6 +270,7 @@ public class FileConfiguration {
         return new StringBuffer()
                 .append("[uri=").append(uri)
                 .append(", props=").append(properties)
+                .append(", ").append(MAX_STOCK_SIZE).append("=").append(getMaxStockSize())
                 .append(", checkCert=").append(checkCert)
                 .append("]")
                 .toString();

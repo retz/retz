@@ -2,6 +2,11 @@
 
 ## 0.0.27
 
+* Add resource offer stocking with limit `retz.max.stock` in configuration.
+  With offers stocked in scheduler and job queue empty, a new job schedule
+  or run request do not need to wait for resource offer - task will be
+  invoked during the schedule request. Scheduler may stock up to `retz.max.stock`
+  (default 16) offers. To disable stocking, set it 0.
 * Remove Range from CUI and protocol
 * Major clean up moving from on-memory data structure utilizing java.util.concurrent
   to data structure based on relational model and transactions using JDBC.

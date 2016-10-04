@@ -45,6 +45,7 @@ public class FileConfigurationTest {
         assertEquals("/cast/away/somewhere/java", config.getMesosAgentJava());
         assertFalse(config.checkCert());
         assertTrue(config.authenticationEnabled());
+        assertEquals(16, config.getMaxStockSize()); // Default value
     }
 
     @Test
