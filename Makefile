@@ -9,7 +9,7 @@ test:
 	$(GRADLE) test
 
 inttest:
-	$(GRADLE) test -Dinttest
+	$(GRADLE) test -Dinttest -is
 
 build:
 	$(GRADLE) build

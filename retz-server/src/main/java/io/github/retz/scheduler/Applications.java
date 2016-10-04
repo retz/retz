@@ -27,9 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Applications {
@@ -149,6 +147,102 @@ public class Applications {
                 .setFrameworkId(frameworkID)
                 .build();
         return executorInfo;
+    }
+
+
+    static List<Protos.Offer.Operation> persistentVolumeOps(Resource resources, Protos.FrameworkInfo frameworkInfo) {
+        List<Protos.Offer.Operation> operations = new LinkedList<>();
+
+        List<Application> apps = needsPersistentVolume(resources, frameworkInfo.getRole());
+        for (Application a : apps) {
+            LOG.debug("Application {}: {} {} volume: {} {}MB",
+                    a.getAppid(), String.join(" ", a.getPersistentFiles()),
+                    String.join(" ", a.getFiles()), a.toVolumeId(frameworkInfo.getRole()), a.getDiskMB());
+        }
+        int reservedSpace = resources.reservedDiskMB();
+        LOG.debug("Number of volumes: {}, reserved space: {}", resources.volumes().size(), reservedSpace);
+
+        for (Application app : apps) {
+
+            String volumeId = app.toVolumeId();
+            LOG.debug("Application {} needs {} MB persistent volume", app.getAppid(), app.getDiskMB());
+            if (reservedSpace < app.getDiskMB().get()) {
+                // If enough space is not reserved, then reserve
+                // TODO: how it must behave when we only have too few space to reserve
+                Protos.Resource.Builder rb = baseResourceBuilder(app.getDiskMB().get() - reservedSpace,
+                        frameworkInfo);
+
+                LOG.info("Reserving resource with principal={}, role={}, app={}",
+                        frameworkInfo.getPrincipal(), frameworkInfo.getRole(), app.getAppid());
+                operations.add(Protos.Offer.Operation.newBuilder()
+                        .setType(Protos.Offer.Operation.Type.RESERVE)
+                        .setReserve(Protos.Offer.Operation.Reserve.newBuilder()
+                                .addResources(rb.build())
+                        )
+                        .build());
+            } else if (!resources.volumes().containsKey(volumeId)) {
+                // We have enough space to reserve, then do it
+                Protos.Resource.Builder rb = baseResourceBuilder(app.getDiskMB().get(), frameworkInfo);
+                LOG.info("Creating {} MB volume {} for application {}", app.getDiskMB(), volumeId, app.getAppid());
+                operations.add(Protos.Offer.Operation.newBuilder()
+                        .setType(Protos.Offer.Operation.Type.CREATE)
+                        .setCreate(Protos.Offer.Operation.Create.newBuilder().addVolumes(
+                                rb.setDisk(Protos.Resource.DiskInfo.newBuilder()
+                                        .setPersistence(Protos.Resource.DiskInfo.Persistence.newBuilder()
+                                                .setPrincipal(frameworkInfo.getPrincipal())
+                                                .setId(volumeId))
+                                        .setVolume(Protos.Volume.newBuilder()
+                                                .setMode(Protos.Volume.Mode.RW)
+                                                .setContainerPath(app.getAppid() + "-home")))
+                                        .build())
+                        ).build());
+                reservedSpace -= app.getDiskMB().get();
+            }
+        }
+        return operations;
+    }
+
+    private static Protos.Resource.Builder baseResourceBuilder(int diskMB, Protos.FrameworkInfo frameworkInfo) {
+        return Protos.Resource.newBuilder()
+                .setName("disk")
+                .setScalar(Protos.Value.Scalar.newBuilder().setValue(diskMB))
+                .setType(Protos.Value.Type.SCALAR)
+                .setReservation(Protos.Resource.ReservationInfo.newBuilder()
+                        .setPrincipal(frameworkInfo.getPrincipal()))
+                .setRole(frameworkInfo.getRole());
+    }
+
+    static List<Protos.Offer.Operation> persistentVolumeCleanupOps(Resource resources, Protos.FrameworkInfo frameworkInfo) {
+        List<Protos.Offer.Operation> operations = new LinkedList<>();
+        List<String> usedVolumes = Applications.volumes(frameworkInfo.getRole());
+        Map<String, Protos.Resource> unusedVolumes = new LinkedHashMap<>();
+        for (Map.Entry<String, Protos.Resource> volume : resources.volumes().entrySet()) {
+            if (!usedVolumes.contains(volume.getKey())) {
+                unusedVolumes.put(volume.getKey(), volume.getValue());
+            }
+        }
+        for (Map.Entry<String, Protos.Resource> volume : unusedVolumes.entrySet()) {
+            String volumeId = volume.getKey();
+            LOG.info("Destroying {}", volumeId);
+            operations.add(Protos.Offer.Operation.newBuilder()
+                    .setType(Protos.Offer.Operation.Type.DESTROY)
+                    .setDestroy(Protos.Offer.Operation.Destroy.newBuilder().addVolumes(volume.getValue()))
+                    .build());
+            LOG.info("Unreserving {}", volumeId);
+            operations.add(Protos.Offer.Operation.newBuilder()
+                    .setType(Protos.Offer.Operation.Type.UNRESERVE)
+                    .setUnreserve(Protos.Offer.Operation.Unreserve.newBuilder()
+                            .addResources(Protos.Resource.newBuilder()
+                                    .setReservation(Protos.Resource.ReservationInfo.newBuilder()
+                                            .setPrincipal(frameworkInfo.getPrincipal()))
+                                    .setName("disk")
+                                    .setType(Protos.Value.Type.SCALAR)
+                                    .setScalar(resources.volumes().get(volumeId).getScalar())
+                                    .setRole(frameworkInfo.getRole())
+                                    .build())
+                    ).build());
+        }
+        return operations;
     }
 }
 

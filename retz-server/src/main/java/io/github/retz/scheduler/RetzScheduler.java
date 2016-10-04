@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
@@ -147,116 +148,42 @@ public class RetzScheduler implements Scheduler {
 
             List<Protos.Offer.Operation> operations = new ArrayList<>();
 
-            SetMap commands = new SetMap();
-
-            List<Application> apps = Applications.needsPersistentVolume(resource, frameworkInfo.getRole());
-            for (Application a : apps) {
-                LOG.debug("Application {}: {} {} volume: {} {}MB",
-                        a.getAppid(), String.join(" ", a.getPersistentFiles()),
-                        String.join(" ", a.getFiles()), a.toVolumeId(frameworkInfo.getRole()), a.getDiskMB());
-            }
-            int reservedSpace = resource.reservedDiskMB();
-            LOG.debug("Number of volumes: {}, reserved space: {}", resource.volumes().size(), reservedSpace);
-
-            for (Application app : apps) {
-
-                String volumeId = app.toVolumeId();
-                LOG.debug("Application {} needs {} MB persistent volume", app.getAppid(), app.getDiskMB());
-                if (reservedSpace < app.getDiskMB().get()) {
-                    // If enough space is not reserved, then reserve
-                    // TODO: how it must behave when we only have too few space to reserve
-                    Protos.Resource.Builder rb = baseResourceBuilder(app.getDiskMB().get() - reservedSpace);
-
-                    LOG.info("Reserving resource with principal={}, role={}, app={}",
-                            frameworkInfo.getPrincipal(), frameworkInfo.getRole(), app.getAppid());
-                    operations.add(Protos.Offer.Operation.newBuilder()
-                            .setType(Protos.Offer.Operation.Type.RESERVE)
-                            .setReserve(Protos.Offer.Operation.Reserve.newBuilder()
-                                    .addResources(rb.build())
-                            )
-                            .build());
-                } else if (!resource.volumes().containsKey(volumeId)) {
-                    // We have enough space to reserve, then do it
-                    Protos.Resource.Builder rb = baseResourceBuilder(app.getDiskMB().get());
-                    LOG.info("Creating {} MB volume {} for application {}", app.getDiskMB(), volumeId, app.getAppid());
-                    operations.add(Protos.Offer.Operation.newBuilder()
-                            .setType(Protos.Offer.Operation.Type.CREATE)
-                            .setCreate(Protos.Offer.Operation.Create.newBuilder().addVolumes(
-                                    rb.setDisk(Protos.Resource.DiskInfo.newBuilder()
-                                            .setPersistence(Protos.Resource.DiskInfo.Persistence.newBuilder()
-                                                    .setPrincipal(frameworkInfo.getPrincipal())
-                                                    .setId(volumeId))
-                                            .setVolume(Protos.Volume.newBuilder()
-                                                    .setMode(Protos.Volume.Mode.RW)
-                                                    .setContainerPath(app.getAppid() + "-home")))
-                                            .build())
-                            ).build());
-                    reservedSpace -= app.getDiskMB().get();
-                }
-            }
+            operations.addAll(Applications.persistentVolumeOps(resource, frameworkInfo));
 
             // Cleanup unused spaces, volumes
-            List<String> usedVolumes = Applications.volumes(frameworkInfo.getRole());
-            Map<String, Protos.Resource> unusedVolumes = new LinkedHashMap<>();
-            for (Map.Entry<String, Protos.Resource> volume : resource.volumes().entrySet()) {
-                if (!usedVolumes.contains(volume.getKey())) {
-                    unusedVolumes.put(volume.getKey(), volume.getValue());
-                }
-            }
-            for (Map.Entry<String, Protos.Resource> volume : unusedVolumes.entrySet()) {
-                String volumeId = volume.getKey();
-                LOG.info("Destroying {}", volumeId);
-                operations.add(Protos.Offer.Operation.newBuilder()
-                        .setType(Protos.Offer.Operation.Type.DESTROY)
-                        .setDestroy(Protos.Offer.Operation.Destroy.newBuilder().addVolumes(volume.getValue()))
-                        .build());
-                LOG.info("Unreserving {}", volumeId);
-                operations.add(Protos.Offer.Operation.newBuilder()
-                        .setType(Protos.Offer.Operation.Type.UNRESERVE)
-                        .setUnreserve(Protos.Offer.Operation.Unreserve.newBuilder()
-                                .addResources(Protos.Resource.newBuilder()
-                                        .setReservation(Protos.Resource.ReservationInfo.newBuilder()
-                                                .setPrincipal(frameworkInfo.getPrincipal()))
-                                        .setName("disk")
-                                        .setType(Protos.Value.Type.SCALAR)
-                                        .setScalar(resource.volumes().get(volumeId).getScalar())
-                                        .setRole(frameworkInfo.getRole())
-                                        .build())
-                        ).build());
-            }
+            operations.addAll(Applications.persistentVolumeCleanupOps(resource, frameworkInfo));
 
             Resource assigned = new Resource(0, 0, 0);
             List<Job> jobs = JobQueue.findFit((int) resource.cpu(), resource.memMB());
 
             LOG.debug("{} jobs found for fit {}/{}", jobs.size(), resource.cpu(), resource.memMB());
-            // Assign tasks if it has enough CPU/Memory
-            for (Job job : jobs) {
-                Optional<Application> app = Applications.get(job.appid());
 
-                if (!app.isPresent()) {
-                    String reason = String.format("Application %s does not exist any more. Cancel.", job.appid());
-                    //kill(job, reason);
-                    JobQueue.cancel(job.id(), reason);
-                    continue;
-                }
-                if (commands.hasEntry(job.appid(), job.cmd())) {
-                    String reason = String.format("Same command is going to be scheduled in single executor; skipping %s '%s'",
-                            job.appid(), job.cmd());
-                    //kill(job, reason);
-                    JobQueue.cancel(job.id(), reason);
-                    continue;
-                } else if (!conf.fileConfig.useGPU() && job.gpu() > 0) {
+            // Assign tasks if it has enough CPU/Memory
+            List<AppJob> appJobs = jobs.stream().filter(job -> {
+                if (!conf.fileConfig.useGPU() && job.gpu() > 0) {
                     // TODO: this should be checked before enqueuing to JobQueue
                     String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
                             job.id(), job.appid(), job.gpu());
                     //kill(job, reason);
                     JobQueue.cancel(job.id(), reason);
-                    continue;
-                } else {
-                    commands.add(job.appid(), job.cmd());
+                    return false;
                 }
+                return true;
+            }).map(job -> {
+                Optional<Application> app = Applications.get(job.appid());
+                return new AppJob(app, job);
+            }).filter(appJob -> {
+                if (!appJob.hasApplication()) {
+                    String reason = String.format("Application %s does not exist any more. Cancel.", appJob.job().appid());
+                    JobQueue.cancel(appJob.job().id(), reason);
+                    return false;
+                }
+                return true;
+            }).collect(Collectors.toList());
 
-
+            for (AppJob appJob : appJobs) {
+                Job job = appJob.job();
+                Application app = appJob.application().get();
                 String id = Integer.toString(job.id());
                 // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                 // (esp ASAKUSA_HOME env)
@@ -267,7 +194,7 @@ public class RetzScheduler implements Scheduler {
                 //.setApplication(app.get(), frameworkInfo.getId());
 
                 try {
-                    tb.setExecutor(job, app.get(), frameworkInfo.getId()); //Applications.encodable(app.get()));
+                    tb.setExecutor(job, app, frameworkInfo.getId()); //Applications.encodable(app.get()));
                 } catch (JsonProcessingException e) {
                     String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
                     //kill(job, reason);
@@ -275,9 +202,9 @@ public class RetzScheduler implements Scheduler {
                     continue;
                 }
 
-                String volumeId = app.get().toVolumeId(frameworkInfo.getRole());
-                if (app.get().getDiskMB().isPresent() && resource.volumes().containsKey(volumeId)) {
-                    LOG.debug("getting {}, diskMB {}", volumeId, app.get().getDiskMB().get());
+                String volumeId = app.toVolumeId(frameworkInfo.getRole());
+                if (app.getDiskMB().isPresent() && resource.volumes().containsKey(volumeId)) {
+                    LOG.debug("getting {}, diskMB {}", volumeId, app.getDiskMB().get());
                     Protos.Resource res = resource.volumes().get(volumeId);
                     LOG.debug("name:{}, role:{}, path:{}, size:{}, principal:{}",
                             res.getName(), res.getRole(), res.getDisk().getVolume().getContainerPath(),
@@ -297,9 +224,9 @@ public class RetzScheduler implements Scheduler {
                 //job.starting(TimestampHelper.now());
 
                 // This shouldn't be a List nor a set, but a Map
-                List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.get().getAppid(), new LinkedList<>());
+                List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.getAppid(), new LinkedList<>());
                 slaves.add(offer.getSlaveId());
-                this.slaves.put(app.get().getAppid(), slaves);
+                this.slaves.put(app.getAppid(), slaves);
 
                 JobQueue.starting(job, Optional.empty(), taskId.getValue());
 
@@ -449,36 +376,22 @@ public class RetzScheduler implements Scheduler {
         //WebConsole.notifyStarted(job);
     }
 
-    private Protos.Resource.Builder baseResourceBuilder(int diskMB) {
-        return Protos.Resource.newBuilder()
-                .setName("disk")
-                .setScalar(Protos.Value.Scalar.newBuilder().setValue(diskMB))
-                .setType(Protos.Value.Type.SCALAR)
-                .setReservation(Protos.Resource.ReservationInfo.newBuilder()
-                        .setPrincipal(frameworkInfo.getPrincipal()))
-                .setRole(frameworkInfo.getRole());
-    }
+    private static class AppJob {
+        private final Optional<Application> app;
+        private final Job job;
 
-    private static class SetMap {
-        private final Map<String, Set<String>> map;
-
-        SetMap() {
-            map = new HashMap<>();
+        AppJob(Optional<Application> a, Job j) {
+            app = a;
+            job = j;
         }
-
-        boolean hasEntry(String key, String element) {
-            return map.containsKey(key) &&
-                    map.get(key).contains(element);
+        boolean hasApplication() {
+            return app.isPresent();
         }
-
-        void add(String key, String element) {
-            if (map.containsKey(key)) {
-                map.get(key).add(element);
-            } else {
-                Set<String> set = new HashSet<>();
-                set.add(element);
-                map.put(key, set);
-            }
+        Optional<Application> application() {
+            return app;
+        }
+        Job job() {
+            return job;
         }
     }
 }
