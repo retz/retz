@@ -271,6 +271,7 @@ public final class WebConsole {
             StatusResponse statusResponse = new StatusResponse();
             JobQueue.setStatus(statusResponse);
             ConsoleWebSocketHandler.setStatus(statusResponse);
+            scheduler.get().setOfferStats(statusResponse);
             res = statusResponse;
         } else {
             res = new ErrorResponse("no scheduler set now");

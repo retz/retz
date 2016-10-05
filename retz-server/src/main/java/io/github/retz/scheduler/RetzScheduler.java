@@ -23,6 +23,7 @@ import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
+import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;
@@ -411,6 +412,19 @@ public class RetzScheduler implements Scheduler {
 
         JobQueue.started(status.getTaskId().getValue(), maybeUrl);
         //WebConsole.notifyStarted(job);
+    }
+
+    public void setOfferStats(StatusResponse statusResponse) {
+        int totalCpu = 0;
+        int totalMem = 0;
+        int totalGpu = 0;
+        for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
+            Resource r = ResourceConstructor.decode(e.getValue().getResourcesList());
+            totalCpu += r.cpu();
+            totalMem += r.memMB();
+            totalGpu += r.gpu();
+        }
+        statusResponse.setOfferStats(OFFER_STOCK.size(), totalCpu, totalMem, totalGpu);
     }
 
     private static class AppJob {
