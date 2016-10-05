@@ -158,10 +158,11 @@ public class FileConfiguration {
 
         databaseURL = properties.getProperty(DATABASE_URL, DEFAULT_DATABASE_URL);
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}",
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 MESOS_AGENT_JAVA, mesosAgentJava,
-                DATABASE_URL, databaseURL);
+                DATABASE_URL, databaseURL,
+                MAX_STOCK_SIZE, getMaxStockSize());
     }
 
     public String getMesosMaster() {
