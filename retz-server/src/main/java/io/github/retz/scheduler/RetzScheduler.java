@@ -152,7 +152,7 @@ public class RetzScheduler implements Scheduler {
             }
 
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-            LOG.debug("Offer: {}", resource);
+            LOG.info("Offer {}: {}", offer.getId().getValue(), resource);
 
             List<Protos.Offer.Operation> operations = new ArrayList<>();
 

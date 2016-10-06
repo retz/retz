@@ -21,6 +21,7 @@ import io.github.retz.mesos.Resource;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Container;
 import io.github.retz.protocol.data.DockerContainer;
+import io.github.retz.protocol.data.DockerVolume;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class Applications {
     public static Optional<Application> get(String appName) {
         try {
             return Database.getApplication(appName);
-        } catch (IOException e){
+        } catch (IOException e) {
             LOG.error(e.toString());
             return Optional.empty();
         }
@@ -92,14 +93,37 @@ public class Applications {
         Container container = application.container();
         DockerContainer c = (DockerContainer) container;
 
-        return Protos.ContainerInfo.newBuilder().setMesos(
+        Protos.ContainerInfo.Builder builder = Protos.ContainerInfo.newBuilder().setMesos(
                 Protos.ContainerInfo.MesosInfo.newBuilder()
                         .setImage(Protos.Image.newBuilder()
                                 .setType(Protos.Image.Type.DOCKER)
                                 .setDocker(Protos.Image.Docker.newBuilder()
                                         .setName(c.image()))))
-                .setType(Protos.ContainerInfo.Type.MESOS)
-                .build();
+                .setType(Protos.ContainerInfo.Type.MESOS);
+
+        for (DockerVolume volume : c.volumes()) {
+            Protos.Volume.Builder vb = Protos.Volume.newBuilder()
+                    .setContainerPath(volume.containerPath()) // target path to mount inside container
+                    .setSource(Protos.Volume.Source.newBuilder()
+                            .setType(Protos.Volume.Source.Type.DOCKER_VOLUME)
+                            .setDockerVolume(Protos.Volume.Source.DockerVolume.newBuilder()
+                                    .setDriver(volume.driver())
+                                    .setName(volume.name())
+                                    //.setDriver("nfs")
+                                    //.setName("192.168.204.222/")
+                                    .build()));
+            switch (volume.mode()) {
+                case RW:
+                    vb.setMode(Protos.Volume.Mode.RW);
+                    break;
+                case RO:
+                default:
+                    vb.setMode(Protos.Volume.Mode.RO);
+            }
+            builder.addVolumes(vb);
+        }
+
+        return builder.build();
     }
 
     public static Protos.CommandInfo appToCommandInfo(Application application, String command) {

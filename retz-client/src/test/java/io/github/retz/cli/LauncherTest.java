@@ -16,11 +16,13 @@
  */
 package io.github.retz.cli;
 
+import io.github.retz.protocol.data.DockerVolume;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -28,6 +30,7 @@ import static org.junit.Assert.*;
 
 public class LauncherTest {
     static final String PROPERTY_FILE = "src/test/resources/retz.properties";
+
     @Test
     public void parseLoadAppTest() throws IOException, URISyntaxException {
         {
@@ -78,7 +81,46 @@ public class LauncherTest {
             assertEquals("ubuntu:latest", command.image);
         }
 
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t",
+                    "--container", "docker", "--image", "ubuntu:latest",
+                    "--docker-volumes", "d:n:cp,d2:n2:cp2:mode=RW:key=value-boo",
+                    "--docker-volumes", "nfs:192.168.0.1/:my-nfs:mode=RW:user=u:pass=p"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("load-app", conf.commander.getParsedCommand());
+            assertEquals("load-app", conf.getParsedSubCommand().getName());
+            assertTrue(conf.getParsedSubCommand() instanceof CommandLoadApp);
+            CommandLoadApp command = (CommandLoadApp) conf.getParsedSubCommand();
+            assertEquals("docker", command.container);
+            assertEquals("ubuntu:latest", command.image);
 
+            List<DockerVolume> volumes = CommandLoadApp.parseDockerVolumeSpecs(command.volumeSpecs);
+            assertEquals(3, volumes.size());
+            {
+                DockerVolume v = volumes.get(0);
+                assertEquals("d", v.driver());
+                assertEquals("n", v.name());
+                assertEquals("cp", v.containerPath());
+                assertEquals(DockerVolume.Mode.RO, v.mode());
+                assertEquals(0, v.options().size());
+            }
+            {
+                DockerVolume v = volumes.get(1);
+                assertEquals("d2", v.driver());
+                assertEquals("cp2", v.containerPath());
+                assertEquals(DockerVolume.Mode.RW, v.mode());
+                assertEquals("value-boo", v.options().getProperty("key"));
+            }
+            {
+                DockerVolume v = volumes.get(2);
+                assertEquals("nfs", v.driver());
+                assertEquals("192.168.0.1/", v.name());
+                assertEquals("my-nfs", v.containerPath());
+                assertEquals(DockerVolume.Mode.RW, v.mode());
+                assertEquals("u", v.options().getProperty("user"));
+                assertEquals("p", v.options().getProperty("pass"));
+            }
+        }
     }
 
     @Test

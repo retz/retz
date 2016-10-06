@@ -2,6 +2,11 @@
 
 ## 0.0.27
 
+* Add Docker volume mount option and protocol. By adding 
+  `--docker-volumes Vol1,Vol2,..` to 'load-app', subcommand on Docker
+  container, jobs on all those applications will be with those volumes
+  mounted inside Docker containers. Besides, Docker volume driver process
+  must be running all Mesos Agent nodes.
 * Add shutdown hook to gracefully and safely stop database
 * Add resource offer stocking with limit `retz.max.stock` in configuration.
   With offers stocked in scheduler and job queue empty, a new job schedule

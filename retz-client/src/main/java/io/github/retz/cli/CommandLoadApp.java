@@ -19,19 +19,15 @@ package io.github.retz.cli;
 import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.Response;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Container;
-import io.github.retz.protocol.data.DockerContainer;
-import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.protocol.data.*;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CommandLoadApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandLoadApp.class);
@@ -62,6 +58,10 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = "--image", description = "Container image name to run a job (only available with Docker container)")
     String image;
 
+    //
+    @Parameter(names = "--docker-volumes", description = "Docker volume drivers")
+    List<String> volumeSpecs = new LinkedList<>();
+
     @Override
     public String description() {
         return "Load an applitation that you want to run";
@@ -90,7 +90,9 @@ public class CommandLoadApp implements SubCommand {
                 LOG.error("'--image' should not be null when Docker container is selected.");
                 return -1;
             }
-            c = new DockerContainer(image);
+
+            List<DockerVolume> dockerVolumes = parseDockerVolumeSpecs(volumeSpecs);
+            c = new DockerContainer(image, dockerVolumes);
         } else {
             if ("root".equals(user)) {
                 LOG.error("Root user is only allowed at Docker containerizer");
@@ -107,7 +109,7 @@ public class CommandLoadApp implements SubCommand {
         }
         Application application = new Application(appName,
                 persistentFiles, largeFiles, files, maybeDisk,
-                Optional.ofNullable(user), fileConfig.getAccessKey(),c);
+                Optional.ofNullable(user), fileConfig.getAccessKey(), c);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())
@@ -130,5 +132,49 @@ public class CommandLoadApp implements SubCommand {
             LOG.error(e.toString(), e);
         }
         return -1;
+    }
+
+    static List<DockerVolume> parseDockerVolumeSpecs(List<String> volumeSpecs) {
+        return volumeSpecs.stream().map(CommandLoadApp::parseVolumeSpec).collect(Collectors.toList());
+    }
+
+    static DockerVolume parseVolumeSpec(String spec) {
+        List<String> specs = Arrays.asList(spec.split(":"));
+        if (specs.size() < 3) {
+            throw new IllegalArgumentException("--docker-volumes option had too few arguments: " + specs.size());
+        } else if (specs.get(0).isEmpty() || specs.get(1).isEmpty() || specs.get(2).isEmpty()) {
+            throw new IllegalArgumentException("--docker-volumes must not have empty element: " + spec);
+        }
+
+        String driver = specs.get(0);
+        String name = specs.get(1);
+        String containerPath = specs.get(2);
+
+        Properties props = parseMoreOptions(specs.subList(3, specs.size()));
+
+        DockerVolume.Mode m = DockerVolume.Mode.RO;
+        String mode = props.getProperty("mode", "RO");
+        if (!"RO".equals(mode) && !"RW".equals(mode)) {
+            LOG.error("Volume mount mode must be either RO or RW");
+            throw new IllegalArgumentException();
+        }
+        if ("RW".equals(mode)) {
+            m = DockerVolume.Mode.RW;
+        }
+        props.remove("mode");
+
+        return new DockerVolume(driver, containerPath, m, name, props);
+    }
+
+    static Properties parseMoreOptions(List<String> options) {
+        Properties props = new Properties();
+        for (String option : options) {
+            String[] pair = option.split("=");
+            if (pair.length != 2) {
+                throw new IllegalArgumentException("Cannot split with '=': " + option);
+            }
+            props.setProperty(pair[0], pair[1]);
+        }
+        return props;
     }
 }

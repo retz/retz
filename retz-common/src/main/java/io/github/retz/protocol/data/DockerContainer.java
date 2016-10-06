@@ -20,15 +20,18 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
+import java.util.*;
 
 public class DockerContainer extends Container {
 
     private String image;
+    private List<DockerVolume> volumes;
 
     @JsonCreator
-    public DockerContainer(@JsonProperty(value = "image", required = true) String image) {
+    public DockerContainer(@JsonProperty(value = "image", required = true) String image,
+                           @JsonProperty("volumes") List<DockerVolume> volumes) {
         this.image = Objects.requireNonNull(image);
+        this.volumes = (volumes == null) ? Arrays.asList() : volumes;
     }
 
     @JsonGetter("image")
@@ -36,4 +39,8 @@ public class DockerContainer extends Container {
         return image;
     }
 
+    @JsonGetter("volumes")
+    public List<DockerVolume> volumes() {
+        return volumes;
+    }
 }
