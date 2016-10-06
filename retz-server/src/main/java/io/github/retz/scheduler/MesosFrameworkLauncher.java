@@ -103,7 +103,9 @@ public final class MesosFrameworkLauncher {
         WebConsole.setDriver(driver);
         LOG.info("Web console has started with port {}", conf.getPort());
 
-        // Stop them all
+        java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(webConsole, driver));
+
+        // Stop them all, usually don't come here
         // Wait for Mesos framework stop
         status = driver.join();
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());

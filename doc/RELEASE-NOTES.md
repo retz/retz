@@ -2,6 +2,7 @@
 
 ## 0.0.27
 
+* Add shutdown hook to gracefully and safely stop database
 * Add resource offer stocking with limit `retz.max.stock` in configuration.
   With offers stocked in scheduler and job queue empty, a new job schedule
   or run request do not need to wait for resource offer - task will be

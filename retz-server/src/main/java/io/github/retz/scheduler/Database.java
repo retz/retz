@@ -81,8 +81,16 @@ public class Database {
         }
     }
 
-    public static void stop() {
+    public static void stop()
+    {
         LOG.info("Stopping database {}", databaseURL);
+        while(pool.getActiveConnections() > 0) {
+            try {
+                Thread.sleep(512);
+            } catch (InterruptedException e) {
+            }
+        }
+        pool.dispose();
     }
 
     static boolean allTableExists(Connection conn) throws SQLException {
