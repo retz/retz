@@ -30,7 +30,7 @@ public class DatabaseTest {
 
     @Test
     public void user() throws Exception {
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
+        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
 
         FileConfiguration config = new FileConfiguration(in);
         Database.init(config);
@@ -61,7 +61,7 @@ public class DatabaseTest {
 
     @Test
     public void application() throws Exception {
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
+        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
         FileConfiguration config = new FileConfiguration(in);
         Database.init(config);
 
@@ -97,7 +97,7 @@ public class DatabaseTest {
 
     @Test
     public void job() throws Exception {
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
+        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
         FileConfiguration config = new FileConfiguration(in);
         Database.init(config);
 

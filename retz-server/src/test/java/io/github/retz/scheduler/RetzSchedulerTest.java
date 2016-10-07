@@ -55,8 +55,8 @@ public class RetzSchedulerTest {
                 .setName(RetzScheduler.FRAMEWORK_NAME)
                 .build();
 
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz.properties");
-        MesosFrameworkLauncher.Configuration conf = new MesosFrameworkLauncher.Configuration(new FileConfiguration(in));
+        InputStream in = Launcher.class.getResourceAsStream("/retz.properties");
+        Launcher.Configuration conf = new Launcher.Configuration(new FileConfiguration(in));
 
         Database.init(conf.getFileConfig());
         scheduler = new RetzScheduler(conf, frameworkInfo);

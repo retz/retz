@@ -1,37 +1,38 @@
 /**
- *    Retz
- *    Copyright (C) 2016 Nautilus Technologies, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016 Nautilus Technologies, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.scheduler;
 
+import com.google.protobuf.ByteString;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.io.FileInputStream;
-import com.google.protobuf.ByteString;
 import java.util.Objects;
 
-public final class MesosFrameworkLauncher {
-    private static final Logger LOG = LoggerFactory.getLogger(MesosFrameworkLauncher.class);
+public final class Launcher {
+    private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
     public static void main(String... argv) {
         System.exit(run(argv));
@@ -59,32 +60,11 @@ public final class MesosFrameworkLauncher {
 
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
-        Protos.Credential credential = null;
-
-        if(conf.fileConfig.hasSecretFile()) {
-            try {
-                credential = Protos.Credential.newBuilder()
-                        .setPrincipal(conf.fileConfig.getPrincipal())
-                        .setSecretBytes(ByteString.readFrom(new FileInputStream(conf.fileConfig.getSecretFile())))
-                        .build();
-            } catch (Exception e) {
-                LOG.error("Cannot read secret file: {}", e.toString());
-                return -1;
-            }
-        }
 
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
-        MesosSchedulerDriver driver = null;
-        try {
-            if(credential == null) {
-                driver = new MesosSchedulerDriver(scheduler, fw, conf.getMesosMaster());
-            } else {
-                driver = new MesosSchedulerDriver(scheduler, fw, conf.getMesosMaster(),credential);
-            }
-        } catch (Exception e) {
-            LOG.error("Cannot start Mesos scheduler: {}", e.toString());
-            return -1;
-        }
+        SchedulerDriver driver = SchedulerDriverFactory.create(scheduler, conf, fw);
+
+
         Protos.Status status = driver.start();
 
         if (status != Protos.Status.DRIVER_RUNNING) {
@@ -140,14 +120,19 @@ public final class MesosFrameworkLauncher {
     }
 
     static final Option OPT_CONFIG;
+    static final Option OPT_MODE;
     private static final Options OPTIONS;
 
     static {
         OPT_CONFIG = new Option("C", "config", true, "Configuration file path");
         OPT_CONFIG.setArgName("/path/to/retz.properties");
 
+        OPT_MODE = new Option("M", "mode", true, "Scheduler mode ( local|mesos )");
+        OPT_MODE.setArgName("mesos");
+
         OPTIONS = new Options();
         OPTIONS.addOption(OPT_CONFIG);
+        OPTIONS.addOption(OPT_MODE);
     }
 
     static Configuration parseConfiguration(String[] argv) throws ParseException, IOException, URISyntaxException {
@@ -160,11 +145,26 @@ public final class MesosFrameworkLauncher {
         Configuration conf = new Configuration(new FileConfiguration(configFile));
         LOG.info("Binding as {}", conf.fileConfig.getUri()); // TODO hostname, protocol
 
+        String mode = cmd.getOptionValue(OPT_MODE.getOpt(), "mesos");
+        if ("local".equals(mode)) {
+            conf.launchMode = Configuration.Mode.LOCAL;
+            LOG.warn("Using local mode. This is for *TESTS*, don't use this in production");
+        } else if ("mesos".equals(mode)) {
+            conf.launchMode = Configuration.Mode.MESOS;
+        }
+
         return conf;
     }
 
     public static final class Configuration {
         FileConfiguration fileConfig;
+
+        enum Mode {
+            LOCAL,
+            MESOS
+        }
+
+        Mode launchMode;
 
         public Configuration(FileConfiguration fileConfig) {
             Objects.requireNonNull(fileConfig, "File configuration cannot be null");

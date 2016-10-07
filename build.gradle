@@ -184,7 +184,7 @@ project(':retz-server') {
         }
     }
 
-    mainClassName = 'io.github.retz.scheduler.MesosFrameworkLauncher'
+    mainClassName = 'io.github.retz.scheduler.Launcher'
 
     shadowJar {
         dependsOn 'copyExecutorJar'

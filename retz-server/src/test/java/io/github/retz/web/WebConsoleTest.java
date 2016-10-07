@@ -64,8 +64,8 @@ public class WebConsoleTest {
         // on Non-TLS setup too. I believe his is because Sparkjava does not cleanly clear TLS setting in
         // Spark.stop(), because with retz.properties it succeeds alone, but fails when right after TLS tests.
         // TODO: investigate and report this to sparkjava
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
-        MesosFrameworkLauncher.Configuration conf = new MesosFrameworkLauncher.Configuration(new FileConfiguration(in));
+        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
+        Launcher.Configuration conf = new Launcher.Configuration(new FileConfiguration(in));
 
         mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());

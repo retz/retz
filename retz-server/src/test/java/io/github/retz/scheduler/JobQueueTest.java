@@ -39,7 +39,7 @@ import static org.junit.Assert.assertFalse;
 public class JobQueueTest {
     @Before
     public void before() throws Exception {
-        InputStream in = MesosFrameworkLauncher.class.getResourceAsStream("/retz-tls.properties");
+        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
 
         FileConfiguration config = new FileConfiguration(in);
         Database.init(config);

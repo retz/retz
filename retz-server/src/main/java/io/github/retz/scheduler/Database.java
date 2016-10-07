@@ -134,7 +134,7 @@ public class Database {
         } else {
             LOG.info("No table exists: creating...");
 
-            InputStream ddl = MesosFrameworkLauncher.class.getResourceAsStream("/retz-ddl.sql");
+            InputStream ddl = Launcher.class.getResourceAsStream("/retz-ddl.sql");
             String createString = org.apache.commons.io.IOUtils.toString(ddl, UTF_8);
             //System.err.println(createString);
             try (Statement statement = conn.createStatement()) {

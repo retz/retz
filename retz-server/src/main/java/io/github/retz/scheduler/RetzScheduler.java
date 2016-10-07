@@ -44,7 +44,7 @@ public class RetzScheduler implements Scheduler {
     private static String jarUri;
     private static final String JAR_FILENAME;
     private static final String JAR_PATH;
-    private MesosFrameworkLauncher.Configuration conf;
+    private Launcher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
     private final ObjectMapper MAPPER = new ObjectMapper();
@@ -66,7 +66,7 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Server name in HTTP(S) header: {}", HTTP_SERVER_NAME);
     }
 
-    public RetzScheduler(MesosFrameworkLauncher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
+    public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
         MAPPER.registerModule(new Jdk8Module());
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
