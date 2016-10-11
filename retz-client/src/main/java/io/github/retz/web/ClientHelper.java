@@ -52,9 +52,11 @@ public class ClientHelper {
         int interval = INITAL_INTERVAL_MSEC;
         Job.JobState currentState = Job.JobState.QUEUED;
         Optional<Job> current;
+
+        int bytesRead = readFileUntilEmpty(c, id, filename, offset, out);
+        offset = offset + bytesRead;
+
         do {
-            int bytesRead = readFileUntilEmpty(c, id, filename, offset, out);
-            offset = offset + bytesRead;
             Response res = c.getJob(id);
             if (!(res instanceof GetJobResponse)) {
                 LOG.error(res.status());
@@ -64,9 +66,13 @@ public class ClientHelper {
             GetJobResponse getJobResponse = (GetJobResponse) res;
             current = getJobResponse.job();
 
+            bytesRead = readFileUntilEmpty(c, id, filename, offset, out);
+            offset = offset + bytesRead;
+
             if (current.isPresent()) {
                 currentState = current.get().state();
-                if (currentState == Job.JobState.FINISHED || currentState == Job.JobState.KILLED) {
+                if ((currentState == Job.JobState.FINISHED || currentState == Job.JobState.KILLED)
+                        && bytesRead == 0) {
                     return current;
                 }
             }
