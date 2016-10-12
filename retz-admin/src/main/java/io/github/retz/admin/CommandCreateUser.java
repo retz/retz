@@ -14,46 +14,42 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.cli;
+package io.github.retz.admin;
 
-import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CommandHelp implements SubCommand {
-    static final Logger LOG = LoggerFactory.getLogger(CommandHelp.class);
+import javax.management.JMException;
+import javax.management.ObjectName;
 
-    JCommander commander;
-
-    public void add(JCommander commander) {
-        this.commander = commander;
-        commander.addCommand(getName(), this, description());
-    }
-
-
-    @Parameter(names = {"-s", "--subcommand"}, description = "Subcommand to see help")
-    private String command;
+public class CommandCreateUser implements SubCommand {
+    static final Logger LOG = LoggerFactory.getLogger(CommandCreateUser.class);
 
     @Override
     public String description() {
-        return "Print help ('-s <subcommand>' see detail options)";
+        return "Create a user";
     }
 
     @Override
     public String getName() {
-        return "help";
+        return "create-user";
     }
 
     @Override
     public int handle(FileConfiguration fileConfig) {
-        if (command == null) {
-            Launcher.help();
-        } else {
-            StringBuilder builder = new StringBuilder();
-            this.commander.usage(command, builder);
-            LOG.info(builder.toString());
+        try(ClosableJmxClient jmxClient = new ClosableJmxClient("localhost", 9999)) {
+            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "createUser");
+            String json = (String)o;
+            LOG.info(json);
+            return 0;
+        } catch (JMException e){
+            LOG.error(e.toString());
+        } catch (Exception e) {
+            LOG.error(e.toString());
         }
-        return 0;
+        return -1;
     }
 }
+

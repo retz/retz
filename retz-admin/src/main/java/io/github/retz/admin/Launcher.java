@@ -14,44 +14,51 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.cli;
+package io.github.retz.admin;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
+import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/*
+retz-admin help
+retz-admin create-user
+retz-admin get-user -id <user>
+retz-admin enable-user -id <user>
+retz-admin disable-user -id <user>
+retz-admin usage -id <user> --start-time <date> --end-time <date>
+retz-admin list-user
+retz-admin snapshot -path <dest-file>
+retz-admin restore -path <src-file>
+ */
 public class Launcher {
-    static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
-    private static final List<SubCommand> SUB_COMMANDS;
+    static List<SubCommand> SUB_COMMANDS = new LinkedList<>();
 
     static {
-        SUB_COMMANDS = new LinkedList<>();
-
-        SUB_COMMANDS.add(new CommandHelp());
-        SUB_COMMANDS.add(new CommandConfig());
-        SUB_COMMANDS.add(new CommandList());
-        SUB_COMMANDS.add(new CommandSchedule());
-        SUB_COMMANDS.add(new CommandGetJob());
-        SUB_COMMANDS.add(new CommandGetFile());
-        SUB_COMMANDS.add(new CommandListFiles());
-        SUB_COMMANDS.add(new CommandKill());
-        SUB_COMMANDS.add(new CommandRun());
-        SUB_COMMANDS.add(new CommandWatch());
-        SUB_COMMANDS.add(new CommandGetApp());
-        SUB_COMMANDS.add(new CommandListApp());
-        SUB_COMMANDS.add(new CommandLoadApp());
-        SUB_COMMANDS.add(new CommandUnloadApp());
+        SubCommand[] subCommands = {
+                new CommandCreateUser(),
+                new CommandDisableUser(),
+                new CommandEnableUser(),
+                new CommandGetUser(),
+                new CommandHelp(),
+                new CommandListUser(),
+                new CommandUsage()
+        };
+        SUB_COMMANDS.addAll(Arrays.asList(subCommands));
     }
 
-    public static void main(String... argv) {
+    public static void main(String... argv) throws Exception {
         int status = execute(argv);
         System.exit(status);
     }
@@ -67,12 +74,12 @@ public class Launcher {
             } else {
                 LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
                         conf.commands.getConfigFile());
-                LOG.debug("Configuration: {}", conf.fileConfiguration.toString());
                 return conf.getParsedSubCommand().handle(conf.fileConfiguration);
             }
 
         } catch (IOException e) {
             LOG.error("Invalid configuration file: {}", e.toString());
+            e.printStackTrace();
         } catch (URISyntaxException e) {
             LOG.error("Bad file format: {}", e.toString());
         } catch (MissingCommandException e) {
@@ -82,19 +89,13 @@ public class Launcher {
             LOG.error("{}", e.toString());
             help(SUB_COMMANDS);
         }
-        return -1;
-    }
-
-    private static boolean oneOf(String key, String... list) {
-        for (String s : list) {
-            if (key.equals(s)) return true;
-        }
-        return false;
+        return 0;
     }
 
     public static void help() {
         help(SUB_COMMANDS);
     }
+
     private static void help(List<SubCommand> subCommands) {
         LOG.info("Subcommands:");
         for (SubCommand subCommand : subCommands) {
@@ -102,6 +103,7 @@ public class Launcher {
                     subCommand.description(), subCommand.getClass().getName());
         }
     }
+
 
     static Configuration parseConfiguration(String... argv) throws IOException, URISyntaxException {
         Configuration conf = new Configuration();
@@ -115,7 +117,9 @@ public class Launcher {
 
         conf.commander.parse(argv);
 
-        conf.fileConfiguration = new FileConfiguration(conf.commands.getConfigFile());
+        if (conf.commands.getConfigFile() != null) {
+            conf.fileConfiguration = new FileConfiguration(conf.commands.getConfigFile());
+        }
         return conf;
     }
 
@@ -134,4 +138,3 @@ public class Launcher {
         }
     }
 }
-

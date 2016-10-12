@@ -14,10 +14,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.cli;
+package io.github.retz.admin;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +31,6 @@ public class CommandHelp implements SubCommand {
         this.commander = commander;
         commander.addCommand(getName(), this, description());
     }
-
 
     @Parameter(names = {"-s", "--subcommand"}, description = "Subcommand to see help")
     private String command;

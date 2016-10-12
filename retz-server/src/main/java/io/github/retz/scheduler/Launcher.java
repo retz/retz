@@ -16,18 +16,18 @@
  */
 package io.github.retz.scheduler;
 
-import com.google.protobuf.ByteString;
+import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
-import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
+import javax.management.*;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
@@ -58,8 +58,28 @@ public final class Launcher {
             return -1;
         }
 
-        Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
+        int jmxPort = 9999;
+        JmxServer jmxServer = new JmxServer(jmxPort);
+        try {
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+            ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
+            AdminConsole mbean = new AdminConsole();
+            mbs.registerMBean(mbean, name);
+            jmxServer.start();
+            LOG.info("JMX enabled listening to {}", jmxPort);
+        } catch (MalformedObjectNameException e) {
+            LOG.error(e.toString());
+        } catch (InstanceAlreadyExistsException e) {
+            LOG.error(e.toString());
+        } catch (MBeanRegistrationException e) {
+            LOG.error(e.toString());
+        } catch (NotCompliantMBeanException e) {
+            LOG.error(e.toString());
+        } catch (JMException e) {
+            LOG.error(e.toString());
+        }
 
+        Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
         SchedulerDriver driver = SchedulerDriverFactory.create(scheduler, conf, fw);
@@ -92,6 +112,7 @@ public final class Launcher {
 
         webConsole.stop(); // Stop web server
         Database.stop();
+        jmxServer.stop();
 
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }
