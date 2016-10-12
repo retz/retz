@@ -73,7 +73,7 @@ public class RetzScheduler implements Scheduler {
         this.slaves = new ConcurrentHashMap<>();
         RetzScheduler.setJarUri(conf.fileConfig.getUri() + JAR_PATH);
 
-        for(Map.Entry<String,Protos.Offer> e : OFFER_STOCK.entrySet()) {
+        for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
             OFFER_STOCK.remove(e.getKey());
         }
     }
@@ -171,7 +171,7 @@ public class RetzScheduler implements Scheduler {
 
     public void maybeInvokeNow(SchedulerDriver driver, Job job) {
         List<String> used = new LinkedList<>();
-        for(Map.Entry<String, Protos.Offer> pair : OFFER_STOCK.entrySet()) {
+        for (Map.Entry<String, Protos.Offer> pair : OFFER_STOCK.entrySet()) {
             Protos.Offer offer = pair.getValue();
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
             List<Protos.Offer.Operation> ops = new LinkedList<>();
@@ -181,12 +181,13 @@ public class RetzScheduler implements Scheduler {
                 break;
             }
         }
-        for(String key : used) {
+        for (String key : used) {
             OFFER_STOCK.remove(key);
         }
     }
+
     private synchronized int handleOffer(SchedulerDriver driver, Resource resource, Protos.Offer offer, List<Job> jobs,
-                            List<Protos.Offer.Operation> operations, boolean doStock) {
+                                         List<Protos.Offer.Operation> operations, boolean doStock) {
         // Assign tasks if it has enough CPU/Memory
         Resource assigned = new Resource(0, 0, 0);
 
@@ -270,7 +271,22 @@ public class RetzScheduler implements Scheduler {
         }
 
         if (operations.isEmpty()) {
-            if (doStock) {
+            // Clean up with existing stock if any duplication found
+            List<Protos.OfferID> dups = new LinkedList<>();
+            for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
+                if (e.getValue().getSlaveId().getValue().equals(offer.getSlaveId().getValue())) {
+                    // Duplicate!
+                    dups.add(e.getValue().getId());
+                }
+            }
+            if (!dups.isEmpty()) {
+                LOG.info("Discarding {} partial offers from same agent", dups.size() + 1);
+                for (Protos.OfferID oid : dups) {
+                    OFFER_STOCK.remove(oid.getValue());
+                    driver.declineOffer(oid);
+                }
+                driver.declineOffer(offer.getId());
+            } else if (doStock) {
                 if (OFFER_STOCK.size() < conf.getFileConfig().getMaxStockSize()) {
                     LOG.info("Stocking offer {}", offer.getId().getValue());
                     OFFER_STOCK.put(offer.getId().getValue(), offer);
