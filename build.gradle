@@ -70,7 +70,6 @@ subprojects {
         ext.name = 'Nautilus Technologies, Inc.'
 
         exclude "**/*.json"
-        include "**/*.sql"
     }
 }
 
