@@ -2,6 +2,7 @@
 
 ## 0.0.27
 
+* Remove logback from client to avoid initialization overhead
 * Change default value of 'retz.max.running' from 512 to 128
 * Add Docker volume mount option and protocol. By adding 
   `--docker-volumes Vol1,Vol2,..` to 'load-app', subcommand on Docker
