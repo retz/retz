@@ -53,7 +53,7 @@ public class FileConfiguration {
 
     // System Limits
     public static final String MAX_SIMULTANEOUS_JOBS = "retz.max.running";
-    static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "512";
+    static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "128";
     static final String MAX_STOCK_SIZE = "retz.max.stock";
     static final String DEFAULT_MAX_STOCK_SIZE = "16";
     // Not yet used

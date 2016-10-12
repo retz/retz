@@ -2,6 +2,7 @@
 
 ## 0.0.27
 
+* Change default value of 'retz.max.running' from 512 to 128
 * Add Docker volume mount option and protocol. By adding 
   `--docker-volumes Vol1,Vol2,..` to 'load-app', subcommand on Docker
   container, jobs on all those applications will be with those volumes
