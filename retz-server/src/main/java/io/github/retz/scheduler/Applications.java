@@ -102,16 +102,26 @@ public class Applications {
                 .setType(Protos.ContainerInfo.Type.MESOS);
 
         for (DockerVolume volume : c.volumes()) {
+            Protos.Volume.Source.DockerVolume.Builder dvb = Protos.Volume.Source.DockerVolume.newBuilder()
+                    .setDriver(volume.driver()) // like "nfs"
+                    .setName(volume.name()); // like "192.168.204.222/"
+            Protos.Parameters.Builder p = Protos.Parameters.newBuilder();
+            for (Object key : volume.options().keySet()) {
+                p.addParameter(Protos.Parameter.newBuilder()
+                        .setKey((String) key)
+                        .setValue(volume.options().getProperty((String) key))
+                        .build());
+            }
+            if (!p.getParameterList().isEmpty()) {
+                dvb.setDriverOptions(p.build());
+            }
+
             Protos.Volume.Builder vb = Protos.Volume.newBuilder()
                     .setContainerPath(volume.containerPath()) // target path to mount inside container
                     .setSource(Protos.Volume.Source.newBuilder()
                             .setType(Protos.Volume.Source.Type.DOCKER_VOLUME)
-                            .setDockerVolume(Protos.Volume.Source.DockerVolume.newBuilder()
-                                    .setDriver(volume.driver())
-                                    .setName(volume.name())
-                                    //.setDriver("nfs")
-                                    //.setName("192.168.204.222/")
-                                    .build()));
+                            .setDockerVolume(dvb.build()));
+
             switch (volume.mode()) {
                 case RW:
                     vb.setMode(Protos.Volume.Mode.RW);
