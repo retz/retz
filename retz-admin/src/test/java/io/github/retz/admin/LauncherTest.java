@@ -16,8 +16,17 @@
  */
 package io.github.retz.admin;
 
-/**
- * Created by kuenishi on 2016/10/13.
- */
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
 public class LauncherTest {
+    @Test
+    public void cli() throws Exception {
+        String[] argv = {"create-user"};
+        Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+        assertEquals("create-user", conf.getParsedSubCommand().getName());
+
+        // TODO add tests of other CLI options
+    }
 }

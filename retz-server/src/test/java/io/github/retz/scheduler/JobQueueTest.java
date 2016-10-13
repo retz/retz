@@ -34,6 +34,7 @@ import java.util.Optional;
 import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class JobQueueTest {
@@ -46,6 +47,7 @@ public class JobQueueTest {
     }
     @After
     public void after() throws Exception {
+        Database.deleteAllJob(Integer.MAX_VALUE);
         Database.stop();
     }
     @Test
@@ -73,9 +75,13 @@ public class JobQueueTest {
         {
             JobQueue.started("foobar-taskid", Optional.empty());
             List<Job> fit = JobQueue.findFit(1000, 100000000);
+            for (Job j : fit) {
+                System.err.println(j.name() + " " +j.cmd());
+            }
             assertTrue(fit.isEmpty());
             assertThat(JobQueue.countRunning(), is(1));
         }
-
+        assertEquals(1, JobQueue.size());
+        assertEquals(1, JobQueue.countRunning());
     }
 }

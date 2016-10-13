@@ -114,12 +114,9 @@ public final class WebConsole {
                 return;
             }
 
-            String givenSignature = req.headers(Authenticator.AUTHORIZATION);
-            LOG.debug("Signature from client: {}", givenSignature);
-
-            Optional<Authenticator.AuthHeaderValue> authHeaderValue = Authenticator.parseHeaderValue(givenSignature);
+            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
             if (!authHeaderValue.isPresent()) {
-                halt(401, "Bad Authorization header: " + givenSignature);
+                halt(401, "Bad Authorization header: " + req.headers(Authenticator.AUTHORIZATION));
             }
 
             Authenticator authenticator;
@@ -159,10 +156,10 @@ public final class WebConsole {
 
         // /jobs GET -> list
         get(ListJobRequest.resourcePattern(), (req, res) -> {
-            LOG.debug("list jobs");
-            //io.github.retz.protocol.Request request = MAPPER.readValue(req.bodyAsBytes(), io.github.retz.protocol.Request.class);
-            ListJobRequest listJobRequest = new ListJobRequest(64);
-            ListJobResponse listJobResponse = WebConsole.list(listJobRequest.limit());
+            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
+
+            ListJobResponse listJobResponse = WebConsole.list(authHeaderValue.get().key(), -1);
             listJobResponse.ok();
             res.status(200);
             res.type("application/json");
@@ -189,7 +186,9 @@ public final class WebConsole {
 
         // /apps GET -> list-app
         get(ListAppRequest.resourcePattern(), (req, res) -> {
-            ListAppResponse response = new ListAppResponse(WebConsole.listApps());
+            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            LOG.info("Listing all apps owned by {}", authHeaderValue.get().key());
+            ListAppResponse response = new ListAppResponse(Applications.getAll(authHeaderValue.get().key()));
             response.ok();
             return MAPPER.writeValueAsString(response);
         });
@@ -294,12 +293,20 @@ public final class WebConsole {
         Spark.stop();
     }
 
-    public static ListJobResponse list(int limit) {
+    Optional<Authenticator.AuthHeaderValue> getAuthInfo(Request req) {
+        String givenSignature = req.headers(Authenticator.AUTHORIZATION);
+        LOG.debug("Signature from client: {}", givenSignature);
+
+        return Authenticator.parseHeaderValue(givenSignature);
+    }
+
+
+    public static ListJobResponse list(String id, int limit) {
         List<Job> queue = new LinkedList<>(); //JobQueue.getAll();
         List<Job> running = new LinkedList<>();
         List<Job> finished = new LinkedList<>();
         //JobQueue.getAllFinished(finished, limit);
-        for (Job job : JobQueue.getAll()) {
+        for (Job job : JobQueue.getAll(id)) {
             switch (job.state()) {
                 case QUEUED:
                     queue.add(job);
@@ -341,10 +348,6 @@ public final class WebConsole {
     public static boolean load(Application app) {
         LOG.info("Registering application name={} owner={}", app.getAppid(), app.getOwner());
         return Applications.load(app);
-    }
-
-    public static List<Application> listApps() {
-        return Applications.getAll();
     }
 
     public static void unload(String appName) {

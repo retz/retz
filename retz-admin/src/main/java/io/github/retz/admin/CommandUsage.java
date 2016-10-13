@@ -28,7 +28,13 @@ public class CommandUsage implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUsage.class);
 
     @Parameter(names = "-id", description = "Get usage of a user", required = true)
-    private int id;
+    private String id;
+
+    @Parameter(names = "-start", description = "")
+    private String start = "0";
+
+    @Parameter(names = "-end", description = "")
+    private String end = "9";
 
     @Override
     public String description() {
@@ -43,10 +49,10 @@ public class CommandUsage implements SubCommand {
     @Override
     public int handle(FileConfiguration fileConfig) {
         try(ClosableJmxClient jmxClient = new ClosableJmxClient("localhost", 9999)) {
-            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "createUser");
+            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "createUser", id, start, end);
             String[] s = (String[])o;
             for (String line : s) {
-                LOG.info(line);
+                LOG.info(line); // JSON of jobs
             }
             return 0;
         } catch (JMException e){

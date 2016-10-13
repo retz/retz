@@ -81,10 +81,9 @@ public class Database {
         }
     }
 
-    public static void stop()
-    {
+    public static void stop() {
         LOG.info("Stopping database {}", databaseURL);
-        while(pool.getActiveConnections() > 0) {
+        while (pool.getActiveConnections() > 0) {
             try {
                 Thread.sleep(512);
             } catch (InterruptedException e) {
@@ -225,19 +224,23 @@ public class Database {
         }
     }
 
-    public static void freezeUser(String keyId) {
+    public static void enableUser(String keyId, boolean enabled) {
         throw new RuntimeException("Not yet implemented");
     }
 
-    public static void deleteUser(String keyId) {
-        throw new RuntimeException("Not yet implemented");
-    }
+    // public static void deleteUser(String keyId) {
+    //    throw new RuntimeException("Not yet implemented");
+    //}
 
     public static List<Application> getAllApplications() throws IOException {
+        return getAllApplications(null);
+    }
+
+    public static List<Application> getAllApplications(String id) throws IOException {
         List<Application> ret = new LinkedList<>();
         try (Connection conn = pool.getConnection()) {
             conn.setAutoCommit(false);
-            ret = getAllApplications(conn);
+            ret = getApplications(conn, id);
             conn.commit();
         } catch (SQLException e) {
             LOG.error(e.toString());
@@ -245,12 +248,19 @@ public class Database {
         return ret;
     }
 
-    public static List<Application> getAllApplications(Connection conn) throws SQLException, IOException {
+    public static List<Application> getApplications(Connection conn, String id) throws SQLException, IOException {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
         List<Application> ret = new LinkedList<>();
-        try (PreparedStatement p = conn.prepareStatement("SELECT * FROM applications")) {
+        String sql = "SELECT * FROM applications";
+        if (id != null) {
+            sql += " WHERE owner=?";
+        }
+        try (PreparedStatement p = conn.prepareStatement(sql)) {
+            if (id != null) {
+                p.setString(1, id);
+            }
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
                     String json = res.getString("json");
@@ -342,17 +352,52 @@ public class Database {
         }
     }
 
-    public static List<Job> getAllJobs() throws IOException {
+    public static List<Job> getAllJobs(String id) throws IOException {
         List<Job> ret = new LinkedList<>();
+        String sql = "SELECT jobs.json FROM jobs";
+        if (id != null) {
+            sql = "SELECT jobs.json FROM jobs, applications WHERE jobs.appid = applications.appid AND applications.owner = ?";
+        }
         try (Connection conn = pool.getConnection();
-             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs")) {
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            if( id != null) {
+                p.setString(1, id);
+            }
             conn.setAutoCommit(true);
 
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
-                    String json = res.getString("json");
+                    String json = res.getString("jobs.json");
                     Job job = MAPPER.readValue(json, Job.class);
                     ret.add(job);
+                }
+            }
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+        }
+        return ret;
+    }
+
+    // Selects all "finished" jobs
+    public static List<Job> finishedJobs(String id, String start, String end) {
+        List<Job> ret = new LinkedList<>();
+        try (Connection conn = pool.getConnection();
+             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE owner=? AND ? <= finished AND finished < ?")) {
+            conn.setAutoCommit(true);
+
+            try (ResultSet res = p.executeQuery()) {
+
+                while(res.next()) {
+                    String json = res.getString("json");
+                    try {
+                        Job job = MAPPER.readValue(json, Job.class);
+                        if (job == null) {
+                            throw new AssertionError("Cannot be null!!");
+                        }
+                        ret.add(job);
+                    } catch (IOException e) {
+                        LOG.error(e.toString()); // JSON text is broken for sure
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -407,14 +452,16 @@ public class Database {
 
     static void updateJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
         LOG.debug("Updating job as name={}, id={}, appid={}", j.name(), j.id(), j.appid());
-        try (PreparedStatement p = conn.prepareStatement("UPDATE jobs SET name=?, appid=?, cmd=?, taskid=?, state=?, json=? WHERE id=?")) {
+        try (PreparedStatement p = conn.prepareStatement("UPDATE jobs SET name=?, appid=?, cmd=?, taskid=?, state=?, started=?, finished=?, json=? WHERE id=?")) {
             p.setString(1, j.name());
             p.setString(2, j.appid());
             p.setString(3, j.cmd());
             p.setString(4, j.taskId());
             p.setString(5, j.state().toString());
-            p.setString(6, MAPPER.writeValueAsString(j));
-            p.setInt(7, j.id());
+            p.setString(6, j.started());
+            p.setString(7, j.finished());
+            p.setString(8, MAPPER.writeValueAsString(j));
+            p.setInt(9, j.id());
             p.execute();
         }
     }

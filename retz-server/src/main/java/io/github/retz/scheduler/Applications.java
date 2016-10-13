@@ -77,6 +77,14 @@ public class Applications {
         }
     }
 
+    public static List<Application> getAll(String id) {
+        try {
+            return Database.getAllApplications(id);
+        } catch (IOException e) {
+            LOG.error(e.toString());
+            return new LinkedList<>();
+        }
+    }
     // TODO: this might be very heavy proportional to number of applications, which could be
     // cut out to another thread, or even remove persistent volume support?
     public static List<Application> needsPersistentVolume(Resource resource, String role) {

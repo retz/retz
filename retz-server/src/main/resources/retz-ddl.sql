@@ -45,25 +45,15 @@ CREATE TABLE jobs(
     appid varchar(32) not null,
     cmd varchar(1024) not null,
 
+    started VARCHAR(32),
+    finished VARCHAR(32),
     taskid VARCHAR(128), -- this introduces NULL'd index {shrug}
     state VARCHAR(16) NOT NULL,
 
     json TEXT NOT NULL,
-    -- scheduled VARCHAR(32),
-    -- started VARCHAR(32),
-    -- finished VARCHAR(32),
-    -- props Map<String, String>
-    -- result INTEGER,
-    -- url VARCHAR(512),
-    -- reason VARCHAR(512),
-    -- retry INTEGER,
-    -- cpu INTEGER NOT NULL,
-    -- memMB INTEGER NOT NULL,
-    -- gpu INTEGER NOT NULL,
-    -- state VARCHAR(16) NOT NULL,
-    -- trustPVFiles BOOLEAN NOT NULL,
     PRIMARY KEY (id)
-    -- FOREIGN KEY (application) REFERENCES applications(name)
 );
 
 CREATE INDEX taskid ON jobs(taskid)
+CREATE INDEX started ON jobs(started)
+CREATE INDEX finished ON jobs(finished)

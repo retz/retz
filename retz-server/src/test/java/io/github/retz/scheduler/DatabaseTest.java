@@ -18,13 +18,18 @@ package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.protocol.data.*;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.protocol.data.User;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.*;
 
 import static org.junit.Assert.*;
+
+import static org.hamcrest.Matchers.*;
 
 public class DatabaseTest {
 
@@ -53,7 +58,7 @@ public class DatabaseTest {
         }
 
         // Try to detect connection leak
-        for(int i = 0; i < 4096; ++i) {
+        for (int i = 0; i < 4096; ++i) {
             assertTrue(Database.getUser("cafebabe").isPresent());
         }
         Database.stop();
@@ -131,16 +136,81 @@ public class DatabaseTest {
             String taskId = "app-taskid-1";
             Optional<Job> maybeJob = Database.getJob(id);
             assertTrue(maybeJob.isPresent());
-            for (Job j : Database.getAllJobs()) {
+            for (Job j : Database.getAllJobs(u.keyId())) {
                 System.err.println(j.id() + j.taskId() + j.state());
             }
             Database.setJobStarting(id, Optional.empty(), taskId);
 
-            for (Job j : Database.getAllJobs()) {
+            for (Job j : Database.getAllJobs(u.keyId())) {
                 System.err.println(j.id() + j.taskId() + j.state());
             }
             assertTrue(Database.getJobFromTaskId(taskId).isPresent());
         }
+        Database.stop();
+    }
+
+    @Test
+    public void multiUsers() throws Exception {
+        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
+        FileConfiguration config = new FileConfiguration(in);
+        Database.init(config);
+
+        List<User> users = new LinkedList<>();
+        for (int i = 0; i < 10; ++i) {
+            users.add(Database.createUser());
+        }
+        assertEquals(10, users.size());
+
+        List<Application> apps = new LinkedList<>();
+        List<String> emptyList = new LinkedList<>();
+        for (User u : users) {
+            Application app = new Application(u.keyId(), emptyList, emptyList, emptyList, Optional.empty(),
+                    Optional.of("unix-user"), u.keyId(), new MesosContainer());
+            Database.addApplication(app);
+            apps.add(app);
+
+            //    public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
+
+            Job job = new Job("uname -a",
+                    TimestampHelper.now(),
+                    null,
+                    null,
+                    new Properties(),
+                    -1,
+                    JobQueue.issueJobId(),
+                    "my-url",
+                    null,
+                    5,
+                    app.getAppid(),
+                    u.keyId(),
+                    1,
+                    32,
+                    0,
+                    null,
+                    false,
+                    Job.JobState.QUEUED);
+            Database.safeAddJob(job);
+        }
+        assertEquals(10, apps.size());
+
+        assertThat(Database.getAllApplications().size(), greaterThanOrEqualTo(10));
+
+        for (Application a : Database.getAllApplications()) {
+            System.err.println(a.getAppid() + " " + a.getOwner());
+        }
+        for (int i = 0; i < 10; ++i) {
+            List<Application> ones = Database.getAllApplications(users.get(i).keyId());
+            assertEquals(1, ones.size());
+            assertEquals(users.get(i).keyId(), ones.get(0).getAppid());
+            assertEquals(users.get(i).keyId(), ones.get(0).getOwner());
+
+            List<Job> jobs = Database.getAllJobs(users.get(i).keyId());
+            assertEquals(1, jobs.size());
+            assertEquals(users.get(i).keyId(), jobs.get(0).appid());
+            assertEquals(users.get(i).keyId(), jobs.get(0).name());
+        }
+
+        Database.deleteAllJob(Integer.MAX_VALUE);
         Database.stop();
     }
 }

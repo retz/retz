@@ -44,9 +44,9 @@ public class JobQueue {
     private JobQueue() {
     }
 
-    public static List<Job> getAll() {
+    public static List<Job> getAll(String id) {
         try {
-            return Database.getAllJobs();
+            return Database.getAllJobs(id);
         } catch (IOException e) {
             LOG.error(e.toString());
             throw new RuntimeException("Database is not available currently");

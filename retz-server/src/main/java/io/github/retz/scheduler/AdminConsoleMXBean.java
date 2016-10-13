@@ -23,5 +23,5 @@ public interface AdminConsoleMXBean {
     public String createUser();
     public String getUser(String keyId);
     public boolean enableUser(String id, boolean enabled);
-    public List<String> getUsage(String keyId);
+    public List<String> getUsage(String keyId, String start, String end);
 }

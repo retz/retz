@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,14 +57,16 @@ public class AdminConsole implements AdminConsoleMXBean {
     {
         LOG.info("AdminConsole.enableUser({}, {})", id, enabled);
         LOG.warn("Not yet implemented"); //TODO
+        Database.enableUser(id, enabled);
         return false;
     }
 
     @Override
-    public List<String> getUsage(String user)
+    public List<String> getUsage(String user, String start, String end)
     {
-        LOG.warn("get usage not yet implemented"); //TODO
-        return new LinkedList<>();
+        LOG.info("Querying usage of {} at [{}, {})", user, start, end); //TODO
+        List<Job> jobs = Database.finishedJobs(user, start, end);
+        return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
     }
 
     @Override
