@@ -2,6 +2,11 @@
 
 ## 0.0.27
 
+* Add administration CLI tool 'retz-admin' as a new subproject, with JMX
+  ports opening at startup. With 'retz-admin', many features like creating,
+  disabling and getting information of users get available via JMX local
+  port. It will be released as another release package as well as
+  'retz-server' and 'retz-client'. 
 * Remove logback from client to avoid initialization overhead
 * Change default value of 'retz.max.running' from 512 to 128
 * Add Docker volume mount option and protocol. By adding 
