@@ -36,6 +36,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Function;
@@ -56,6 +57,11 @@ public class Client implements AutoCloseable {
     private MySocket socket = null;
     private final Optional<io.github.retz.auth.Authenticator> authenticator;
 
+    public static final String VERSION_STRING;
+    static{
+        ResourceBundle labels = ResourceBundle.getBundle("retz-client");
+        VERSION_STRING = labels.getString("version");
+    }
     protected Client(URI uri, Optional<Authenticator> authenticator) {
         this.scheme = uri.getScheme();
         this.host = uri.getHost();

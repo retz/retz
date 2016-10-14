@@ -117,6 +117,23 @@ def makePropertyFile(jarFileName, basedir, testType, name, version) {
     prop.store(propFile.newWriter(), null)
 }
 
+def makeClientPropertyFile(basedir, testType, name, version) {
+    // A kludge workaround for clean build which don't have build/resources/main
+    // where property file creation fails
+    def subdir = new File(basedir, "/resources/${testType}")
+    subdir.mkdirs();
+
+    def fullVersion = "${name}-${version} (${gitVersion()})"
+
+    def prop = new Properties()
+    def propFile = new File("${basedir}/resources/${testType}/retz-client.properties")
+    prop.setProperty("version", fullVersion)
+    propFile.createNewFile()
+    prop.store(propFile.newWriter(), null)
+}
+
+
+
 project(':retz-server') {
     apply plugin: 'application'
     apply plugin: "com.github.johnrengelman.shadow"
@@ -232,10 +249,18 @@ project(':retz-client') {
 
         compile "com.beust:jcommander:1.48"
 
-        //compile 'commons-cli:commons-cli:1.3.1'
         compile 'commons-io:commons-io:2.5'
         compile 'org.eclipse.jetty.websocket:websocket-client:9.3.2.v20150730'
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
+    }
+
+
+    task processResources.doLast {
+        makeClientPropertyFile("${buildDir}", "main", project.name, project.version)
+    }
+
+    task processTestResources.doLast {
+        makeClientPropertyFile("${buildDir}", "test", project.name, project.version)
     }
 
     run {

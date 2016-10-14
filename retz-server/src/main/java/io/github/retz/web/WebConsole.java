@@ -154,6 +154,7 @@ public final class WebConsole {
         get("/ping", (req, res) -> "OK");
         get("/status", WebConsole::status);
 
+        // TODO: XXX: validate application owner at ALL job-related APIs
         // /jobs GET -> list
         get(ListJobRequest.resourcePattern(), (req, res) -> {
             Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
@@ -196,11 +197,17 @@ public final class WebConsole {
         // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
             LOG.debug(LoadAppRequest.resourcePattern());
+            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
             res.type("application/json");
 
             // TODO: check key from Authorization header matches a key in Application object
             LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
-            LOG.debug("app id={} with owner={}", loadAppRequest.application().getAppid(), loadAppRequest.application().getOwner());
+            LOG.debug("app (id={}, owner={}), requested by {}",
+                    loadAppRequest.application().getAppid(), loadAppRequest.application().getOwner(),
+                    authHeaderValue.get().key());
+
+            // Compare application owner and requester
+            validateOwner(req, loadAppRequest.application());
 
             if (!(loadAppRequest.application().container() instanceof DockerContainer)) {
                 if (loadAppRequest.application().getUser().isPresent() &&
@@ -226,15 +233,22 @@ public final class WebConsole {
         });
 
         get(GetAppRequest.resourcePattern(), (req, res) -> {
+            LOG.debug(LoadAppRequest.resourcePattern());
+            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+
             String appname = req.params(":name");
-            LOG.debug("deleting app {}", appname);
+            LOG.debug("deleting app {} requested by {}", appname, authHeaderValue.get().key());
             Optional<Application> maybeApp = Applications.get(appname);
             res.type("application/json");
             if (maybeApp.isPresent()) {
+                // Compare application owner and requester
+                validateOwner(req, maybeApp.get());
+
                 res.status(200);
                 GetAppResponse getAppResponse = new GetAppResponse(maybeApp.get());
                 getAppResponse.ok();
                 return MAPPER.writeValueAsString(getAppResponse);
+
             } else {
                 ErrorResponse response = new ErrorResponse("No such application: " + appname);
                 res.status(404);
@@ -296,19 +310,26 @@ public final class WebConsole {
         Spark.stop();
     }
 
-    Optional<Authenticator.AuthHeaderValue> getAuthInfo(Request req) {
+    static Optional<Authenticator.AuthHeaderValue>  getAuthInfo(Request req) {
         String givenSignature = req.headers(Authenticator.AUTHORIZATION);
         LOG.debug("Signature from client: {}", givenSignature);
 
         return Authenticator.parseHeaderValue(givenSignature);
     }
 
+    static void validateOwner(Request req, Application app) {
+        Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+        if (!app.getOwner().equals(authHeaderValue.get().key())) {
+            LOG.debug("Invalid request: requester and owner does not match");
+            halt(400, "Invalid request: requester and owner does not match");
+        }
+    }
 
     public static ListJobResponse list(String id, int limit) {
         List<Job> queue = new LinkedList<>(); //JobQueue.getAll();
         List<Job> running = new LinkedList<>();
         List<Job> finished = new LinkedList<>();
-        //JobQueue.getAllFinished(finished, limit);
+
         for (Job job : JobQueue.getAll(id)) {
             switch (job.state()) {
                 case QUEUED:
@@ -334,6 +355,8 @@ public final class WebConsole {
             LOG.error("Driver is not present; this setup should be wrong");
             return false;
         }
+
+        // TODO: non-application owner is even possible to kill job
         Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
 
         // There's a slight pitfall between cancel above and kill below where
@@ -350,6 +373,7 @@ public final class WebConsole {
 
     @Deprecated
     public static void unload(String appName) {
+        // TODO: non-application owner is even possible to kill job
         Applications.unload(appName);
         LOG.info("Unloaded {}", appName);
         if (WebConsole.driver.isPresent() &&
@@ -363,13 +387,16 @@ public final class WebConsole {
         ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
         res.type("application/json");
         Optional<Application> maybeApp = Applications.get(scheduleRequest.job().appid()); // TODO check owner right here
-        if (! maybeApp.isPresent()) {
+        if (!maybeApp.isPresent()) {
             LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
             ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
             res.status(404);
             return MAPPER.writeValueAsString(response);
 
         } else if (maybeApp.get().enabled()) {
+
+            validateOwner(req, maybeApp.get());
+
             Job job = scheduleRequest.job();
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
 

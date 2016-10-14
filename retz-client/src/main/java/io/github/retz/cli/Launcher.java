@@ -19,6 +19,7 @@ package io.github.retz.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
+import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.SynchronousQueue;
 
 public class Launcher {
     static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
@@ -56,6 +58,7 @@ public class Launcher {
     }
 
     public static int execute(String... argv) {
+        LOG.info(Client.VERSION_STRING);
         try {
             Configuration conf = parseConfiguration(argv);
             JCommander commander = conf.commander;
