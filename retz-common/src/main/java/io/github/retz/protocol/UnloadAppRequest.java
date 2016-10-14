@@ -20,9 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Created by kuenishi on 6/6/16.
- */
+@Deprecated
 public class UnloadAppRequest extends Request {
     private String appid;
 

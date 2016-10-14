@@ -248,6 +248,7 @@ public class Client implements AutoCloseable {
         return rpc(new ListAppRequest());
     }
 
+    @Deprecated
     public Response unload(String appName) throws IOException {
         return rpc(new UnloadAppRequest(appName));
     }

@@ -16,6 +16,7 @@
  */
 package io.github.retz.protocol;
 
+@Deprecated
 public class UnloadAppResponse extends Response {
     public UnloadAppResponse(){}
 }

@@ -62,6 +62,7 @@ public class Applications {
         }
     }
 
+    @Deprecated
     public static void unload(String appName) {
         // Volumes are destroyed lazily
         LOG.info("deleting {}", appName);

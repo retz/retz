@@ -244,7 +244,7 @@ public final class WebConsole {
 
         delete(UnloadAppRequest.resourcePattern(), (req, res) -> {
             String appname = req.params(":name");
-            LOG.info("deleting app {}", appname);
+            LOG.warn("deleting app {} (This API is deprecated)", appname);
             WebConsole.unload(appname);
             UnloadAppResponse response = new UnloadAppResponse();
             response.ok();
@@ -348,6 +348,7 @@ public final class WebConsole {
         return false;
     }
 
+    @Deprecated
     public static void unload(String appName) {
         Applications.unload(appName);
         LOG.info("Unloaded {}", appName);
