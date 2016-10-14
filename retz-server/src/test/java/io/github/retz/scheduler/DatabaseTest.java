@@ -77,7 +77,7 @@ public class DatabaseTest {
 
         List<String> emptyList = new LinkedList<>();
         Application app = new Application("testapp", emptyList, emptyList, emptyList, Optional.empty(),
-                Optional.of("unix-user"), u.keyId(), new MesosContainer());
+                Optional.of("unix-user"), u.keyId(), new MesosContainer(), true);
         boolean res = Database.addApplication(app);
 
         assertTrue(res);
@@ -90,7 +90,7 @@ public class DatabaseTest {
         System.err.println(app2.toString());
 
         Application app3 = new Application("testapppo", emptyList, emptyList, emptyList, Optional.empty(),
-                Optional.of("unix-user"), "charlie", new MesosContainer());
+                Optional.of("unix-user"), "charlie", new MesosContainer(), true);
         assertFalse(Database.addApplication(app3));
 
         Database.safeDeleteApplication(app.getAppid());
@@ -112,7 +112,7 @@ public class DatabaseTest {
         System.err.println("User " + u.keyId() + " created.");
 
         Application a = new Application("someapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), u.keyId(), new MesosContainer());
+                Optional.empty(), Optional.empty(), u.keyId(), new MesosContainer(), true);
         Database.addApplication(a);
 
         int id = -1;
@@ -165,7 +165,7 @@ public class DatabaseTest {
         List<String> emptyList = new LinkedList<>();
         for (User u : users) {
             Application app = new Application(u.keyId(), emptyList, emptyList, emptyList, Optional.empty(),
-                    Optional.of("unix-user"), u.keyId(), new MesosContainer());
+                    Optional.of("unix-user"), u.keyId(), new MesosContainer(), true);
             Database.addApplication(app);
             apps.add(app);
 

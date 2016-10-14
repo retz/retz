@@ -209,7 +209,10 @@ public final class WebConsole {
                     return MAPPER.writeValueAsString(new ErrorResponse("root user is only allowed with Docker container"));
                 }
             }
-            boolean result = WebConsole.load(loadAppRequest.application());
+
+            Application app = loadAppRequest.application();
+            LOG.info("Registering application name={} owner={}", app.getAppid(), app.getOwner());
+            boolean result = Applications.load(app);
 
             if (result) {
                 res.status(200);
@@ -345,11 +348,6 @@ public final class WebConsole {
         return false;
     }
 
-    public static boolean load(Application app) {
-        LOG.info("Registering application name={} owner={}", app.getAppid(), app.getOwner());
-        return Applications.load(app);
-    }
-
     public static void unload(String appName) {
         Applications.unload(appName);
         LOG.info("Unloaded {}", appName);
@@ -363,7 +361,14 @@ public final class WebConsole {
     public static String schedule(Request req, Response res) throws IOException, InterruptedException {
         ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
         res.type("application/json");
-        if (Applications.get(scheduleRequest.job().appid()).isPresent()) {
+        Optional<Application> maybeApp = Applications.get(scheduleRequest.job().appid()); // TODO check owner right here
+        if (! maybeApp.isPresent()) {
+            LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
+            ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
+            res.status(404);
+            return MAPPER.writeValueAsString(response);
+
+        } else if (maybeApp.get().enabled()) {
             Job job = scheduleRequest.job();
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
 
@@ -381,9 +386,9 @@ public final class WebConsole {
             return MAPPER.writeValueAsString(scheduleResponse);
 
         } else {
-            LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
-            ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
-            res.status(404);
+            // Application is currently disabled
+            res.status(401);
+            ErrorResponse response = new ErrorResponse("Application " + maybeApp.get().getAppid() + " is disabled");
             return MAPPER.writeValueAsString(response);
         }
     }

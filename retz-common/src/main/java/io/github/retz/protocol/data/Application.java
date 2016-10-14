@@ -36,6 +36,7 @@ public class Application {
     private String owner;
 
     private Container container;
+    private boolean enabled;
 
     @JsonCreator
     public Application(@JsonProperty(value = "appid", required = true) String appid,
@@ -45,7 +46,8 @@ public class Application {
                        @JsonProperty("diskMB") Optional<Integer> diskMB,
                        @JsonProperty("user") Optional<String> user,
                        @JsonProperty("owner") String owner,
-                       @JsonProperty("container") Container container) {
+                       @JsonProperty("container") Container container,
+                       @JsonProperty("enabled") boolean enabled) {
         this.appid = Objects.requireNonNull(appid);
         this.persistentFiles = persistentFiles;
         this.largeFiles = largeFiles;
@@ -54,6 +56,7 @@ public class Application {
         this.owner = Objects.requireNonNull(owner);
         this.user = user;
         this.container = (container != null) ? container : new MesosContainer();
+        this.enabled = enabled;
     }
 
     @JsonGetter("appid")
@@ -96,6 +99,11 @@ public class Application {
         return container;
     }
 
+    @JsonGetter("enabled")
+    public boolean enabled() {
+        return enabled;
+    }
+
     public void setContainer(Container c) {
         container = Objects.requireNonNull(c);
     }
@@ -128,7 +136,12 @@ public class Application {
         if (user.isPresent()) {
             maybeUser = "user=" + user.get();
         }
-        return String.format("Application name=%s: owner=%s %s container=%s: files=%s/%s: %s",
+        String enabledStr = "";
+        if (!enabled) {
+            enabledStr = "(disabled)";
+        }
+        return String.format("Application%s name=%s: owner=%s %s container=%s: files=%s/%s: %s",
+                enabledStr,
                 getAppid(),
                 owner,
                 maybeUser,

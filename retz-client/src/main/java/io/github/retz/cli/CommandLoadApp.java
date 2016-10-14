@@ -58,9 +58,11 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = "--image", description = "Container image name to run a job (only available with Docker container)")
     String image;
 
-    //
     @Parameter(names = "--docker-volumes", description = "Docker volume drivers")
     List<String> volumeSpecs = new LinkedList<>();
+
+    @Parameter(names = "--enabled", description = "Enable application [true|false]. If disabled, server returns 401 for any job scheduling request.")
+    String enabledStr = "true";
 
     @Override
     public String description() {
@@ -107,9 +109,18 @@ public class CommandLoadApp implements SubCommand {
         } else {
             maybeDisk = Optional.of(disk);
         }
+
+        boolean enabled = true;
+        if ("false".equals(enabledStr)) {
+            enabled = false;
+        } else if (! "true".equals(enabledStr)) {
+            LOG.error("Wrong argument for --enabled option: {}", enabledStr);
+            return -1;
+        }
         Application application = new Application(appName,
                 persistentFiles, largeFiles, files, maybeDisk,
-                Optional.ofNullable(user), fileConfig.getAccessKey(), c);
+                Optional.ofNullable(user), fileConfig.getAccessKey(), c,
+                enabled);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())

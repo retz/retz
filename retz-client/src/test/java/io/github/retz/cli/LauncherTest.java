@@ -41,7 +41,8 @@ public class LauncherTest {
         }
 
         {
-            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t", "-F", "file://foo/bar/baz"};
+            String[] argv = {"-C", PROPERTY_FILE, "load-app", "-A", "t", "-F", "file://foo/bar/baz",
+            "--enabled", "false"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("load-app", conf.commander.getParsedCommand());
             assertEquals("load-app", conf.getParsedSubCommand().getName());
@@ -50,6 +51,7 @@ public class LauncherTest {
             assertFalse(command.files.isEmpty());
             assertEquals("file://foo/bar/baz", command.files.get(0));
             assertEquals("mesos", command.container);
+            assertEquals("false", command.enabledStr);
         }
 
         {

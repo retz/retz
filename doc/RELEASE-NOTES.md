@@ -2,6 +2,10 @@
 
 ## 0.0.27
 
+* Remove 'unload-app' and add 'enabled' flag to application instead, and
+  made application overwritable. In near future, Namely `UnloadApp`
+  protocol, 'DELETE /app/<appid>' will be deprecated and removed. Also,
+  this introduces in incompatible change to client-server protocol.
 * Add administration CLI tool 'retz-admin' as a new subproject, with JMX
   ports opening at startup. With 'retz-admin', many features like creating,
   disabling and getting information of users get available via JMX local

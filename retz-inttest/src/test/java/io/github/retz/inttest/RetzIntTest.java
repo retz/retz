@@ -71,7 +71,7 @@ public class RetzIntTest extends IntTestBase {
                 .setAuthenticator(config.getAuthenticator())
                 .build();
         Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList("file:///spawn_retz_server.sh"),
-                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load(echoApp);
         assertThat(loadRes.status(), is("ok"));
@@ -117,7 +117,7 @@ public class RetzIntTest extends IntTestBase {
                 .build();
 
         Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
         Response response = client.load(echoApp);
         System.err.println(response.status());
         LoadAppResponse loadRes = (LoadAppResponse) response;
@@ -221,7 +221,7 @@ public class RetzIntTest extends IntTestBase {
 
     private void loadSimpleApp(Client client, String appName) throws IOException {
         Application app = new Application(appName, Arrays.asList(),
-                Arrays.asList(), Arrays.asList(), Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+                Arrays.asList(), Arrays.asList(), Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
         Response res = client.load(app);
 
         assertTrue(res.status(), res instanceof LoadAppResponse);

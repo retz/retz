@@ -53,7 +53,7 @@ public class JobQueueTest {
     @Test
     public void q() throws InterruptedException, IOException {
         Application app = new Application("a", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
         Applications.load(app);
         Job job = new Job("a", "b", null, 1000, 100000000);
         job.schedule(0, TimestampHelper.now());

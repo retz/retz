@@ -96,7 +96,7 @@ public class RetzSchedulerTest {
     public void launch() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
-                Arrays.asList(files), Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer()));
+                Arrays.asList(files), Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
 
@@ -140,7 +140,7 @@ public class RetzSchedulerTest {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Database.addUser(new User("Deadbeef", "cafebabe", true));
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
-                Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer()));
+                Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
 
@@ -164,7 +164,7 @@ public class RetzSchedulerTest {
     public void slaveFail() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
-                Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer()));
+                Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
 

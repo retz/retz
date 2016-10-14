@@ -48,7 +48,6 @@ public class Launcher {
         SUB_COMMANDS.add(new CommandGetApp());
         SUB_COMMANDS.add(new CommandListApp());
         SUB_COMMANDS.add(new CommandLoadApp());
-        SUB_COMMANDS.add(new CommandUnloadApp());
     }
 
     public static void main(String... argv) {

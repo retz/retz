@@ -284,6 +284,7 @@ public class Database {
                 return false;
             }
 
+            deleteApplication(conn, a.getAppid());
             p.setString(1, a.getAppid());
             p.setString(2, a.getOwner());
             p.setString(3, MAPPER.writeValueAsString(a));

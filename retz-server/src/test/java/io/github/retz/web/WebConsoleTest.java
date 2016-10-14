@@ -117,7 +117,7 @@ public class WebConsoleTest {
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
-                    Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+                    Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
             Response res = webClient.load(app);
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
@@ -159,7 +159,7 @@ public class WebConsoleTest {
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
-                    Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer());
+                    Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
             Response res = webClient.load(app);
             System.err.println(res.status());
             assertThat(res, instanceOf(LoadAppResponse.class));
@@ -266,7 +266,7 @@ public class WebConsoleTest {
         User user = new User("deadbeef", "cafebabe", true);
         Database.addUser(user);
         Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), user.keyId(), new MesosContainer());
+                Optional.empty(), Optional.empty(), user.keyId(), new MesosContainer(), true);
         Database.addApplication(app);
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
         JobQueue.push(job);
