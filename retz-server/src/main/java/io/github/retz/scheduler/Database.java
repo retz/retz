@@ -410,7 +410,7 @@ public class Database {
     static List<Job> findFit(int cpu, int memMB) throws IOException {
         List<Job> ret = new LinkedList<>();
         try (Connection conn = pool.getConnection();
-             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED'")) {
+             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC")) {
             conn.setAutoCommit(true);
 
             try (ResultSet res = p.executeQuery()) {
