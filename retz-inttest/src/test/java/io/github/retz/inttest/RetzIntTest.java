@@ -91,11 +91,12 @@ public class RetzIntTest extends IntTestBase {
 
         ClientHelper.getWholeFile(client, runRes.id(), "stdout", toDir);
         ClientHelper.getWholeFile(client, runRes.id(), "stderr", toDir);
-        ClientHelper.getWholeFile(client, runRes.id(), "stdout-" + runRes.id(), toDir);
-        ClientHelper.getWholeFile(client, runRes.id(), "stderr-" + runRes.id(), toDir);
 
         String actualText = catStdout(client, runRes);
-        assertEquals(echoText + "\n", actualText);
+        List<String> lines = Arrays.asList(actualText.split("\n"));
+        assertThat(lines, hasItem(echoText));
+        assertThat(lines, hasItem("Received SUBSCRIBED event"));
+        assertThat(lines, hasItem("Received LAUNCH event"));
 
         ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
         assertThat(listJobResponse.finished().size(), greaterThan(0));
@@ -259,8 +260,13 @@ public class RetzIntTest extends IntTestBase {
                     if (getJobResponse.job().get().state() == Job.JobState.FINISHED
                             || getJobResponse.job().get().state() == Job.JobState.KILLED) {
                         toRemove.add(echoJob);
-                        assertThat(catStdout(client, getJobResponse.job().get()),
-                                is(Integer.toString(echoJob.argv) + "\n"));
+
+                        String actualText = catStdout(client, getJobResponse.job().get());
+                        List<String> lines = Arrays.asList(actualText.split("\n"));
+                        assertThat(lines, hasItem(Integer.toString(echoJob.argv)));
+                        assertThat(lines, hasItem("Received SUBSCRIBED event"));
+                        assertThat(lines, hasItem("Received LAUNCH event"));
+
                     } else if (checkRetval) {
                         assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
                                         + ", Message: " + getJobResponse.job().get().reason(),
@@ -334,7 +340,7 @@ public class RetzIntTest extends IntTestBase {
 
     private String catStdout(Client c, Job job) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ClientHelper.getWholeFile(c, job.id(), "stdout-" + job.id(), true, out);
+        ClientHelper.getWholeFile(c, job.id(), "stdout", true, out);
         return out.toString(String.valueOf(StandardCharsets.UTF_8));
     }
 

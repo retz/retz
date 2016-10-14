@@ -14,9 +14,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.executor;
+package io.github.retz.localexecutor;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import scala.actors.threadpool.Arrays;
@@ -46,9 +47,9 @@ public class CPUManagerTest {
             assertTrue(Numa.numNodes() > 0);
             assertTrue(Numa.numCPUs() > 1);
 
-            assertEquals(Numa.numCPUs(), manager.availableCPUCount());
+            Assert.assertEquals(Numa.numCPUs(), manager.availableCPUCount());
         }
-        assertEquals(Runtime.getRuntime().availableProcessors(), manager.availableCPUCount());
+        Assert.assertEquals(Runtime.getRuntime().availableProcessors(), manager.availableCPUCount());
     }
 
     @Test
@@ -61,7 +62,7 @@ public class CPUManagerTest {
 
         manager.free("foobar");
 
-        assertEquals(Runtime.getRuntime().availableProcessors(), manager.availableCPUCount());
+        Assert.assertEquals(Runtime.getRuntime().availableProcessors(), manager.availableCPUCount());
     }
 
     @Test
@@ -69,7 +70,7 @@ public class CPUManagerTest {
         Integer[] nodes = {4, 4, 4, 4}; // 4x4 numa structure
         CPUManager.setTopology(Arrays.asList(nodes));
 
-        assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
+        Assert.assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
         System.err.println(CPUManager.get().toString());
 
         List<Integer> cpus = CPUManager.get().assign("hey><", 7);
@@ -77,7 +78,7 @@ public class CPUManagerTest {
         assertEquals(7, cpus.size());
 
         CPUManager.get().free("hey><");
-        assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
+        Assert.assertEquals(4 * nodes.length, CPUManager.get().availableCPUCount());
     }
 
     @Test

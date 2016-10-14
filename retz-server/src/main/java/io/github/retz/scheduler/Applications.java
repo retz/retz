@@ -18,11 +18,7 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.retz.mesos.Resource;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Container;
-import io.github.retz.protocol.data.DockerContainer;
-import io.github.retz.protocol.data.DockerVolume;
-import org.apache.commons.io.FilenameUtils;
+import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,6 +82,7 @@ public class Applications {
             return new LinkedList<>();
         }
     }
+
     // TODO: this might be very heavy proportional to number of applications, which could be
     // cut out to another thread, or even remove persistent volume support?
     public static List<Application> needsPersistentVolume(Resource resource, String role) {
@@ -145,22 +142,31 @@ public class Applications {
         return builder.build();
     }
 
-    public static Protos.CommandInfo appToCommandInfo(Application application, String command) {
-        Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
-                .setShell(true)
-                .setValue(command);
-
+    public static Protos.CommandInfo appToCommandInfo(Application application, Job job) {
+        Protos.CommandInfo.Builder builder = Protos.CommandInfo.newBuilder();
         if (application.getUser().isPresent()) {
-            commandInfoBuilder.setUser(application.getUser().get());
+            builder.setUser(application.getUser().get());
         }
         for (String file : application.getFiles()) {
-            commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
+            builder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));
         }
         for (String file : application.getLargeFiles()) {
-            commandInfoBuilder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
+            builder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(true));
         }
-        return commandInfoBuilder.build();
+        Protos.Environment.Builder envBuilder = Protos.Environment.newBuilder();
+        for (Map.Entry<Object, Object> e : job.props().entrySet()) {
+            String key = (String) e.getKey();
+            String value = (String) e.getValue();
+            envBuilder.addVariables(Protos.Environment.Variable.newBuilder()
+                    .setName(key).setValue(value).build());
+        }
+        return builder.setEnvironment(envBuilder.build())
+                .setValue(job.cmd())
+                .setShell(true)
+                .build();
     }
+
+    /*
 
     public static Protos.ExecutorInfo appToExecutorInfo(String java, Application application, Protos.FrameworkID frameworkID) {
 
@@ -190,7 +196,7 @@ public class Applications {
                 .setFrameworkId(frameworkID)
                 .build();
         return executorInfo;
-    }
+    } */
 
 
     static List<Protos.Offer.Operation> persistentVolumeOps(Resource resources, Protos.FrameworkInfo frameworkInfo) {

@@ -41,9 +41,6 @@ import java.util.stream.Collectors;
 public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
     private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
-    private static String jarUri;
-    private static final String JAR_FILENAME;
-    private static final String JAR_PATH;
     private Launcher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
@@ -58,9 +55,6 @@ public class RetzScheduler implements Scheduler {
         // REVIEW: http://www.eclipse.org/aether/ (not surveyed yet)
         // REVIEW: https://github.com/airlift/resolver (used in presto?)
         ResourceBundle labels = ResourceBundle.getBundle("retz-server");
-        JAR_FILENAME = labels.getString("jarfilename");
-        JAR_PATH = "/" + JAR_FILENAME;
-        LOG.info("Executor jar file name to distribute: {}", JAR_FILENAME);
 
         HTTP_SERVER_NAME = labels.getString("servername");
         LOG.info("Server name in HTTP(S) header: {}", HTTP_SERVER_NAME);
@@ -71,24 +65,10 @@ public class RetzScheduler implements Scheduler {
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
-        RetzScheduler.setJarUri(conf.fileConfig.getUri() + JAR_PATH);
 
         for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
             OFFER_STOCK.remove(e.getKey());
         }
-    }
-
-    public static String getJarUri() {
-        return jarUri;
-    }
-
-    public static String getJarPath() {
-        return JAR_PATH;
-    }
-
-    public static void setJarUri(String uri) {
-        LOG.info("Executor jar distribution URI: {}", uri);
-        jarUri = uri;
     }
 
     public void stopAllExecutors(SchedulerDriver driver, String appName) {
@@ -222,17 +202,8 @@ public class RetzScheduler implements Scheduler {
             TaskBuilder tb = new TaskBuilder(conf.getFileConfig().getMesosAgentJava())
                     .setOffer(resource, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
                     .setName("retz-task-name-" + job.name())
-                    .setTaskId("retz-task-id-" + id);
-            //.setApplication(app.get(), frameworkInfo.getId());
-
-            try {
-                tb.setExecutor(job, app, frameworkInfo.getId()); //Applications.encodable(app.get()));
-            } catch (JsonProcessingException e) {
-                String reason = String.format("Cannot encode job to JSON: %s - killing the job", job);
-                //kill(job, reason);
-                JobQueue.cancel(job.id(), reason);
-                continue;
-            }
+                    .setTaskId("retz-task-id-" + id)
+                    .setCommand(job, app);
 
             String volumeId = app.toVolumeId(frameworkInfo.getRole());
             if (app.getDiskMB().isPresent() && resource.volumes().containsKey(volumeId)) {

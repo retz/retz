@@ -109,8 +109,7 @@ public final class WebConsole {
             // These don't require authentication to simplify operation
             if ("/ping".equals(resource) || "/status".equals(resource)
                     || "/cui".equals(resource) // TODO: this is special exception; in future this must be removed...
-                    || "/".equals(resource)
-                    || resource.equals(RetzScheduler.getJarPath())) {
+                    || "/".equals(resource)) {
                 return;
             }
 

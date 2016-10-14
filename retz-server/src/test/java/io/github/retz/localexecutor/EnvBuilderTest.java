@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.executor;
+package io.github.retz.localexecutor;
 
 import org.junit.Assert;
 import org.junit.Test;

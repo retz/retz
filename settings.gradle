@@ -10,7 +10,6 @@
  */
 
 include 'retz-server'
-include 'retz-executor'
 include 'retz-client'
 include 'retz-common'
 include 'retz-inttest'

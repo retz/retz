@@ -2,6 +2,8 @@
 
 ## 0.0.27
 
+* Remove RetzExecutor, preserving as local mode executor. This has few
+  effect to users - while it simplifies the system a lot.
 * Remove 'unload-app' and add 'enabled' flag to application instead, and
   made application overwritable. In near future, Namely `UnloadApp`
   protocol, 'DELETE /app/<appid>' will be deprecated and removed. Also,
