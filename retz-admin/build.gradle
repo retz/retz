@@ -1,0 +1,36 @@
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'nebula.ospackage-application'
+apply plugin: "com.github.johnrengelman.shadow"
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile project(":retz-common")
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'org.slf4j:slf4j-simple:1.7.21'
+    compile group: 'com.j256.simplejmx', name: 'simplejmx', version: '1.12'
+    compile "com.beust:jcommander:1.48"
+
+}
+
+mainClassName = 'io.github.retz.admin.Launcher'
+
+ospackage {
+    os = LINUX
+    user = 'root' // https://github.com/nebula-plugins/gradle-ospackage-plugin/issues/13
+}
+buildRpm {
+    release = '1.el7'
+    arch = 'X86_64'
+}
+buildDeb {
+    arch = 'AMD64'
+}
