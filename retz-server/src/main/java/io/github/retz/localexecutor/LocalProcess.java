@@ -71,7 +71,7 @@ public class LocalProcess {
         if (metaJob.getJob().props() != null) {
             envBuilder.putAll(metaJob.getJob().props());
         }
-        String newHome = System.getProperty("user.dir", ".");
+        String newHome = System.getProperty("user.dir", "/tmp");
         envBuilder.put("HOME", newHome); // move to temporary directory where Mesos opened tarball
         // Instead we adopt a kludge adding '-Duser.home=/tmp/....' to JVM arguments
         // envBuilder.put("YAESS_OPTS", "-Duser.home=" + newHome);
@@ -83,8 +83,8 @@ public class LocalProcess {
         //cmd.addAll(Arrays.asList(metaJob.getJob().cmd().split("[\\s]+")));
 
         processBuilder.directory(new File(newHome))
-                .redirectError(new File("stderr-" + metaJob.getJob().id()))
-                .redirectOutput(new File("stdout-" + metaJob.getJob().id()))
+                .redirectError(new File("stderr"))
+                .redirectOutput(new File("stdout"))
                 .command(localCmd);
 
         start = System.currentTimeMillis();

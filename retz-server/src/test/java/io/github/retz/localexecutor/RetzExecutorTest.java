@@ -76,7 +76,6 @@ public class RetzExecutorTest {
 
         assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
-
     }
 
     // TODO: make this kind of tests as quickchecky state machine test
@@ -89,7 +88,6 @@ public class RetzExecutorTest {
         executor.reregistered(driver, executor.getSlaveInfo());
         executor.shutdown(driver);
         executor.error(driver, "noooooooooooooooooooooooooooooop");
-
     }
 
     @Test
@@ -160,6 +158,5 @@ public class RetzExecutorTest {
 
         assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
-
     }
 }
