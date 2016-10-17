@@ -4,7 +4,7 @@ set -e
 ## SUBCMD=$1
 ## shift
 ## echo $SUBCMD
-JAR=`ls retz-admin/build/libs/retz-admin-*.jar`
+JAR=`ls retz-admin/build/libs/retz-admin-*-all.jar`
 echo "Using jar file '$JAR'"
 java -jar $JAR "$@"
 
