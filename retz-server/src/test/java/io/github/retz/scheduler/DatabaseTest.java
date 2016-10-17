@@ -22,6 +22,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.User;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +31,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
 public class DatabaseTest {
@@ -42,11 +44,12 @@ public class DatabaseTest {
         Database.init(config);
 
         // DEFAULT_DATABASE_URL afaik
-        //assertEquals("jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1", config.getDatabaseURL());
+        assertEquals("jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1", config.getDatabaseURL());
     }
 
     @After
     public void after() throws Exception {
+        Database.deleteAllProperties();
         Database.stop();
     }
 
@@ -119,7 +122,7 @@ public class DatabaseTest {
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
             Database.safeAddJob(job);
 
-            assertEquals(1, Database.getLatestJobId());
+            assertThat(Database.getLatestJobId(), Matchers.greaterThanOrEqualTo(1));
             Job job2 = Database.getJob(job.id()).get();
 
             assertEquals(job.id(), job2.id());
@@ -204,5 +207,13 @@ public class DatabaseTest {
         }
 
         Database.deleteAllJob(Integer.MAX_VALUE);
+    }
+
+    @Test
+    public void testProps() {
+        String frameworkId = "foorbartest....";
+        assertFalse(Database.getFrameworkId().isPresent());
+        assertTrue(Database.setFrameworkId(frameworkId));
+        assertThat(Database.getFrameworkId().get(), is(frameworkId));
     }
 }

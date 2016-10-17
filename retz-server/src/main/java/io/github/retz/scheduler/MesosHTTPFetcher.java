@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +36,6 @@ import java.util.Optional;
  */
 public class MesosHTTPFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosHTTPFetcher.class);
-
 
     public static Optional<String> sandboxBaseUri(String master, String slaveId, String frameworkId, String executorId) {
         return sandboxUri("browse", master, slaveId, frameworkId, executorId);
@@ -174,5 +174,34 @@ public class MesosHTTPFetcher {
             }
         }
         return Optional.empty();
+    }
+
+    static List<Map<String, Object>> fetchTasks(String master, String frameworkId, int offset, int limit) throws MalformedURLException {
+        URL url = new URL("http://" + master + "/tasks?offset=" + offset + "&limit=" + limit);
+        HttpURLConnection conn;
+        try {
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setDoOutput(true);
+            return parseTasks(conn.getInputStream(), frameworkId);
+        } catch (IOException e) {
+            return new LinkedList<>();
+        }
+    }
+
+    static List<Map<String, Object>> parseTasks(InputStream in, String frameworkId) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Map<String, Object>> ret = new LinkedList<>();
+
+        Map<String, List<Map<String, Object>>> map = mapper.readValue(in, Map.class);
+        List<Map<String, Object>> tasks = map.get("tasks");
+        for (Map<String, Object> task : tasks) {
+            String fid = (String) task.get("framework_id");
+            if (!frameworkId.equals(fid)) {
+                continue;
+            }
+            ret.add(task);
+        }
+        return ret;
     }
 }

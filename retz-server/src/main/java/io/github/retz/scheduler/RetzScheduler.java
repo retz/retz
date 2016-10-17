@@ -16,7 +16,6 @@
  */
 package io.github.retz.scheduler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
@@ -36,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class RetzScheduler implements Scheduler {
@@ -90,6 +90,7 @@ public class RetzScheduler implements Scheduler {
     @Override
     public void error(SchedulerDriver driver, String message) {
         LOG.error(message);
+        // 'Framework has been removed' comes here;
     }
 
 
@@ -108,11 +109,30 @@ public class RetzScheduler implements Scheduler {
     public void registered(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) {
         LOG.info("Connected to master {}; Framework ID: {}", masterInfo.getHostname(), frameworkId.getValue());
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
+
+        Optional<String> oldFrameworkId = Database.getFrameworkId();
+        if (oldFrameworkId.isPresent()) {
+            if (oldFrameworkId.get().equals(frameworkId.getValue())) {
+                // framework exists. nothing to do
+                LOG.info("Framework id={} existed in past. Recovering any running jobs...", frameworkId.getValue());
+                maybeRecoverRunning(driver);
+            } else {
+                LOG.error("Old different framework ({}) exists (!= {}). Quitting",
+                        oldFrameworkId.get(), frameworkId.getValue());
+                driver.stop();
+            }
+        } else {
+            if (Database.setFrameworkId(frameworkId.getValue())) {
+            } else {
+                LOG.warn("Failed to remember frameworkID...");
+            }
+        }
     }
 
     @Override
     public void reregistered(SchedulerDriver driver, Protos.MasterInfo masterInfo) {
-        LOG.info("Connected to master {}", masterInfo.getHostname());
+        LOG.info("Reconnected to master {}", masterInfo.getHostname());
+        maybeRecoverRunning(driver);
     }
 
     @Override
@@ -434,5 +454,13 @@ public class RetzScheduler implements Scheduler {
         Job job() {
             return job;
         }
+    }
+
+    // Get all running jobs and sync its latest state in Mesos
+    // If it's not lost, just update state. Otherwise, set its state as QUEUED back.
+    // TODO: offload this from scheduler callback thread
+    private void maybeRecoverRunning(SchedulerDriver driver) {
+        List<Job> jobs = Database.getRunning();
+        Database.retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
     }
 }

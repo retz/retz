@@ -237,6 +237,7 @@ public class Job {
         }
         this.state = STARTING;
     }
+
     public void started(String taskId, Optional<String> maybeUrl, String now) {
         this.started = now;
         this.taskId = taskId;
@@ -245,6 +246,7 @@ public class Job {
         }
         this.state = STARTED;
     }
+
     public void finished(String now, Optional<String> url, int result) {
         this.finished = now;
         this.result = result;
@@ -290,10 +292,11 @@ public class Job {
         if (state == FINISHED) {
             sb.append(", result=").append(result);
         }
-        if (result != 0){
+        if (result != 0) {
             sb.append(", reason=").append(reason);
         }
-            sb.append("}");
+        sb.append(", taskid=").append(taskId)
+                .append("}");
         return sb.toString();
     }
 }

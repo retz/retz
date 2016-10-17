@@ -7,4 +7,3 @@ set -e
 JAR=`ls retz-admin/build/libs/retz-admin-*-all.jar`
 echo "Using jar file '$JAR'"
 java -jar $JAR "$@"
-

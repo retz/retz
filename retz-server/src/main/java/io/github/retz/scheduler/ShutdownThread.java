@@ -38,8 +38,10 @@ public class ShutdownThread extends Thread {
         console.stop();
         // Close all database connections; it may take time
         Database.stop();
-        // Shut down connection to Mesos
-        driver.stop();
+        // Shut down connection to Mesos; always will be preserved for failover
+        // true - possibly connect with same FrameworkID, Mesos doesn't collect tasks
+        // false - Same FrameworkID will never connect again, Mesos would refuse reconnection
+        driver.stop(true);
         LOG.info("All clean up finished");
     }
 }

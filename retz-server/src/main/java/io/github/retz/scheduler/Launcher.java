@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.cli.FileConfiguration;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.Protos;
@@ -28,11 +29,28 @@ import org.slf4j.LoggerFactory;
 import javax.management.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public final class Launcher {
+    static final Option OPT_CONFIG;
+    static final Option OPT_MODE;
     private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
+    private static final Options OPTIONS;
+
+    static {
+        OPT_CONFIG = new Option("C", "config", true, "Configuration file path");
+        OPT_CONFIG.setArgName("/path/to/retz.properties");
+
+        OPT_MODE = new Option("M", "mode", true, "Scheduler mode ( local|mesos )");
+        OPT_MODE.setArgName("mesos");
+
+        OPTIONS = new Options();
+        OPTIONS.addOption(OPT_CONFIG);
+        OPTIONS.addOption(OPT_MODE);
+    }
 
     public static void main(String... argv) {
         System.exit(run(argv));
@@ -81,9 +99,16 @@ public final class Launcher {
 
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
+        // Retz must do all recovery process before launching scheduler;
+        // This is because running scheduler changes state of any jobs if it
+        // has successfully connected to Mesos master.
+        // By hitting HTTP endpoints and comparing with database job states,
+        // Retz can decide whether to re-run it or just finish it.
+        // BTW after connecting to Mesos it looks like re-sending unacked messages.
+        maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getRunning());
+
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
         SchedulerDriver driver = SchedulerDriverFactory.create(scheduler, conf, fw);
-
 
         Protos.Status status = driver.start();
 
@@ -117,6 +142,40 @@ public final class Launcher {
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }
 
+    private static void maybeRequeueRunningJobs(String master, String frameworkId, List<Job> running) {
+        LOG.info("{} jobs found in DB 'STARTING' or 'STARTED' state. Requeuing...", running.size());
+        int offset = 0;
+        int limit = 128;
+        Map<String, Job> runningMap = running.stream().collect(Collectors.toMap(job -> job.taskId(), job -> job));
+        List<Job> recoveredJobs = new LinkedList<>();
+        while (true) {
+            try {
+                List<Map<String, Object>> tasks = MesosHTTPFetcher.fetchTasks(master, frameworkId, offset, limit);
+                if (tasks.isEmpty()) {
+                    break;
+                }
+
+                for (Map<String, Object> task : tasks) {
+                    String state = (String) task.get("state");
+                    // Get TaskId
+                    String taskId = (String) task.get("id");
+                    if (runningMap.containsKey(taskId)) {
+                        Job job = runningMap.remove(taskId);
+                        recoveredJobs.add(JobQueue.updateJobStatus(job, state));
+                    } else {
+                        LOG.warn("Unknown job!");
+                    }
+                }
+                offset = offset + tasks.size();
+            } catch (MalformedURLException e) {
+                LOG.error(e.toString());
+                throw new RuntimeException(e.toString());
+            }
+        }
+        Database.updateJobs(recoveredJobs);
+        LOG.info("{} jobs rescheduled, {} jobs didn't need change.", recoveredJobs.size(), runningMap.size());
+    }
+
     private static Protos.FrameworkInfo buildFrameworkInfo(Configuration conf) {
         String userName = conf.fileConfig.getUserName();
 
@@ -124,10 +183,16 @@ public final class Launcher {
                 .setUser(userName)
                 .setName(RetzScheduler.FRAMEWORK_NAME)
                 .setWebuiUrl(conf.fileConfig.getUri().toASCIIString())
-                .setFailoverTimeout(0)
+                .setFailoverTimeout(3600 * 24 * 7)
                 .setCheckpoint(true)
                 .setPrincipal(conf.fileConfig.getPrincipal())
                 .setRole(conf.fileConfig.getRole());
+
+        Optional<String> fid = Database.getFrameworkId();
+        if (fid.isPresent()) {
+            LOG.info("FrameworkID {} found", fid.get());
+            fwBuilder.setId(Protos.FrameworkID.newBuilder().setValue(fid.get()).build());
+        }
 
         if (conf.fileConfig.useGPU()) {
             LOG.info("GPU enabled - registering with GPU_RESOURCES capability.");
@@ -138,22 +203,6 @@ public final class Launcher {
 
         LOG.info("Connecting to Mesos master {} as {}", conf.getMesosMaster(), userName);
         return fwBuilder.build();
-    }
-
-    static final Option OPT_CONFIG;
-    static final Option OPT_MODE;
-    private static final Options OPTIONS;
-
-    static {
-        OPT_CONFIG = new Option("C", "config", true, "Configuration file path");
-        OPT_CONFIG.setArgName("/path/to/retz.properties");
-
-        OPT_MODE = new Option("M", "mode", true, "Scheduler mode ( local|mesos )");
-        OPT_MODE.setArgName("mesos");
-
-        OPTIONS = new Options();
-        OPTIONS.addOption(OPT_CONFIG);
-        OPTIONS.addOption(OPT_MODE);
     }
 
     static Configuration parseConfiguration(String[] argv) throws ParseException, IOException, URISyntaxException {
@@ -179,12 +228,6 @@ public final class Launcher {
 
     public static final class Configuration {
         FileConfiguration fileConfig;
-
-        enum Mode {
-            LOCAL,
-            MESOS
-        }
-
         Mode launchMode;
 
         public Configuration(FileConfiguration fileConfig) {
@@ -204,6 +247,11 @@ public final class Launcher {
 
         public FileConfiguration getFileConfig() {
             return fileConfig;
+        }
+
+        enum Mode {
+            LOCAL,
+            MESOS
         }
 
     }

@@ -66,7 +66,7 @@ public class RetzSchedulerTest {
     @After
     public void after() {
         driver.clear();
-        JobQueue.clear();
+        Database.clear();
         Database.stop();
     }
 

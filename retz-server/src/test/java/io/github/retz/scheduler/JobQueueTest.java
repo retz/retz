@@ -48,6 +48,7 @@ public class JobQueueTest {
     @After
     public void after() throws Exception {
         Database.deleteAllJob(Integer.MAX_VALUE);
+        Database.deleteAllProperties();
         Database.stop();
     }
     @Test

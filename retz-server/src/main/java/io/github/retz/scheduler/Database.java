@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.dao.Jobs;
+import io.github.retz.dao.Property;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
@@ -40,10 +42,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 // TODO: make this Singleton?
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static String databaseURL = null;
     private static DataSource dataSource = new DataSource();
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static {
         MAPPER.registerModule(new Jdk8Module());
@@ -60,7 +61,7 @@ public class Database {
 
         props.setUrl(config.getDatabaseURL());
         props.setDriverClassName(config.getDatabaseDriver());
-        if(config.getDatabaseUser().isPresent()) {
+        if (config.getDatabaseUser().isPresent()) {
             props.setUsername(config.getDatabaseUser().get());
             if (config.getDatabasePass().isPresent()) {
                 props.setPassword(config.getDatabasePass().get());
@@ -103,21 +104,31 @@ public class Database {
     public static void stop() {
         LOG.info("Stopping database {}", databaseURL);
 
-        ///while (pool.getActiveConnections() > 0) {
-        while(dataSource.getNumActive() > 0) {
+        while (dataSource.getNumActive() > 0) {
             try {
                 Thread.sleep(512);
             } catch (InterruptedException e) {
             }
         }
         dataSource.close();
-        //pool.dispose();
+    }
+
+    static void clear() {
+        try (Connection conn = dataSource.getConnection();
+             Statement statement = conn.createStatement()) {
+            statement.execute("DROP TABLE users, jobs, applications, properties");
+            conn.commit();
+            LOG.info("All tables dropped successfully");
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+        }
     }
 
     static boolean allTableExists(Connection conn) throws SQLException {
         boolean userTableExists = false;
         boolean applicationTableExists = false;
         boolean jobTableExists = false;
+        boolean propTableExists = false;
 
         DatabaseMetaData meta = conn.getMetaData();
 
@@ -131,6 +142,8 @@ public class Database {
                 applicationTableExists = true;
             } else if ("JOBS".equals(tableName)) {
                 jobTableExists = true;
+            } else if ("PROPERTIES".equals(tableName)) {
+                propTableExists = true;
             }
             LOG.info("category={}, scheme={}, name={}, type={}, remarks={}",
                     res.getString("TABLE_CAT"), res.getString("TABLE_SCHEM"),
@@ -138,9 +151,9 @@ public class Database {
                     res.getString("REMARKS"));
         }
 
-        if (userTableExists && applicationTableExists && jobTableExists) {
+        if (userTableExists && applicationTableExists && jobTableExists && propTableExists) {
             return true;
-        } else if (!userTableExists && !applicationTableExists && !jobTableExists) {
+        } else if (!userTableExists && !applicationTableExists && !jobTableExists && !propTableExists) {
             return false;
         } else {
             throw new RuntimeException("Database is partially ready: quitting");
@@ -151,7 +164,7 @@ public class Database {
         LOG.info("Checking database schema of {} ...", databaseURL);
 
         if (allTableExists(conn)) {
-            LOG.info("All three table exists.");
+            LOG.info("All four table exists.");
         } else {
             LOG.info("No table exists: creating...");
 
@@ -169,7 +182,7 @@ public class Database {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         //try (Connection conn = pool.getConnection();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection()) {
-            PreparedStatement p = conn.prepareStatement("SELECT * FROM users")) {
+             PreparedStatement p = conn.prepareStatement("SELECT * FROM users")) {
             conn.setAutoCommit(true);
 
             try (ResultSet res = p.executeQuery()) {
@@ -219,7 +232,7 @@ public class Database {
 
     public static Optional<User> getUser(String keyId) {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
-        try (Connection conn = dataSource.getConnection()){ //pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             Optional<User> u = getUser(conn, keyId);
             conn.commit();
@@ -384,7 +397,7 @@ public class Database {
         }
         try (Connection conn = dataSource.getConnection(); // pool.getConnection();
              PreparedStatement p = conn.prepareStatement(sql)) {
-            if( id != null) {
+            if (id != null) {
                 p.setString(1, id);
             }
             conn.setAutoCommit(true);
@@ -412,7 +425,7 @@ public class Database {
 
             try (ResultSet res = p.executeQuery()) {
 
-                while(res.next()) {
+                while (res.next()) {
                     String json = res.getString("json");
                     try {
                         Job job = MAPPER.readValue(json, Job.class);
@@ -471,22 +484,6 @@ public class Database {
             p.setString(5, j.taskId());
             p.setString(6, j.state().toString());
             p.setString(7, MAPPER.writeValueAsString(j));
-            p.execute();
-        }
-    }
-
-    static void updateJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
-        LOG.debug("Updating job as name={}, id={}, appid={}", j.name(), j.id(), j.appid());
-        try (PreparedStatement p = conn.prepareStatement("UPDATE jobs SET name=?, appid=?, cmd=?, taskid=?, state=?, started=?, finished=?, json=? WHERE id=?")) {
-            p.setString(1, j.name());
-            p.setString(2, j.appid());
-            p.setString(3, j.cmd());
-            p.setString(4, j.taskId());
-            p.setString(5, j.state().toString());
-            p.setString(6, j.started());
-            p.setString(7, j.finished());
-            p.setString(8, MAPPER.writeValueAsString(j));
-            p.setInt(9, j.id());
             p.execute();
         }
     }
@@ -591,7 +588,7 @@ public class Database {
                     Optional<Job> result = fun.apply(job);
                     if (result.isPresent()) {
                         // addJob..
-                        updateJob(conn, job);
+                        new Jobs(conn, MAPPER).updateJob(job);
                         conn.commit();
                         LOG.info("Job (id={}) status updated to {}", job.id(), job.state());
                     }
@@ -652,5 +649,70 @@ public class Database {
             LOG.error(e.toString());
         }
         return 0;
+    }
+
+    public static List<Job> getRunning() {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            return new Jobs(conn, MAPPER).getAllRunning();
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+            return Arrays.asList();
+        }
+    }
+
+    public static boolean setFrameworkId(String value) {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(true);
+            LOG.info("setting new framework: {}", value);
+            return new Property(conn).setFrameworkId(value);
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+            return false;
+        }
+    }
+
+    public static Optional<String> getFrameworkId() {
+        try (Connection conn = dataSource.getConnection()) {
+            return new Property(conn).getFrameworkId();
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+            return Optional.empty();
+        }
+    }
+
+    public static void deleteAllProperties() {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            new Property(conn).deleteAll();
+            conn.commit();
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+        }
+    }
+
+    public static void updateJobs(List<Job> list) {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            Jobs jobs = new Jobs(conn, MAPPER);
+            for (Job job : list) {
+                jobs.updateJob(job);
+            }
+            conn.commit();
+        } catch (JsonProcessingException e) {
+            LOG.error(e.toString());
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+        }
+    }
+
+    public static void retryJobs(List<Integer> ids) {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            new Jobs(conn, MAPPER).doRetry(ids);
+            conn.commit();
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+        }
     }
 }

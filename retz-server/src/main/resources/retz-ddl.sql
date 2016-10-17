@@ -57,3 +57,12 @@ CREATE TABLE jobs(
 CREATE INDEX taskid ON jobs(taskid);
 CREATE INDEX started ON jobs(started);
 CREATE INDEX finished ON jobs(finished);
+
+-- System wide properties such ad FrameworkID; see io.github.retz.dao.Property
+CREATE TABLE properties(
+    key VARCHAR(128) NOT NULL UNIQUE,
+    value VARCHAR(256) NOT NULL,
+    epoch INTEGER NOT NULL -- probably later use
+);
+
+CREATE INDEX key ON properties(key);

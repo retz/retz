@@ -2,9 +2,19 @@
 
 ## 0.0.28
 
-* Add PostgreSQL JDBC driver with configuration items such as 'retz.database.driver',
-  'retz.database.user' and 'retz.database.pass' to support PostgreSQL as
-  backend database. Currently it only support database name 'retz'.
+* Preserve Framework id in database and reuse it after restart. Mesos
+  scheduler failover timeout is now set as 1 week (hard coded). Now
+  Retz has at most one week maintenance window without losing any
+  information or tasks. After 1 week absent if framework id is
+  preserved in database, Mesos will refuse connection from Retz unless
+  Retz forgets the framework id. In that case, just removing framework
+  id from database (i.e. deleting whole database file, or executing
+  `DELETE FROM properties WHERE key='FrameworkID'` at database
+  console) will enable Retz connect to Mesos again.
+* Add PostgreSQL JDBC driver with configuration items such as
+  'retz.database.driver', 'retz.database.user' and
+  'retz.database.pass' to support PostgreSQL as backend
+  database. Currently it only support database name 'retz'.
 * Remove H2 connection pool and use Tomcat JDBC connection pool.
 
 ## 0.0.27
