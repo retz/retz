@@ -22,7 +22,6 @@ import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -169,7 +168,7 @@ public class LocalSchedulerDriver implements SchedulerDriver {
                                       Protos.Filters filters) {
         // TODO: this function must be implemented to test result fetching (do we support Docker as well?)
         // TODO: wonder NotImplementedException is suitable as this is originally for refleciton.
-        throw new NotImplementedException();
+        throw new RuntimeException("Not implemented yet");
 //        this.accepted.addAll(offerIds);
 //        for (Protos.OfferID id : offerIds) {
 //            Protos.Offer.Builder ob = offers.get(id).toBuilder();
