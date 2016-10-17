@@ -54,6 +54,6 @@ CREATE TABLE jobs(
     PRIMARY KEY (id)
 );
 
-CREATE INDEX taskid ON jobs(taskid)
-CREATE INDEX started ON jobs(started)
-CREATE INDEX finished ON jobs(finished)
+CREATE INDEX taskid ON jobs(taskid);
+CREATE INDEX started ON jobs(started);
+CREATE INDEX finished ON jobs(finished);

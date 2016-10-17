@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.0.28
+
+* Add PostgreSQL JDBC driver with configuration items such as 'retz.database.driver',
+  'retz.database.user' and 'retz.database.pass' to support PostgreSQL as
+  backend database. Currently it only support database name 'retz'.
+* Remove H2 connection pool and use Tomcat JDBC connection pool.
+
 ## 0.0.27
 
 * Remove RetzExecutor, preserving as local mode executor. This has few

@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 // TODO: Most of items here have become server-specific. Move them out of common to server with proper abstraction
@@ -64,6 +65,10 @@ public class FileConfiguration {
     // Persistence
     static final String DATABASE_URL = "retz.database.url";
     static final String DEFAULT_DATABASE_URL = "jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1";
+    static final String DATABASE_DRIVER_CLASS = "retz.database.driver";
+    static final String DEFAULT_DATABASE_DRIVER_CLASS = "org.h2.Driver";
+    static final String DATABASE_USERNAME = "retz.database.user";
+    static final String DATABASE_PASSWORD = "retz.database.pass";
 
     // If BIND_ADDRESS is for SSL, these will be used for both server and client
     static final String KEYSTORE_FILE = "retz.tls.keystore.file";
@@ -82,6 +87,7 @@ public class FileConfiguration {
     private final int maxSimultaneousJobs;
     private final String mesosAgentJava;
     private final String databaseURL;
+    private final String databaseDriver;
     private final boolean useGPU;
     private final boolean authenticationEnabled;
     private final boolean checkCert;
@@ -157,6 +163,7 @@ public class FileConfiguration {
         mesosAgentJava = properties.getProperty(MESOS_AGENT_JAVA, "java");
 
         databaseURL = properties.getProperty(DATABASE_URL, DEFAULT_DATABASE_URL);
+        databaseDriver = properties.getProperty(DATABASE_DRIVER_CLASS, DEFAULT_DATABASE_DRIVER_CLASS);
 
         LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
@@ -264,6 +271,18 @@ public class FileConfiguration {
 
     public String getDatabaseURL() {
         return databaseURL;
+    }
+
+    public String getDatabaseDriver() {
+        return databaseDriver;
+    }
+
+    public Optional<String> getDatabaseUser() {
+        return Optional.ofNullable(properties.getProperty(DATABASE_USERNAME));
+    }
+
+    public Optional<String> getDatabasePass() {
+        return Optional.ofNullable(properties.getProperty(DATABASE_PASSWORD));
     }
 
     @Override

@@ -138,7 +138,7 @@ project(':retz-server') {
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
 
         compile 'com.h2database:h2:1.4.+'
-        //compile group: 'org.postgresql', name: 'postgresql', version: '9.4.+'
+        compile group: 'org.postgresql', name: 'postgresql', version: '9.4.+'
         compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.5.+'
 
         testCompile project(":retz-client")

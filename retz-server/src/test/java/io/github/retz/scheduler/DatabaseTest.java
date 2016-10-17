@@ -22,27 +22,36 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.User;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.*;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.*;
-
-import static org.hamcrest.Matchers.*;
 
 public class DatabaseTest {
 
-    @Test
-    public void user() throws Exception {
+    @Before
+    public void before() throws Exception {
         InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
 
         FileConfiguration config = new FileConfiguration(in);
         Database.init(config);
 
         // DEFAULT_DATABASE_URL afaik
-        assertEquals("jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1", config.getDatabaseURL());
+        //assertEquals("jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1", config.getDatabaseURL());
+    }
 
+    @After
+    public void after() throws Exception {
+        Database.stop();
+    }
+
+    @Test
+    public void user() throws Exception {
         Database.addUser(new User("cafebabe", "foobar", true));
 
         assertFalse(Database.getUser("non-pooh-bar").isPresent());
@@ -61,15 +70,10 @@ public class DatabaseTest {
         for (int i = 0; i < 4096; ++i) {
             assertTrue(Database.getUser("cafebabe").isPresent());
         }
-        Database.stop();
     }
 
     @Test
     public void application() throws Exception {
-        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
-        FileConfiguration config = new FileConfiguration(in);
-        Database.init(config);
-
         User u = Database.createUser();
         assertTrue(Database.getUser(u.keyId()).isPresent());
         assertEquals(u.secret(), Database.getUser(u.keyId()).get().secret());
@@ -96,16 +100,10 @@ public class DatabaseTest {
         Database.safeDeleteApplication(app.getAppid());
 
         assertFalse(Database.getApplication(app.getAppid()).isPresent());
-
-        Database.stop();
     }
 
     @Test
     public void job() throws Exception {
-        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
-        FileConfiguration config = new FileConfiguration(in);
-        Database.init(config);
-
         User u = Database.createUser();
         assertTrue(Database.getUser(u.keyId()).isPresent());
         assertEquals(u.secret(), Database.getUser(u.keyId()).get().secret());
@@ -146,15 +144,10 @@ public class DatabaseTest {
             }
             assertTrue(Database.getJobFromTaskId(taskId).isPresent());
         }
-        Database.stop();
     }
 
     @Test
     public void multiUsers() throws Exception {
-        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
-        FileConfiguration config = new FileConfiguration(in);
-        Database.init(config);
-
         List<User> users = new LinkedList<>();
         for (int i = 0; i < 10; ++i) {
             users.add(Database.createUser());
@@ -199,11 +192,11 @@ public class DatabaseTest {
             System.err.println(a.getAppid() + " " + a.getOwner());
         }
         for (int i = 0; i < 10; ++i) {
+            System.err.println("user>> " + users.get(i).keyId());
             List<Application> ones = Database.getAllApplications(users.get(i).keyId());
             assertEquals(1, ones.size());
             assertEquals(users.get(i).keyId(), ones.get(0).getAppid());
             assertEquals(users.get(i).keyId(), ones.get(0).getOwner());
-
             List<Job> jobs = Database.getAllJobs(users.get(i).keyId());
             assertEquals(1, jobs.size());
             assertEquals(users.get(i).keyId(), jobs.get(0).appid());
@@ -211,6 +204,5 @@ public class DatabaseTest {
         }
 
         Database.deleteAllJob(Integer.MAX_VALUE);
-        Database.stop();
     }
 }

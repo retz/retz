@@ -41,7 +41,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
     private static String databaseURL = null;
-    //private static JdbcConnectionPool pool = null;
     private static DataSource dataSource = new DataSource();
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -57,10 +56,22 @@ public class Database {
         databaseURL = Objects.requireNonNull(config.getDatabaseURL());
         LOG.info("Initializing database {}", databaseURL);
 
-        //pool = JdbcConnectionPool.create(config.getDatabaseURL(), "", "");
         PoolProperties props = new PoolProperties();
+
         props.setUrl(config.getDatabaseURL());
-        props.setDriverClassName("org.h2.Driver");
+        props.setDriverClassName(config.getDatabaseDriver());
+        if(config.getDatabaseUser().isPresent()) {
+            props.setUsername(config.getDatabaseUser().get());
+            if (config.getDatabasePass().isPresent()) {
+                props.setPassword(config.getDatabasePass().get());
+            }
+        }
+        /*
+        props.setDriverClassName("org.postgresql.Driver");
+        props.setUrl("jdbc:postgresql://127.0.0.1:5432/retz");
+        props.setUsername("retz");
+        props.setPassword("retz");
+                */
         props.setValidationQuery("select 1;");
         props.setJmxEnabled(true);
         dataSource.setPoolProperties(props);
@@ -367,9 +378,9 @@ public class Database {
 
     public static List<Job> getAllJobs(String id) throws IOException {
         List<Job> ret = new LinkedList<>();
-        String sql = "SELECT jobs.json FROM jobs";
+        String sql = "SELECT j.json FROM jobs j";
         if (id != null) {
-            sql = "SELECT jobs.json FROM jobs, applications WHERE jobs.appid = applications.appid AND applications.owner = ?";
+            sql = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
         }
         try (Connection conn = dataSource.getConnection(); // pool.getConnection();
              PreparedStatement p = conn.prepareStatement(sql)) {
@@ -380,7 +391,8 @@ public class Database {
 
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
-                    String json = res.getString("jobs.json");
+                    //String json = res.getString("j.json");
+                    String json = res.getString(1);
                     Job job = MAPPER.readValue(json, Job.class);
                     ret.add(job);
                 }
