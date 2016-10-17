@@ -82,9 +82,10 @@ public class LocalProcess {
         String[] localCmd = {"sh", "-c", metaJob.getJob().cmd()}; // TODO: do we really add another 'sh' layer.
         //cmd.addAll(Arrays.asList(metaJob.getJob().cmd().split("[\\s]+")));
 
-        processBuilder.directory(new File(newHome))
-                .redirectError(new File("stderr"))
-                .redirectOutput(new File("stdout"))
+        String sandbox = "/tmp";
+        processBuilder.directory(new File(sandbox))
+                .redirectError(new File(sandbox + "/stderr"))
+                .redirectOutput(new File(sandbox + "/stdout"))
                 .command(localCmd);
 
         start = System.currentTimeMillis();
