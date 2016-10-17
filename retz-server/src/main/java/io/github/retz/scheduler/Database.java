@@ -24,7 +24,8 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
-import org.h2.jdbcx.JdbcConnectionPool;
+import org.apache.tomcat.jdbc.pool.DataSource;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
     private static String databaseURL = null;
-    private static JdbcConnectionPool pool = null;
+    //private static JdbcConnectionPool pool = null;
+    private static DataSource dataSource = new DataSource();
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -55,9 +57,15 @@ public class Database {
         databaseURL = Objects.requireNonNull(config.getDatabaseURL());
         LOG.info("Initializing database {}", databaseURL);
 
-        pool = JdbcConnectionPool.create(config.getDatabaseURL(), "", "");
+        //pool = JdbcConnectionPool.create(config.getDatabaseURL(), "", "");
+        PoolProperties props = new PoolProperties();
+        props.setUrl(config.getDatabaseURL());
+        props.setDriverClassName("org.h2.Driver");
+        props.setValidationQuery("select 1;");
+        props.setJmxEnabled(true);
+        dataSource.setPoolProperties(props);
 
-        try (Connection conn = pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             DatabaseMetaData meta = conn.getMetaData();
 
@@ -83,13 +91,16 @@ public class Database {
 
     public static void stop() {
         LOG.info("Stopping database {}", databaseURL);
-        while (pool.getActiveConnections() > 0) {
+
+        ///while (pool.getActiveConnections() > 0) {
+        while(dataSource.getNumActive() > 0) {
             try {
                 Thread.sleep(512);
             } catch (InterruptedException e) {
             }
         }
-        pool.dispose();
+        dataSource.close();
+        //pool.dispose();
     }
 
     static boolean allTableExists(Connection conn) throws SQLException {
@@ -145,8 +156,9 @@ public class Database {
     static List<User> allUsers() {
         List<User> ret = new LinkedList<>();
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
-        try (Connection conn = pool.getConnection();
-             PreparedStatement p = conn.prepareStatement("SELECT * FROM users")) {
+        //try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection()) {
+            PreparedStatement p = conn.prepareStatement("SELECT * FROM users")) {
             conn.setAutoCommit(true);
 
             try (ResultSet res = p.executeQuery()) {
@@ -177,7 +189,7 @@ public class Database {
 
     public static boolean addUser(User u) {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("INSERT INTO users(key_id, secret, enabled) values(?, ?, ?)")) {
             conn.setAutoCommit(true);
 
@@ -196,7 +208,7 @@ public class Database {
 
     public static Optional<User> getUser(String keyId) {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
-        try (Connection conn = pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()){ //pool.getConnection()) {
             conn.setAutoCommit(false);
             Optional<User> u = getUser(conn, keyId);
             conn.commit();
@@ -238,7 +250,7 @@ public class Database {
 
     public static List<Application> getAllApplications(String id) throws IOException {
         List<Application> ret = new LinkedList<>();
-        try (Connection conn = pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             ret = getApplications(conn, id);
             conn.commit();
@@ -273,7 +285,7 @@ public class Database {
     }
 
     public static boolean addApplication(Application a) throws JsonProcessingException {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("INSERT INTO applications(appid, owner, json) values(?, ?, ?)")) {
             conn.setAutoCommit(false);
 
@@ -299,7 +311,7 @@ public class Database {
     }
 
     public static Optional<Application> getApplication(String appid) throws IOException {
-        try (Connection conn = pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(true);
             return getApplication(conn, appid);
         } catch (SQLException e) {
@@ -329,7 +341,7 @@ public class Database {
     }
 
     public static void safeDeleteApplication(String appid) {
-        try (Connection conn = pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             // TODO: check there are no non-finished Jobs
             // TODO: THINK: what about finished jobs??????
@@ -359,7 +371,7 @@ public class Database {
         if (id != null) {
             sql = "SELECT jobs.json FROM jobs, applications WHERE jobs.appid = applications.appid AND applications.owner = ?";
         }
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); // pool.getConnection();
              PreparedStatement p = conn.prepareStatement(sql)) {
             if( id != null) {
                 p.setString(1, id);
@@ -382,7 +394,7 @@ public class Database {
     // Selects all "finished" jobs
     public static List<Job> finishedJobs(String id, String start, String end) {
         List<Job> ret = new LinkedList<>();
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE owner=? AND ? <= finished AND finished < ?")) {
             conn.setAutoCommit(true);
 
@@ -409,7 +421,7 @@ public class Database {
 
     static List<Job> findFit(int cpu, int memMB) throws IOException {
         List<Job> ret = new LinkedList<>();
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC")) {
             conn.setAutoCommit(true);
 
@@ -468,7 +480,7 @@ public class Database {
     }
 
     public static void safeAddJob(Job j) {
-        try (Connection conn = pool.getConnection()) {
+        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
 
             Optional<Application> app = getApplication(conn, j.appid());
@@ -487,7 +499,7 @@ public class Database {
     }
 
     public static Optional<Job> getJob(int id) throws JsonProcessingException, IOException {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE id = ?")) {
             conn.setAutoCommit(true);
             p.setInt(1, id);
@@ -510,7 +522,7 @@ public class Database {
     }
 
     public static Optional<Job> getJobFromTaskId(String taskId) throws JsonProcessingException, IOException {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE taskid=?")) {
             conn.setAutoCommit(true);
 
@@ -537,7 +549,7 @@ public class Database {
 
     // Delete all jobs that has ID smaller than id
     public static void deleteAllJob(int maxId) {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("DELETE FROM jobs WHERE id < ?")) {
             conn.setAutoCommit(true);
             p.setInt(1, maxId);
@@ -556,7 +568,7 @@ public class Database {
     }
 
     static void updateJob(int id, Function<Job, Optional<Job>> fun) {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE id=?")) {
             conn.setAutoCommit(false);
             p.setInt(1, id);
@@ -583,7 +595,7 @@ public class Database {
     }
 
     public static int countJobs() {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs")) {
             conn.setAutoCommit(true);
             try (ResultSet set = p.executeQuery()) {
@@ -598,7 +610,7 @@ public class Database {
     }
 
     static int countRunning() {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);
             p.setString(1, Job.JobState.STARTED.toString());
@@ -614,7 +626,7 @@ public class Database {
     }
 
     public static int getLatestJobId() {
-        try (Connection conn = pool.getConnection();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT id FROM jobs ORDER BY id DESC LIMIT 1")) {
             conn.setAutoCommit(true);
             try (ResultSet res = p.executeQuery()) {
