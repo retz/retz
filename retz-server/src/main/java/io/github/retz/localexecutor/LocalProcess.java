@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -36,12 +35,10 @@ public class LocalProcess {
     private Process p;
     private Protos.TaskInfo task;
     private MetaJob metaJob;
-    private List<Integer> assigned;
 
-    public LocalProcess(Protos.TaskInfo task, MetaJob metaJob, List<Integer> assigned) {
+    public LocalProcess(Protos.TaskInfo task, MetaJob metaJob) {
         this.task = Objects.requireNonNull(task);
         this.metaJob = metaJob;
-        this.assigned = assigned;
     }
 
     public synchronized Protos.TaskInfo getTaskInfo() {
@@ -70,7 +67,7 @@ public class LocalProcess {
             return false;
         }
 
-        EnvBuilder envBuilder = new EnvBuilder(assigned.size(), resource.memMB(), path);
+        EnvBuilder envBuilder = new EnvBuilder((int)resource.cpu(), resource.memMB(), path);
         if (metaJob.getJob().props() != null) {
             envBuilder.putAll(metaJob.getJob().props());
         }
@@ -94,7 +91,6 @@ public class LocalProcess {
 
         LOG.info("Running command: {}", metaJob.getJob().cmd()); //String.join(" ", argv));
         try {
-            LOG.info("Assigning CPU cores [{}] to {}", CPUManager.listIntToString(assigned), task.getTaskId());
             p = processBuilder.start();
         } catch (IOException e) {
             LOG.error(e.toString());

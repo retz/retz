@@ -143,7 +143,6 @@ project(':retz-server') {
 
         // For local executor
         compile 'org.apache.commons:commons-compress:1.12'
-        compile 'org.xerial:jnuma:0.1.3'
     }
 
     task processResources.doLast {

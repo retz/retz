@@ -28,7 +28,6 @@ public class MesosExecutorLauncher {
     public static void main(String... argv) {
         String cwd = System.getProperty("user.dir");
         LOG.info("Executor running on {} with {}", cwd, String.join(" ", argv));
-        LOG.info(CPUManager.get().toString());
         RetzExecutor executor = new RetzExecutor();
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
         LocalProcessManager.start(driver);

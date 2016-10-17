@@ -66,7 +66,6 @@ public class RetzExecutorTest {
 
     @Test
     public void run() {
-        int startcpu = CPUManager.get().availableCPUCount();
 
         assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
@@ -78,13 +77,11 @@ public class RetzExecutorTest {
         assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
 
-        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     // TODO: make this kind of tests as quickchecky state machine test
     @Test
     public void fuzz() {
-        int startcpu = CPUManager.get().availableCPUCount();
         assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
 
         // check no exception thrown
@@ -93,12 +90,10 @@ public class RetzExecutorTest {
         executor.shutdown(driver);
         executor.error(driver, "noooooooooooooooooooooooooooooop");
 
-        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     @Test
     public void launchTaskTest() throws IOException, InterruptedException {
-        int startcpu = CPUManager.get().availableCPUCount();
         assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
 
@@ -131,50 +126,10 @@ public class RetzExecutorTest {
         assertThat(jobResult.result(), is(0));
         assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
-        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
-    }
-
-    @Test
-    public void notEnough() throws IOException {
-        int startcpu = CPUManager.get().availableCPUCount();
-        assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
-        // check registered called
-
-        String tempFilename = FilenameUtils.concat("/tmp", folder.newFile().getName());
-        System.err.println("Temporary file: " + tempFilename);
-        assertFalse(new File(tempFilename).exists());
-
-        int cpus = 32;
-        int memMB = 128;
-        Application app = new Application("some-app", new LinkedList<>(), new LinkedList<>(), new LinkedList<>(),
-                Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(),true);
-        Job job = new Job("appname", "touch " + tempFilename, null, cpus, memMB);
-        MetaJob metaJob = new MetaJob(job, app);
-        Protos.TaskInfo task = Protos.TaskInfo.newBuilder()
-                .setTaskId(Protos.TaskID.newBuilder().setValue("foobar-task").build())
-                .setData(ByteString.copyFromUtf8(mapper.writeValueAsString(metaJob)))
-                .setExecutor(executor.getExecutorInfo())
-                .setSlaveId(executor.getSlaveInfo().getId())
-                .addAllResources(ResourceConstructor.construct(cpus, memMB))
-                .setName("yeah, holilday!")
-                .build();
-
-        executor.launchTask(driver, task);
-
-        assertFalse(new File(tempFilename).exists());
-        Optional<Protos.TaskStatus> status = driver.getUpdatedStatus();
-        assertTrue(status.isPresent());
-        assertThat(status.get().getState(), is(Protos.TaskState.TASK_KILLED));
-
-        assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
-        // check shutdown called
-
-        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 
     @Test
     public void invalidJsonOnLaunchTask() throws IOException {
-        int startcpu = CPUManager.get().availableCPUCount();
         assertThat(driver.start(), is(Protos.Status.DRIVER_RUNNING));
         // check registered called
 
@@ -206,6 +161,5 @@ public class RetzExecutorTest {
         assertThat(driver.stop(), is(Protos.Status.DRIVER_STOPPED));
         // check shutdown called
 
-        assertThat(CPUManager.get().availableCPUCount(), is(startcpu));
     }
 }

@@ -96,17 +96,7 @@ public class LocalProcessManager implements Runnable {
             return;
         }
 
-        List<Integer> assigned = CPUManager.get().assign(task.getTaskId().getValue(), cpus);
-        LOG.info("Given {}cpus/{}MB by Mesos, CPUManager got {}", cpus, memMB, assigned.size());
-
-        if (assigned.isEmpty()) {
-            LOG.error("No CPU was assigned by CPUManager at task {}", task.getTaskId().getValue());
-            // XXX: must not reach here as long as Mesos resource allocation is correct
-            MANAGER.killed(task);
-            return;
-        }
-
-        LocalProcess p = new LocalProcess(task, metaJob, assigned);
+        LocalProcess p = new LocalProcess(task, metaJob);
         MANAGER.starting(task.getTaskId());
 
         if (p.start()) {
@@ -153,7 +143,6 @@ public class LocalProcessManager implements Runnable {
                 .setTaskId(task.getTaskId())
                 .setMessage("killed")
                 .setState(Protos.TaskState.TASK_KILLED);
-        CPUManager.get().free(task.getTaskId().getValue());
 
         JobResult jobResult = new JobResult(task.getTaskId().getValue(), -42,
                 TimestampHelper.now(), "Job was killed");
@@ -179,7 +168,6 @@ public class LocalProcessManager implements Runnable {
         }
         for (LocalProcess localProcess : finished) {
             Protos.TaskInfo task = localProcess.getTaskInfo();
-            CPUManager.get().free(task.getTaskId().getValue());
             int status = localProcess.handle();
 
             JobResult jobResult = new JobResult(task.getTaskId().getValue(),
