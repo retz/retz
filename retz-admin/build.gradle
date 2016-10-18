@@ -16,7 +16,7 @@ dependencies {
 
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile 'org.slf4j:slf4j-simple:1.7.21'
-    compile group: 'com.j256.simplejmx', name: 'simplejmx', version: '1.12'
+    compile group: 'com.j256.simplejmx', name: 'simplejmx', version: '1.13'
     compile "com.beust:jcommander:1.48"
 
 }

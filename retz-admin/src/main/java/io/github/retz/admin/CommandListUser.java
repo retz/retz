@@ -16,7 +16,6 @@
  */
 package io.github.retz.admin;
 
-import com.beust.jcommander.Parameter;
 import com.j256.simplejmx.client.JmxClient;
 import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
@@ -40,7 +39,7 @@ public class CommandListUser implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) {
-        try(ClosableJmxClient jmxClient = new ClosableJmxClient("localhost", 9999)) {
+        try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
         /*
         Set<ObjectName> objectNames = jmxClient.getBeanNames();
         for (ObjectName on : objectNames) {

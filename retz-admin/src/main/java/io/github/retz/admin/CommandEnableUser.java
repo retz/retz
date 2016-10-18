@@ -17,6 +17,7 @@
 package io.github.retz.admin;
 
 import com.beust.jcommander.Parameter;
+import com.j256.simplejmx.client.JmxClient;
 import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class CommandEnableUser implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) {
-        try(ClosableJmxClient jmxClient = new ClosableJmxClient("localhost", 9999)) {
+        try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
             Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "enableUser", id, true);
             boolean result = (Boolean)o;
             LOG.info("User enabled: {}", result);
