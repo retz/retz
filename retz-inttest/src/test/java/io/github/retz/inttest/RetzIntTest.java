@@ -16,6 +16,7 @@
  */
 package io.github.retz.inttest;
 
+import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
@@ -23,7 +24,7 @@ import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
@@ -43,6 +43,35 @@ import static org.junit.Assert.*;
  */
 public class RetzIntTest extends IntTestBase {
     private static final int RES_OK = 0;
+    private static ClosableContainer container;
+    private final String configfile = "retz.properties";
+
+    @BeforeClass
+    public static void setupContainer() throws Exception {
+        container = createContainer(CONTAINER_NAME);
+        container.setConfigfile("retz.properties");
+        container.start();
+
+        System.out.println();
+        System.out.println("====================");
+        System.out.println("Processes (by ps -awxx)");
+        System.out.println(container.ps());
+        System.out.println();
+        System.out.println("====================");
+        System.out.println(container.getRetzServerPid());
+    }
+
+    @AfterClass
+    public static void cleanupContainer() throws Exception {
+        container.close();
+    }
+
+    @Before
+    public void loadConfig() throws Exception {
+        config = new FileConfiguration("src/test/resources/" + configfile);
+        assertEquals(RETZ_HOST, config.getUri().getHost());
+        assertEquals(RETZ_PORT, config.getUri().getPort());
+    }
 
     @Test
     public void listAppTest() throws Exception {

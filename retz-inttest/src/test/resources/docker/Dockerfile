@@ -48,6 +48,7 @@ COPY mesos-master_default /etc/default/mesos-master
 # Copy retz.properties file here, because it will be rewritten by the
 # above spawn script for IP address setting.
 COPY retz.properties /retz.properties
+COPY retz-persistent.properties /retz-persistent.properties
 
 # Want to know Mesos version
 RUN ls -l /usr/lib/libmesos*

@@ -22,8 +22,9 @@ set -x
 
 IP_ADDR=`ip -f inet address show eth0 | grep inet | awk {'print $2;}' | cut -d/ -f1`
 echo "eth0 IP address used by retz-server: " ${IP_ADDR}
+echo "Configuration file: " $1
 
-sed -i -e 's/##IP##/'${IP_ADDR}'/' retz.properties
+sed -i -e 's/##IP##/'${IP_ADDR}'/' $1
 
 nohup java -jar /build/libs/retz-server-all.jar \
-    -C /retz.properties > /build/log/retz-server.log 2>&1 &
+    -C /$1 >> /build/log/retz-server.log 2>&1 &

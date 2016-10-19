@@ -236,6 +236,7 @@ project(':retz-client') {
 project('retz-inttest') {
     dependencies {
         testCompile project(":retz-client")
+        testCompile project(":retz-admin")
         testCompile 'com.github.docker-java:docker-java:3.0.0'
     }
 
