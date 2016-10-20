@@ -299,9 +299,9 @@ public class FileConfiguration {
 
     public static String userAsConfig(User u) {
         StringBuilder builder = new StringBuilder()
-                .append(AUTHENTICATION).append(" = true")
-        .append(ACCESS_KEY).append(" = ").append(u.keyId())
-        .append(ACCESS_SECRET).append(" = ").append(u.secret());
+                .append(AUTHENTICATION).append(" = true\n")
+        .append(ACCESS_KEY).append(" = ").append(u.keyId()).append("\n")
+        .append(ACCESS_SECRET).append(" = ").append(u.secret()).append("\n");
         return builder.toString();
     }
 }

@@ -23,10 +23,40 @@ import static org.junit.Assert.assertEquals;
 public class LauncherTest {
     @Test
     public void cli() throws Exception {
-        String[] argv = {"create-user"};
-        Launcher.Configuration conf = Launcher.parseConfiguration(argv);
-        assertEquals("create-user", conf.getParsedSubCommand().getName());
-
-        // TODO add tests of other CLI options
+        {
+            String[] argv = {"create-user"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("create-user", conf.getParsedSubCommand().getName());
+        }
+        {
+            String[] argv = {"disable-user", "-id", "kao"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("disable-user", conf.getParsedSubCommand().getName());
+        }
+        {
+            String[] argv = {"enable-user", "-id", "kao"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("enable-user", conf.getParsedSubCommand().getName());
+        }
+        {
+            String[] argv = {"get-user", "-id", "kao"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("get-user", conf.getParsedSubCommand().getName());
+        }
+        {
+            String[] argv = {"help", "-s", "get-user"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("help", conf.getParsedSubCommand().getName());
+        }
+        {
+            String[] argv = {"list-user"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("list-user", conf.getParsedSubCommand().getName());
+        }
+        {
+            String[] argv = {"usage", "-id", "kao"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("usage", conf.getParsedSubCommand().getName());
+        }
     }
 }

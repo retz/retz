@@ -42,9 +42,9 @@ public class CommandListUser implements SubCommand {
     @Override
     public int handle(FileConfiguration fileConfig) throws Throwable {
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
-            List<User> users = client.listUsersAsObject();
-            for(User user: users) {
-                LOG.info("User id={}, enabled={}", user.keyId(), user.enabled());
+            List<String> users = client.listUser();
+            for(String id: users) {
+                LOG.info(id);
             }
             return 0;
         }

@@ -21,6 +21,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.j256.simplejmx.client.JmxClient;
 import io.github.retz.bean.AdminConsoleMXBean;
 import io.github.retz.protocol.data.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -31,6 +33,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
+    static final Logger LOG = LoggerFactory.getLogger(AdminConsoleClient.class);
 
     private JmxClient client;
     private ObjectName objectName;
@@ -61,17 +64,6 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         } catch (Exception o) {
             return Arrays.asList();
         }
-    }
-
-    public List<User> listUsersAsObject() {
-        List<String> lines = listUser();
-        return lines.stream().map(line -> {
-            try {
-                return mapper.readValue(line, User.class);
-            } catch (IOException e) {
-                return null;
-            }
-        }).collect(Collectors.toList());
     }
 
     @Override
