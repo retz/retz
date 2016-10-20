@@ -58,12 +58,12 @@ public class Launcher {
         SUB_COMMANDS.addAll(Arrays.asList(subCommands));
     }
 
-    public static void main(String... argv) throws Exception {
+    public static void main(String... argv) throws Throwable {
         int status = execute(argv);
         System.exit(status);
     }
 
-    public static int execute(String... argv) {
+    public static int execute(String... argv) throws Throwable {
         try {
             Configuration conf = parseConfiguration(argv);
             JCommander commander = conf.commander;

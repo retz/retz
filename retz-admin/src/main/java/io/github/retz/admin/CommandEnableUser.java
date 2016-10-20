@@ -42,20 +42,13 @@ public class CommandEnableUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
+    public int handle(FileConfiguration fileConfig) throws Throwable {
         try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
             Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "enableUser", id, true);
             boolean result = (Boolean)o;
             LOG.info("User enabled: {}", result);
             return 0;
-        } catch (JMException e){
-            LOG.error(e.toString());
-            e.printStackTrace();
-        } catch (Exception e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
         }
-        return -1;
     }
 }
 

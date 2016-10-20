@@ -30,6 +30,7 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.StringJoiner;
 
 // TODO: Most of items here have become server-specific. Move them out of common to server with proper abstraction
 public class FileConfiguration {
@@ -294,5 +295,13 @@ public class FileConfiguration {
                 .append(", checkCert=").append(checkCert)
                 .append("]")
                 .toString();
+    }
+
+    public static String userAsConfig(User u) {
+        StringBuilder builder = new StringBuilder()
+                .append(AUTHENTICATION).append(" = true")
+        .append(ACCESS_KEY).append(" = ").append(u.keyId())
+        .append(ACCESS_SECRET).append(" = ").append(u.secret());
+        return builder.toString();
     }
 }

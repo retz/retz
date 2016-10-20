@@ -42,20 +42,12 @@ public class CommandDisableUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
-        try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
-            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "enableUser", id, false);
-            boolean result = (Boolean)o;
+    public int handle(FileConfiguration fileConfig) throws Throwable {
+        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+            boolean result = client.enableUser(id, false);
             LOG.info("User disabled: {}", result);
             return 0;
-        } catch (JMException e){
-            LOG.error(e.toString());
-            e.printStackTrace();
-        } catch (Exception e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
         }
-        return -1;
     }
 }
 

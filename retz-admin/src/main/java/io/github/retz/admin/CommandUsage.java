@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.management.JMException;
 import javax.management.ObjectName;
+import java.util.List;
 
 public class CommandUsage implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUsage.class);
@@ -48,20 +49,14 @@ public class CommandUsage implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
-        try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
-            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "createUser", id, start, end);
-            String[] s = (String[])o;
-            for (String line : s) {
-                LOG.info(line); // JSON of jobs
+    public int handle(FileConfiguration fileConfig) throws Throwable {
+        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+            List<String> lines = client.getUsage(id, start, end);
+            for(String line: lines) {
+                LOG.info(line);
             }
             return 0;
-        } catch (JMException e){
-            LOG.error(e.toString());
-        } catch (Exception e) {
-            LOG.error(e.toString());
         }
-        return -1;
     }
 }
 

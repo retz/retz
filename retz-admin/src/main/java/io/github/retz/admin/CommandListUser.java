@@ -18,11 +18,13 @@ package io.github.retz.admin;
 
 import com.j256.simplejmx.client.JmxClient;
 import io.github.retz.cli.FileConfiguration;
+import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.JMException;
 import javax.management.ObjectName;
+import java.util.List;
 
 public class CommandListUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListUser.class);
@@ -38,30 +40,14 @@ public class CommandListUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
-        try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
-        /*
-        Set<ObjectName> objectNames = jmxClient.getBeanNames();
-        for (ObjectName on : objectNames) {
-            LOG.info(on.toString());
-        }
-        jmxClient.invokeOperation(new ObjectName("java.lang:type=Memory"), "gc");
-        */
-            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "listUser");
-            LOG.debug("{}: {}", o.getClass().getName(), o.toString());
-            String[] users = (String[]) o;
-            //List<String> users = (List<String>)o;
-            for (String user : users) {
-                LOG.info(user);
+    public int handle(FileConfiguration fileConfig) throws Throwable {
+        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+            List<User> users = client.listUsersAsObject();
+            for(User user: users) {
+                LOG.info("User id={}, enabled={}", user.keyId(), user.enabled());
             }
             return 0;
-        } catch (JMException e){
-            LOG.error(e.toString());
-        } catch (Exception e) {
-            LOG.error(e.toString());
         }
-        return -1;
-
     }
 }
 

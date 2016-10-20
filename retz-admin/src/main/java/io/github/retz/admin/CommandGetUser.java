@@ -19,6 +19,7 @@ package io.github.retz.admin;
 import com.beust.jcommander.Parameter;
 import com.j256.simplejmx.client.JmxClient;
 import io.github.retz.cli.FileConfiguration;
+import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,18 +43,12 @@ public class CommandGetUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
-        try(JmxClient jmxClient = new JmxClient("localhost", 9999)) {
-            Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "getUser", id);
-            String json = (String)o;
-            LOG.info(json);
+    public int handle(FileConfiguration fileConfig) throws Throwable  {
+        try (AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+            User user = client.getUserAsObject(id);
+            LOG.info("User id={}, enabled={}", user.keyId(), user.enabled());
             return 0;
-        } catch (JMException e){
-            LOG.error(e.toString());
-        } catch (Exception e) {
-            LOG.error(e.toString());
         }
-        return -1;
     }
 }
 
