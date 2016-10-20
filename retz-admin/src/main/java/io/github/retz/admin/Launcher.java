@@ -89,7 +89,7 @@ public class Launcher {
             LOG.error("{}", e.toString());
             help(SUB_COMMANDS);
         }
-        return 0;
+        return -1;
     }
 
     public static void help() {

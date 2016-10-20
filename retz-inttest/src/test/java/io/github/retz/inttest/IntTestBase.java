@@ -63,7 +63,7 @@ public class IntTestBase {
         ClosableContainer.removeIfExists(dockerClient, containerName);
 
         Ports portBindings = new Ports();
-        List<ExposedPort> ports = Arrays.asList(15050, 15051, RETZ_PORT).stream()
+        List<ExposedPort> ports = Arrays.asList(15050, 15051, RETZ_PORT, 9999).stream()
                 .map(port -> ExposedPort.tcp(port)).collect(Collectors.toList());
         ports.forEach(port -> portBindings.bind(port, Ports.Binding.bindPort(port.getPort())));
 

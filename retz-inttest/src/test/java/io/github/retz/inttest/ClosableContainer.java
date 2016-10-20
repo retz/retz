@@ -31,6 +31,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class ClosableContainer implements AutoCloseable {
     private final DockerClient dockerClient;
@@ -187,6 +188,18 @@ public class ClosableContainer implements AutoCloseable {
         Thread.sleep(3 * 1024); // 3 seconds rule
         String ps = ps();
         return !ps.contains("retz-server-all.jar");
+    }
+
+    public String system(String[] command) throws Exception {
+        ExecCreateCmdResponse spawnAgent = dockerClient
+                .execCreateCmd(containerId).withTty(true)
+                .withAttachStdout(true).withAttachStderr(true)
+                .withCmd(command).exec();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        dockerClient.execStartCmd(spawnAgent.getId()).withDetach(false)
+                .exec(new ExecStartResultCallback(out, System.err))
+                .awaitCompletion(8, TimeUnit.SECONDS);
+        return out.toString(String.valueOf(StandardCharsets.UTF_8));
     }
 
     private Runnable createHolderTask(String name, String[] command) {

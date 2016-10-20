@@ -32,9 +32,7 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.*;
 
-import static io.github.retz.inttest.IntTestBase.RETZ_HOST;
-import static io.github.retz.inttest.IntTestBase.RETZ_PORT;
-import static io.github.retz.inttest.IntTestBase.createContainer;
+import static io.github.retz.inttest.IntTestBase.*;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
@@ -175,7 +173,47 @@ public class PersistenceTest {
             }
             System.err.println("[SUCCESS] ＼(≧▽≦)／");
         }
+    }
 
+    @Test
+    public void userTest() throws Exception {
+        System.err.println("Connecting to " + RETZ_HOST);
+        // create-user, list-user, disable-user, enable-user, get-user
+        {
+            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "list-user"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "create-user"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "get-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "disable-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "get-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "fail!"};
+            verifyCommandFails(command, "ERROR");
+        }
+    }
+
+    private void verifyCommand(String[] command) throws  Exception {
+        String result = container.system(command);
+        assertFalse(result, result.contains("ERROR"));
+        assertFalse(result, result.contains("Error"));
+    }
+
+    private void verifyCommandFails(String[] command, String word) throws Exception {
+        String result = container.system(command);
+        assertTrue(result, result.contains(word));
     }
 }
 

@@ -24,6 +24,7 @@ import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.JMException;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.IOException;
@@ -39,6 +40,9 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
     private ObjectName objectName;
     private ObjectMapper mapper;
 
+    public AdminConsoleClient(String host, int port) throws JMException {
+        this(new JmxClient(host, port));
+    }
     public AdminConsoleClient(JmxClient client) throws MalformedObjectNameException {
         this.client = Objects.requireNonNull(client);
         objectName = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
