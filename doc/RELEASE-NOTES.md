@@ -2,6 +2,8 @@
 
 ## 0.0.28
 
+* Add integer priority field to 'Job' object in the protocol for future use.
+  This introduces incompatible change to client-server protocol.
 * Preserve Framework id in database and reuse it after restart. Mesos
   scheduler failover timeout is now set as 1 week (hard coded). Now
   Retz has at most one week maintenance window without losing any

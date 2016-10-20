@@ -33,11 +33,12 @@ public class Job {
     private String finished;
     private Properties props;
     private int result = -1;
-    // REVIEW: Use @JsonProperty(required=true) only if it is mandatory,
-    private int id; // TODO This becomes 0 when the JSON property is absent...
+
+    private int id;
     private String url;
     private String reason;
     private int retry; // How many retry now we have
+    private int priority;
 
     private final String appid;
     private String name; // TODO: make this configurable;
@@ -76,6 +77,7 @@ public class Job {
         this.gpu = 0;
         this.state = CREATED;
         this.retry = 0;
+        this.priority = 0;
     }
 
     public Job(String appName, String cmd, Properties props, int cpu, int memMB, int gpu) {
@@ -94,6 +96,7 @@ public class Job {
                @JsonProperty("url") String url,
                @JsonProperty("reason") String reason,
                @JsonProperty("retry") int retry,
+               @JsonProperty("priority") int priority,
                @JsonProperty(value = "appid", required = true) String appid,
                @JsonProperty(value = "name") String name,
                @JsonProperty("cpu") int cpu,
@@ -112,6 +115,7 @@ public class Job {
         this.url = url;
         this.reason = reason;
         this.retry = retry;
+        this.priority = priority;
         this.appid = appid;
         this.name = name;
         assert cpu > 0;
@@ -172,6 +176,11 @@ public class Job {
     @JsonGetter("retry")
     public int retry() {
         return retry;
+    }
+
+    @JsonGetter("priority")
+    public int priority() {
+        return priority;
     }
 
     @JsonGetter("appid")
