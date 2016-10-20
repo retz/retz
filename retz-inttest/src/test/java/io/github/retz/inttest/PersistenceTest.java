@@ -32,18 +32,21 @@ import org.junit.Test;
 import java.net.URI;
 import java.util.*;
 
+import static io.github.retz.inttest.IntTestBase.RETZ_HOST;
+import static io.github.retz.inttest.IntTestBase.RETZ_PORT;
+import static io.github.retz.inttest.IntTestBase.createContainer;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
 
-public class PersistenceTest extends IntTestBase {
+public class PersistenceTest {
     private static final int JOB_AMOUNT = 64;
     private static ClosableContainer container;
-    private final String configfile = "retz-persistent.properties";
+    protected FileConfiguration config;
 
     @BeforeClass
     public static void setupContainer() throws Exception {
-        container = createContainer(CONTAINER_NAME);
+        container = createContainer(IntTestBase.CONTAINER_NAME);
         container.setConfigfile("retz-persistent.properties");
         container.start();
 
@@ -66,6 +69,7 @@ public class PersistenceTest extends IntTestBase {
         config = new FileConfiguration("src/test/resources/retz-persistent.properties");
         assertEquals(RETZ_HOST, config.getUri().getHost());
         assertEquals(RETZ_PORT, config.getUri().getPort());
+
     }
 
     @Test
@@ -76,7 +80,7 @@ public class PersistenceTest extends IntTestBase {
         List<String> e = Arrays.asList();
         Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
                 user.keyId(), new MesosContainer(), true);
-        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 
         try (Client client = Client.newBuilder(uri).enableAuthentication(true).setAuthenticator(config.getAuthenticator()).build()) {
 

@@ -35,16 +35,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.github.retz.inttest.IntTestBase.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 /**
  * Simple integration test cases for retz-server / -executor.
  */
-public class RetzIntTest extends IntTestBase {
+public class RetzIntTest {
     private static final int RES_OK = 0;
     private static ClosableContainer container;
-    private final String configfile = "retz.properties";
+    private static final String configfile = "retz.properties";
+    protected FileConfiguration config;
 
     @BeforeClass
     public static void setupContainer() throws Exception {
@@ -75,7 +77,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void listAppTest() throws Exception {
-        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         Client client = Client.newBuilder(uri)
                 .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
@@ -94,7 +96,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void runAppTest() throws Exception {
-        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         Client client = Client.newBuilder(uri)
                 .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
@@ -140,7 +142,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void killTest() throws Exception {
-        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         Client client = Client.newBuilder(uri)
                 .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
@@ -193,7 +195,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void scheduleAppTest() throws Exception {
-        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 
         try (Client client = Client.newBuilder(uri)
                 .enableAuthentication(config.authenticationEnabled())
@@ -312,7 +314,7 @@ public class RetzIntTest extends IntTestBase {
 
     @Test
     public void scheduleAppTest2() throws Exception {
-        URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
                 .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())

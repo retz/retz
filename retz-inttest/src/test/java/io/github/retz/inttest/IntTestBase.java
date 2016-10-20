@@ -43,11 +43,8 @@ public class IntTestBase {
     public static final String CONTAINER_NAME = "retz-inttest-ertpqgh34jv9air";
     public static final String RETZ_HOST = "127.0.0.1";
     public static final int RETZ_PORT = 19090;
-    protected static String configfile;
     // Probably better to make log and downloading directories for testc ases.
     private static String hostBuildDir;
-    private static ClosableContainer container;
-    protected FileConfiguration config;
 
     public static ClosableContainer createContainer(String containerName) throws Exception {
         hostBuildDir = new File("./build/").getCanonicalPath();
