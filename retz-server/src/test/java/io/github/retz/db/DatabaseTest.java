@@ -16,21 +16,17 @@
  */
 package io.github.retz.db;
 
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.User;
 import io.github.retz.scheduler.JobQueue;
-import io.github.retz.scheduler.Launcher;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.InputStream;
 import java.util.*;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;

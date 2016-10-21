@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,6 +70,9 @@ public final class Launcher {
             LOG.error(e.toString());
             return -1;
         } catch (URISyntaxException e) {
+            LOG.error(e.toString());
+            return -1;
+        } catch (SQLException e){
             LOG.error(e.toString());
             return -1;
         } catch (IOException e) {

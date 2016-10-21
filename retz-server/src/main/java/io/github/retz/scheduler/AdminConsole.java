@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,8 +43,12 @@ public class AdminConsole implements AdminConsoleMXBean {
     @Override
     public String createUser() {
         LOG.info("AdminConsole.createUser()");
-        User user = Database.getInstance().createUser();
-        return maybeEncodeAsJSON(user);
+        try {
+            User user = Database.getInstance().createUser();
+            return maybeEncodeAsJSON(user);
+        } catch (SQLException e){
+            return errorJSON(e.toString());
+        }
     }
 
     @Override
@@ -79,7 +84,11 @@ public class AdminConsole implements AdminConsoleMXBean {
             return MAPPER.writeValueAsString(o);
         } catch (IOException e) {
             LOG.error(e.toString());
-            return "{\"error\":\"" + e.toString() + "\"}";
+            return errorJSON(e.toString());
         }
+    }
+
+    private String errorJSON(String message) {
+        return "{\"error\":\"" + message + "\"}";
     }
 }

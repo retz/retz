@@ -24,6 +24,7 @@ apply plugin: 'nebula-aggregate-javadocs'
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'scala'
     apply plugin: 'findbugs'
     apply plugin: "com.github.hierynomus.license"
 
@@ -39,12 +40,12 @@ subprojects {
     dependencies {
         compile 'org.slf4j:slf4j-api:1.7.21'
 
-        // Declare the dependency for your favourite test framework you want to use in your tests.
-        // TestNG is also supported by the Gradle Test task. Just change the
-        // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
-        // 'test.useTestNG()' to your build script.
         testCompile 'junit:junit:4.12'
         testCompile 'org.hamcrest:hamcrest-library:1.3'
+
+        testCompile 'org.scalacheck:scalacheck_2.11:1.13.+'
+        testCompile 'org.scalatest:scalatest_2.11:3.0.+'
+        testCompile 'org.scala-lang:scala-library:2.11.+'
     }
 
     jar {
@@ -145,6 +146,13 @@ project(':retz-server') {
         compile 'org.apache.commons:commons-compress:1.12'
     }
 
+    test {
+        useJUnit()
+        testLogging { // Show that tests are run in the command-line output
+            events 'started', 'passed'
+        }
+    }
+
     task processResources.doLast {
         makePropertyFile("${buildDir}", "main", project.name, project.version)
     }
@@ -160,6 +168,8 @@ project(':retz-server') {
     }
 
     mainClassName = 'io.github.retz.scheduler.Launcher'
+
+    findbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
 
     ospackage {
         os = LINUX
@@ -243,7 +253,6 @@ project('retz-admin') {
         compile 'org.slf4j:slf4j-simple:1.7.21'
         compile group: 'com.j256.simplejmx', name: 'simplejmx', version: '1.13'
         compile "com.beust:jcommander:1.48"
-
     }
 
     mainClassName = 'io.github.retz.admin.Launcher'
