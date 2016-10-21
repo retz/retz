@@ -16,7 +16,6 @@
  */
 package io.github.retz.scheduler;
 
-import org.apache.mesos.Protos;
 import org.junit.Test;
 
 import java.io.IOException;

@@ -30,7 +30,6 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.StringJoiner;
 
 // TODO: Most of items here have become server-specific. Move them out of common to server with proper abstraction
 public class FileConfiguration {

@@ -16,8 +16,9 @@
  */
 package io.github.retz.db;
 
-/**
- * Created by kuenishi on 16/10/17.
- */
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+
 public class PropertyTest {
 }

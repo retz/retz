@@ -47,7 +47,7 @@ public class RetzSchedulerTest {
     ObjectMapper mapper;
 
     @Before
-    public void before() throws IOException, URISyntaxException {
+    public void before() throws Exception {
         mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
 
@@ -136,8 +136,8 @@ public class RetzSchedulerTest {
         driver.stop();
     }
 
-    // @Test
-    public void notEnough() throws InterruptedException {
+    @Test
+    public void notEnough() throws Exception {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true));
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),

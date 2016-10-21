@@ -50,6 +50,7 @@ public class JobQueueTest {
     public void after() throws Exception {
         Database.getInstance().deleteAllJob(Integer.MAX_VALUE);
         Database.getInstance().deleteAllProperties();
+        Database.getInstance().clear(); // Deleting users and applications?
         Database.getInstance().stop();
     }
     @Test
