@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.*;
         @JsonSubTypes.Type(name = "get-file", value = GetFileResponse.class),
         @JsonSubTypes.Type(name = "list-files", value = ListFilesResponse.class),
         @JsonSubTypes.Type(name = "kill", value = KillResponse.class),
-        @JsonSubTypes.Type(name = "watch", value = WatchResponse.class),
         @JsonSubTypes.Type(name = "get-app", value = GetAppResponse.class),
         @JsonSubTypes.Type(name = "load-app", value = LoadAppResponse.class),
         @JsonSubTypes.Type(name = "unload-app", value = UnloadAppResponse.class),

@@ -241,17 +241,6 @@ public class WebConsoleTest {
     }
 
     @Test
-    public void watch() throws Exception {
-        webClient.startWatch((watchResponse) -> {
-            assertThat(watchResponse, instanceOf(WatchResponse.class));
-            System.err.println(((WatchResponse) watchResponse).status());
-            return false;
-        });
-        //System.err.println(res.status);
-        webClient.disconnect();
-    }
-
-    @Test
     public void ping() throws IOException {
         Client c = Client.newBuilder(config.getUri())
                 .enableAuthentication(config.authenticationEnabled())

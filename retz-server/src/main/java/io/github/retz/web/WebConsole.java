@@ -55,7 +55,6 @@ public final class WebConsole {
     private static Optional<SchedulerDriver> driver = Optional.empty();
 
     private Thread clientMonitorThread;
-    private ClientMonitor clientMonitor;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
@@ -73,10 +72,6 @@ public final class WebConsole {
         }
         port(config.getUri().getPort());
         staticFileLocation("/public");
-
-        // APIs to be in WebSocket: watch, run
-        webSocket("/cui", ConsoleWebSocketHandler.class);
-        webSocketIdleTimeoutMillis(Connection.IDLE_TIMEOUT_SEC * 1000);
 
         before((req, res) -> {
             res.header("Server", RetzScheduler.HTTP_SERVER_NAME);
@@ -264,11 +259,6 @@ public final class WebConsole {
             return MAPPER.writeValueAsString(response);
         });
 
-        clientMonitor = new ClientMonitor(Connection.KEEPALIVE_INTERVAL_SEC);  // I won't make this configurable until it's needed
-        clientMonitorThread = new Thread(clientMonitor);
-        clientMonitorThread.setName("ClientMonitor");
-        clientMonitorThread.start();
-
         init();
     }
 
@@ -285,7 +275,6 @@ public final class WebConsole {
         if (scheduler.isPresent()) {
             StatusResponse statusResponse = new StatusResponse();
             JobQueue.setStatus(statusResponse);
-            ConsoleWebSocketHandler.setStatus(statusResponse);
             scheduler.get().setOfferStats(statusResponse);
             res = statusResponse;
         } else {
@@ -300,12 +289,6 @@ public final class WebConsole {
     }
 
     public void stop() {
-        clientMonitor.stop();
-        try {
-            clientMonitorThread.join();
-        } catch (InterruptedException e) {
-            LOG.warn("Can't join client monitor thread: " + e.toString());
-        }
         Spark.stop();
     }
 

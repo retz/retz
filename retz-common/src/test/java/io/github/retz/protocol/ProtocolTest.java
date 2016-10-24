@@ -159,15 +159,6 @@ public class ProtocolTest {
             assertThat(getJobResponse.job().get().cmd(), is("Mmmmmmmmmy commmmmand1!!!!!"));
         }
         {
-            String json = "{\"command\":\"watch\", \"status\":\"ok\", \"event\":\"finished\", \"job\":{\"cmd\":\"ls\", \"id\":23, \"appid\":\"myapp\", \"state\":\"STARTED\", \"cpu\":1,\"memMB\":128}}";
-            Response res = mapper.readValue(json, Response.class);
-            assertThat(res, instanceOf(WatchResponse.class));
-            WatchResponse wres = (WatchResponse) res;
-            assertThat(wres.status(), is("ok"));
-            assertThat(wres.event(), is("finished"));
-            assertNotNull(wres.job());
-        }
-        {
             String json = "{\"command\":\"status\",\"queueLength\":1,\"runningLength\":0,\"numSlaves\":0,\"watcherLength\":0,\"sessionLength\":1,\"status\":\"ok\"}";
             Response res = mapper.readValue(json, Response.class);
             assertThat(res, instanceOf(StatusResponse.class));
@@ -188,7 +179,7 @@ public class ProtocolTest {
 
         {
             Job job = new Job("foobar-app", "ls -l", null, 1, 128);
-            ScheduleRequest scheduleRequest = new ScheduleRequest(job, false);
+            ScheduleRequest scheduleRequest = new ScheduleRequest(job);
             String json = mapper.writeValueAsString(scheduleRequest);
             Request req = mapper.readValue(json, Request.class);
             assertThat(req, instanceOf(ScheduleRequest.class));

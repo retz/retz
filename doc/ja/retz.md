@@ -235,7 +235,6 @@ $ retz-client schedule -file <list of batches in a text file>
 $ retz-client get-job -id <jobid>
 $ retz-client get-file -id <jobid> --fetch <filename> --poll -R -
 $ retz-client list-files -id <jobid> --path <path> -R -
-$ retz-client watch
 $ retz-client config
 ```
 
@@ -445,14 +444,6 @@ Response: `{"status":"ok", "queue": [ Job0, Job1, .... ]}`
 * `GET /apps` behind `list-app` command
 * `PUT /app/:name` behind `load-app` command
 * `DELETE /app/:name` behind `unload-app` command
-
-* `watch` via WebSocket, behind `watch` command
-
-`watch` はサーバーのURL `ws://hostname:9090/cui` とWebSocketを介して通信する。ここではそ
-の通信仕様を定義する。
-
-Request: `{"commnd":"watch"}`
-Response: `{"status":"ok", "event":Event, "job":Job}}`
 
 * `Job`
 

@@ -25,23 +25,15 @@ import java.util.Objects;
 
 public class ScheduleRequest extends Request {
     private Job job;
-    private boolean doWatch;
 
     @JsonCreator
-    public ScheduleRequest(@JsonProperty(value = "job", required = true) Job job,
-                           @JsonProperty("doWatch") boolean doWatch) {
+    public ScheduleRequest(@JsonProperty(value = "job", required = true) Job job) {
         this.job = Objects.requireNonNull(job);
-        this.doWatch = doWatch;
     }
 
     @JsonGetter("job")
     public Job job() {
         return job;
-    }
-
-    @JsonGetter("doWatch")
-    public boolean doWatch() {
-        return doWatch;
     }
 
     @Override

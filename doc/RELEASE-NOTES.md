@@ -2,6 +2,8 @@
 
 ## 0.0.28
 
+* Remove 'watch' command and protocol. This changed 'ScheduleRequest'
+  protocol and introduced incompatibility.
 * Add integer priority field to 'Job' object in the protocol for future use.
   This introduces incompatible change to client-server protocol.
 * Preserve Framework id in database and reuse it after restart. Mesos

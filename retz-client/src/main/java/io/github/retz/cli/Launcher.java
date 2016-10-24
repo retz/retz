@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
 
 public class Launcher {
     static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
@@ -46,7 +45,6 @@ public class Launcher {
         SUB_COMMANDS.add(new CommandListFiles());
         SUB_COMMANDS.add(new CommandKill());
         SUB_COMMANDS.add(new CommandRun());
-        SUB_COMMANDS.add(new CommandWatch());
         SUB_COMMANDS.add(new CommandGetApp());
         SUB_COMMANDS.add(new CommandListApp());
         SUB_COMMANDS.add(new CommandLoadApp());

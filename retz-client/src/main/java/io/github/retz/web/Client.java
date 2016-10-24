@@ -23,24 +23,21 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.eclipse.jetty.util.security.Credential.MD5.digest;
@@ -54,7 +51,6 @@ public class Client implements AutoCloseable {
     private final String host;
     private final int port;
     private WebSocketClient wsclient = null;
-    private MySocket socket = null;
     private final Optional<io.github.retz.auth.Authenticator> authenticator;
 
     public static final String VERSION_STRING;
@@ -86,24 +82,6 @@ public class Client implements AutoCloseable {
                 throw new AssertionError(e.toString());
             }
         }
-    }
-
-    private boolean connect() throws IOException, ExecutionException, URISyntaxException, Exception {
-        // TODO: this does not work for SSL
-        URI uri = new URI(String.format("ws://%s:%d/cui", host, port));
-        this.socket = new MySocket();
-        this.wsclient = new WebSocketClient();
-        wsclient.start();
-
-        Future<Session> f = wsclient.connect(socket, uri, new ClientUpgradeRequest());
-        while (true) {
-            try {
-                f.get();
-                break;
-            } catch (InterruptedException e) {
-            }
-        }
-        return !f.isCancelled();
     }
 
     @Override
@@ -157,7 +135,7 @@ public class Client implements AutoCloseable {
     }
 
     public Response schedule(Job job) throws IOException {
-        return rpc(new ScheduleRequest(job, false));
+        return rpc(new ScheduleRequest(job));
     }
 
     public Response getJob(int id) throws IOException {
@@ -173,11 +151,7 @@ public class Client implements AutoCloseable {
     }
 
     public Job run(Job job) throws IOException {
-        return run(job, true);
-    }
-
-    public Job run(Job job, boolean poll) throws IOException {
-        Response res = rpc(new ScheduleRequest(job, true));
+        Response res = rpc(new ScheduleRequest(job));
         if (!(res instanceof ScheduleResponse)) {
             LOG.error(res.status());
             return null;
@@ -185,11 +159,8 @@ public class Client implements AutoCloseable {
         ScheduleResponse scheduleResponse = (ScheduleResponse) res;
         LOG.info("Job scheduled: id={}", scheduleResponse.job().id());
 
-        if (poll) {
             return waitPoll(scheduleResponse.job());
-        } else {
-            return waitWS(scheduleResponse.job());
-        }
+
     }
 
     private Job waitPoll(Job job) throws IOException {
@@ -217,25 +188,6 @@ public class Client implements AutoCloseable {
                 return null;
             }
         } while (true);
-    }
-    private Job waitWS(Job job) throws IOException {
-        // FIXME: There's a slight race condition between a job finish and watch registration
-        // The latter is expected to be before the former, otherwise this function waits forever
-        Job result = waitForResponse(watchResponse -> {
-            if (watchResponse.job() == null) {
-                return null;
-            } else if (job.id() == watchResponse.job().id()) {
-                LOG.info("{}: id={}", watchResponse.event(), watchResponse.job().id());
-                if (watchResponse.job().state() == Job.JobState.FINISHED) {
-                    return watchResponse.job();
-                } else if (watchResponse.job().state() == Job.JobState.KILLED) {
-                    return watchResponse.job();
-                }
-            }
-            LOG.debug("keep waiting");
-            return null; // keep waiting
-        });
-        return result;
     }
 
     public Response kill(int id) throws IOException {
@@ -305,55 +257,6 @@ public class Client implements AutoCloseable {
                 conn.disconnect();
             }
         }
-    }
-
-    // Wait for good response until the callback gives non-null good value.
-    // To keep watching, callback must keep returning null.
-    public <RetType> RetType waitForResponse(Function<WatchResponse, RetType> callback) throws IOException {
-        try {
-            if (!connect()) {
-                LOG.error("failed to connect to host");
-                return null;
-            } else {
-                LOG.info("Connected to the host. Start waiting for response..");
-            }
-        } catch (Exception e) {
-            LOG.error(e.toString());
-            return null;
-        }
-        RetType ret = null;
-        while (ret == null) {
-            String json;
-            try {
-                json = socket.awaitResponse();
-                LOG.debug("WaitForResponse started: {}", json);
-            } catch (InterruptedException e) {
-                continue;
-            }
-            Response res = mapper.readValue(json, Response.class);
-            if (res instanceof WatchResponse) {
-                WatchResponse wres = (WatchResponse) res;
-                ret = callback.apply(wres);
-            } else if (res instanceof ErrorResponse) {
-                ErrorResponse eres = (ErrorResponse) res;
-                LOG.error(eres.status());
-                return null;
-            }
-        }
-        return ret;
-    }
-
-    // This method does block while callback returns.
-    // The callback must return true to keep watching.
-    public void startWatch(Predicate<WatchResponse> callback) throws IOException {
-        waitForResponse(watchResponse -> {
-            if (callback.test(watchResponse)) {
-                return null;
-            } else {
-                return 1;
-            }
-        });
-
     }
 
     public static ClientBuilder newBuilder(URI uri) {
