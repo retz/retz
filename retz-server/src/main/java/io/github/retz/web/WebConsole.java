@@ -41,6 +41,7 @@ import spark.Spark;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -54,10 +55,16 @@ public final class WebConsole {
     private static Optional<RetzScheduler> scheduler = Optional.empty();
     private static Optional<SchedulerDriver> driver = Optional.empty();
 
+    private static final List<String> NO_AUTH_PAGES;
+
     private Thread clientMonitorThread;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
+        String[] noAuthPages = {
+                "/ping", "/status",
+                "/", "/update.js", "/style.css", "/favicon.ico"};
+        NO_AUTH_PAGES = Arrays.asList(noAuthPages);
     }
 
     public WebConsole(FileConfiguration config) {
@@ -102,9 +109,7 @@ public final class WebConsole {
 
             LOG.debug("req={}, res={}, resource=", req, res, resource);
             // These don't require authentication to simplify operation
-            if ("/ping".equals(resource) || "/status".equals(resource)
-                    || "/cui".equals(resource) // TODO: this is special exception; in future this must be removed...
-                    || "/".equals(resource)) {
+            if (NO_AUTH_PAGES.contains(resource)) {
                 return;
             }
 

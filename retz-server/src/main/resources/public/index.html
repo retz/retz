@@ -19,20 +19,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Retz Realtime Console</title>
+    <title>Retz</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Retz Realtime Console</h1>
 
-<div id="reconnect">refresh</div>
+<div id="container">
 
-<div id="console">    <!-- Built by JS --> </div>
+    <h1>Welcome to Retz!</h1>
 
-<div> TODO: loaded applications may show up here </div>
+    <h2>System Status</h2>
 
+    <div id="up"></div>
+    <div id="version"></div>
+    <br/>
+    <a href="#" onClick="updateProfile();">Reload System Status</a>
 
-<script src="websocket.js"></script>
+    <div id="profile"></div>
+
+    <h2>Getting Started to Access This Retz Service</h2>
+    Go to <a href="https://github.com/retz/retz/blob/master/doc/getting-started-client.rst">Getting Started With Retz Client</a>
+    and get started.
+
+    <h2>Download</h2>
+    Go to <a href="https://github.com/retz/retz/releases">release page</a> and get client package for Linux or JAR file
+    of matching version release.
+
+    <h2>Link</h2>
+    <ul>
+        <li><a href="https://retz.github.io/">Retz official site</a></li>
+        <li><a href="https://github.com/retz/retz/issues">Report issue</a></li>
+    </ul>
+    <hr/>
+    Retz 2016.
+
+</div>
+<script src="update.js" type="text/javascript"><!-- --></script>
 </body>
 </html>

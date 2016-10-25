@@ -1,4 +1,4 @@
-/**
+/*
  *    Retz
  *    Copyright (C) 2016 Nautilus Technologies, Inc.
  *
@@ -14,42 +14,26 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-* {
-    box-sizing: border-box;
+// System Profile Updater
+
+function updateProfile(){
+    console.log("updating profile");
+    fetch("/ping").then(function(response){
+        var version = response.headers.get("Server");
+        var text = response.text();
+        console.log("/ping => " + version + "/" + text)
+
+        id("version").innerText = "System version: " + version;
+        return text;
+
+    }).then(function(text) {
+        id("up").innerText = "System status: " + text;
+    });
 }
 
-html {
-    overflow-y: scroll;
+//Helper function for selecting element by id
+function id(id) {
+    return document.getElementById(id);
 }
 
-body {
-    font-family: "Fira Sans";
-    //font-size: 14px;
-    //padding: 20px;
-    background-color: gray;
-}
-
-div#container {
-    width: 800px;
-    padding-left: 5em;
-    padding-right: 5em;
-    padding-top: 2em;
-    padding-bottom: 2em;
-    margin: auto;
-    background-color: white;
-}
-
-li {
-    margin: 5px 0;
-}
-
-
-div#console {
-    padding: 10px;
-    //margin: 10px 0;
-    border-left: 5px solid #aaa;
-    position: relative;
-    height: 32em;
-    overflow: scroll;
-    resize: both;
-}
+updateProfile();
