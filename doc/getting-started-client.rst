@@ -45,10 +45,10 @@ curl like `"curl -i http://retz.example.com:9090/ping"` and see
 For 0.0.25 as a package installation example,
 
 * For Ubuntu or Debian, download `Debian package
-  <https://github.com/retz/retz/releases/download/0.0.25/retz-client_0.0.25_amd64.deb>`_
+  <https://github.com/retz/retz/releases/download/0.0.27/retz-client_0.0.27_amd64.deb>`_
   and install via `dpkg -i`.
 * For CentOS, download `RPM package
-  <https://github.com/retz/retz/releases/download/0.0.25/retz-client-0.0.25-1.el7.x86_64.rpm>`_
+  <https://github.com/retz/retz/releases/download/0.0.27/retz-client-0.0.27-1.el7.x86_64.rpm>`_
   and install via `rpm -i`.
 
 Both ways install a command `/opt/retz-client/bin/retz-client` and a

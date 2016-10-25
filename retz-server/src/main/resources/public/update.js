@@ -17,6 +17,8 @@
 // System Profile Updater
 
 function updateProfile(){
+    id("up").innerText = "Requesting status to server ...";
+
     console.log("updating profile");
     fetch("/ping").then(function(response){
         var version = response.headers.get("Server");
