@@ -41,7 +41,7 @@ public class DatabaseTest {
         InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
 
         FileConfiguration config = new FileConfiguration(in);
-        Database.init(config);
+        Database.getInstance().init(config);
 
         // DEFAULT_DATABASE_URL afaik
         assertEquals("jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1", config.getDatabaseURL());
@@ -49,46 +49,46 @@ public class DatabaseTest {
 
     @After
     public void after() throws Exception {
-        Database.deleteAllProperties();
-        Database.stop();
+        Database.getInstance().deleteAllProperties();
+        Database.getInstance().stop();
     }
 
     @Test
     public void user() throws Exception {
-        Database.addUser(new User("cafebabe", "foobar", true));
+        Database.getInstance().addUser(new User("cafebabe", "foobar", true));
 
-        assertFalse(Database.getUser("non-pooh-bar").isPresent());
-        assertTrue(Database.getUser("cafebabe").isPresent());
-        assertEquals("foobar", Database.getUser("cafebabe").get().secret());
+        assertFalse(Database.getInstance().getUser("non-pooh-bar").isPresent());
+        assertTrue(Database.getInstance().getUser("cafebabe").isPresent());
+        assertEquals("foobar", Database.getInstance().getUser("cafebabe").get().secret());
 
-        User u = Database.createUser();
-        assertTrue(Database.getUser(u.keyId()).isPresent());
-        assertEquals(u.secret(), Database.getUser(u.keyId()).get().secret());
+        User u = Database.getInstance().createUser();
+        assertTrue(Database.getInstance().getUser(u.keyId()).isPresent());
+        assertEquals(u.secret(), Database.getInstance().getUser(u.keyId()).get().secret());
 
-        for (User v : Database.allUsers()) {
+        for (User v : Database.getInstance().allUsers()) {
             System.err.println(v.keyId() + "\t" + v.secret() + "\t" + v.enabled());
         }
 
         // Try to detect connection leak
         for (int i = 0; i < 4096; ++i) {
-            assertTrue(Database.getUser("cafebabe").isPresent());
+            assertTrue(Database.getInstance().getUser("cafebabe").isPresent());
         }
     }
 
     @Test
     public void application() throws Exception {
-        User u = Database.createUser();
-        assertTrue(Database.getUser(u.keyId()).isPresent());
-        assertEquals(u.secret(), Database.getUser(u.keyId()).get().secret());
+        User u = Database.getInstance().createUser();
+        assertTrue(Database.getInstance().getUser(u.keyId()).isPresent());
+        assertEquals(u.secret(), Database.getInstance().getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
 
         List<String> emptyList = new LinkedList<>();
         Application app = new Application("testapp", emptyList, emptyList, emptyList, Optional.empty(),
                 Optional.of("unix-user"), u.keyId(), new MesosContainer(), true);
-        boolean res = Database.addApplication(app);
+        boolean res = Database.getInstance().addApplication(app);
 
         assertTrue(res);
-        Application app2 = Database.getApplication(app.getAppid()).get();
+        Application app2 = Database.getInstance().getApplication(app.getAppid()).get();
 
         assertEquals(app.getAppid(), app2.getAppid());
         assertEquals(app.getOwner(), app2.getOwner());
@@ -98,54 +98,54 @@ public class DatabaseTest {
 
         Application app3 = new Application("testapppo", emptyList, emptyList, emptyList, Optional.empty(),
                 Optional.of("unix-user"), "charlie", new MesosContainer(), true);
-        assertFalse(Database.addApplication(app3));
+        assertFalse(Database.getInstance().addApplication(app3));
 
-        Database.safeDeleteApplication(app.getAppid());
+        Database.getInstance().safeDeleteApplication(app.getAppid());
 
-        assertFalse(Database.getApplication(app.getAppid()).isPresent());
+        assertFalse(Database.getInstance().getApplication(app.getAppid()).isPresent());
     }
 
     @Test
     public void job() throws Exception {
-        User u = Database.createUser();
-        assertTrue(Database.getUser(u.keyId()).isPresent());
-        assertEquals(u.secret(), Database.getUser(u.keyId()).get().secret());
+        User u = Database.getInstance().createUser();
+        assertTrue(Database.getInstance().getUser(u.keyId()).isPresent());
+        assertEquals(u.secret(), Database.getInstance().getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
 
         Application a = new Application("someapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
                 Optional.empty(), Optional.empty(), u.keyId(), new MesosContainer(), true);
-        Database.addApplication(a);
+        Database.getInstance().addApplication(a);
 
         int id = -1;
         {
             Job job = new Job(a.getAppid(), "uname -a", new Properties(), 1, 32);
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
-            Database.safeAddJob(job);
+            Database.getInstance().safeAddJob(job);
 
-            assertThat(Database.getLatestJobId(), Matchers.greaterThanOrEqualTo(1));
-            Job job2 = Database.getJob(job.id()).get();
+            assertThat(Database.getInstance().getLatestJobId(), Matchers.greaterThanOrEqualTo(1));
+            Job job2 = Database.getInstance().getJob(job.id()).get();
 
             assertEquals(job.id(), job2.id());
             assertEquals(job.cmd(), job2.cmd());
             assertEquals(job.toString(), job2.toString());
             id = job.id();
 
-            assertTrue(Database.getJob(job.id()).isPresent());
+            assertTrue(Database.getInstance().getJob(job.id()).isPresent());
         }
         //System.err.println(job2.toString());
         {
             String taskId = "app-taskid-1";
-            Optional<Job> maybeJob = Database.getJob(id);
+            Optional<Job> maybeJob = Database.getInstance().getJob(id);
             assertTrue(maybeJob.isPresent());
-            for (Job j : Database.getAllJobs(u.keyId())) {
+            for (Job j : Database.getInstance().getAllJobs(u.keyId())) {
                 System.err.println(j.id() + j.taskId() + j.state());
             }
-            Database.setJobStarting(id, Optional.empty(), taskId);
+            Database.getInstance().setJobStarting(id, Optional.empty(), taskId);
 
-            for (Job j : Database.getAllJobs(u.keyId())) {
+            for (Job j : Database.getInstance().getAllJobs(u.keyId())) {
                 System.err.println(j.id() + j.taskId() + j.state());
             }
-            assertTrue(Database.getJobFromTaskId(taskId).isPresent());
+            assertTrue(Database.getInstance().getJobFromTaskId(taskId).isPresent());
         }
     }
 
@@ -153,7 +153,7 @@ public class DatabaseTest {
     public void multiUsers() throws Exception {
         List<User> users = new LinkedList<>();
         for (int i = 0; i < 10; ++i) {
-            users.add(Database.createUser());
+            users.add(Database.getInstance().createUser());
         }
         assertEquals(10, users.size());
 
@@ -162,7 +162,7 @@ public class DatabaseTest {
         for (User u : users) {
             Application app = new Application(u.keyId(), emptyList, emptyList, emptyList, Optional.empty(),
                     Optional.of("unix-user"), u.keyId(), new MesosContainer(), true);
-            Database.addApplication(app);
+            Database.getInstance().addApplication(app);
             apps.add(app);
 
             //    public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
@@ -186,35 +186,35 @@ public class DatabaseTest {
                     null,
                     false,
                     Job.JobState.QUEUED);
-            Database.safeAddJob(job);
+            Database.getInstance().safeAddJob(job);
         }
         assertEquals(10, apps.size());
 
-        assertThat(Database.getAllApplications().size(), greaterThanOrEqualTo(10));
+        assertThat(Database.getInstance().getAllApplications().size(), greaterThanOrEqualTo(10));
 
-        for (Application a : Database.getAllApplications()) {
+        for (Application a : Database.getInstance().getAllApplications()) {
             System.err.println(a.getAppid() + " " + a.getOwner());
         }
         for (int i = 0; i < 10; ++i) {
             System.err.println("user>> " + users.get(i).keyId());
-            List<Application> ones = Database.getAllApplications(users.get(i).keyId());
+            List<Application> ones = Database.getInstance().getAllApplications(users.get(i).keyId());
             assertEquals(1, ones.size());
             assertEquals(users.get(i).keyId(), ones.get(0).getAppid());
             assertEquals(users.get(i).keyId(), ones.get(0).getOwner());
-            List<Job> jobs = Database.getAllJobs(users.get(i).keyId());
+            List<Job> jobs = Database.getInstance().getAllJobs(users.get(i).keyId());
             assertEquals(1, jobs.size());
             assertEquals(users.get(i).keyId(), jobs.get(0).appid());
             assertEquals(users.get(i).keyId(), jobs.get(0).name());
         }
 
-        Database.deleteAllJob(Integer.MAX_VALUE);
+        Database.getInstance().deleteAllJob(Integer.MAX_VALUE);
     }
 
     @Test
     public void testProps() {
         String frameworkId = "foorbartest....";
-        assertFalse(Database.getFrameworkId().isPresent());
-        assertTrue(Database.setFrameworkId(frameworkId));
-        assertThat(Database.getFrameworkId().get(), is(frameworkId));
+        assertFalse(Database.getInstance().getFrameworkId().isPresent());
+        assertTrue(Database.getInstance().setFrameworkId(frameworkId));
+        assertThat(Database.getInstance().getFrameworkId().get(), is(frameworkId));
     }
 }

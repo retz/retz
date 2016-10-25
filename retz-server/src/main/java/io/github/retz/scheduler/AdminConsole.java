@@ -41,36 +41,35 @@ public class AdminConsole implements AdminConsoleMXBean {
     @Override
     public String createUser() {
         LOG.info("AdminConsole.createUser()");
-        User user = Database.createUser();
+        User user = Database.getInstance().createUser();
         return maybeEncodeAsJSON(user);
     }
 
     @Override
     public String getUser(String name) {
         LOG.info("AdminConsole.getUser({})", name);
-        Optional<User> maybeUser = Database.getUser(name);
+        Optional<User> maybeUser = Database.getInstance().getUser(name);
         return maybeEncodeAsJSON(maybeUser);
     }
 
     @Override
     public boolean enableUser(String id, boolean enabled) {
         LOG.info("AdminConsole.enableUser({}, {})", id, enabled);
-        LOG.warn("Not yet implemented"); //TODO
-        Database.enableUser(id, enabled);
+        Database.getInstance().enableUser(id, enabled);
         return false;
     }
 
     @Override
     public List<String> getUsage(String user, String start, String end) {
         LOG.info("Querying usage of {} at [{}, {})", user, start, end); //TODO
-        List<Job> jobs = Database.finishedJobs(user, start, end);
+        List<Job> jobs = Database.getInstance().finishedJobs(user, start, end);
         return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
     }
 
     @Override
     public List<String> listUser() {
         LOG.info("AdminConsole.listUser()");
-        List<User> users = Database.allUsers();
+        List<User> users = Database.getInstance().allUsers();
         return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
     }
 

@@ -124,7 +124,7 @@ public final class WebConsole {
                 authenticator = adminAuthenticator.get();
             } else {
                 // Not admin
-                Optional<User> u = Database.getUser(authHeaderValue.get().key());
+                Optional<User> u = Database.getInstance().getUser(authHeaderValue.get().key());
                 if (!u.isPresent()) {
                     halt(403, "No such user");
                 }

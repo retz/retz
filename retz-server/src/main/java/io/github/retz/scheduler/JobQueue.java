@@ -39,7 +39,7 @@ public class JobQueue {
     private static final AtomicInteger COUNTER;
 
     static {
-        int latest = Database.getLatestJobId();
+        int latest = Database.getInstance().getLatestJobId();
         COUNTER = new AtomicInteger(latest + 1);
     }
 
@@ -48,7 +48,7 @@ public class JobQueue {
 
     public static List<Job> getAll(String id) {
         try {
-            return Database.getAllJobs(id);
+            return Database.getInstance().getAllJobs(id);
         } catch (IOException e) {
             LOG.error(e.toString());
             throw new RuntimeException("Database is not available currently");
@@ -63,11 +63,11 @@ public class JobQueue {
 
     public static void push(Job job) throws InterruptedException {
         // TODO: set a cap of queue
-        Database.safeAddJob(job);
+        Database.getInstance().safeAddJob(job);
     }
 
     public static Optional<String> cancel(int id, String reason) {
-        Database.updateJob(id, (job -> {
+        Database.getInstance().updateJob(id, (job -> {
             job.killed(TimestampHelper.now(), Optional.empty(), reason);
             LOG.info("Job id={} has been canceled.", id);
             return Optional.of(job);
@@ -83,7 +83,7 @@ public class JobQueue {
     // @doc take as much jobs as in the max cpu/memMB
     public synchronized static List<Job> findFit(int cpu, int memMB) {
         try {
-            return Database.findFit(cpu, memMB);
+            return Database.getInstance().findFit(cpu, memMB);
         } catch (IOException e) {
             LOG.error(e.toString());
             return new LinkedList<>();
@@ -92,7 +92,7 @@ public class JobQueue {
 
     public synchronized static Optional<Job> getJob(int id) {
         try {
-            return Database.getJob(id);
+            return Database.getInstance().getJob(id);
         } catch (IOException e) {
             LOG.error(e.toString());
         }
@@ -100,22 +100,22 @@ public class JobQueue {
     }
 
     public synchronized static void clear() {
-        Database.deleteAllJob(Integer.MAX_VALUE);
+        Database.getInstance().deleteAllJob(Integer.MAX_VALUE);
     }
 
     public static int size() {
-        return Database.countJobs();
+        return Database.getInstance().countJobs();
     }
 
     public static void starting(Job job, Optional<String> url, String taskId) {
-        Database.setJobStarting(job.id(), url, taskId);
+        Database.getInstance().setJobStarting(job.id(), url, taskId);
     }
 
     static void started(String taskId, Optional<String> maybeUrl) {
         try {
-            Optional<Job> maybeJob = Database.getJobFromTaskId(taskId);
+            Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
-                Database.updateJob(maybeJob.get().id(), job -> {
+                Database.getInstance().updateJob(maybeJob.get().id(), job -> {
                     job.started(taskId, maybeUrl, TimestampHelper.now());
                     return Optional.of(job);
                 });
@@ -127,7 +127,7 @@ public class JobQueue {
 
     public static Optional<Job> getFromTaskId(String taskId) {
         try {
-            return Database.getJobFromTaskId(taskId);
+            return Database.getInstance().getJobFromTaskId(taskId);
         } catch (IOException e) {
             LOG.error(e.toString());
             return Optional.empty();
@@ -136,10 +136,10 @@ public class JobQueue {
 
     public static void retry(String taskId, String reason) {
         try {
-            Optional<Job> maybeJob = Database.getJobFromTaskId(taskId);
+            Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
                 int threshold = 5;
-                Database.updateJob(maybeJob.get().id(), job -> {
+                Database.getInstance().updateJob(maybeJob.get().id(), job -> {
                     if (job.retry() > threshold) {
                         String msg = String.format("Giving up Job retry: %d / id=%d, last reason='%s'", threshold, job.id(), reason);
                         LOG.warn(msg);
@@ -161,9 +161,9 @@ public class JobQueue {
     // Whether it's success, fail, or killed
     static void finished(String taskId, Optional<String> maybeUrl, int ret, String finished) {
         try {
-            Optional<Job> maybeJob = Database.getJobFromTaskId(taskId);
+            Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
-                Database.updateJob(maybeJob.get().id(), job -> {
+                Database.getInstance().updateJob(maybeJob.get().id(), job -> {
                     job.finished(finished, maybeUrl, ret);
                     return Optional.of(job);
                 });
@@ -176,9 +176,9 @@ public class JobQueue {
 
     public static void failed(String taskId, Optional<String> maybeUrl, String msg) {
         try {
-            Optional<Job> maybeJob = Database.getJobFromTaskId(taskId);
+            Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
-                Database.updateJob(maybeJob.get().id(), job -> {
+                Database.getInstance().updateJob(maybeJob.get().id(), job -> {
                     job.killed(TimestampHelper.now(), maybeUrl, msg);
                     return Optional.of(job);
                 });
@@ -190,7 +190,7 @@ public class JobQueue {
     }
 
     public static int countRunning() {
-        return Database.countRunning();
+        return Database.getInstance().countRunning();
     }
 
     //TODO: make this happen.... with admin APIs

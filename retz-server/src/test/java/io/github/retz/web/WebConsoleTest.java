@@ -75,7 +75,7 @@ public class WebConsoleTest {
         webConsole = new WebConsole(config);
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
-        Database.init(config);
+        Database.getInstance().init(config);
 
         System.err.println(config.authenticationEnabled());
         System.err.println(config.toString());
@@ -96,7 +96,7 @@ public class WebConsoleTest {
         webClient.disconnect();
         webConsole.stop();
         JobQueue.clear();
-        Database.stop();
+        Database.getInstance().stop();
     }
 
     /**
@@ -253,10 +253,10 @@ public class WebConsoleTest {
     @Test
     public void status() throws Exception {
         User user = new User("deadbeef", "cafebabe", true);
-        Database.addUser(user);
+        Database.getInstance().addUser(user);
         Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
                 Optional.empty(), Optional.empty(), user.keyId(), new MesosContainer(), true);
-        Database.addApplication(app);
+        Database.getInstance().addApplication(app);
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
         JobQueue.push(job);
 

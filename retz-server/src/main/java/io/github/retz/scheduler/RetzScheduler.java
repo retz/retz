@@ -110,7 +110,7 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Connected to master {}; Framework ID: {}", masterInfo.getHostname(), frameworkId.getValue());
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
 
-        Optional<String> oldFrameworkId = Database.getFrameworkId();
+        Optional<String> oldFrameworkId = Database.getInstance().getFrameworkId();
         if (oldFrameworkId.isPresent()) {
             if (oldFrameworkId.get().equals(frameworkId.getValue())) {
                 // framework exists. nothing to do
@@ -122,7 +122,7 @@ public class RetzScheduler implements Scheduler {
                 driver.stop();
             }
         } else {
-            if (Database.setFrameworkId(frameworkId.getValue())) {
+            if (Database.getInstance().setFrameworkId(frameworkId.getValue())) {
             } else {
                 LOG.warn("Failed to remember frameworkID...");
             }
@@ -460,7 +460,7 @@ public class RetzScheduler implements Scheduler {
     // If it's not lost, just update state. Otherwise, set its state as QUEUED back.
     // TODO: offload this from scheduler callback thread
     private void maybeRecoverRunning(SchedulerDriver driver) {
-        List<Job> jobs = Database.getRunning();
-        Database.retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
+        List<Job> jobs = Database.getInstance().getRunning();
+        Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
     }
 }

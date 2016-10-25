@@ -64,7 +64,7 @@ public final class Launcher {
             if (conf.fileConfig.isTLS()) {
                 LOG.warn("Make sure a valid certificate is being used or RetzExecutor may not work.");
             }
-            Database.init(conf.getFileConfig());
+            Database.getInstance().init(conf.getFileConfig());
         } catch (ParseException e) {
             LOG.error(e.toString());
             return -1;
@@ -105,7 +105,7 @@ public final class Launcher {
         // By hitting HTTP endpoints and comparing with database job states,
         // Retz can decide whether to re-run it or just finish it.
         // BTW after connecting to Mesos it looks like re-sending unacked messages.
-        maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getRunning());
+        maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getInstance().getRunning());
 
         RetzScheduler scheduler = new RetzScheduler(conf, fw);
         SchedulerDriver driver = SchedulerDriverFactory.create(scheduler, conf, fw);
@@ -136,7 +136,7 @@ public final class Launcher {
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());
 
         webConsole.stop(); // Stop web server
-        Database.stop();
+        Database.getInstance().stop();
         jmxServer.stop();
 
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
@@ -172,7 +172,7 @@ public final class Launcher {
                 throw new RuntimeException(e.toString());
             }
         }
-        Database.updateJobs(recoveredJobs);
+        Database.getInstance().updateJobs(recoveredJobs);
         LOG.info("{} jobs rescheduled, {} jobs didn't need change.", recoveredJobs.size(), runningMap.size());
     }
 
@@ -188,7 +188,7 @@ public final class Launcher {
                 .setPrincipal(conf.fileConfig.getPrincipal())
                 .setRole(conf.fileConfig.getRole());
 
-        Optional<String> fid = Database.getFrameworkId();
+        Optional<String> fid = Database.getInstance().getFrameworkId();
         if (fid.isPresent()) {
             LOG.info("FrameworkID {} found", fid.get());
             fwBuilder.setId(Protos.FrameworkID.newBuilder().setValue(fid.get()).build());

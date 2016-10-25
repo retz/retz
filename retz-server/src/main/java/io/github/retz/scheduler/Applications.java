@@ -32,7 +32,7 @@ public class Applications {
 
     public static Optional<Application> get(String appName) {
         try {
-            return Database.getApplication(appName);
+            return Database.getInstance().getApplication(appName);
         } catch (IOException e) {
             LOG.error(e.toString());
             return Optional.empty();
@@ -41,7 +41,7 @@ public class Applications {
 
     public static List<String> volumes(String role) {
         try {
-            return (Database.getAllApplications().stream()
+            return (Database.getInstance().getAllApplications().stream()
                     .map(entry -> entry.toVolumeId(role))
                     .collect(Collectors.toList()));
         } catch (IOException e) {
@@ -52,7 +52,7 @@ public class Applications {
 
     public static boolean load(Application application) {
         try {
-            return Database.addApplication(application);
+            return Database.getInstance().addApplication(application);
         } catch (JsonProcessingException e) {
             return false; // Maybe this must be handled inside addApplication...
         }
@@ -62,12 +62,12 @@ public class Applications {
     public static void unload(String appName) {
         // Volumes are destroyed lazily
         LOG.info("deleting {}", appName);
-        Database.safeDeleteApplication(appName);
+        Database.getInstance().safeDeleteApplication(appName);
     }
 
     public static List<Application> getAll() {
         try {
-            return Database.getAllApplications();
+            return Database.getInstance().getAllApplications();
         } catch (IOException e) {
             LOG.error(e.toString());
             return new LinkedList<>();
@@ -76,7 +76,7 @@ public class Applications {
 
     public static List<Application> getAll(String id) {
         try {
-            return Database.getAllApplications(id);
+            return Database.getInstance().getAllApplications(id);
         } catch (IOException e) {
             LOG.error(e.toString());
             return new LinkedList<>();

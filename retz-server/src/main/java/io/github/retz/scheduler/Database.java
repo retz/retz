@@ -39,21 +39,29 @@ import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-// TODO: make this Singleton?
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static String databaseURL = null;
-    private static DataSource dataSource = new DataSource();
+    private static Database database = new Database();
 
-    static {
+    private final ObjectMapper MAPPER = new ObjectMapper();
+    private final DataSource dataSource = new DataSource();
+    private String databaseURL = null;
+
+    Database() {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    private Database() {
+    public static Database getInstance() {
+        return database;
     }
 
-    public static void init(FileConfiguration config) throws IOException {
+    static Database newMemInstance(String name) throws IOException {
+        Database db = new Database();
+        db.initOnMem(name);
+        return db;
+    }
+
+    public void init(FileConfiguration config) throws IOException {
         databaseURL = Objects.requireNonNull(config.getDatabaseURL());
         LOG.info("Initializing database {}", databaseURL);
 
@@ -72,9 +80,30 @@ public class Database {
         props.setUrl("jdbc:postgresql://127.0.0.1:5432/retz");
         props.setUsername("retz");
         props.setPassword("retz");
-                */
+        */
+        init(props, true);
+
+        addUser(config.getUser());
+        if (getUser(config.getAccessKey()).isPresent()) {
+            LOG.info("admin user is {}", config.getAccessKey());
+        } else {
+            LOG.error("No admin user created in database");
+            throw new RuntimeException("orz");
+        }
+    }
+
+    void initOnMem(String name) throws IOException {
+        PoolProperties props = new PoolProperties();
+        databaseURL = "jdbc:h2:mem:" + name + ";DB_CLOSE_DELAY=-1";
+        props.setUrl(databaseURL);
+        props.setDriverClassName("org.h2.Driver");
+        init(props, false);
+    }
+
+    private void init(PoolProperties props, boolean enableJmx) throws IOException {
         props.setValidationQuery("select 1;");
-        props.setJmxEnabled(true);
+        props.setJmxEnabled(enableJmx);
+
         dataSource.setPoolProperties(props);
 
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
@@ -91,17 +120,9 @@ public class Database {
         } catch (SQLException e) {
             LOG.error(e.toString());
         }
-
-        addUser(config.getUser());
-        if (getUser(config.getAccessKey()).isPresent()) {
-            LOG.info("admin user is {}", config.getAccessKey());
-        } else {
-            LOG.error("No admin user created in database");
-            throw new RuntimeException("orz");
-        }
     }
 
-    public static void stop() {
+    public void stop() {
         LOG.info("Stopping database {}", databaseURL);
 
         while (dataSource.getNumActive() > 0) {
@@ -113,7 +134,7 @@ public class Database {
         dataSource.close();
     }
 
-    static void clear() {
+    void clear() {
         try (Connection conn = dataSource.getConnection();
              Statement statement = conn.createStatement()) {
             statement.execute("DROP TABLE users, jobs, applications, properties");
@@ -124,7 +145,7 @@ public class Database {
         }
     }
 
-    static boolean allTableExists(Connection conn) throws SQLException {
+    boolean allTableExists(Connection conn) throws SQLException {
         boolean userTableExists = false;
         boolean applicationTableExists = false;
         boolean jobTableExists = false;
@@ -160,7 +181,7 @@ public class Database {
         }
     }
 
-    static void maybeCreateTables(Connection conn) throws SQLException, IOException {
+    void maybeCreateTables(Connection conn) throws SQLException, IOException {
         LOG.info("Checking database schema of {} ...", databaseURL);
 
         if (allTableExists(conn)) {
@@ -177,7 +198,7 @@ public class Database {
         }
     }
 
-    static List<User> allUsers() {
+    List<User> allUsers() {
         List<User> ret = new LinkedList<>();
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         //try (Connection conn = pool.getConnection();
@@ -198,7 +219,7 @@ public class Database {
     }
 
     // Maybe this must return Optional<User> ?
-    public static User createUser() throws RuntimeException {
+    public User createUser() throws RuntimeException {
 
         String keyId = UUID.randomUUID().toString().replace("-", "");
         String secret = UUID.randomUUID().toString().replace("-", "");
@@ -211,7 +232,7 @@ public class Database {
         }
     }
 
-    public static boolean addUser(User u) {
+    public boolean addUser(User u) {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("INSERT INTO users(key_id, secret, enabled) values(?, ?, ?)")) {
@@ -230,7 +251,7 @@ public class Database {
         }
     }
 
-    public static Optional<User> getUser(String keyId) {
+    public Optional<User> getUser(String keyId) {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
@@ -243,7 +264,7 @@ public class Database {
         }
     }
 
-    public static Optional<User> getUser(Connection conn, String keyId) throws SQLException {
+    public Optional<User> getUser(Connection conn, String keyId) throws SQLException {
         if (conn.getAutoCommit()) {
             throw new RuntimeException("Autocommit on");
         }
@@ -260,7 +281,8 @@ public class Database {
         }
     }
 
-    public static void enableUser(String keyId, boolean enabled) {
+    public void enableUser(String keyId, boolean enabled) {
+        LOG.warn("enableUser: Not yet implemented"); //TODO
         throw new RuntimeException("Not yet implemented");
     }
 
@@ -268,11 +290,11 @@ public class Database {
     //    throw new RuntimeException("Not yet implemented");
     //}
 
-    public static List<Application> getAllApplications() throws IOException {
+    public List<Application> getAllApplications() throws IOException {
         return getAllApplications(null);
     }
 
-    public static List<Application> getAllApplications(String id) throws IOException {
+    public List<Application> getAllApplications(String id) throws IOException {
         List<Application> ret = new LinkedList<>();
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
@@ -284,7 +306,7 @@ public class Database {
         return ret;
     }
 
-    public static List<Application> getApplications(Connection conn, String id) throws SQLException, IOException {
+    public List<Application> getApplications(Connection conn, String id) throws SQLException, IOException {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
@@ -308,7 +330,7 @@ public class Database {
         return ret;
     }
 
-    public static boolean addApplication(Application a) throws JsonProcessingException {
+    public boolean addApplication(Application a) throws JsonProcessingException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("INSERT INTO applications(appid, owner, json) values(?, ?, ?)")) {
             conn.setAutoCommit(false);
@@ -334,7 +356,7 @@ public class Database {
         }
     }
 
-    public static Optional<Application> getApplication(String appid) throws IOException {
+    public Optional<Application> getApplication(String appid) throws IOException {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(true);
             return getApplication(conn, appid);
@@ -344,7 +366,7 @@ public class Database {
         return Optional.empty();
     }
 
-    public static Optional<Application> getApplication(Connection conn, String appid) throws SQLException, IOException {
+    public Optional<Application> getApplication(Connection conn, String appid) throws SQLException, IOException {
         try (PreparedStatement p = conn.prepareStatement("SELECT * FROM applications WHERE appid = ?")) {
 
             p.setString(1, appid);
@@ -364,7 +386,7 @@ public class Database {
         return Optional.empty();
     }
 
-    public static void safeDeleteApplication(String appid) {
+    public void safeDeleteApplication(String appid) {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             // TODO: check there are no non-finished Jobs
@@ -379,7 +401,7 @@ public class Database {
     }
 
     // Within transaction context and autocommit must be false
-    public static void deleteApplication(Connection conn, String appid) throws SQLException {
+    public void deleteApplication(Connection conn, String appid) throws SQLException {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
@@ -389,7 +411,7 @@ public class Database {
         }
     }
 
-    public static List<Job> getAllJobs(String id) throws IOException {
+    public List<Job> getAllJobs(String id) throws IOException {
         List<Job> ret = new LinkedList<>();
         String sql = "SELECT j.json FROM jobs j";
         if (id != null) {
@@ -417,7 +439,7 @@ public class Database {
     }
 
     // Selects all "finished" jobs
-    public static List<Job> finishedJobs(String id, String start, String end) {
+    public List<Job> finishedJobs(String id, String start, String end) {
         List<Job> ret = new LinkedList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE owner=? AND ? <= finished AND finished < ?")) {
@@ -444,7 +466,7 @@ public class Database {
         return ret;
     }
 
-    static List<Job> findFit(int cpu, int memMB) throws IOException {
+    List<Job> findFit(int cpu, int memMB) throws IOException {
         List<Job> ret = new LinkedList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC")) {
@@ -475,7 +497,7 @@ public class Database {
         return ret;
     }
 
-    public static void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
+    public void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
         try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());
             p.setInt(2, j.id());
@@ -488,7 +510,7 @@ public class Database {
         }
     }
 
-    public static void safeAddJob(Job j) {
+    public void safeAddJob(Job j) {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
 
@@ -507,7 +529,7 @@ public class Database {
         }
     }
 
-    public static Optional<Job> getJob(int id) throws JsonProcessingException, IOException {
+    public Optional<Job> getJob(int id) throws JsonProcessingException, IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE id = ?")) {
             conn.setAutoCommit(true);
@@ -530,7 +552,7 @@ public class Database {
         return Optional.empty();
     }
 
-    public static Optional<Job> getJobFromTaskId(String taskId) throws JsonProcessingException, IOException {
+    public Optional<Job> getJobFromTaskId(String taskId) throws JsonProcessingException, IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE taskid=?")) {
             conn.setAutoCommit(true);
@@ -557,7 +579,7 @@ public class Database {
     }
 
     // Delete all jobs that has ID smaller than id
-    public static void deleteAllJob(int maxId) {
+    public void deleteAllJob(int maxId) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("DELETE FROM jobs WHERE id < ?")) {
             conn.setAutoCommit(true);
@@ -568,7 +590,7 @@ public class Database {
         }
     }
 
-    public static void setJobStarting(int id, Optional<String> maybeUrl, String taskId) {
+    public void setJobStarting(int id, Optional<String> maybeUrl, String taskId) {
         updateJob(id, job -> {
             job.starting(taskId, maybeUrl, TimestampHelper.now());
             LOG.info("TaskId of id={}: {} / {}", id, taskId, job.taskId());
@@ -576,7 +598,7 @@ public class Database {
         });
     }
 
-    static void updateJob(int id, Function<Job, Optional<Job>> fun) {
+    void updateJob(int id, Function<Job, Optional<Job>> fun) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE id=?")) {
             conn.setAutoCommit(false);
@@ -603,7 +625,7 @@ public class Database {
         }
     }
 
-    public static int countJobs() {
+    public int countJobs() {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs")) {
             conn.setAutoCommit(true);
@@ -618,7 +640,7 @@ public class Database {
         return -1;
     }
 
-    static int countRunning() {
+    int countRunning() {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);
@@ -634,7 +656,7 @@ public class Database {
         return -1;
     }
 
-    public static int getLatestJobId() {
+    public int getLatestJobId() {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT id FROM jobs ORDER BY id DESC LIMIT 1")) {
             conn.setAutoCommit(true);
@@ -651,7 +673,7 @@ public class Database {
         return 0;
     }
 
-    public static List<Job> getRunning() {
+    public List<Job> getRunning() {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             return new Jobs(conn, MAPPER).getAllRunning();
@@ -661,7 +683,7 @@ public class Database {
         }
     }
 
-    public static boolean setFrameworkId(String value) {
+    public boolean setFrameworkId(String value) {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(true);
             LOG.info("setting new framework: {}", value);
@@ -672,7 +694,7 @@ public class Database {
         }
     }
 
-    public static Optional<String> getFrameworkId() {
+    public Optional<String> getFrameworkId() {
         try (Connection conn = dataSource.getConnection()) {
             return new Property(conn).getFrameworkId();
         } catch (SQLException e) {
@@ -681,7 +703,7 @@ public class Database {
         }
     }
 
-    public static void deleteAllProperties() {
+    public void deleteAllProperties() {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             new Property(conn).deleteAll();
@@ -691,7 +713,7 @@ public class Database {
         }
     }
 
-    public static void updateJobs(List<Job> list) {
+    public void updateJobs(List<Job> list) {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             Jobs jobs = new Jobs(conn, MAPPER);
@@ -706,7 +728,7 @@ public class Database {
         }
     }
 
-    public static void retryJobs(List<Integer> ids) {
+    public void retryJobs(List<Integer> ids) {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             new Jobs(conn, MAPPER).doRetry(ids);

@@ -43,13 +43,13 @@ public class JobQueueTest {
         InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
 
         FileConfiguration config = new FileConfiguration(in);
-        Database.init(config);
+        Database.getInstance().getInstance().init(config);
     }
     @After
     public void after() throws Exception {
-        Database.deleteAllJob(Integer.MAX_VALUE);
-        Database.deleteAllProperties();
-        Database.stop();
+        Database.getInstance().deleteAllJob(Integer.MAX_VALUE);
+        Database.getInstance().deleteAllProperties();
+        Database.getInstance().stop();
     }
     @Test
     public void q() throws InterruptedException, IOException {
@@ -69,7 +69,7 @@ public class JobQueueTest {
             assertThat(job2.get(0).appid(), is(job.appid()));
             JobQueue.starting(job2.get(0), Optional.empty(), "foobar-taskid");
 
-            Optional<Job> j = Database.getJobFromTaskId("foobar-taskid");
+            Optional<Job> j = Database.getInstance().getJobFromTaskId("foobar-taskid");
             assertTrue(j.isPresent());
         }
 

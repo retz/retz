@@ -37,7 +37,7 @@ public class ShutdownThread extends Thread {
         // Close up all incoming requests to prevent database update
         console.stop();
         // Close all database connections; it may take time
-        Database.stop();
+        Database.getInstance().stop();
         // Shut down connection to Mesos; always will be preserved for failover
         // true - possibly connect with same FrameworkID, Mesos doesn't collect tasks
         // false - Same FrameworkID will never connect again, Mesos would refuse reconnection

@@ -58,7 +58,7 @@ public class RetzSchedulerTest {
         InputStream in = Launcher.class.getResourceAsStream("/retz.properties");
         Launcher.Configuration conf = new Launcher.Configuration(new FileConfiguration(in));
 
-        Database.init(conf.getFileConfig());
+        Database.getInstance().init(conf.getFileConfig());
         scheduler = new RetzScheduler(conf, frameworkInfo);
         driver = new MesosSchedulerDummyDriver(scheduler, frameworkInfo, conf.getMesosMaster());
     }
@@ -66,8 +66,8 @@ public class RetzSchedulerTest {
     @After
     public void after() {
         driver.clear();
-        Database.clear();
-        Database.stop();
+        Database.getInstance().clear();
+        Database.getInstance().stop();
     }
 
     @Test
@@ -138,7 +138,7 @@ public class RetzSchedulerTest {
     @Test
     public void notEnough() throws InterruptedException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Database.addUser(new User("Deadbeef", "cafebabe", true));
+        Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true));
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
