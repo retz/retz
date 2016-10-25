@@ -16,6 +16,7 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.db.Database;
 import io.github.retz.web.WebConsole;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;

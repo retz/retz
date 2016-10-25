@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
+import io.github.retz.db.Database;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;

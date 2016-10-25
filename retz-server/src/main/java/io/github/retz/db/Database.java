@@ -14,18 +14,17 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.db;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.dao.Jobs;
-import io.github.retz.dao.Property;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
+import io.github.retz.scheduler.Launcher;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.slf4j.Logger;
@@ -45,7 +44,7 @@ public class Database {
 
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final DataSource dataSource = new DataSource();
-    private String databaseURL = null;
+    String databaseURL = null;
 
     Database() {
         MAPPER.registerModule(new Jdk8Module());
@@ -134,7 +133,7 @@ public class Database {
         dataSource.close();
     }
 
-    void clear() {
+    public void clear() {
         try (Connection conn = dataSource.getConnection();
              Statement statement = conn.createStatement()) {
             statement.execute("DROP TABLE users, jobs, applications, properties");
@@ -198,7 +197,7 @@ public class Database {
         }
     }
 
-    List<User> allUsers() {
+    public List<User> allUsers() {
         List<User> ret = new LinkedList<>();
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         //try (Connection conn = pool.getConnection();
@@ -466,7 +465,7 @@ public class Database {
         return ret;
     }
 
-    List<Job> findFit(int cpu, int memMB) throws IOException {
+    public List<Job> findFit(int cpu, int memMB) throws IOException {
         List<Job> ret = new LinkedList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC")) {
@@ -598,7 +597,7 @@ public class Database {
         });
     }
 
-    void updateJob(int id, Function<Job, Optional<Job>> fun) {
+    public void updateJob(int id, Function<Job, Optional<Job>> fun) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE id=?")) {
             conn.setAutoCommit(false);
@@ -640,7 +639,7 @@ public class Database {
         return -1;
     }
 
-    int countRunning() {
+    public int countRunning() {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);

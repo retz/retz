@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.db.Database;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.StatusResponse;
@@ -35,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class RetzScheduler implements Scheduler {

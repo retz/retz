@@ -28,7 +28,7 @@ import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.scheduler.Applications;
-import io.github.retz.scheduler.Database;
+import io.github.retz.db.Database;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
 import org.apache.mesos.Protos;

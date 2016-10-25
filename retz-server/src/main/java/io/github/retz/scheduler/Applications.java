@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.github.retz.db.Database;
 import io.github.retz.mesos.Resource;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;

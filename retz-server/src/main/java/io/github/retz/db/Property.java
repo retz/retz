@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.dao;
+package io.github.retz.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

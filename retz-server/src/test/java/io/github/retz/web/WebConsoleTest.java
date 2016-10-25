@@ -19,6 +19,7 @@ package io.github.retz.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.FileConfiguration;
+import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.*;
 import io.github.retz.scheduler.*;

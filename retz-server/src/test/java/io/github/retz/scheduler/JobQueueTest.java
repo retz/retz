@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;

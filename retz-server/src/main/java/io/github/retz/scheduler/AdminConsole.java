@@ -19,6 +19,7 @@ package io.github.retz.scheduler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.bean.AdminConsoleMXBean;
+import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;

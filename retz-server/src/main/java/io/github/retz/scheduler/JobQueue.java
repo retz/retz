@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.db.Database;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
@@ -24,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
