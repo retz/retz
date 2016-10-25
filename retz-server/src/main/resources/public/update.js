@@ -18,14 +18,18 @@
 
 function updateProfile(){
     id("up").innerText = "Requesting status to server ...";
+    id("date").innerText = "";
+    id("version").innerText = "";
 
     console.log("updating profile");
     fetch("/ping").then(function(response){
         var version = response.headers.get("Server");
+        var date = response.headers.get("Date");
         var text = response.text();
-        console.log("/ping => " + version + "/" + text)
+        console.log("/ping => " + version + "/" + text + "@" + date);
 
         id("version").innerText = "System version: " + version;
+        id("date").innerText = "Status at " + date + ":";
         return text;
 
     }).then(function(text) {

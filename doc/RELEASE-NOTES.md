@@ -2,6 +2,8 @@
 
 ## 0.0.28
 
+* Update HTML page '/' removing all WebSocket JavaScript code and replace
+  with simple guidance and small update on latest status.
 * Remove 'watch' command and protocol. This changed 'ScheduleRequest'
   protocol and introduced incompatibility.
 * Add integer priority field to 'Job' object in the protocol for future use.
