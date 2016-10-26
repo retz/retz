@@ -16,7 +16,10 @@
  */
 package io.github.retz.db
 
-import io.github.retz.protocol.data.User
+import java.util.{Optional, Properties}
+
+import io.github.retz.cli.TimestampHelper
+import io.github.retz.protocol.data.{Application, Job, MesosContainer, User}
 import org.junit.Test
 import org.scalacheck.Prop._
 import org.scalacheck.commands.Commands
@@ -24,20 +27,24 @@ import org.scalacheck.{Gen, Prop}
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.prop.Checkers
 
+import scala.collection.JavaConverters._
+
 object DatabaseSpec extends Commands {
 
   case class State(users: Map[String, User],
+                   applications: Map[String, Application],
+                   queued: Map[Int, Job],
                    name: String)
 
   type Sut = Database
 
   override def canCreateNewSut(newState: State, initStates: Traversable[State], runningSuts: Traversable[Sut]): Boolean = {
-    //System.err.println("can we create new databaas?")
+    println("can we create new databaas?")
     initStates.forall(_.name != newState.name)
   }
 
   override def initialPreCondition(state: State): Boolean = {
-    state.users.isEmpty
+    state.users.isEmpty && state.applications.isEmpty && state.queued.isEmpty
   }
 
   override def newSut(state: State): Sut = {
@@ -46,7 +53,6 @@ object DatabaseSpec extends Commands {
   }
 
   override def destroySut(sut: Sut): Unit = {
-    //println("Stopping")
     sut.clear()
     sut.stop()
     println("Stopped " + sut)
@@ -54,23 +60,19 @@ object DatabaseSpec extends Commands {
 
   override def genInitialState: Gen[State] = for {
     name <- RetzGen.nonEmpty(32)
-  } yield State(Map.empty, name)
+  } yield State(Map.empty, Map.empty, Map.empty, name)
 
   // Commands: schedule, scheduled, started, resource offer, job finished, job lost
   // Add user, add application
   // Noop for validation...
   override def genCommand(state: State): Gen[Command] =
-  Gen.oneOf(Gen.const(Noop), genAddUser)
+  if (state.users.isEmpty) {
+    Gen.oneOf(Gen.const(Noop), genAddUser)
+  } else {
+    Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state))
+  }
 
-  /*
-    if (state.users.isEmpty) {
-      genAddUser(state)
-    } else if(state.applications.isEmpty) {
-      Gen.oneOf(genAddUser(state), genAddApplication(state))
-    } else {
-      Gen.oneOf(genAddUser(state), genAddApplication(state))
-    } */
-
+  // For ScalaCheck sanity testing
   case object Noop extends UnitCommand {
     override def preCondition(state: State): Boolean = true
 
@@ -102,82 +104,73 @@ object DatabaseSpec extends Commands {
 
     override def nextState(state: State): State =
       if (!state.users.contains(user.keyId())) {
-        State(state.users + (user.keyId() -> user), state.name)
+        State(state.users + (user.keyId() -> user), state.applications, state.queued, state.name)
       } else {
         state
       }
   }
 
-  /*
-    def genApplication(state: State): Gen[Application] = for {
-      appid <- RetzGen.nonEmpty
-      persistentFiles <- Gen.containerOf[List, String](RetzGen.url)
-      largeFiles <- Gen.containerOf[List, String](RetzGen.url)
-      files <- Gen.containerOf[List, String](RetzGen.url)
-      diskMB <- Gen.chooseNum(0, 10)
-      unixUser <- RetzGen.nonEmpty
-      owner <- Gen.oneOf(state.users.keys.toSeq)
-    } yield new Application(appid, persistentFiles.asJava, largeFiles.asJava, files.asJava,
-      java.util.Optional.of(diskMB), Optional.of(unixUser), owner, new MesosContainer(), true)
+  def genAddApplication(state: State): Gen[AddApplication] = for {
+    appid <- RetzGen.nonEmpty(32)
+    persistentFiles <- Gen.containerOf[List, String](RetzGen.url)
+    largeFiles <- Gen.containerOf[List, String](RetzGen.url)
+    files <- Gen.containerOf[List, String](RetzGen.url)
+    diskMB <- Gen.chooseNum(0, 10)
+    unixUser <- RetzGen.nonEmpty
+    owner <- Gen.oneOf(state.users.keys.toSeq)
+  } yield
+    AddApplication(new Application(appid,
+      persistentFiles.asJava, largeFiles.asJava, files.asJava,
+      java.util.Optional.of(diskMB), Optional.of(unixUser), owner, new MesosContainer(), true))
 
-    def genAddApplication(state: State): Gen[AddApplication] = for {
-      application <- genApplication(state)
-    } yield AddApplication(application)
+  case class AddApplication(application: Application) extends UnitCommand {
+    override def preCondition(state: State): Boolean = true
 
-    case class AddApplication(application: Application) extends UnitCommand {
-      override def preCondition(state: State): Boolean = {
-        //Database.getUser(application.getOwner).isPresent
-        println("do we have user " + application.getOwner + "? -> " + (state.applications contains(application.getOwner)))
-        state.applications contains(application.getOwner)
-      }
-
-      override def run(sut: Sut): Unit = {
-        println("Adding application " + application.getAppid)
-        sut.addApplication(application)
-      }
-
-      override def nextState(state: State): State = {
-        state.applications(application.getAppid) = application
-        state
-      }
-
-      override def postCondition(state: State, success: Boolean): Prop = success
+    override def run(sut: Sut): Unit = {
+      println("Adding application as overwrite: " + application.getAppid)
+      sut.addApplication(application)
     }
-    def genJob(state: State): Gen[Job] = for {
-      appid <- Gen.oneOf(state.applications.keys.toSeq)
-      name <- RetzGen.nonEmpty
-      cmd <- RetzGen.nonEmpty
-    } yield new Job(appid, cmd, new Properties(), 1, 1, 1)
 
-    def genSchedule(state: State): Gen[Schedule] = for {
-      job <- genJob(state)
-      id <- Gen.posNum[Int]
-    } yield Schedule(id, job)
+    override def nextState(state: State): State = {
+      val apps = state.applications - application.getAppid + (application.getAppid -> application)
+      State(state.users, apps, state.queued, state.name)
+    }
 
-    case class Schedule(id: Int, job: Job) extends UnitCommand {
-      override def preCondition(state: State): Boolean = {
-        Database.getApplication(job.appid()).isPresent &&
-          !Database.getJob(id).isPresent &&
-          !(state.jobs contains id)
-      }
+    override def postCondition(state: State, success: Boolean): Prop = success
+  }
 
-      override def run(sut: Sut): Unit = {
+/*
+  def genSchedule(state: State): Gen[Schedule] = for {
+    appid <- Gen.oneOf(state.applications.keys.toSeq)
+    name <- RetzGen.nonEmpty
+    cmd <- RetzGen.nonEmpty
+    id <- Gen.posNum[Int]
+  } yield {
+    var job = new Job(appid, cmd, new Properties(), 1, 1, 1)
+    job.schedule(id, TimestampHelper.now())
+    Schedule(id, job)
+  }
+
+  case class Schedule(id: Int, job: Job) extends UnitCommand {
+    override def preCondition(state: State): Boolean = true
+
+    override def run(sut: Sut): Unit =
+      if (!sut.getJob(id).isPresent) {
         println("Adding job " + job.toString)
-        job.schedule(id, TimestampHelper.now())
-        Database.safeAddJob(job)
+        sut.safeAddJob(job)
       }
 
-      override def nextState(state: State): State = {
-        state.jobs(job.id()) = job
-        state
-      }
+    override def postCondition(state: State, success: Boolean) = success
 
-      override def postCondition(state: State, success: Boolean): Prop = {
-        val j = Database.getJob(id).get()
-        j.id() == id
+    override def nextState(state: State): State = {
+      val q = if (state.queued.contains(id)) {
+        state.queued
+      } else {
+        state.queued - id + (id -> job)
       }
+      State(state.users, state.applications, q, state.name)
     }
-  */
+  } */
 }
 
 class DatabaseTestSuite extends JUnitSuite with Checkers {
