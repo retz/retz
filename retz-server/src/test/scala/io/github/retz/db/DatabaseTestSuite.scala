@@ -68,8 +68,10 @@ object DatabaseSpec extends Commands {
   override def genCommand(state: State): Gen[Command] =
   if (state.users.isEmpty) {
     Gen.oneOf(Gen.const(Noop), genAddUser)
-  } else {
+  } else if (state.applications.isEmpty) {
     Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state))
+  } else {
+    Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state), genSchedule(state))
   }
 
   // For ScalaCheck sanity testing
@@ -139,14 +141,14 @@ object DatabaseSpec extends Commands {
     override def postCondition(state: State, success: Boolean): Prop = success
   }
 
-/*
+
   def genSchedule(state: State): Gen[Schedule] = for {
     appid <- Gen.oneOf(state.applications.keys.toSeq)
     name <- RetzGen.nonEmpty
     cmd <- RetzGen.nonEmpty
     id <- Gen.posNum[Int]
   } yield {
-    var job = new Job(appid, cmd, new Properties(), 1, 1, 1)
+    var job = new Job(appid, cmd, new Properties(), 1, 32, 1)
     job.schedule(id, TimestampHelper.now())
     Schedule(id, job)
   }
@@ -170,7 +172,7 @@ object DatabaseSpec extends Commands {
       }
       State(state.users, state.applications, q, state.name)
     }
-  } */
+  }
 }
 
 class DatabaseTestSuite extends JUnitSuite with Checkers {
