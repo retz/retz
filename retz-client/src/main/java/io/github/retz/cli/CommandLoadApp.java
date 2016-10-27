@@ -42,14 +42,10 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = {"-L", "--large-file"}, description = "Large files that will be cached at agents")
     List<String> largeFiles = new LinkedList<>();
 
-    @Parameter(names = {"-P", "--persistent"}, description = "Persistent files")
-    private List<String> persistentFiles = new LinkedList<>();
-    // ("http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
-
     @Parameter(names = {"-U", "--user"}, description = "User name to run task")
     private String user;
 
-    @Parameter(names = "-disk", description = "Disk size for persistent volume in MB")
+    //@Parameter(names = "-disk", description = "Disk size for sandbox in MB")
     private int disk = 0;
 
     @Parameter(names = "--container", description = "Container in which job is run 'mesos' or 'docker'")
@@ -78,12 +74,8 @@ public class CommandLoadApp implements SubCommand {
     public int handle(FileConfiguration fileConfig) {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
-        if (files.isEmpty() && persistentFiles.isEmpty()) {
+        if (files.isEmpty()) {
             LOG.warn("No files specified; mesos-execute would rather suite your use case.");
-        }
-        if (!persistentFiles.isEmpty() && !(disk == 0)) {
-            LOG.error("Option '-disk' required when persistent files specified");
-            return -1;
         }
 
         Container c;
@@ -118,7 +110,7 @@ public class CommandLoadApp implements SubCommand {
             return -1;
         }
         Application application = new Application(appName,
-                persistentFiles, largeFiles, files, maybeDisk,
+                Arrays.asList(), largeFiles, files, maybeDisk,
                 Optional.ofNullable(user), fileConfig.getAccessKey(), c,
                 enabled);
 

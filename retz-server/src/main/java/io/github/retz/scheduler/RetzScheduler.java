@@ -156,11 +156,6 @@ public class RetzScheduler implements Scheduler {
 
             List<Protos.Offer.Operation> operations = new ArrayList<>();
 
-            operations.addAll(Applications.persistentVolumeOps(resource, frameworkInfo));
-
-            // Cleanup unused spaces, volumes
-            operations.addAll(Applications.persistentVolumeCleanupOps(resource, frameworkInfo));
-
             List<Job> jobs = JobQueue.findFit((int) resource.cpu(), resource.memMB());
 
             LOG.debug("{} jobs found for fit {}/{}", jobs.size(), resource.cpu(), resource.memMB());
@@ -224,17 +219,6 @@ public class RetzScheduler implements Scheduler {
                     .setName("retz-task-name-" + job.name())
                     .setTaskId("retz-task-id-" + id)
                     .setCommand(job, app);
-
-            String volumeId = app.toVolumeId(frameworkInfo.getRole());
-            if (app.getDiskMB().isPresent() && resource.volumes().containsKey(volumeId)) {
-                LOG.debug("getting {}, diskMB {}", volumeId, app.getDiskMB().get());
-                Protos.Resource res = resource.volumes().get(volumeId);
-                LOG.debug("name:{}, role:{}, path:{}, size:{}, principal:{}",
-                        res.getName(), res.getRole(), res.getDisk().getVolume().getContainerPath(),
-                        res.getScalar().getValue(),
-                        res.getReservation().getPrincipal());
-                tb.setVolume(resource, volumeId);
-            }
 
             assigned.merge(tb.getAssigned());
             Protos.TaskInfo task = tb.build();

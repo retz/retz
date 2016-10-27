@@ -54,9 +54,6 @@ public class CommandRun implements SubCommand {
     @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job")
     int gpu = 0;
 
-    @Parameter(names = "-trustpvfiles", description = "Whether to trust decompressed files in persistent volume from -P option")
-    private boolean trustPVFiles = false;
-
     @Parameter(names = "-stderr", description = "Print stderr after the task finished to standard error")
     boolean stderr = false;
 
@@ -76,7 +73,6 @@ public class CommandRun implements SubCommand {
 
         Job job = new Job(appName, remoteCmd,
                 envProps, cpu, mem, gpu);
-        job.setTrustPVFiles(trustPVFiles);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())

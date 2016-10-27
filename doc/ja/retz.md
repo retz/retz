@@ -120,8 +120,7 @@ $ retz-client list-app
 なっていなければならない。
 
 一度登録したアプリケーションのファイルを追加、削除するには一度登録解除 (
-`unload-app` ) すること。 `unload-app` を行うと、そのアプリケーション
-のために確保されていた Persistent Volume も削除予約される。登録されている
+`unload-app` ) すること。登録されている
 アプリケーションの一覧を見るには `list-app` を実行する。
 
 内部的には、このタイミングでExecutorを起動、作成する。Executor idは
@@ -147,7 +146,7 @@ Executor が終了してからしばらくは残るが、GC時に削除される
 * ファイルがMesos agent 上でキャッシュされる以外は、 `-F` と同様
 
 3. `-P` オプションを使って、 アプリケーション開始時に永続領域を確保し、
-  そこにファイルを展開する
+  そこにファイルを展開する (Removed)
 * [Persistent Volumes](http://mesos.apache.org/documentation/latest/persistent-volume/)
 * データはRetzがアプリケーション用に確保したAgent上の永続領域に保存さ
   れる。これは、Executorの実行ディレクトリ下に `retz-<app-name>` とい
@@ -253,16 +252,11 @@ $ retz-client config
   ブは通常、Mesosに与えられたRAM量または、ここで指定した最大値を実行時に利用する。
 * `-gpu <posint>` [opt default=0] ジョブを実行可能なGPUの枚数。
   これを有効にするためには、サーバーの設定ファイルで `retz.gpu=true` を設定しておかなければならない。
-* `-trustpvfiles` Persistent Volumes 上に展開されているファイルが完全であると信用する
 * `-id <jobid>` ジョブの状態を表示する。`-R <dir>` を `run` と同様に指定することで、結果をローカルに取得できる
 * `-file <filename>` [must if batch/home is omitted] **未実装**
 * `-retry <posint>` [opt default=config] **未実装**
 
 `-E key=value` の形で環境変数を指定するときに、Executor上での実行環境に合わせた値を利用できる。
-
-* `$RETZ_CPU` Mesosによって割り当てられた実際のコア数
-* `$RETZ_MEM` Mesosによって割り当てられた実際のメモリ量（MB）
-* `$RETZ_PVNAME` Mesosによって割り当てられたPersistent Volumeの相対パス。 Persistent Volume がない場合は `.` になる。
 
 例えば、 Asakusa on M3BP で利用する場合は
 

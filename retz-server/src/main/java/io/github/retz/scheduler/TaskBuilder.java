@@ -71,13 +71,6 @@ public class TaskBuilder {
         return this;
     }
 
-    public TaskBuilder setVolume(Resource r, String volumeId) {
-        assert r.volumes().containsKey(volumeId);
-        LOG.debug(r.volumes().get(volumeId).toString());
-        builder.addResources(r.volumes().get(volumeId));
-        return this;
-    }
-
     public TaskBuilder setName(String name) {
         builder.setName(name);
         return this;

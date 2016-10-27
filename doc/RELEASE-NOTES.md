@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.29
+
+* Remove Persistent Volumes support
+
 ## 0.0.28
 
 * Fix a bug where return value of 'retz-client run' always being non-zero
