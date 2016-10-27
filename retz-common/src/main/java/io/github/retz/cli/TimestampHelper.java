@@ -23,7 +23,7 @@ import java.util.Date;
 
 public class TimestampHelper {
     // Use ISO8601-like extended format
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSXXX");
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
     public static String now() {
         synchronized (DATE_FORMAT) {
