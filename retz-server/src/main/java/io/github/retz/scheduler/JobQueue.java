@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.db.JobNotFoundException;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
@@ -26,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.sql.Time;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * On memory job queue to mediate job execution requests and resources
  * TODO: make all these data tolerant against node or network failure
+ * TODO: FIXME: re-design all exception handling, which to supress / which to return to client
  */
 public class JobQueue {
     private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
@@ -78,7 +79,7 @@ public class JobQueue {
         Database.getInstance().updateJobs(jobs);
     }
 
-    public static Optional<String> cancel(int id, String reason) {
+    public static Optional<String> cancel(int id, String reason) throws SQLException, IOException, JobNotFoundException {
         Database.getInstance().updateJob(id, (job -> {
             job.killed(TimestampHelper.now(), Optional.empty(), reason);
             LOG.info("Job id={} has been canceled.", id);
@@ -124,20 +125,24 @@ public class JobQueue {
     }
 
     public static void starting(Job job, Optional<String> url, String taskId) {
-        Database.getInstance().setJobStarting(job.id(), url, taskId);
+        try {
+            Database.getInstance().setJobStarting(job.id(), url, taskId);
+        } catch (IOException e) {
+
+        } catch (SQLException e) {
+
+        } catch (JobNotFoundException e) {
+
+        }
     }
 
-    static void started(String taskId, Optional<String> maybeUrl) {
-        try {
-            Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
-            if (maybeJob.isPresent()) {
-                Database.getInstance().updateJob(maybeJob.get().id(), job -> {
-                    job.started(taskId, maybeUrl, TimestampHelper.now());
-                    return Optional.of(job);
-                });
-            }
-        } catch (IOException e) {
-            LOG.warn("Couldn't update status of {} to started: {}", taskId, e.toString());
+    static void started(String taskId, Optional<String> maybeUrl) throws IOException, SQLException, JobNotFoundException {
+        Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
+        if (maybeJob.isPresent()) {
+            Database.getInstance().updateJob(maybeJob.get().id(), job -> {
+                job.started(taskId, maybeUrl, TimestampHelper.now());
+                return Optional.of(job);
+            });
         }
     }
 
@@ -150,7 +155,7 @@ public class JobQueue {
         }
     }
 
-    public static void retry(String taskId, String reason) {
+    public static void retry(String taskId, String reason) throws SQLException, JobNotFoundException {
         try {
             Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
@@ -175,7 +180,7 @@ public class JobQueue {
     }
 
     // Whether it's success, fail, or killed
-    static void finished(String taskId, Optional<String> maybeUrl, int ret, String finished) {
+    static void finished(String taskId, Optional<String> maybeUrl, int ret, String finished) throws SQLException, JobNotFoundException {
         try {
             Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
@@ -190,7 +195,7 @@ public class JobQueue {
         }
     }
 
-    public static void failed(String taskId, Optional<String> maybeUrl, String msg) {
+    public static void failed(String taskId, Optional<String> maybeUrl, String msg) throws SQLException, JobNotFoundException {
         try {
             Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
