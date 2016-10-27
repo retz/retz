@@ -2,6 +2,12 @@
 
 ## 0.0.28
 
+* Fix a bug where return value of 'retz-client run' always being non-zero
+  (esp. default value of Job.result()). By the way, since 0.0.27, Retz is
+  using Mesos' default command executor and thus Retz cannot take return
+  value of application command any more. Instead it returns `0` iff the
+  task state ends with `TASK_FINISHED`, otherwise `i - TASK_FINISHED` where
+  `i` is the last task state.
 * Update HTML page '/' removing all WebSocket JavaScript code and replace
   with simple guidance and small update on latest status.
 * Remove 'watch' command and protocol. This changed 'ScheduleRequest'

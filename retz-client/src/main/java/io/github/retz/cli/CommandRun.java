@@ -95,18 +95,17 @@ public class CommandRun implements SubCommand {
             Job running = ClientHelper.waitForStart(scheduled, webClient);
             LOG.info("job {} started: {}", running.id(), running.state());
 
-            String filename = ClientHelper.maybeGetStdout(running.id(), webClient);
-
-            LOG.info("============ {} in job {} sandbox start ===========", filename, running.id());
-            Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), filename, true, System.out);
-            LOG.info("============ {} of job {} sandbox end ===========", filename, running.id());
+            LOG.info("============ stdout in job {} sandbox start ===========", running.id());
+            Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), "stdout", true, System.out);
+            LOG.info("============ stdout of job {} sandbox end ===========", running.id());
             LOG.info("{} {}", finished.get().state(), finished.get().finished());
 
-            if (finished.isPresent())
-            LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
-                    running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
-                    finished.get().result());
-            return running.result();
+            if (finished.isPresent()) {
+                LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
+                        running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
+                        finished.get().result());
+                return finished.get().result();
+            }
 
         } catch (ParseException e) {
             LOG.error(e.toString());
