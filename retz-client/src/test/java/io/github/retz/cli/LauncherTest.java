@@ -153,6 +153,20 @@ public class LauncherTest {
             assertEquals(2, command.cpu);
             assertEquals(32, command.mem);
             assertEquals(0, command.gpu);
+            assertFalse(command.stderr);
+        }
+
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t",
+                    "-cmd", "uname -a", "-E", "a=b", "-cpu", "2", "-gpu", "1", "-stderr"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("run", conf.commander.getParsedCommand());
+            CommandRun command = (CommandRun) conf.getParsedSubCommand();
+            assertEquals("a=b", command.envs.get(0));
+            assertEquals(2, command.cpu);
+            assertEquals(32, command.mem);
+            assertEquals(1, command.gpu);
+            assertTrue(command.stderr);
         }
     }
 

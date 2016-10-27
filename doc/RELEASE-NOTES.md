@@ -31,6 +31,8 @@
 
 ## 0.0.27
 
+* Add '-stderr' option to 'retz-client run' so that job standard error is
+  easily printed at the client console, which is off by default.
 * Remove RetzExecutor, preserving as local mode executor. This has few
   effect to users - while it simplifies the system a lot.
 * Remove 'unload-app' and add 'enabled' flag to application instead, and

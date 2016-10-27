@@ -57,6 +57,9 @@ public class CommandRun implements SubCommand {
     @Parameter(names = "-trustpvfiles", description = "Whether to trust decompressed files in persistent volume from -P option")
     private boolean trustPVFiles = false;
 
+    @Parameter(names = "-stderr", description = "Print stderr after the task finished to standard error")
+    boolean stderr = false;
+
     @Override
     public String description() {
         return "Schedule and watch a job";
@@ -82,7 +85,6 @@ public class CommandRun implements SubCommand {
                 .build()) {
 
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
-            //Job running = webClient.run(job);
             Response res = webClient.schedule(job);
 
             if (!(res instanceof ScheduleResponse)) {
@@ -98,8 +100,14 @@ public class CommandRun implements SubCommand {
             LOG.info("============ stdout in job {} sandbox start ===========", running.id());
             Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), "stdout", true, System.out);
             LOG.info("============ stdout of job {} sandbox end ===========", running.id());
-            LOG.info("{} {}", finished.get().state(), finished.get().finished());
 
+            if (stderr) {
+                LOG.info("============ stderr in job {} sandbox start ===========", running.id());
+                Optional<Job> j = ClientHelper.getWholeFile(webClient, running.id(), "stderr", false, System.err);
+                LOG.info("============ stderr of job {} sandbox end ===========", running.id());
+            }
+
+            LOG.info("{} {}", finished.get().state(), finished.get().finished());
             if (finished.isPresent()) {
                 LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
                         running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
