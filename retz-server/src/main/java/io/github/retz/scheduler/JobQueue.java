@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
+import java.sql.Time;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +68,16 @@ public class JobQueue {
         Database.getInstance().safeAddJob(job);
     }
 
+    public static void cancelAll(List<Job> jobs) {
+        for (Job job : jobs) {
+            if (job.state() != Job.JobState.KILLED) {
+                LOG.warn("Job state isn't yet KILLED: changing here from {}", job);
+                job.killed(TimestampHelper.now(), Optional.empty(), "Changed via JobQueue.cancelAll check");
+            }
+        }
+        Database.getInstance().updateJobs(jobs);
+    }
+
     public static Optional<String> cancel(int id, String reason) {
         Database.getInstance().updateJob(id, (job -> {
             job.killed(TimestampHelper.now(), Optional.empty(), reason);
@@ -81,13 +93,17 @@ public class JobQueue {
     }
 
     // @doc take as much jobs as in the max cpu/memMB
-    public synchronized static List<Job> findFit(int cpu, int memMB) {
+    public static List<Job> findFit(int cpu, int memMB) {
         try {
             return Database.getInstance().findFit(cpu, memMB);
         } catch (IOException e) {
             LOG.error(e.toString());
             return new LinkedList<>();
         }
+    }
+
+    public static List<Job> queued(int limit) throws SQLException, IOException {
+        return Database.getInstance().queued(limit);
     }
 
     public synchronized static Optional<Job> getJob(int id) {

@@ -496,6 +496,29 @@ public class Database {
         return ret;
     }
 
+    public List<Job> queued(int limit) throws IOException, SQLException {
+        List<Job> ret = new LinkedList<>();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
+             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC LIMIT ?")) {
+            conn.setAutoCommit(true);
+            p.setInt(1, limit);
+
+            try (ResultSet res = p.executeQuery()) {
+                while (res.next()) {
+                    String json = res.getString("json");
+                    Job job = MAPPER.readValue(json, Job.class);
+
+                    if (job == null || job.state() != Job.JobState.QUEUED) {
+                        throw new AssertionError("Cannot be null!!");
+                    } else {
+                        ret.add(job);
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
     public void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
         try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());

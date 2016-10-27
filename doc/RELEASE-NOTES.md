@@ -2,6 +2,8 @@
 
 ## 0.0.29
 
+* Fix a bug where an exceeding job is to be launched with stocked offers,
+  with a huge clean up on creating execution plan matching offers and jobs
 * Print reason at 'retz-client run' when the job is killed
 * Remove Persistent Volumes support
 

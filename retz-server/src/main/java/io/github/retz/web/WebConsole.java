@@ -389,7 +389,7 @@ public final class WebConsole {
 
             JobQueue.push(job);
             if (scheduler.isPresent() && driver.isPresent()) {
-                LOG.info("Trying invocation from offer stock");
+                LOG.info("Trying invocation from offer stock: {}", job);
                 scheduler.get().maybeInvokeNow(driver.get(), job);
             }
 

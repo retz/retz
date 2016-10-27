@@ -39,16 +39,20 @@ public class TaskBuilder {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private Resource assigned;
-    private String java;
     Protos.TaskInfo.Builder builder;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    TaskBuilder(String java) {
-        this.java = Objects.requireNonNull(java);
+    TaskBuilder() {
         builder = Protos.TaskInfo.newBuilder();
+    }
+
+    public TaskBuilder setResource(Resource r, Protos.SlaveID slaveID) {
+        builder.addAllResources(ResourceConstructor.construct((int)r.cpu(), r.memMB(), r.diskMB(), r.gpu()));
+        builder.setSlaveId(slaveID);
+        return this;
     }
 
     // @doc assign as much CPU/Memory as possible

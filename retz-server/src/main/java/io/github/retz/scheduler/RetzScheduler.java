@@ -24,7 +24,6 @@ import io.github.retz.db.Database;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.StatusResponse;
-import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;
 import org.apache.mesos.Protos;
@@ -38,16 +37,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static io.github.retz.scheduler.JobQueue.queued;
+
 public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
-    private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
-    private Launcher.Configuration conf;
-    private Protos.FrameworkInfo frameworkInfo;
-    private Map<String, List<Protos.SlaveID>> slaves;
-    private final ObjectMapper MAPPER = new ObjectMapper();
     public static final String HTTP_SERVER_NAME;
-
-    private final Map<String, Protos.Offer> OFFER_STOCK = new ConcurrentHashMap<>();
+    private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
 
     static {
         // TODO: stop hard coding and get the file name in more generic way
@@ -59,6 +54,14 @@ public class RetzScheduler implements Scheduler {
         HTTP_SERVER_NAME = labels.getString("servername");
         LOG.info("Server name in HTTP(S) header: {}", HTTP_SERVER_NAME);
     }
+
+    private final ObjectMapper MAPPER = new ObjectMapper();
+    private final Map<String, Protos.Offer> OFFER_STOCK = new ConcurrentHashMap<>();
+    private final Planner PLANNER = (Planner) new NaivePlanner();
+    private final Protos.Filters filters = Protos.Filters.newBuilder().setRefuseSeconds(1).build();
+    private Launcher.Configuration conf;
+    private Protos.FrameworkInfo frameworkInfo;
+    private Map<String, List<Protos.SlaveID>> slaves;
 
     public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
         MAPPER.registerModule(new Jdk8Module());
@@ -139,146 +142,111 @@ public class RetzScheduler implements Scheduler {
     public void resourceOffers(SchedulerDriver driver, List<Protos.Offer> offers) {
         LOG.debug("Resource offer: {}", offers.size());
 
-        // TODO TODO TODO: much more refinment on assigning resources
-
-        for (Protos.Offer offer : offers) {
-            // Check if simultaneous jobs exceeded its limit
-            //int running = JobQueue.getRunning().size();
-            int running = JobQueue.countRunning();
-            if (running >= conf.fileConfig.getMaxSimultaneousJobs()) {
-                LOG.warn("Number of concurrently running jobs has reached its limit: {} >= {} ({})",
-                        running, conf.fileConfig.getMaxSimultaneousJobs(), FileConfiguration.MAX_SIMULTANEOUS_JOBS);
-                break;
+        // Merge fresh offers from Mesos and offers in stock here, declining duplicate offers
+        List<Protos.Offer> available = new LinkedList<>();
+        synchronized (OFFER_STOCK) {
+            // TODO: cleanup this code, optimize for max.stock = 0 case
+            Map<String, List<Protos.Offer>> allOffers = new HashMap<>();
+            for (Protos.Offer offer : OFFER_STOCK.values()) {
+                String key = offer.getSlaveId().getValue();
+                List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
+                list.add(offer);
+                allOffers.put(offer.getSlaveId().getValue(), list);
+            }
+            for (Protos.Offer offer : offers) {
+                String key = offer.getSlaveId().getValue();
+                List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
+                list.add(offer);
+                allOffers.put(offer.getSlaveId().getValue(), list);
             }
 
-            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-            LOG.info("Offer {}: {}", offer.getId().getValue(), resource);
-
-            List<Protos.Offer.Operation> operations = new ArrayList<>();
-
-            List<Job> jobs = JobQueue.findFit((int) resource.cpu(), resource.memMB());
-
-            LOG.debug("{} jobs found for fit {}/{}", jobs.size(), resource.cpu(), resource.memMB());
-
-            handleOffer(driver, resource, offer, jobs, operations, true);
+            int declined = 0;
+            for (Map.Entry<String, List<Protos.Offer>> e : allOffers.entrySet()) {
+                if (e.getValue().size() == 1) {
+                    available.add(e.getValue().get(0));
+                } else {
+                    for (Protos.Offer dup : e.getValue()) {
+                        driver.declineOffer(dup.getId(), filters);
+                        declined += 1;
+                    }
+                }
+            }
+            if (conf.fileConfig.getMaxStockSize() > 0) {
+                LOG.info("Offer stock renewal: {} offers available ({} declined from stock)", available.size(), declined);
+            }
+            OFFER_STOCK.clear();
         }
+
+        Resource resource = new Resource(0, 0, 0);
+        for (Protos.Offer offer : available) {
+            resource.merge(ResourceConstructor.decode(offer.getResourcesList()));
+        }
+
+        List<Job> jobs = JobQueue.findFit((int) resource.cpu(), resource.memMB());
+        handleAll(available, jobs, driver);
     }
 
     public void maybeInvokeNow(SchedulerDriver driver, Job job) {
-        List<String> used = new LinkedList<>();
-        for (Map.Entry<String, Protos.Offer> pair : OFFER_STOCK.entrySet()) {
-            Protos.Offer offer = pair.getValue();
-            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-            List<Protos.Offer.Operation> ops = new LinkedList<>();
-            Job[] jobs = {job};
-            if (handleOffer(driver, resource, offer, Arrays.asList(jobs), ops, false) == 1) {
-                used.add(pair.getKey());
-                break;
+        try {
+            List<Job> queued = JobQueue.queued(1);
+            if (queued.size() == 1 && queued.get(0).id() == job.id()) {
+                // OK
+            } else {
+                return;
             }
+        }catch (Exception e) {
+            LOG.error("maybeInvokeNow failed: {}", e.toString());
+            return;
         }
-        for (String key : used) {
-            OFFER_STOCK.remove(key);
+
+        List<Protos.Offer> available = new LinkedList<>();
+        synchronized (OFFER_STOCK) {
+            available.addAll(OFFER_STOCK.values());
+            OFFER_STOCK.clear();
         }
+        // Only if the queue is empty, and with offer stock, try job invocation
+        List<Job> jobs = Arrays.asList(job);
+        handleAll(available, jobs, driver);
     }
 
-    private synchronized int handleOffer(SchedulerDriver driver, Resource resource, Protos.Offer offer, List<Job> jobs,
-                                         List<Protos.Offer.Operation> operations, boolean doStock) {
-        // Assign tasks if it has enough CPU/Memory
-        Resource assigned = new Resource(0, 0, 0);
+    public void handleAll(List<Protos.Offer> offers, List<Job> jobs, SchedulerDriver driver) {
 
-        List<AppJob> appJobs = jobs.stream().filter(job -> {
-            if (!conf.fileConfig.useGPU() && job.gpu() > 0) {
-                // TODO: this should be checked before enqueuing to JobQueue
-                String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
-                        job.id(), job.appid(), job.gpu());
-                //kill(job, reason);
-                JobQueue.cancel(job.id(), reason);
-                return false;
-            }
-            return true;
-        }).map(job -> {
-            Optional<Application> app = Applications.get(job.appid());
-            return new AppJob(app, job);
-        }).filter(appJob -> {
-            if (!appJob.hasApplication()) {
-                String reason = String.format("Application %s does not exist any more. Cancel.", appJob.job().appid());
-                JobQueue.cancel(appJob.job().id(), reason);
-                return false;
-            }
-            return true;
-        }).collect(Collectors.toList());
-
-        for (AppJob appJob : appJobs) {
-            Job job = appJob.job();
-            Application app = appJob.application().get();
-            String id = Integer.toString(job.id());
-            // Not using simple CommandExecutor to keep the executor lifecycle with its assets
-            // (esp ASAKUSA_HOME env)
-            TaskBuilder tb = new TaskBuilder(conf.getFileConfig().getMesosAgentJava())
-                    .setOffer(resource, job.cpu(), job.memMB(), job.gpu(), offer.getSlaveId())
-                    .setName("retz-task-name-" + job.name())
-                    .setTaskId("retz-task-id-" + id)
-                    .setCommand(job, app);
-
-            assigned.merge(tb.getAssigned());
-            Protos.TaskInfo task = tb.build();
-
-            Protos.Offer.Operation.Launch launch = Protos.Offer.Operation.Launch.newBuilder()
-                    .addTaskInfos(Protos.TaskInfo.newBuilder(task))
-                    .build();
-
-            Protos.TaskID taskId = task.getTaskId();
-            //job.starting(TimestampHelper.now());
-
-            // This shouldn't be a List nor a set, but a Map
-            List<Protos.SlaveID> slaves = this.slaves.getOrDefault(app.getAppid(), new LinkedList<>());
-            slaves.add(offer.getSlaveId());
-            this.slaves.put(app.getAppid(), slaves);
-
-            JobQueue.starting(job, Optional.empty(), taskId.getValue());
-
-            operations.add(Protos.Offer.Operation.newBuilder()
-                    .setType(Protos.Offer.Operation.Type.LAUNCH)
-                    .setLaunch(launch).build());
-            LOG.info("Job {}(task {}) is to be ran as '{}' with {} at Slave {}",
-                    job.id(), taskId.getValue(), job.cmd(), tb.getAssigned().toString(), offer.getSlaveId().getValue());
-
+        // TODO: this is fleaky limitation, build this into Planner.plan as a constraint
+        // Check if simultaneous jobs exceeded its limit
+        int running = JobQueue.countRunning();
+        if (running >= conf.fileConfig.getMaxSimultaneousJobs()) {
+            LOG.warn("Number of concurrently running jobs has reached its limit: {} >= {} ({})",
+                    running, conf.fileConfig.getMaxSimultaneousJobs(), FileConfiguration.MAX_SIMULTANEOUS_JOBS);
+            return;
         }
 
-        if (operations.isEmpty()) {
-            // Clean up with existing stock if any duplication found
-            List<Protos.OfferID> dups = new LinkedList<>();
-            for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
-                if (e.getValue().getSlaveId().getValue().equals(offer.getSlaveId().getValue())) {
-                    // Duplicate!
-                    dups.add(e.getValue().getId());
-                }
-            }
-            if (!dups.isEmpty()) {
-                LOG.info("Discarding {} partial offers from same agent", dups.size() + 1);
-                for (Protos.OfferID oid : dups) {
-                    OFFER_STOCK.remove(oid.getValue());
-                    driver.declineOffer(oid);
-                }
-                driver.declineOffer(offer.getId());
-            } else if (doStock) {
-                if (OFFER_STOCK.size() < conf.getFileConfig().getMaxStockSize()) {
-                    LOG.info("Stocking offer {}", offer.getId().getValue());
-                    OFFER_STOCK.put(offer.getId().getValue(), offer);
-                } else {
-                    LOG.debug("Nothing to do: declining the whole offer");
-                    driver.declineOffer(offer.getId());
-                }
-            }
-        } else {
-            Protos.Filters filters = Protos.Filters.newBuilder().setRefuseSeconds(1).build();
-            List<Protos.OfferID> offerIds = new ArrayList<>();
-            offerIds.add(offer.getId());
-            LOG.info("Total resource newly used: {}", assigned.toString());
-            LOG.info("Accepting offer {}, {} operations (remaining: {})", offer.getId().getValue(), operations.size(), resource);
-            driver.acceptOffers(offerIds, operations, filters);
+        // DO MAKE PLANNING
+        List<Job> cancel = new LinkedList<>();
+        List<AppJobPair> appJobPairs = PLANNER.filter(jobs, cancel, conf.getFileConfig().useGPU());
+        // update database to change all jobs state to KILLED
+        JobQueue.cancelAll(cancel);
+
+        Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getFileConfig().getMaxStockSize());
+
+        // Update local database, to running
+        for (Job j : bestPlan.getToBeLaunched()) {
+            JobQueue.starting(j, Optional.empty(), j.taskId());
         }
-        return operations.size();
+        // Accept offers to mesos
+        if (!(bestPlan.getToBeAccepted().isEmpty() && bestPlan.getOperations().isEmpty())) {
+            driver.acceptOffers(bestPlan.getToBeAccepted(), bestPlan.getOperations(), filters);
+        }
+
+        // update database to change all jobs state to KILLED
+        JobQueue.cancelAll(bestPlan.getToCancel());
+
+        // Stock unused offers, return duplicate offers
+        OFFER_STOCK.putAll(bestPlan.getToStock());
+        for (Protos.OfferID id : bestPlan.getToDecline()) {
+            driver.declineOffer(id, filters);
+        }
+        LOG.info("{} accepted, {} declined ({} offers back in stock)",
+                bestPlan.getToBeAccepted().size(), bestPlan.getToDecline().size(), bestPlan.getToStock().size());
     }
 
     @Override
@@ -402,7 +370,6 @@ public class RetzScheduler implements Scheduler {
                 status.getExecutorId().getValue());
 
         JobQueue.started(status.getTaskId().getValue(), maybeUrl);
-        //WebConsole.notifyStarted(job);
     }
 
     public void setOfferStats(StatusResponse statusResponse) {
@@ -418,28 +385,6 @@ public class RetzScheduler implements Scheduler {
         statusResponse.setOfferStats(OFFER_STOCK.size(), totalCpu, totalMem, totalGpu);
     }
 
-    private static class AppJob {
-        private final Optional<Application> app;
-        private final Job job;
-
-        AppJob(Optional<Application> a, Job j) {
-            app = a;
-            job = j;
-        }
-
-        boolean hasApplication() {
-            return app.isPresent();
-        }
-
-        Optional<Application> application() {
-            return app;
-        }
-
-        Job job() {
-            return job;
-        }
-    }
-
     // Get all running jobs and sync its latest state in Mesos
     // If it's not lost, just update state. Otherwise, set its state as QUEUED back.
     // TODO: offload this from scheduler callback thread
@@ -447,4 +392,6 @@ public class RetzScheduler implements Scheduler {
         List<Job> jobs = Database.getInstance().getRunning();
         Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
     }
+
+
 }
