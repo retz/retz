@@ -2,6 +2,7 @@
 
 ## 0.0.29
 
+* Print reason at 'retz-client run' when the job is killed
 * Remove Persistent Volumes support
 
 ## 0.0.28

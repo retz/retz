@@ -103,12 +103,14 @@ public class CommandRun implements SubCommand {
                 LOG.info("============ stderr of job {} sandbox end ===========", running.id());
             }
 
-            LOG.info("{} {}", finished.get().state(), finished.get().finished());
             if (finished.isPresent()) {
+                LOG.info("{} {} {}", finished.get().state(), finished.get().finished(), finished.get().reason());
                 LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
                         running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
                         finished.get().result());
                 return finished.get().result();
+            } else {
+                LOG.error("Failed to fetch last state of job id={}", running.id());
             }
 
         } catch (ParseException e) {
