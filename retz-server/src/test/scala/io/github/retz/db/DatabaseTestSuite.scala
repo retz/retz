@@ -14,6 +14,22 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+/**
+  * Retz
+  * Copyright (C) 2016 Nautilus Technologies, Inc.
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package io.github.retz.db
 
 import java.util.{Optional, Properties}
@@ -28,13 +44,50 @@ import org.scalatest.junit.JUnitSuite
 import org.scalatest.prop.Checkers
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+import scala.util.Try
 
 object DatabaseSpec extends Commands {
 
   case class State(users: Map[String, User],
                    applications: Map[String, Application],
                    queued: Map[Int, Job],
-                   name: String)
+                   running: Map[Int, Job],
+                   name: String) {
+    def start(id : Int, taskId: String) : State = {
+      var job: Job = queued.get(id).get
+      //job.killed(TimestampHelper.now(), Optional.empty(), "reason")
+      job.started(taskId, Optional.empty(), TimestampHelper.now())
+      State(users, applications, queued - id, running + (id -> job), name)
+    }
+    def addUser(user: User) : State = {
+      State(users + (user.keyId() -> user), applications, queued, running, name)
+    }
+
+    /*
+  def findFit(cpu: Int, mem: Int, gpu: Int): Fit = {
+    val q = queued.values.toSeq.sortWith((l,r) => l.scheduled() < r.scheduled())
+    var fit = q.toList
+        var totalCpu: Int = 0
+        var totalMem: Int = 0
+        while (res.next && totalCpu <= cpu && totalMem <= memMB) {
+          val json: String = res.getString("json")
+          val job: Job = MAPPER.readValue(json, classOf[Job])
+          if (job == null) throw new AssertionError("Cannot be null!!")
+          else if (totalCpu + job.cpu <= cpu && totalMem + job.memMB <= memMB) {
+            ret.add(job)
+            totalCpu += job.cpu
+            totalMem += job.memMB
+          }
+          else break //todo: break is not supported
+        }
+      finally if (res != null) res.close()
+        Fit(cpu, mem, gpu, fit)
+    }
+    */
+
+  }
 
   type Sut = Database
 
@@ -60,7 +113,7 @@ object DatabaseSpec extends Commands {
 
   override def genInitialState: Gen[State] = for {
     name <- RetzGen.nonEmpty(32)
-  } yield State(Map.empty, Map.empty, Map.empty, name)
+  } yield State(Map.empty, Map.empty, Map.empty, Map.empty, name)
 
   // Commands: schedule, scheduled, started, resource offer, job finished, job lost
   // Add user, add application
@@ -70,8 +123,10 @@ object DatabaseSpec extends Commands {
     Gen.oneOf(Gen.const(Noop), genAddUser)
   } else if (state.applications.isEmpty) {
     Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state))
+  //} else if (state.queued.isEmpty) {
+  //  Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state), genSchedule(state))
   } else {
-    Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state), genSchedule(state))
+    Gen.oneOf(Gen.const(Noop), genAddUser, genAddApplication(state), genSchedule(state))//, genResourceOffer(state))
   }
 
   // For ScalaCheck sanity testing
@@ -106,7 +161,7 @@ object DatabaseSpec extends Commands {
 
     override def nextState(state: State): State =
       if (!state.users.contains(user.keyId())) {
-        State(state.users + (user.keyId() -> user), state.applications, state.queued, state.name)
+        state.addUser(user)
       } else {
         state
       }
@@ -135,12 +190,11 @@ object DatabaseSpec extends Commands {
 
     override def nextState(state: State): State = {
       val apps = state.applications - application.getAppid + (application.getAppid -> application)
-      State(state.users, apps, state.queued, state.name)
+      State(state.users, apps, state.queued, state.running, state.name)
     }
 
     override def postCondition(state: State, success: Boolean): Prop = success
   }
-
 
   def genSchedule(state: State): Gen[Schedule] = for {
     appid <- Gen.oneOf(state.applications.keys.toSeq)
@@ -170,9 +224,41 @@ object DatabaseSpec extends Commands {
       } else {
         state.queued - id + (id -> job)
       }
-      State(state.users, state.applications, q, state.name)
+      State(state.users, state.applications, q, state.running, state.name)
     }
   }
+
+  /*
+  def genResourceOffer(state: State): Gen[ResourceOffer] = for {
+    cpu <- Gen.chooseNum[Int](1, 20)
+    mem <- Gen.chooseNum[Int](32, 65536)
+    gpu <- Gen.chooseNum[Int](0, 8)
+  } yield ResourceOffer(state.findFit(cpu, mem, gpu))
+
+  case class Fit(cpu: Int, mem: Int, gpu: Int, jobs: List[Job]) {}
+
+  case class ResourceOffer(fit: Fit) extends  Command {
+    type Result = List[Job]
+    override def preCondition(state: State): Boolean = true
+
+    override def run(sut: Database): List[Job] = {
+      var list = sut.findFit(fit.cpu, fit.mem).asScala
+      list.map({ job =>
+        val taskId: String = "boom-" + job.appid() + "-" + job.id()
+        sut.setJobStarting(job.id(), Optional.empty(), taskId)
+        job
+      }).toList
+    }
+
+    override def postCondition(state: State, result: Try[List[Job]]): Prop = {
+      result.ensuring(_.isSuccess)
+      result.ensuring(_.get.size == fit.jobs.size)
+      true
+    }
+
+    override def nextState(state: State): State = state
+  }
+  */
 }
 
 class DatabaseTestSuite extends JUnitSuite with Checkers {

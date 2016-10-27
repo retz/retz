@@ -338,7 +338,7 @@ public final class WebConsole {
         return new ListJobResponse(queue, running, finished);
     }
 
-    public static boolean kill(int id) {
+    public static boolean kill(int id) throws Exception {
         if (!driver.isPresent()) {
             LOG.error("Driver is not present; this setup should be wrong");
             return false;

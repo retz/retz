@@ -54,7 +54,7 @@ public class JobQueueTest {
         Database.getInstance().stop();
     }
     @Test
-    public void q() throws InterruptedException, IOException {
+    public void q() throws Exception {
         Application app = new Application("a", Arrays.asList(), Arrays.asList(), Arrays.asList(),
                 Optional.empty(), Optional.empty(), "deadbeef", new MesosContainer(), true);
         Applications.load(app);

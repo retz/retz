@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.db.JobNotFoundException;
 import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.StatusResponse;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -330,7 +332,14 @@ public class RetzScheduler implements Scheduler {
             } catch (IOException e) {
             }
         }
-        JobQueue.retry(status.getTaskId().getValue(), reason);
+        try {
+            JobQueue.retry(status.getTaskId().getValue(), reason);
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+        } catch (JobNotFoundException e) {
+            LOG.warn(e.toString(), e);
+            // TODO: re-insert the failed job again?
+        }
     }
 
     void finished(Protos.TaskStatus status) {
@@ -349,24 +358,45 @@ public class RetzScheduler implements Scheduler {
                 LOG.error("Exception: {}", e.toString());
             }
         }
-        JobQueue.finished(status.getTaskId().getValue(), maybeUrl, ret, finished);
-        // notify watchers?
+        try {
+            JobQueue.finished(status.getTaskId().getValue(), maybeUrl, ret, finished);
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+        } catch (JobNotFoundException e) {
+            LOG.warn(e.toString(), e);
+            // TODO: re-insert the failed job again?
+        }
+
     }
 
     void failed(Protos.TaskStatus status) {
         Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
                 status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                 status.getExecutorId().getValue());
-
-        JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
+        try {
+            JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+        } catch (JobNotFoundException e) {
+            LOG.warn(e.toString(), e);
+            // TODO: re-insert the failed job again?
+        }
     }
 
     void started(Protos.TaskStatus status) {
         Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
                 status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                 status.getExecutorId().getValue());
-
-        JobQueue.started(status.getTaskId().getValue(), maybeUrl);
+        try {
+            JobQueue.started(status.getTaskId().getValue(), maybeUrl);
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+        } catch (JobNotFoundException e) {
+            LOG.warn(e.toString(), e);
+            // TODO: re-insert the failed job again?
+        } catch (IOException e) {
+            LOG.error(e.toString(), e);
+        }
     }
 
     public void setOfferStats(StatusResponse statusResponse) {
