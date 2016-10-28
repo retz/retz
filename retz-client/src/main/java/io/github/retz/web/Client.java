@@ -23,10 +23,10 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -34,30 +34,30 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.eclipse.jetty.util.security.Credential.MD5.digest;
 
-
-// WebSocket client to Retz service
 public class Client implements AutoCloseable {
+    public static final String VERSION_STRING;
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
+
+    static {
+        ResourceBundle labels = ResourceBundle.getBundle("retz-client");
+        VERSION_STRING = labels.getString("version");
+    }
+
     private final ObjectMapper mapper;
     private final String scheme;
     private final String host;
     private final int port;
-    private WebSocketClient wsclient = null;
     private final Optional<io.github.retz.auth.Authenticator> authenticator;
+    private MessageDigest DIGEST = null; //TODO this could be final, though...
 
-    public static final String VERSION_STRING;
-    static{
-        ResourceBundle labels = ResourceBundle.getBundle("retz-client");
-        VERSION_STRING = labels.getString("version");
-    }
     protected Client(URI uri, Optional<Authenticator> authenticator) {
         this.scheme = uri.getScheme();
         this.host = uri.getHost();
@@ -65,6 +65,12 @@ public class Client implements AutoCloseable {
         this.mapper = new ObjectMapper();
         this.mapper.registerModule(new Jdk8Module());
         this.authenticator = authenticator;
+
+        try {
+            DIGEST = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new AssertionError("No such algorithm callled MD5.");
+        }
     }
 
     protected Client(URI uri) {
@@ -84,19 +90,14 @@ public class Client implements AutoCloseable {
         }
     }
 
-    @Override
-    public void close() {
-        disconnect();
+    public static ClientBuilder newBuilder(URI uri) {
+        return new ClientBuilder(uri);
     }
 
-    public void disconnect() {
-        if (wsclient != null) {
-            try {
-                wsclient.stop();
-            } catch (Exception e) {
-            }
-        }
+    @Override
+    public void close() {
     }
+
 
     public boolean ping() throws IOException {
         URL url;
@@ -159,7 +160,7 @@ public class Client implements AutoCloseable {
         ScheduleResponse scheduleResponse = (ScheduleResponse) res;
         LOG.info("Job scheduled: id={}", scheduleResponse.job().id());
 
-            return waitPoll(scheduleResponse.job());
+        return waitPoll(scheduleResponse.job());
 
     }
 
@@ -230,7 +231,7 @@ public class Client implements AutoCloseable {
             if (req.hasPayload()) {
                 payload = mapper.writeValueAsString(req);
                 LOG.debug("Sending {} request with payload '{}'", req.method(), payload);
-                md5 = digest(payload);
+                md5 = DatatypeConverter.printHexBinary(DIGEST.digest(payload.getBytes(UTF_8)));
                 conn.setRequestProperty("Content-MD5", md5);
                 conn.setRequestProperty("Content-Length", Integer.toString(payload.length()));
             }
@@ -244,7 +245,6 @@ public class Client implements AutoCloseable {
             }
 
             if (req.hasPayload()) {
-                //mapper.writeValue(conn.getOutputStream(), req);
                 conn.getOutputStream().write(payload.getBytes(UTF_8));
             }
 
@@ -257,9 +257,5 @@ public class Client implements AutoCloseable {
                 conn.disconnect();
             }
         }
-    }
-
-    public static ClientBuilder newBuilder(URI uri) {
-        return new ClientBuilder(uri);
     }
 }

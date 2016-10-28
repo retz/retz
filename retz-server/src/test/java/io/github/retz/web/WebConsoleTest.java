@@ -94,7 +94,7 @@ public class WebConsoleTest {
      */
     @After
     public void tearDown() throws Exception {
-        webClient.disconnect();
+        webClient.close();
         webConsole.stop();
         JobQueue.clear();
         Database.getInstance().stop();
@@ -109,7 +109,6 @@ public class WebConsoleTest {
         assertTrue(res.queue().isEmpty());
         assertTrue(res.running().isEmpty());
         assertTrue(res.finished().isEmpty());
-        webClient.disconnect();
     }
 
     @Test
@@ -135,7 +134,6 @@ public class WebConsoleTest {
             assertThat(app.getAppid(), is("foobar"));
         }
         webClient.unload("foobar");
-        webClient.disconnect();
     }
 
     @Test
@@ -212,8 +210,6 @@ public class WebConsoleTest {
             assertThat(res, instanceOf(ErrorResponse.class));
         }
         webClient.unload("foobar");
-        webClient.disconnect();
-
     }
 
     @Test
@@ -238,7 +234,6 @@ public class WebConsoleTest {
     public void kill() throws Exception {
         Response res = webClient.kill(0);
         System.err.println(res.status());
-        webClient.disconnect();
     }
 
     @Test
@@ -273,6 +268,5 @@ public class WebConsoleTest {
         System.err.println(statusResponse.queueLength());
         assertThat(statusResponse.queueLength(), is(1));
         assertThat(statusResponse.sessionLength(), is(0));
-        webClient.disconnect();
     }
 }
