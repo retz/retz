@@ -10,7 +10,8 @@ Retz needs JDK8 to build.
   $ make deb
 
 or run `make rpm` for RPM-managed environment like Red Hat, Fedora,
-CentOS Linux.
+CentOS Linux. It is also possible to run `make server-jar` to obtain
+a jar file with all dependencies bundled.
 
 Retz requires Mesos ( >= 1.0) running (see
 [staring Mesos](https://mesos.apache.org/gettingstarted/) ),
@@ -61,7 +62,12 @@ Or to run without installation, just run
 
   $ bin/retz-server
 
+or
 
-in your repository.
+::
+
+  # java -jar ./retz-server/build/libs/retz-server-x.y.z-all.jar -C retz.properties
+
+for the jar version in your repository.
 
 See getting-started-client.rst to see how to use this service with clients.
