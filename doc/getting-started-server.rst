@@ -24,7 +24,12 @@ Install the server:
   # sudo dpkg -i retz-server-x.y.z.deb
 
 
-Edit `/opt/retz-server/etc/retz.properties` according to your environment:
+Create a `retz.properties` file according to your environment. The deb and rpm
+packages install an `/opt/retz-server/etc/retz.properties` file with default
+values, and this is also where the Retz server will look for that file if
+not specified otherwise with the `-C` parameter.
+
+The following options must be set in the `retz.properties` file:
 
 * `retz.mesos = 192.168.100.128:5050` - A pair of IP address and port
   number where Mesos master is listening to. Thus Mesos master must be
@@ -32,9 +37,11 @@ Edit `/opt/retz-server/etc/retz.properties` according to your environment:
 * `retz.bind = http://localhost:9090` - An URL of host name and port
   number where Retz will bind and start Web server (port number must
   be > 1024)
-* `retz.mesos.principal = retz` - Mesos principal name
-* `retz.mesos.role = retz` - Role name in Mesos
-* `retz.mesos.secret.file` - A file path containing mesos authentication secret (optional, no line breaks allowed in the file)
+* `retz.access.key = deadbeef` - User key to access the Retz server
+* `retz.access.secret = cafebabe` - Secret to access the Retz server
+
+Other settings are optional and documented in the `default configuration file
+<https://github.com/retz/retz/blob/master/retz-server/src/main/dist/etc/retz.properties>`_.
 
 Retz is a program that runs just in foreground. To start Retz in
 console, type
