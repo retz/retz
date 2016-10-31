@@ -28,5 +28,8 @@ rpm:
 deb:
 	$(GRADLE) --refresh-dependencies buildDeb
 
+server-jar:
+	$(GRADLE) :retz-server:shadowJar
+
 client-jar:
 	$(GRADLE) :retz-client:shadowJar
