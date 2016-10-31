@@ -40,8 +40,10 @@
 
 * Add '-stderr' option to 'retz-client run' so that job standard error is
   easily printed at the client console, which is off by default.
-* Remove RetzExecutor, preserving as local mode executor. This has few
-  effect to users - while it simplifies the system a lot.
+* Remove RetzExecutor, preserving as local mode executor. Pre-set environment
+  variable including `$RETZ_CPU`, `$RETZ_MEM` and `$RETZ_PVNAME` are now
+  removed. Instead, reuse arguments of `-cpu`, `-mem` and persistent volume
+  name.
 * Remove 'unload-app' and add 'enabled' flag to application instead, and
   made application overwritable. In near future, Namely `UnloadApp`
   protocol, 'DELETE /app/<appid>' will be deprecated and removed. Also,
