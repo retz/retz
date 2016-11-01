@@ -2,6 +2,8 @@
 
 ## 0.0.29
 
+* Fix wrong timestamp representaion in all logs; it should be 0-23 hours
+  for a day but it was 0-12 without AM/PM notion.
 * Fix a bug where an exceeding job is to be launched with stocked offers,
   with a huge clean up on creating execution plan matching offers and jobs
 * Print reason at 'retz-client run' when the job is killed
