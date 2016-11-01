@@ -93,21 +93,21 @@ public class CommandRun implements SubCommand {
             Job running = ClientHelper.waitForStart(scheduled, webClient);
             LOG.info("job {} started: {}", running.id(), running.state());
 
-            LOG.info("============ stdout in job {} sandbox start ===========", running.id());
+            LOG.info("============ stdout of job {} sandbox start ===========", running.id());
             Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), "stdout", true, System.out);
             LOG.info("============ stdout of job {} sandbox end ===========", running.id());
 
             if (stderr) {
-                LOG.info("============ stderr in job {} sandbox start ===========", running.id());
+                LOG.info("============ stderr of job {} sandbox start ===========", running.id());
                 Optional<Job> j = ClientHelper.getWholeFile(webClient, running.id(), "stderr", false, System.err);
                 LOG.info("============ stderr of job {} sandbox end ===========", running.id());
             }
 
             if (finished.isPresent()) {
-                LOG.info("{} {} {}", finished.get().state(), finished.get().finished(), finished.get().reason());
-                LOG.info("Job(id={}, cmd='{}') finished in {} seconds and returned {}",
+                LOG.debug(finished.get().toString());
+                LOG.info("Job(id={}, cmd='{}') finished in {} seconds. status: {}",
                         running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
-                        finished.get().result());
+                        finished.get().state());
                 return finished.get().result();
             } else {
                 LOG.error("Failed to fetch last state of job id={}", running.id());

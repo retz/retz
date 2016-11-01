@@ -308,4 +308,40 @@ public class Job {
                 .append("}");
         return sb.toString();
     }
+
+    public String pp() {
+        StringBuilder sb = new StringBuilder("{")
+                .append("id=").append(id)
+                .append(", name=").append(name)
+                .append(", appid=").append(appid)
+                .append(", cmd=").append(cmd)
+                .append(", env=").append(props)
+                .append(", cpus=").append(cpu)
+                .append(", mem=").append(memMB);
+
+        if (gpu > 0) {
+            sb.append(", gpu=").append(gpu);
+        }
+        if (scheduled != null) {
+            sb.append(", scheduled=").append(scheduled);
+        }
+        if (started != null) {
+            sb.append(", started=").append(started);
+        }
+        if (finished != null) {
+            sb.append(", finished=").append(finished);
+        }
+        sb.append(", state=").append(state);
+        if (state == FINISHED) {
+            sb.append(", result=").append(result);
+        }
+        if (reason != null) {
+            sb.append(", reason=").append(reason);
+        }
+        if (taskId != null) {
+            sb.append(", taskid=").append(taskId);
+        }
+        return sb.append("}").toString();
+    }
+
 }

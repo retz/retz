@@ -62,11 +62,7 @@ public class CommandGetJob implements SubCommand {
 
                 if (getJobResponse.job().isPresent()) {
                     Job job = getJobResponse.job().get();
-
-                    // TODO: print full job spec here
-                    LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
-                    LOG.info("\tstarted={}, finished={}, state={}", job.started(), job.finished(), job.state());
-                    LOG.info("return value={}, reason={}", job.result(), job.reason());
+                    LOG.info(job.pp());
                     return 0;
 
                 } else {
