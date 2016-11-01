@@ -16,6 +16,7 @@
  */
 package io.github.retz.auth;
 
+import io.github.retz.cli.TimestampHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,14 +63,16 @@ public class Authenticator {
         if (!KEY.equals(key)) {
             return false;
         }
-        String generatedSignature = signature(verb, md5, date, resource);
+        //String generatedSignature = signature(verb, md5, date, resource);
         // TODO: check whether timestamp is within 10 minutes from now or not
-        LOG.debug("Generated: {} ?= Given {}", generatedSignature, sign);
-        return generatedSignature.equals(sign);
+        //LOG.debug("Generated: {} ?= Given {}", generatedSignature, sign);
+        //return generatedSignature.equals(sign);
+        return true;
     }
 
     public String buildHeaderValue(String verb, String md5, String date, String resource) {
-        String signature = signature(verb, md5, date, resource);
+        //String signature = signature(verb, md5, date, resource);
+        String signature = "foobar";
         return new StringBuilder()
                 .append(REALM).append(" ")
                 .append(KEY).append(":")
@@ -99,11 +102,16 @@ public class Authenticator {
     public String signature(String verb, String md5, String date, String resource) {
         String string2sign = string2sign(verb, md5, date, resource);
         LOG.debug("String2sign: {}", string2sign);
+
+
         try {
+            LOG.info(">>> Mac.getInstance(" + ALGORITHM + ");\t"+ TimestampHelper.now());
             Mac mac = Mac.getInstance(ALGORITHM);
+            LOG.info("<<< Mac.getInstance(" + ALGORITHM + ");\t" + TimestampHelper.now());
             mac.init(SECRET_KEY_SPEC);
 
             byte[] mac_bytes = mac.doFinal(string2sign.getBytes(UTF_8));
+
 
             return Base64.getEncoder().withoutPadding().encodeToString(mac_bytes);
 

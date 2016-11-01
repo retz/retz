@@ -82,7 +82,11 @@ public final class WebConsole {
 
         before((req, res) -> {
             res.header("Server", RetzScheduler.HTTP_SERVER_NAME);
+            LOG.info("start");
 
+            if (! config.getAuthentication()) {
+                return;
+            }
             String resource;
 
             if (req.raw().getQueryString() != null) {
@@ -131,22 +135,28 @@ public final class WebConsole {
                 authenticator = new Authenticator(u.get().keyId(), u.get().secret());
             }
 
+            LOG.info("start");
             if (!authenticator.authenticate(verb, md5, date, resource,
                     authHeaderValue.get().key(), authHeaderValue.get().signature())) {
+                LOG.info("start1");
                 String string2sign = authenticator.string2sign(verb, md5, date, resource);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
                             authenticator.signature(verb, md5, date, resource),
                             authHeaderValue.get().signature());
                 }
+                LOG.info("start2");
+
                 halt(401, "Authentication failed. String to sign: " + string2sign);
             }
+            LOG.info("end");
         });
 
         after((req, res) -> {
             LOG.debug("{} {} {} {} from {} {}",
                     res.raw().getStatus(),
                     req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
+
         });
 
         // APIs to be in vanilla HTTP
@@ -156,6 +166,7 @@ public final class WebConsole {
         // TODO: XXX: validate application owner at ALL job-related APIs
         // /jobs GET -> list
         get(ListJobRequest.resourcePattern(), (req, res) -> {
+
             Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
             LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
 

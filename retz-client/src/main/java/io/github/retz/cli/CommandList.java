@@ -43,29 +43,34 @@ public class CommandList implements SubCommand {
     @Override
     public int handle(FileConfiguration fileConfig) {
         LOG.info("Configuration: {}", fileConfig.toString());
-
+        System.err.println(TimestampHelper.now());
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(fileConfig.checkCert())
                 .build()) {
 
+            System.err.println(TimestampHelper.now());
             Response res = webClient.list(64); // TODO: make this CLI argument
             if (res instanceof ErrorResponse) {
                 LOG.info(res.status());
                 return -1;
             }
+            System.err.println(TimestampHelper.now());
             ListJobResponse r = (ListJobResponse) res;
             List<Job> jobs = new LinkedList<>();
             jobs.addAll(r.queue());
             jobs.addAll(r.running());
             jobs.addAll(r.finished());
+            System.err.println(TimestampHelper.now());
 
             TableFormatter formatter = new TableFormatter(
                     "TaskId", "State", "AppName", "Command", "Result", "Duration",
                     "Scheduled", "Started", "Finished", "Reason");
+            System.err.println(TimestampHelper.now());
 
             jobs.sort((a, b) -> a.id() - b.id());
+            System.err.println(TimestampHelper.now());
 
             for (Job job : jobs) {
                 String reason = "-";

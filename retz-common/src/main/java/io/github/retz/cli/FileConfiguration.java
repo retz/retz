@@ -245,6 +245,11 @@ public class FileConfiguration {
         return new User(key, secret, enabled);
     }
 
+    public boolean getAuthentication() {
+        String a = properties.getProperty(AUTHENTICATION, "true");
+        return Boolean.parseBoolean(a);
+    }
+
     public Authenticator getAuthenticator() {
         String key = properties.getProperty(ACCESS_KEY);
         String secret = properties.getProperty(ACCESS_SECRET);

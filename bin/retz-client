@@ -6,7 +6,7 @@ set -e
 ## echo $SUBCMD
 JAR=`ls retz-client/build/libs/retz-client-*-all.jar`
 echo "Using jar file '$JAR'"
-java -jar $JAR "$@"
- ## $SUBCMD -C ./retz.properties "$@"
+java -Xms16m -jar $JAR "$@"
+ ## $SUBCMD -C ./retz.properties "$@" -Xrunhprof
 #echo ./gradlew :retz-client:shadowJar :retz-client:run -Pargs=\"$SUBCMD -C ../retz.properties $@\"
 #./gradlew :retz-client:shadowJar :retz-client:run -Pargs=\"$SUBCMD -C ../retz.properties $@\"
