@@ -2,6 +2,7 @@ package io.github.retz.auth;
 
 import io.github.retz.cli.TableFormatter;
 import io.github.retz.cli.TimestampHelper;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Test;
 
 import javax.crypto.Mac;
@@ -14,7 +15,6 @@ import java.util.function.Function;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 
 public class AuthenticatorTest {
     private static final String ALGORITHM = "HmacSHA256";
@@ -42,19 +42,24 @@ public class AuthenticatorTest {
         });
 
 
-    encode(formatter, "java.security.MessageDigest", (Void t) -> {
+        encode(formatter, "java.security.MessageDigest", (Void t) -> {
 
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
 
-            md.update(secret.getBytes(UTF_8));
-            md.update(string2sign.getBytes(UTF_8));
-            return Base64.getEncoder().withoutPadding().encodeToString(md.digest());
+                md.update(secret.getBytes(UTF_8));
+                md.update(string2sign.getBytes(UTF_8));
+                return Base64.getEncoder().withoutPadding().encodeToString(md.digest());
 
-        } catch (Exception cnse) {
-            return "fail" + cnse.toString();
-        }
-    });
+            } catch (Exception cnse) {
+                return "fail" + cnse.toString();
+            }
+        });
+
+        // Commons codes, whose implementation is actually java.security.MessageDigest
+        encode(formatter, "org.apache.commons.codec.digest.DigestUtils", (Void t) ->
+                DigestUtils.sha256Hex(secret + string2sign)
+        );
 
         System.err.println(formatter.titles());
         for (String line : formatter) {
@@ -68,7 +73,7 @@ public class AuthenticatorTest {
         assertFalse(result.startsWith("fail"));
         Date end = Calendar.getInstance().getTime();
         long diffms = end.getTime() - start.getTime();
-        formatter.feed("javax.crypto.Mac", Long.toString(diffms), result);
+        formatter.feed(name, Long.toString(diffms), result);
     }
 
     @Test
