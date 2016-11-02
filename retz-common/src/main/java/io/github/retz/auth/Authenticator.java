@@ -24,6 +24,8 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -31,15 +33,27 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Authenticator {
     private static final Logger LOG = LoggerFactory.getLogger(Authenticator.class);
 
-    public static final String AUTHORIZATION = "Authorization";
-
-    private final String KEY;
-    //private final String SECRET;
-    private final SecretKeySpec SECRET_KEY_SPEC;
-
     private static final String REALM = "Retz-auth-v1";
     private static final String ALGORITHM = "HmacSHA256";
+    public static final String AUTHORIZATION = "Authorization";
 
+    static Mac mac = null;
+
+    private final String KEY;
+    private final SecretKeySpec SECRET_KEY_SPEC;
+
+    static {
+        try {
+            Date start = Calendar.getInstance().getTime();
+            mac = Mac.getInstance(ALGORITHM);
+            Date end = Calendar.getInstance().getTime();
+            LOG.info("javax.crypto.Mac instance with {} initialized in {} ms.",
+                    ALGORITHM, end.getTime() - start.getTime());
+        } catch (NoSuchAlgorithmException e) {
+            LOG.error(e.toString(), e);
+            System.exit(-1);
+        }
+    }
     public Authenticator(String key, String secret) {
         KEY = key;
         SECRET_KEY_SPEC = new SecretKeySpec(secret.getBytes(UTF_8), ALGORITHM);
@@ -100,15 +114,15 @@ public class Authenticator {
         String string2sign = string2sign(verb, md5, date, resource);
         LOG.debug("String2sign: {}", string2sign);
         try {
-            Mac mac = Mac.getInstance(ALGORITHM);
-            mac.init(SECRET_KEY_SPEC);
-
-            byte[] mac_bytes = mac.doFinal(string2sign.getBytes(UTF_8));
-
-            return Base64.getEncoder().withoutPadding().encodeToString(mac_bytes);
-
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError(ALGORITHM + " does not exist");
+            if (Authenticator.mac == null) {
+                throw new RuntimeException("Authenticator is null");
+            }
+            // TODO: when this becomes bottleneck at server side, make this TLS
+            synchronized (Authenticator.mac) {
+                Authenticator.mac.init(SECRET_KEY_SPEC);
+                byte[] mac_bytes = mac.doFinal(string2sign.getBytes(UTF_8));
+                return Base64.getEncoder().withoutPadding().encodeToString(mac_bytes);
+            }
         } catch (InvalidKeyException e) {
             throw new AssertionError(SECRET_KEY_SPEC.getFormat() + " is wrong");
         }
