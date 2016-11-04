@@ -65,7 +65,7 @@ public class CommandSchedule implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
+    public int handle(ClientCLIConfig fileConfig) {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         Job job = new Job(appName, remoteCmd,

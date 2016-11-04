@@ -18,7 +18,6 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesos.Resource;
@@ -36,8 +35,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import static io.github.retz.scheduler.JobQueue.queued;
 
 public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
@@ -216,17 +213,17 @@ public class RetzScheduler implements Scheduler {
         int running = JobQueue.countRunning();
         if (running >= conf.fileConfig.getMaxSimultaneousJobs()) {
             LOG.warn("Number of concurrently running jobs has reached its limit: {} >= {} ({})",
-                    running, conf.fileConfig.getMaxSimultaneousJobs(), FileConfiguration.MAX_SIMULTANEOUS_JOBS);
+                    running, conf.fileConfig.getMaxSimultaneousJobs(), ServerConfiguration.MAX_SIMULTANEOUS_JOBS);
             return;
         }
 
         // DO MAKE PLANNING
         List<Job> cancel = new LinkedList<>();
-        List<AppJobPair> appJobPairs = PLANNER.filter(jobs, cancel, conf.getFileConfig().useGPU());
+        List<AppJobPair> appJobPairs = PLANNER.filter(jobs, cancel, conf.getServerConfig().useGPU());
         // update database to change all jobs state to KILLED
         JobQueue.cancelAll(cancel);
 
-        Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getFileConfig().getMaxStockSize());
+        Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getServerConfig().getMaxStockSize());
 
         // Update local database, to running
         for (Job j : bestPlan.getToBeLaunched()) {

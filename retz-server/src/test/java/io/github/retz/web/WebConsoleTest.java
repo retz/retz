@@ -18,6 +18,7 @@ package io.github.retz.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
@@ -47,7 +48,8 @@ public class WebConsoleTest {
     private WebConsole webConsole;
     private Client webClient;
     private ObjectMapper mapper;
-    private FileConfiguration config;
+    private ServerConfiguration config;
+    private ClientCLIConfig cliConfig;
 
     /**
      * Initializes the test.
@@ -66,24 +68,25 @@ public class WebConsoleTest {
         // Spark.stop(), because with retz.properties it succeeds alone, but fails when right after TLS tests.
         // TODO: investigate and report this to sparkjava
         InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
-        Launcher.Configuration conf = new Launcher.Configuration(new FileConfiguration(in));
+        Launcher.Configuration conf = new Launcher.Configuration(new ServerConfiguration(in));
 
         mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
 
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
-        config = conf.getFileConfig();
+        config = conf.getServerConfig();
         webConsole = new WebConsole(config);
         WebConsole.setScheduler(scheduler);
         awaitInitialization();
         Database.getInstance().init(config);
 
+        cliConfig = new ClientCLIConfig("src/test/resources/retz-tls-client.properties");
         System.err.println(config.authenticationEnabled());
         System.err.println(config.toString());
-        webClient = Client.newBuilder(config.getUri()).
-                enableAuthentication(config.authenticationEnabled())
-                .setAuthenticator(config.getAuthenticator())
-                .checkCert(config.checkCert())
+        webClient = Client.newBuilder(cliConfig.getUri()).
+                enableAuthentication(cliConfig.authenticationEnabled())
+                .setAuthenticator(cliConfig.getAuthenticator())
+                .checkCert(cliConfig.checkCert())
                 .build();
     }
 

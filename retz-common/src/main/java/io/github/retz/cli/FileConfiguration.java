@@ -36,103 +36,46 @@ import java.util.StringJoiner;
 public class FileConfiguration {
     private static final Logger LOG = LoggerFactory.getLogger(FileConfiguration.class);
 
-    static final String MESOS_LOC_KEY = "retz.mesos";
-    static final String BIND_ADDRESS = "retz.bind";
-    static final String MESOS_ROLE = "retz.mesos.role";
-
-    static final String MESOS_PRINCIPAL = "retz.mesos.principal";
-    static final String DEFAULT_MESOS_PRINCIPAL = "retz";
-
-    static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
-    static final String USE_GPU = "retz.gpu";
-
     // Authentication enabled by default
     static final String AUTHENTICATION = "retz.authentication";
 
-    // In server, these are for admins; while in clients, these are for each user
+    // In server, these are for "first" user; while in clients, these are for each user
     static final String ACCESS_KEY = "retz.access.key";
     static final String ACCESS_SECRET = "retz.access.secret";
 
-    // System Limits
-    public static final String MAX_SIMULTANEOUS_JOBS = "retz.max.running";
-    static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "128";
-    static final String MAX_STOCK_SIZE = "retz.max.stock";
-    static final String DEFAULT_MAX_STOCK_SIZE = "16";
-    // Not yet used
-    static final String QUEUE_MAX = "retz.max.queue";
-    static final String SCHEDULE_RESULTS = "retz.results";
-    static final String SCHEDULE_RETRY = "retz.retry";
-
-    // Persistence
-    static final String DATABASE_URL = "retz.database.url";
-    static final String DEFAULT_DATABASE_URL = "jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1";
-    static final String DATABASE_DRIVER_CLASS = "retz.database.driver";
-    static final String DEFAULT_DATABASE_DRIVER_CLASS = "org.h2.Driver";
-    static final String DATABASE_USERNAME = "retz.database.user";
-    static final String DATABASE_PASSWORD = "retz.database.pass";
-
-    // If BIND_ADDRESS is for SSL, these will be used for both server and client
+    // If TLS enabled, these will be used for both server and client
     static final String KEYSTORE_FILE = "retz.tls.keystore.file";
     static final String KEYSTORE_PASS = "retz.tls.keystore.pass";
     static final String TRUSTSTORE_FILE = "retz.tls.truststore.file";
     static final String TRUSTSTORE_PASS = "retz.tls.truststore.pass";
     static final String CHECK_CERT = "retz.tls.insecure";
 
-    // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
-    static final String USER_NAME = "retz.user";
-
-    static final String MESOS_AGENT_JAVA = "retz.executor.java";
-
-    private final Properties properties;
-    private final URI uri;
-    private final int maxSimultaneousJobs;
-    private final String mesosAgentJava;
-    private final String databaseURL;
-    private final String databaseDriver;
-    private final boolean useGPU;
+    protected Properties properties;
     private final boolean authenticationEnabled;
     private final boolean checkCert;
 
-    public FileConfiguration(String path) throws IOException, URISyntaxException {
+
+    public FileConfiguration(String path) throws IOException {
         this(new File(path));
     }
 
-    public FileConfiguration(File file) throws IOException, URISyntaxException {
+    public FileConfiguration(File file) throws IOException {
         this(new FileInputStream(file));
         LOG.debug("Parsed file {}: {}", file.getName(),
                 String.join(", ", properties.stringPropertyNames()));
     }
 
-    public FileConfiguration(InputStream in) throws IOException, URISyntaxException{
+    public FileConfiguration(InputStream in) throws IOException {
         this.properties = new Properties();
         properties.load(in);
         in.close();
 
-        Objects.requireNonNull(properties.getProperty(BIND_ADDRESS), "Host and port are required");
-
-        uri = new URI(properties.getProperty(BIND_ADDRESS));
-        if( uri.getHost().equals("0.0.0.0")) {
-            LOG.error("retz.bind is told to Mesos; {}/32 should not be assigned", uri.getHost());
-            throw new IllegalArgumentException();
-        }
-        if (uri.getPort() < 1024 || 65536 < uri.getPort()) {
-            LOG.error("retz.bind must not use well known port, or just too large: {}", uri.getPort());
-            throw new IllegalArgumentException();
-        }
+        /*
         if (isTLS()) {
             LOG.info("Checking Keystores .. {}", properties.getProperty(KEYSTORE_FILE));
             Objects.requireNonNull(properties.getProperty(KEYSTORE_FILE));
             Objects.requireNonNull(properties.getProperty(KEYSTORE_PASS));
-        }
-
-        String gpu = properties.getProperty(USE_GPU, "false");
-        if (gpu.equals("true")) {
-            useGPU = true;
-        } else if (gpu.equals("false")) {
-            useGPU = false;
-        } else {
-            throw new IllegalArgumentException(USE_GPU + "must be boolean");
-        }
+        } */
 
         String authentication = properties.getProperty(AUTHENTICATION, "true");
         authenticationEnabled = ! authentication.equals("false");
@@ -155,35 +98,8 @@ public class FileConfiguration {
         } else {
             this.checkCert = true;
         }
-
-        maxSimultaneousJobs = Integer.parseInt(properties.getProperty(MAX_SIMULTANEOUS_JOBS, DEFAULT_MAX_SIMULTANEOUS_JOBS));
-        if(maxSimultaneousJobs < 1) {
-            throw new IllegalArgumentException(MAX_SIMULTANEOUS_JOBS + " must be positive");
-        }
-
-        mesosAgentJava = properties.getProperty(MESOS_AGENT_JAVA, "java");
-
-        databaseURL = properties.getProperty(DATABASE_URL, DEFAULT_DATABASE_URL);
-        databaseDriver = properties.getProperty(DATABASE_DRIVER_CLASS, DEFAULT_DATABASE_DRIVER_CLASS);
-
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}",
-                getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
-                MESOS_AGENT_JAVA, mesosAgentJava,
-                DATABASE_URL, databaseURL,
-                MAX_STOCK_SIZE, getMaxStockSize());
     }
 
-    public String getMesosMaster() {
-        return properties.getProperty(MESOS_LOC_KEY);
-    }
-
-    public URI getUri() {
-        return uri;
-    }
-
-    public boolean isTLS() {
-        return uri.getScheme().equals("https");
-    }
     public boolean checkCert() {
         return checkCert;
     }
@@ -199,30 +115,6 @@ public class FileConfiguration {
     public String getTruststorePass() {
         return properties.getProperty(TRUSTSTORE_PASS);
     }
-    public String getPrincipal() {
-        // Principal is required to reserve volumes
-        String principal = properties.getProperty(MESOS_PRINCIPAL, DEFAULT_MESOS_PRINCIPAL);
-        if (principal.isEmpty()) {
-            return DEFAULT_MESOS_PRINCIPAL;
-        }
-        return principal;
-    }
-    public boolean hasSecretFile() {
-        return getSecretFile() != null;
-    }
-    public String getSecretFile()  {
-        return properties.getProperty(MESOS_SECRET_FILE);
-    }
-
-    public String getRole() {
-        // Same role as principal
-        return properties.getProperty(MESOS_ROLE, getPrincipal());
-    }
-
-    public String getUserName() {
-        return properties.getProperty(USER_NAME, System.getProperty("user.name"));
-    }
-
     public boolean authenticationEnabled() {
         return authenticationEnabled;
     }
@@ -254,54 +146,11 @@ public class FileConfiguration {
         return new Authenticator(key, secret);
     }
 
-    public boolean useGPU() {
-        return useGPU;
-    }
-
-    public int getMaxSimultaneousJobs() {
-        return maxSimultaneousJobs;
-    }
-
-    public int getMaxStockSize() {
-        return Integer.parseInt(properties.getProperty(MAX_STOCK_SIZE, DEFAULT_MAX_STOCK_SIZE));
-    }
-
-    public String getMesosAgentJava() {
-        return mesosAgentJava;
-    }
-
-    public String getDatabaseURL() {
-        return databaseURL;
-    }
-
-    public String getDatabaseDriver() {
-        return databaseDriver;
-    }
-
-    public Optional<String> getDatabaseUser() {
-        return Optional.ofNullable(properties.getProperty(DATABASE_USERNAME));
-    }
-
-    public Optional<String> getDatabasePass() {
-        return Optional.ofNullable(properties.getProperty(DATABASE_PASSWORD));
-    }
-
-    @Override
-    public String toString() {
-        return new StringBuffer()
-                .append("[uri=").append(uri)
-                .append(", props=").append(properties)
-                .append(", ").append(MAX_STOCK_SIZE).append("=").append(getMaxStockSize())
-                .append(", checkCert=").append(checkCert)
-                .append("]")
-                .toString();
-    }
-
     public static String userAsConfig(User u) {
         StringBuilder builder = new StringBuilder()
                 .append(AUTHENTICATION).append(" = true\n")
-        .append(ACCESS_KEY).append(" = ").append(u.keyId()).append("\n")
-        .append(ACCESS_SECRET).append(" = ").append(u.secret()).append("\n");
+                .append(ACCESS_KEY).append(" = ").append(u.keyId()).append("\n")
+                .append(ACCESS_SECRET).append(" = ").append(u.secret()).append("\n");
         return builder.toString();
     }
 }

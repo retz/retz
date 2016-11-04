@@ -25,6 +25,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.scheduler.Launcher;
+import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.slf4j.Logger;
@@ -60,7 +61,7 @@ public class Database {
         return db;
     }
 
-    public void init(FileConfiguration config) throws IOException {
+    public void init(ServerConfiguration config) throws IOException {
         databaseURL = Objects.requireNonNull(config.getDatabaseURL());
         LOG.info("Initializing database {}", databaseURL);
 

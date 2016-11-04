@@ -31,6 +31,7 @@ import io.github.retz.scheduler.Applications;
 import io.github.retz.db.Database;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ public final class WebConsole {
         NO_AUTH_PAGES = Arrays.asList(noAuthPages);
     }
 
-    public WebConsole(FileConfiguration config) {
+    public WebConsole(ServerConfiguration config) {
 
         if (config.isTLS()) {
             LOG.info("HTTPS enabled. Keystore file={}, keystore pass={} chars, Truststore file={}, Truststorepass={} chars",

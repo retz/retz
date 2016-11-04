@@ -34,7 +34,7 @@ public class CommandConfig implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
+    public int handle(ClientCLIConfig fileConfig) {
         LOG.info("Configuration: {}", fileConfig.toString());
         return 0;
     }

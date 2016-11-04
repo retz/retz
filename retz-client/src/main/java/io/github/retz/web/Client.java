@@ -161,7 +161,6 @@ public class Client implements AutoCloseable {
         LOG.info("Job scheduled: id={}", scheduleResponse.job().id());
 
         return waitPoll(scheduleResponse.job());
-
     }
 
     private Job waitPoll(Job job) throws IOException {

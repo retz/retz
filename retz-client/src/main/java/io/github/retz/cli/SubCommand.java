@@ -17,6 +17,7 @@
 package io.github.retz.cli;
 
 import com.beust.jcommander.JCommander;
+import io.github.retz.web.Client;
 
 import java.util.List;
 import java.util.Properties;
@@ -29,7 +30,7 @@ public interface SubCommand {
 
     String description();
 
-    int handle(FileConfiguration fileConfig);
+    int handle(ClientCLIConfig fileConfig);
 
     String getName();
 

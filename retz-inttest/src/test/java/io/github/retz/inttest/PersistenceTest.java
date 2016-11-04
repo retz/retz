@@ -16,6 +16,7 @@
  */
 package io.github.retz.inttest;
 
+import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
@@ -40,7 +41,7 @@ import static org.junit.Assert.*;
 public class PersistenceTest {
     private static final int JOB_AMOUNT = 64;
     private static ClosableContainer container;
-    protected FileConfiguration config;
+    protected ClientCLIConfig config;
 
     @BeforeClass
     public static void setupContainer() throws Exception {
@@ -64,16 +65,14 @@ public class PersistenceTest {
 
     @Before
     public void loadConfig() throws Exception {
-        config = new FileConfiguration("src/test/resources/retz-persistent.properties");
+        // Mostly same as RetzIntTest
+        config = new ClientCLIConfig("src/test/resources/retz-client.properties");
         assertEquals(RETZ_HOST, config.getUri().getHost());
         assertEquals(RETZ_PORT, config.getUri().getPort());
-
     }
 
     @Test
     public void persistence() throws Exception {
-        System.err.println(config.getDatabaseURL());
-
         User user = config.getUser();
         List<String> e = Arrays.asList();
         Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),

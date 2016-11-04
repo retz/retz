@@ -17,7 +17,6 @@
 package io.github.retz.scheduler;
 
 import com.j256.simplejmx.server.JmxServer;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.WebConsole;
@@ -65,7 +64,7 @@ public final class Launcher {
             if (conf.fileConfig.isTLS()) {
                 LOG.warn("Make sure a valid certificate is being used or RetzExecutor may not work.");
             }
-            Database.getInstance().init(conf.getFileConfig());
+            Database.getInstance().init(conf.getServerConfig());
         } catch (ParseException e) {
             LOG.error(e.toString());
             return -1;
@@ -213,7 +212,7 @@ public final class Launcher {
         // This default path must match the prefix in build.gradle
         String configFile = cmd.getOptionValue(OPT_CONFIG.getOpt(), "/opt/retz-server/etc/retz.properties");
 
-        Configuration conf = new Configuration(new FileConfiguration(configFile));
+        Configuration conf = new Configuration(new ServerConfiguration(configFile));
         LOG.info("Binding as {}", conf.fileConfig.getUri()); // TODO hostname, protocol
 
         String mode = cmd.getOptionValue(OPT_MODE.getOpt(), "mesos");
@@ -228,10 +227,10 @@ public final class Launcher {
     }
 
     public static final class Configuration {
-        FileConfiguration fileConfig;
+        ServerConfiguration fileConfig;
         Mode launchMode;
 
-        public Configuration(FileConfiguration fileConfig) {
+        public Configuration(ServerConfiguration fileConfig) {
             Objects.requireNonNull(fileConfig, "File configuration cannot be null");
             Objects.requireNonNull(fileConfig.getMesosMaster(), "Mesos master location cannot be empty");
 
@@ -246,7 +245,7 @@ public final class Launcher {
             return fileConfig.getMesosMaster();
         }
 
-        public FileConfiguration getFileConfig() {
+        public ServerConfiguration getServerConfig() {
             return fileConfig;
         }
 

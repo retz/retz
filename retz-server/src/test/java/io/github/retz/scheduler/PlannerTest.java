@@ -23,13 +23,11 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import org.apache.mesos.Protos;
-import org.h2.store.Data;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.sql.Time;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
@@ -46,12 +44,12 @@ public class PlannerTest {
         planner = (Planner)new NaivePlanner();
         fid = Protos.FrameworkID.newBuilder().setValue("dummy-frameworkid-qwerty").build();
         InputStream in = Launcher.class.getResourceAsStream("/retz.properties");
-        Launcher.Configuration conf = new Launcher.Configuration(new FileConfiguration(in));
-        Database.getInstance().init(conf.getFileConfig());
+        Launcher.Configuration conf = new Launcher.Configuration(new ServerConfiguration(in));
+        Database.getInstance().init(conf.getServerConfig());
 
          Application anon =
                 new Application(ANON_APPID, Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                        Optional.empty(), Optional.empty(), conf.getFileConfig().getUser().keyId(),
+                        Optional.empty(), Optional.empty(), conf.getServerConfig().getUser().keyId(),
                         new MesosContainer(), true);
         Applications.load(anon);
     }

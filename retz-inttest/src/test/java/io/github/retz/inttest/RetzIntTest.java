@@ -16,7 +16,7 @@
  */
 package io.github.retz.inttest;
 
-import io.github.retz.cli.FileConfiguration;
+import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
@@ -45,8 +45,8 @@ import static org.junit.Assert.*;
 public class RetzIntTest {
     private static final int RES_OK = 0;
     private static ClosableContainer container;
-    private static final String configfile = "retz.properties";
-    protected FileConfiguration config;
+    private static final String configfile = "retz-client.properties";
+    protected ClientCLIConfig config;
 
     @BeforeClass
     public static void setupContainer() throws Exception {
@@ -70,7 +70,7 @@ public class RetzIntTest {
 
     @Before
     public void loadConfig() throws Exception {
-        config = new FileConfiguration("src/test/resources/" + configfile);
+        config = new ClientCLIConfig("src/test/resources/" + configfile);
         assertEquals(RETZ_HOST, config.getUri().getHost());
         assertEquals(RETZ_PORT, config.getUri().getPort());
     }

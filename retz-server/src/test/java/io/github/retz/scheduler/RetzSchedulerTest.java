@@ -57,9 +57,9 @@ public class RetzSchedulerTest {
                 .build();
 
         InputStream in = Launcher.class.getResourceAsStream("/retz.properties");
-        Launcher.Configuration conf = new Launcher.Configuration(new FileConfiguration(in));
+        Launcher.Configuration conf = new Launcher.Configuration(new ServerConfiguration(in));
 
-        Database.getInstance().init(conf.getFileConfig());
+        Database.getInstance().init(conf.getServerConfig());
         scheduler = new RetzScheduler(conf, frameworkInfo);
         driver = new MesosSchedulerDummyDriver(scheduler, frameworkInfo, conf.getMesosMaster());
     }

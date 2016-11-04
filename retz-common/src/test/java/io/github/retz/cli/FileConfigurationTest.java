@@ -30,22 +30,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by kuenishi on 9/14/16.
- */
 public class FileConfigurationTest {
     @Test
     public void tryLoadConfig() throws Exception {
         FileConfiguration config = new FileConfiguration("src/test/resources/retz.properties");
 
-        assertEquals(config.getMesosMaster(), "123.23.43.356:23563");
-        assertEquals(config.getUri(), new URI("https://234.34.34.2:23452"));
         assertEquals(config.getKeystoreFile(), "path/to/keystore.jsk");
         assertEquals(config.getKeystorePass(), "foobar");
-        assertEquals("/cast/away/somewhere/java", config.getMesosAgentJava());
         assertFalse(config.checkCert());
         assertTrue(config.authenticationEnabled());
-        assertEquals(16, config.getMaxStockSize()); // Default value
     }
 
     @Test

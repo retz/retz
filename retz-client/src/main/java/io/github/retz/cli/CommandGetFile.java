@@ -66,7 +66,7 @@ public class CommandGetFile implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
+    public int handle(ClientCLIConfig fileConfig) {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         OutputStream out = null;

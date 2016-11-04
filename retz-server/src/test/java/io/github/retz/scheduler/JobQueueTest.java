@@ -43,7 +43,7 @@ public class JobQueueTest {
     public void before() throws Exception {
         InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
 
-        FileConfiguration config = new FileConfiguration(in);
+        ServerConfiguration config = new ServerConfiguration(in);
         Database.getInstance().getInstance().init(config);
     }
     @After

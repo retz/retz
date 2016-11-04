@@ -18,6 +18,7 @@ package io.github.retz.cli;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +47,7 @@ public class CommandHelp implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
+    public int handle(ClientCLIConfig fileConfig) {
         if (command == null) {
             Launcher.help();
         } else {

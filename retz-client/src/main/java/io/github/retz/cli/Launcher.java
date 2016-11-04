@@ -67,8 +67,8 @@ public class Launcher {
             } else {
                 LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
                         conf.commands.getConfigFile());
-                LOG.debug("Configuration: {}", conf.fileConfiguration.toString());
-                return conf.getParsedSubCommand().handle(conf.fileConfiguration);
+                LOG.debug("Configuration: {}", conf.configuration.toString());
+                return conf.getParsedSubCommand().handle(conf.configuration);
             }
 
         } catch (IOException e) {
@@ -115,12 +115,12 @@ public class Launcher {
 
         conf.commander.parse(argv);
 
-        conf.fileConfiguration = new FileConfiguration(conf.commands.getConfigFile());
+        conf.configuration = new ClientCLIConfig(conf.commands.getConfigFile());
         return conf;
     }
 
     static class Configuration {
-        FileConfiguration fileConfiguration;
+        ClientCLIConfig configuration;
         JCommander commander;
         MainCommand commands;
 
