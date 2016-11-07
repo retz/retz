@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
 public class RetzIntTest {
     private static final int RES_OK = 0;
     private static ClosableContainer container;
-    private static final String configfile = "retz-client.properties";
+    private static final String configfile = "retz-c.properties";
     protected ClientCLIConfig config;
 
     @BeforeClass

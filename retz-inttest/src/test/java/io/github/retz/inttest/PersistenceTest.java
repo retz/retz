@@ -66,7 +66,7 @@ public class PersistenceTest {
     @Before
     public void loadConfig() throws Exception {
         // Mostly same as RetzIntTest
-        config = new ClientCLIConfig("src/test/resources/retz-client.properties");
+        config = new ClientCLIConfig("src/test/resources/retz-c.properties");
         assertEquals(RETZ_HOST, config.getUri().getHost());
         assertEquals(RETZ_PORT, config.getUri().getPort());
     }
