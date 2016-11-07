@@ -82,7 +82,20 @@ public class OfferAcceptor {
     public Protos.SlaveID getSlaveID() {
         return slaveID;
     }
+
     public List<Job> getJobs() {
         return jobs;
+    }
+
+    public void verify() {
+        for (Protos.Offer offer : offers) {
+            if (!offer.getSlaveId().getValue().equals(slaveID.getValue())) {
+                throw new AssertionError("Different Slave ID in single offer acceptor (" +
+                        slaveID.getValue() + "):\t" + offer.getSlaveId().getValue());
+            }
+        }
+        if (operations.size() != jobs.size()) {
+            throw new AssertionError("Operations and jobs doesn't match in size: "+ operations.size() + "/" + jobs.size());
+        }
     }
 }

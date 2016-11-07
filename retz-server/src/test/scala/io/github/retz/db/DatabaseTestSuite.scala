@@ -36,6 +36,8 @@ import java.util.{Optional, Properties}
 
 import io.github.retz.cli.TimestampHelper
 import io.github.retz.protocol.data.{Application, Job, MesosContainer, User}
+import io.github.retz.protocol.RetzDataGen
+import io.github.retz.RetzGen
 import org.junit.Test
 import org.scalacheck.Prop._
 import org.scalacheck.commands.Commands
@@ -141,9 +143,8 @@ object DatabaseSpec extends Commands {
   }
 
   val genAddUser: Gen[AddUser] = for {
-    key <- RetzGen.nonEmpty(32)
-    secret <- RetzGen.nonEmpty(64)
-  } yield AddUser(new User(key, secret, true))
+    user <- RetzDataGen.user
+  } yield AddUser(user)
 
   case class AddUser(user: User) extends UnitCommand {
     override def preCondition(state: State): Boolean = true
@@ -168,17 +169,9 @@ object DatabaseSpec extends Commands {
   }
 
   def genAddApplication(state: State): Gen[AddApplication] = for {
-    appid <- RetzGen.nonEmpty(32)
-    persistentFiles <- Gen.containerOf[List, String](RetzGen.url)
-    largeFiles <- Gen.containerOf[List, String](RetzGen.url)
-    files <- Gen.containerOf[List, String](RetzGen.url)
-    diskMB <- Gen.chooseNum(0, 10)
-    unixUser <- RetzGen.nonEmpty
     owner <- Gen.oneOf(state.users.keys.toSeq)
-  } yield
-    AddApplication(new Application(appid,
-      persistentFiles.asJava, largeFiles.asJava, files.asJava,
-      java.util.Optional.of(diskMB), Optional.of(unixUser), owner, new MesosContainer(), true))
+    app <- RetzDataGen.application(owner)
+  } yield AddApplication(app)
 
   case class AddApplication(application: Application) extends UnitCommand {
     override def preCondition(state: State): Boolean = true
@@ -198,11 +191,9 @@ object DatabaseSpec extends Commands {
 
   def genSchedule(state: State): Gen[Schedule] = for {
     appid <- Gen.oneOf(state.applications.keys.toSeq)
-    name <- RetzGen.nonEmpty
-    cmd <- RetzGen.nonEmpty
+    job <- RetzDataGen.job(appid)
     id <- Gen.posNum[Int]
   } yield {
-    var job = new Job(appid, cmd, new Properties(), 1, 32, 1, 0)
     job.schedule(id, TimestampHelper.now())
     Schedule(id, job)
   }

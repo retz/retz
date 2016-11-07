@@ -231,4 +231,15 @@ public class RetzSchedulerTest {
         return builder.build();
     }
 
+    public static Protos.Offer buildOffer(String fid, String sid, String offerId, int cpus, int mem) {
+        Protos.Offer.Builder builder = Protos.Offer.newBuilder()
+                .addAllResources(ResourceConstructor.construct(cpus, mem))
+                .setSlaveId(Protos.SlaveID.newBuilder()
+                        .setValue(sid)
+                        .build())
+                .setFrameworkId(Protos.FrameworkID.newBuilder().setValue(fid).build())
+                .setHostname("127.0.0.1:5051")
+                .setId(Protos.OfferID.newBuilder().setValue(offerId).build());
+        return builder.build();
+    }
 }
