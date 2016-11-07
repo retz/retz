@@ -283,6 +283,11 @@ project('retz-inttest') {
     }
     task copy(dependsOn: ['copyServerJar', 'copyClientJar', 'copyAdminJar'])
 
+    // Retz- clients classes brought to build/classes, while bundled resources are not
+    task processTestResources.doLast {
+        makeClientPropertyFile("${buildDir}", "test", project.name, project.version)
+    }
+
     task buildDocker {
         doLast {
             exec {
