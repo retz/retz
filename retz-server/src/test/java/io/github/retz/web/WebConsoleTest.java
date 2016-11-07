@@ -103,6 +103,10 @@ public class WebConsoleTest {
         Database.getInstance().stop();
     }
 
+    @Test
+    public void version() {
+        System.err.println(Client.VERSION_STRING);
+    }
     /**
      * @throws Exception if failed
      */

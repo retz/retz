@@ -50,6 +50,7 @@ public class RetzIntTest {
 
     @BeforeClass
     public static void setupContainer() throws Exception {
+        System.out.println(Client.VERSION_STRING);
         container = createContainer(CONTAINER_NAME);
         container.setConfigfile("retz.properties");
         container.start();
