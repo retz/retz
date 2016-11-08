@@ -83,12 +83,11 @@ public class Database {
         */
         init(props, true);
 
-        addUser(config.getUser());
         if (getUser(config.getAccessKey()).isPresent()) {
             LOG.info("admin user is {}", config.getAccessKey());
         } else {
-            LOG.error("No admin user created in database");
-            throw new RuntimeException("orz");
+            LOG.info("No user found: creating admin user {}", config.getAccessKey());
+            addUser(config.getUser());
         }
     }
 
