@@ -133,7 +133,7 @@ This may take time, but finally you'll get:
 ::
 
    I15:40:15 job 11 scheduled
-   I15:40:47 job 11 started: FINISHED
+   I15:40:47 job 11 started: STARTING
    I15:40:47 ============ stdout-11 in job 11 sandbox start ===========
    hello, retz
    I15:40:48 ============ stdout-11 of job 11 sandbox end ===========
