@@ -44,13 +44,13 @@ provided by server administrator, to find correct version just hit
 curl like ``curl -i http://retz.example.com:9090/ping`` and see
 ``Server:`` header.
 
-For 0.0.25 as a package installation example,
+For 0.0.29 as a package installation example,
 
 * For Ubuntu or Debian, download `Debian package
-  <https://github.com/retz/retz/releases/download/0.0.27/retz-client_0.0.27_amd64.deb>`_
+  <https://github.com/retz/retz/releases/download/0.0.29/retz-client_0.0.29_amd64.deb>`_
   and install via ``dpkg -i``.
 * For CentOS, download `RPM package
-  <https://github.com/retz/retz/releases/download/0.0.27/retz-client-0.0.27-1.el7.x86_64.rpm>`_
+  <https://github.com/retz/retz/releases/download/0.0.29/retz-client-0.0.29-1.el7.x86_64.rpm>`_
   and install via ``rpm -i``.
 
 Both ways install a command ``/opt/retz-client/bin/retz-client`` and a
@@ -60,14 +60,14 @@ configuration file ``/opt/retz-client/etc/retz.properties`` . Include
 they will be called respectively ``retz-client`` and ``retz.properties`` .
 
 To install with just a jar file, download `the fat jar file
-<https://github.com/retz/retz/releases/download/0.0.25/retz-client-0.0.25-all.jar>`_
+<https://github.com/retz/retz/releases/download/0.0.29/retz-client-0.0.29-all.jar>`_
 . And place it wherever you like, and create a shell script like
 
 ::
 
    #!/bin/sh
    set -e
-   java -jar /path/to/lib/retz-client-0.0.25-all.jar -C /path/to/etc/retz.properties "$@"
+   java -jar /path/to/lib/retz-client-0.0.29-all.jar -C /path/to/etc/retz.properties "$@"
 
 And then install it to a path that is included in ``$PATH`` . Also,
 install ``retz.properties`` to ``/path/to/etc`` . These shell script and
@@ -81,7 +81,7 @@ be provided by the server administrator. Refer to `README
 just important items, which must be provided by service administrator
 are being listed:
 
-* ``retz.bind`` - e.g. ``http://retz.example.com:9090`` in later part of this document
+* ``retz.server.uri`` - e.g. ``http://retz.example.com:9090`` in later part of this document
 * ``retz.authentication``
 * ``retz.access.key`` - when authentication is true
 * ``retz.access.secret`` - when authentication is true
@@ -243,7 +243,6 @@ out job id and give it to see any information:
    I16:51:26 11     FINISHED test          echo 'hello, retz' 0      0.364    2016-09-26T03:40:15.573+09:00 2016-09-26T03:40:39.517+09:00 2016-09-26T03:40:39.881+09:00 -
    $ retz-client list-files -id 11
    I16:53:05 gid     mode       uid  mtime               size     path
-   I16:53:05 nogroup -rw-r--r-- retz 2016-40-26 03:40:18 15542828 retz-executor-0.0.25-all.jar
    I16:53:05 nogroup -rw-r--r-- retz 2016-40-26 03:40:23 1878     stderr
    I16:53:05 nogroup -rw-r--r-- retz 2016-40-26 03:40:37 0        stderr-11
    I16:53:05 nogroup -rw-r--r-- retz 2016-40-26 03:40:39 4041     stdout

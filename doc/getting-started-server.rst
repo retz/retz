@@ -147,15 +147,15 @@ Setting up Retz
 Download the latest DEB packages of ``retz-server`` and ``retz-admin``
 from `GitHub release page <https://github.com/retz/retz/releases>`_
 and install them. The server DEB creates ``retz`` user to run a Retz
-process. This is an example of 0.0.28::
+process. This is an example of 0.0.29::
 
-  # wget https://github.com/retz/retz/releases/download/0.0.28/retz-server_0.0.28_amd64.deb
-  # wget https://github.com/retz/retz/releases/download/0.0.28/retz-admin_0.0.28_amd64.deb
-  # md5sum retz-server_0.0.28_amd64.deb retz-admin_0.0.28_amd64.deb
-  3f335c2db1ca50656e5d28303a78d91f  retz-server_0.0.28_amd64.deb
-  1e539e086c45e113c7f832ffae8cdc75  retz-admin_0.0.28_amd64.deb
-  # dpkg -i retz-server_0.0.28_amd64.deb
-  # dpkg -i retz-admin_0.0.28_amd64.deb
+  # wget https://github.com/retz/retz/releases/download/0.0.29/retz-server_0.0.29_amd64.deb
+  # wget https://github.com/retz/retz/releases/download/0.0.29/retz-admin_0.0.29_amd64.deb
+  # md5sum retz-server_0.0.29_amd64.deb retz-admin_0.0.29_amd64.deb
+  3f335c2db1ca50656e5d28303a78d91f  retz-server_0.0.29_amd64.deb
+  1e539e086c45e113c7f832ffae8cdc75  retz-admin_0.0.29_amd64.deb
+  # dpkg -i retz-server_0.0.29_amd64.deb
+  # dpkg -i retz-admin_0.0.29_amd64.deb
 
 
 Create a ``retz.properties`` file according to your environment. The deb
