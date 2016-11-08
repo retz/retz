@@ -202,7 +202,7 @@ object DatabaseSpec extends Commands {
     cmd <- RetzGen.nonEmpty
     id <- Gen.posNum[Int]
   } yield {
-    var job = new Job(appid, cmd, new Properties(), 1, 32, 1)
+    var job = new Job(appid, cmd, new Properties(), 1, 32, 1, 0)
     job.schedule(id, TimestampHelper.now())
     Schedule(id, job)
   }

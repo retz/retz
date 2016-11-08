@@ -50,15 +50,6 @@ public class LocalProcess {
         String path = ".";
         Resource resource = ResourceConstructor.decode(task.getResourcesList());
 
-        // TODO: initiate all persistent downloads in metaJob.persistentFiles here
-        if (!metaJob.getApp().getPersistentFiles().isEmpty()) {
-            String volumeId = metaJob.getApp().toVolumeId();
-            path = resource.getPersistentVolumePath(volumeId, ".");
-            LOG.info("Volume ID: {}, path: {}", volumeId, path);
-        } else {
-            LOG.debug("No persistent file needed: [{}]", String.join(", ", metaJob.getApp().getPersistentFiles()));
-        }
-
         try {
             // TODO: this is actually done in LocalProcessManager singleton thread, which may block other task invocations
             FileManager.fetchPersistentFiles(metaJob.getApp().getPersistentFiles(), path, metaJob.getJob().trustPVFiles());

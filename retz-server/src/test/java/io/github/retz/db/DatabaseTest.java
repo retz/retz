@@ -181,6 +181,8 @@ public class DatabaseTest {
                     1,
                     32,
                     0,
+                    0,
+                    0,
                     null,
                     false,
                     Job.JobState.QUEUED);

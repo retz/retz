@@ -21,6 +21,7 @@ import io.github.retz.mesos.Resource;
 import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,22 +44,26 @@ public class NaivePlanner implements Planner {
         for (Protos.Offer offer : offers) {
             Resource assigned = new Resource(0, 0, 0);
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+            int lastPort = 0;
 
             while (!appJobs.isEmpty() &&
                     assigned.cpu() <= resource.cpu() &&
                     assigned.memMB() <= resource.memMB() &&
-                    assigned.gpu() <= resource.gpu()) {
+                    assigned.gpu() <= resource.gpu() &&
+                    assigned.portAmount() <= resource.portAmount()) {
                 AppJobPair appJob = appJobs.get(0);
                 Job job = appJob.job();
 
                 if (assigned.cpu() + job.cpu() <= resource.cpu() &&
                         assigned.memMB() + job.memMB() <= resource.memMB() &&
-                        assigned.gpu() + job.gpu() <= resource.gpu()) {
+                        assigned.gpu() + job.gpu() <= resource.gpu() &&
+                        assigned.portAmount() + job.ports() <= resource.portAmount()) {
 
                     String id = Integer.toString(job.id());
                     // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                     // (esp ASAKUSA_HOME env)
-                    Resource assign = new Resource(job.cpu(), job.memMB(), 0, 0, job.gpu());
+                    Resource assign = resource.cut(job.cpu(), job.memMB(), job.gpu(), job.ports(), lastPort);
+                    lastPort = assign.lastPort();
                     TaskBuilder tb = new TaskBuilder()
                             .setResource(assign, offer.getSlaveId())
                             .setName("retz-" + appJob.application().getAppid() + "-name-" + job.name())
@@ -80,8 +85,8 @@ public class NaivePlanner implements Planner {
                     job.starting(taskId.getValue(), Optional.empty(), TimestampHelper.now());
                     launch.add(job);
 
-                    LOG.info("Job {}(task {}) is to be ran as '{}' at Slave {}",
-                            job.id(), taskId.getValue(), job.cmd(), offer.getSlaveId().getValue());
+                    LOG.info("Job {}(task {}) is to be ran as '{}' at Slave {} with resource {}",
+                            job.id(), taskId.getValue(), job.cmd(), offer.getSlaveId().getValue(), assign);
                     appJobs.remove(0);
                 } else {
                     break;
@@ -98,15 +103,16 @@ public class NaivePlanner implements Planner {
     }
 
     private static boolean resourceSufficient(Resource resource, List<AppJobPair> jobs) {
-        Optional<Resource> needs = jobs.stream().map(appjob -> new Resource(appjob.job().cpu(), appjob.job().memMB(), 0, 0, appjob.job().gpu()))
-                .reduce((lhs, rhs) -> {
-                    lhs.merge(rhs);
-                    return lhs;
-                });
+        Optional<Resource> needs = jobs.stream().map(appjob -> new Resource(appjob.job().cpu(), appjob.job().memMB(), 0, appjob.job().gpu(), Arrays.asList())).reduce((lhs, rhs) -> {
+            lhs.merge(rhs);
+            return lhs;
+        });
+        int portNeeds = jobs.stream().mapToInt(appJobPair -> appJobPair.job().ports()).sum();
         return needs.isPresent() &&
                 needs.get().cpu() <= resource.cpu() &&
                 needs.get().memMB() <= resource.memMB() &&
-                needs.get().gpu() <= resource.gpu();
+                needs.get().gpu() <= resource.gpu() &&
+                portNeeds <= resource.portAmount();
     }
 
     @Override
@@ -145,7 +151,7 @@ public class NaivePlanner implements Planner {
     // INPUT: jobs - candidates for task launch, most likely chosen from database or else
     @Override
     public Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock) {
-        Resource total = new Resource(0, 0, 0, 0, 0);
+        Resource total = new Resource(0, 0, 0, 0, new LinkedList<>());
         for (Protos.Offer offer : offers) {
             total.merge(ResourceConstructor.decode(offer.getResourcesList()));
         }

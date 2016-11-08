@@ -178,6 +178,7 @@ public class RetzScheduler implements Scheduler {
 
         Resource resource = new Resource(0, 0, 0);
         for (Protos.Offer offer : available) {
+            LOG.debug("offer: {}", offer);
             resource.merge(ResourceConstructor.decode(offer.getResourcesList()));
         }
 

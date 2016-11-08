@@ -49,28 +49,10 @@ public class TaskBuilder {
     }
 
     public TaskBuilder setResource(Resource r, Protos.SlaveID slaveID) {
-        builder.addAllResources(ResourceConstructor.construct((int)r.cpu(), r.memMB(), r.diskMB(), r.gpu()));
+        //builder.addAllResources(ResourceConstructor.construct((int)r.cpu(), r.memMB(), r.diskMB(), r.gpu()));
+        assigned = r;
+        builder.addAllResources(r.construct());
         builder.setSlaveId(slaveID);
-        return this;
-    }
-
-    // @doc assign as much CPU/Memory as possible
-    public TaskBuilder setOffer(Resource offered, int cpu, int memMB, int gpu, Protos.SlaveID slaveID) {
-        assert cpu <= offered.cpu();
-        assert memMB <= offered.memMB();
-        assert gpu <= offered.gpu();
-        int assignedCpu = cpu;
-        int assignedMem = memMB;
-        int assignedGPU = gpu;
-
-        assigned = new Resource(assignedCpu, assignedMem, 0, 0, assignedGPU);
-        builder.addAllResources(ResourceConstructor.construct(assignedCpu, assignedMem, 0, assignedGPU))
-                //builder.addAllResources(offer.getResourcesList())
-                .setSlaveId(slaveID);
-        offered.subCPU(assignedCpu);
-        offered.subMemMB(assignedMem);
-        offered.subGPU(assignedGPU);
-        LOG.debug("Assigning cpu={}, mem={}, gpus={}", assignedCpu, assignedMem, assignedGPU);
         return this;
     }
 
@@ -86,7 +68,7 @@ public class TaskBuilder {
     }
 
     public TaskBuilder setCommand(Job job, Application application) {
-        Protos.CommandInfo commandInfo = appToCommandInfo(application, job);
+        Protos.CommandInfo commandInfo = appToCommandInfo(application, job, assigned.ports());
         builder.setCommand(commandInfo);
 
         if (application.container() instanceof DockerContainer) {

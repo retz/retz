@@ -47,6 +47,10 @@ public class Range {
         return max;
     }
 
+    public boolean overlap(Range rhs) {
+        return (this.min - rhs.max) * (this.max - rhs.min) <= 0;
+    }
+
     public static Range parseRange(String s, String dflt) {
         if (s == null) {
             return parseRange(dflt);

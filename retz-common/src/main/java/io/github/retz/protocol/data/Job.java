@@ -45,6 +45,8 @@ public class Job {
     private final int cpu;
     private final int memMB;
     private int gpu;
+    private final int diskMB; // Number of disk quota the job requires
+    private int ports; // Number of ports the job requires
 
     private String taskId; // TaskId assigned by Mesos (or other scheduler)
 
@@ -75,14 +77,17 @@ public class Job {
         this.cpu = cpu;
         this.memMB = memMB;
         this.gpu = 0;
+        this.diskMB = 0;
+        this.ports = 0;
         this.state = CREATED;
         this.retry = 0;
         this.priority = 0;
     }
 
-    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int gpu) {
+    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int gpu, int ports) {
         this(appName, cmd, props, cpu, memMB);
         this.gpu = Objects.requireNonNull(gpu);
+        this.ports = ports;
     }
 
     @JsonCreator
@@ -99,9 +104,11 @@ public class Job {
                @JsonProperty("priority") int priority,
                @JsonProperty(value = "appid", required = true) String appid,
                @JsonProperty(value = "name") String name,
-               @JsonProperty("cpu") int cpu,
-               @JsonProperty("memMB") int memMB,
+               @JsonProperty(value = "cpu", required = true) int cpu,
+               @JsonProperty(value = "memMB", required = true) int memMB,
                @JsonProperty("gpu") int gpu,
+               @JsonProperty("diskMB") int diskMB,
+               @JsonProperty("ports") int ports,
                @JsonProperty("taskId") String taskId,
                @JsonProperty("trustPVFiles") boolean trustPVFiles,
                @JsonProperty("state") JobState state) {
@@ -122,6 +129,8 @@ public class Job {
         this.cpu = cpu;
         assert memMB >= 32;
         this.memMB = memMB;
+        this.diskMB = diskMB;
+        this.ports = ports;
         this.gpu = gpu;
         this.taskId = taskId;
         this.trustPVFiles = trustPVFiles;
@@ -208,6 +217,16 @@ public class Job {
         return gpu;
     }
 
+    @JsonGetter("diskMB")
+    public int diskMB() {
+        return diskMB;
+    }
+
+    @JsonGetter("ports")
+    public int ports() {
+        return ports;
+    }
+
     @JsonGetter("taskId")
     public String taskId() {
         return taskId;
@@ -288,6 +307,12 @@ public class Job {
         if (gpu > 0) {
             sb.append(", gpu=").append(gpu);
         }
+        if (diskMB > 0) {
+            sb.append(", disk=").append(diskMB);
+        }
+        if (ports > 0) {
+            sb.append(", ports=").append(ports);
+        }
         if (scheduled != null) {
             sb.append(", scheduled=").append(scheduled);
         }
@@ -321,6 +346,12 @@ public class Job {
 
         if (gpu > 0) {
             sb.append(", gpu=").append(gpu);
+        }
+        if (diskMB > 0) {
+            sb.append(", disk=").append(diskMB);
+        }
+        if (ports > 0) {
+            sb.append(", ports=").append(ports);
         }
         if (scheduled != null) {
             sb.append(", scheduled=").append(scheduled);

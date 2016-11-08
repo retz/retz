@@ -18,15 +18,16 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.retz.db.Database;
-import io.github.retz.mesos.Resource;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class Applications {
     private static final Logger LOG = LoggerFactory.getLogger(Applications.class);
@@ -120,7 +121,7 @@ public class Applications {
         return builder.build();
     }
 
-    public static Protos.CommandInfo appToCommandInfo(Application application, Job job) {
+    public static Protos.CommandInfo appToCommandInfo(Application application, Job job, List<Range> ports) {
         Protos.CommandInfo.Builder builder = Protos.CommandInfo.newBuilder();
         if (application.getUser().isPresent()) {
             builder.setUser(application.getUser().get());
@@ -137,6 +138,15 @@ public class Applications {
             String value = (String) e.getValue();
             envBuilder.addVariables(Protos.Environment.Variable.newBuilder()
                     .setName(key).setValue(value).build());
+        }
+        int portCount = 0;
+        for (Range range : ports) {
+            for (int p = range.getMin(); p <= range.getMax(); ++p) {
+                String name = "PORT" + portCount;
+                envBuilder.addVariables(Protos.Environment.Variable.newBuilder()
+                        .setName(name).setValue(Integer.toString(p)).build());
+                portCount += 1;
+            }
         }
         return builder.setEnvironment(envBuilder.build())
                 .setValue(job.cmd())

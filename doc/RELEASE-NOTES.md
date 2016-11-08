@@ -1,10 +1,18 @@
 # Retz release notes
 
-## 0.0.29
+## 0.0.30
 
+* Add port range allocation which is supported by Mesos - available at
+  'run' and 'schedule' subcommand with '-ports' option specifying *amount*
+  of ports, which will be provided as environment variables '$PORT0',
+  '$PORT1' and so on. All jobs may use up to 1000 ports. This introduces
+  *incompatible changes* to JSON formatting over network.
 * Split FileConfiguration to client and server configuration, guiding
   more suitable key names and descriptions. Especially, 'retz.bind' at
   client side config is renamed to 'retz.server.uri'.
+
+## 0.0.29
+
 * Fix wrong timestamp representaion in all logs; it should be 0-23 hours
   for a day but it was 0-12 without AM/PM notion.
 * Fix a bug where an exceeding job is to be launched with stocked offers,

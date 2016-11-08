@@ -31,26 +31,21 @@ import java.util.Properties;
 
 public class CommandSchedule implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandSchedule.class);
-
+    @Parameter(names = "-ports", description = "Number of ports (up to 1000) required to the job; Ports will be given as $PORT0, $PORT1, ...")
+    int ports = 0;
     @Parameter(names = "-cmd", required = true, description = "Remote command")
     private String remoteCmd;
-
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
-
     @Parameter(names = {"-E", "--env"}, arity = 2,
             description = "Pairs of environment variable names and values, like '-E ASAKUSA_M3BP_OPTS='-Xmx32g' -E SPARK_CMD=path/to/spark-cmd'")
     private List<String> envs;
-
     @Parameter(names = "-cpu", description = "Number of CPU cores assigned to the job")
     private int cpu = 1;
-
     @Parameter(names = "-mem", description = "Number of size of RAM(MB) assigned to the job")
     private int mem = 32;
-
     @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job in Range")
     private int gpu = 0;
-
     @Parameter(names = "-trustpvfiles", description = "Whether to trust decompressed files in persistent volume from -P option")
     private boolean trustPVFiles = false;
 
@@ -68,8 +63,7 @@ public class CommandSchedule implements SubCommand {
     public int handle(ClientCLIConfig fileConfig) {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
-        Job job = new Job(appName, remoteCmd,
-                envProps, cpu, mem, gpu);
+        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
         job.setTrustPVFiles(trustPVFiles);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())

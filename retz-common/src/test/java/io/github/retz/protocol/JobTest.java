@@ -52,6 +52,8 @@ public class JobTest {
                 32,
                 65536,
                 8,
+                0,
+                0,
                 "my-sample-taskid",
                 false,
                 Job.JobState.QUEUED);

@@ -16,6 +16,7 @@
  */
 package io.github.retz.mesos;
 
+import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 
 import java.util.LinkedHashMap;
@@ -59,9 +60,9 @@ public class ResourceConstructor {
     }
 
     public static Resource decode(List<Protos.Resource> resources) {
-        int memMB = 0, diskMB = 0, reservedDiskMB = 0, gpu = 0;
+        int memMB = 0, diskMB = 0, gpu = 0;
+        List<Range> ports = new LinkedList<>();
         double cpu = 0;
-        Map<String, Protos.Resource> volumes = new LinkedHashMap<>();
         for (Protos.Resource r : resources) {
             if (r.getName().equals("cpus")) {
                 // Will be screwed up if we have reserved CPUs
@@ -71,35 +72,16 @@ public class ResourceConstructor {
                 memMB = (int) (r.getScalar().getValue());
             } else if (r.getName().equals("disk")) {
                 int size = (int) (r.getScalar().getValue());
-
-                if (r.hasReservation()) {
-                    if (r.hasDisk() && r.getDisk().hasVolume()) {
-                        volumes.put(r.getDisk().getPersistence().getId(), r);
-                    } else {
-                        // TODO: check principal and owner is right ones
-                        reservedDiskMB += size;
-                    }
-                } else {
-                    diskMB = size;
-                }
-                /*
-                System.err.println("================================");
-                System.err.println(diskMB);
-                System.err.println(reservedDiskMB);
-                System.err.println("Reservation Principal> " + r.getReservation().getPrincipal());
-                System.err.println("Reservation Role> " + r.getRole()); //.getDisk().getPersistence().getId());
-                System.err.println("Volume ID> " + r.getDisk().getPersistence().getId());
-                System.err.println("Path> " + r.getDisk().getVolume().getContainerPath());
-                System.err.println("Path> " + r.getDisk().getVolume().getHostPath());
-                for (Protos.Label label : r.getReservation().getLabels().getLabelsList()) {
-                    System.err.println(label.getKey() + "=>" + label.getValue());
-                } */
+                diskMB = size;
+            } else if (r.getName().equals("ports")) {
+                 for(Protos.Value.Range range : r.getRanges().getRangeList()) {
+                     ports.add(new Range((int)range.getBegin(), (int)range.getEnd()));
+                 }
             } else if (r.getName().equals("gpus")) {
                 gpu = (int) (r.getScalar().getValue());
             }
         }
-        Resource ret = new Resource(cpu, memMB, diskMB, reservedDiskMB, gpu);
-        ret.volumes().putAll(volumes);
+        Resource ret = new Resource(cpu, memMB, diskMB, gpu, ports);
         return ret;
     }
 }
