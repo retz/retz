@@ -82,6 +82,7 @@ And tell Ubuntu APT Mesosphere's repository::
 
 The installation is quite simple::
 
+  # apt-get install openjdk-8-jdk
   # apt-get install mesos
   # mesos-master --version
   mesos 1.0.1
@@ -92,7 +93,7 @@ To start all required process, run::
 
   # systemctl start zookeeper
   # systemctl start mesos-master
-  # systemctl start mesos-agent
+  # systemctl start mesos-slave
 
 And then, try opening your IP address like http://10.0.2.5:5050 to see
 whether Mesos master is running, and Mesos slave is properly registered
@@ -286,7 +287,7 @@ Also, Retz has many knobs to control its setup
 
 
 Database configurations - by default Retz stores all information on
-memory. T
+memory.
 
 * ``retz.database.url`` A JDBC address where Retz connects. Default is
   ``jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1``. To store data
