@@ -113,7 +113,7 @@ public class RetzIntTest {
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
         String echoText = "hoge from echo-app via Retz!";
-        Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256);
+        Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256, 0, 1);
         Job runRes = client.run(job);
         assertThat(runRes.result(), is(RES_OK));
         assertThat(runRes.state(), is(Job.JobState.FINISHED));
@@ -160,7 +160,7 @@ public class RetzIntTest {
         assertThat(listRes.status(), is("ok"));
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
-        Job job = new Job("echo-app", "sleep 60", new Properties(), 1, 32);
+        Job job = new Job("echo-app", "sleep 60", new Properties(), 1, 32, 0, 2);
         response = client.schedule(job);
         assertThat(response, instanceOf(ScheduleResponse.class));
         ScheduleResponse scheduleResponse = (ScheduleResponse) response;
@@ -270,7 +270,7 @@ public class RetzIntTest {
     private List<EchoJob> scheduleEchoJobs(Client client, String appName, String cmdPrefix, List<Integer> argvList) throws IOException {
         List<EchoJob> echoJobs = new LinkedList<>();
         for (Integer i : argvList) {
-            Job job = new Job(appName, cmdPrefix + i.toString(), new Properties(), 1, 32);
+            Job job = new Job(appName, cmdPrefix + i.toString(), new Properties(), 1, 32, 0, 3);
 
             ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
             assertThat(scheduleResponse.status(), is("ok"));
