@@ -25,6 +25,7 @@ apply plugin: 'nebula-aggregate-javadocs'
 subprojects {
     apply plugin: 'java'
     apply plugin: 'scala'
+    apply plugin: 'eclipse'
     apply plugin: 'findbugs'
     apply plugin: "com.github.hierynomus.license"
 
@@ -71,6 +72,10 @@ subprojects {
         ext.name = 'Nautilus Technologies, Inc.'
 
         excludes(["**/*.json", "**/*.jks"])
+    }
+
+    eclipse {
+        project.buildCommand 'org.eclipse.jdt.core.javabuilder'
     }
 }
 
