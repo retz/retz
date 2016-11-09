@@ -150,6 +150,12 @@ public class RetzSchedulerTest {
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
 
+        try {
+            // Now database update is async with Stanchion, just waiting
+            Thread.sleep(5000);
+        }catch(InterruptedException e){
+        }
+
         assertThat(driver.getDeclined().size(), is(1));
         assertTrue(driver.getAccepted().isEmpty());
         assertTrue(driver.getTasks().isEmpty());

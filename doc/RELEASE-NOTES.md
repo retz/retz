@@ -1,8 +1,15 @@
 # Retz release notes
 
+## 0.0.32
+
+* Fix a race condition ( #69 ) where Jetty thread and Mesos client callback
+  thread both read a job from database and launch task *s* with different
+  offers. This causes the job (task) with same task id refused by Mesos
+  and the latter returns by "TASK_ERROR".
+
 ## 0.0.31
 
-* Fix a bug in a cluster where > 2 Mesos agents serving same port range
+* Fix a bug ( #74) in a cluster where > 2 Mesos agents serving same port range
   causes a crash before accepting offers. This was introduced at 0.0.30
   ( `c1fe39c998fdb433d` ).
 

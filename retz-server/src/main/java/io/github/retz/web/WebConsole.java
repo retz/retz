@@ -20,15 +20,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.auth.Authenticator;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.scheduler.Applications;
-import io.github.retz.db.Database;
 import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.scheduler.ServerConfiguration;
@@ -46,7 +45,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
@@ -54,10 +52,9 @@ import static spark.Spark.*;
 public final class WebConsole {
     private static final Logger LOG = LoggerFactory.getLogger(WebConsole.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final List<String> NO_AUTH_PAGES;
     private static Optional<RetzScheduler> scheduler = Optional.empty();
     private static Optional<SchedulerDriver> driver = Optional.empty();
-
-    private static final List<String> NO_AUTH_PAGES;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
@@ -293,11 +290,7 @@ public final class WebConsole {
         }
     }
 
-    public void stop() {
-        Spark.stop();
-    }
-
-    static Optional<Authenticator.AuthHeaderValue>  getAuthInfo(Request req) {
+    static Optional<Authenticator.AuthHeaderValue> getAuthInfo(Request req) {
         String givenSignature = req.headers(Authenticator.AUTHORIZATION);
         LOG.debug("Signature from client: {}", givenSignature);
 
@@ -391,6 +384,7 @@ public final class WebConsole {
             if (scheduler.isPresent() && driver.isPresent()) {
                 LOG.info("Trying invocation from offer stock: {}", job);
                 scheduler.get().maybeInvokeNow(driver.get(), job);
+
             }
 
             ScheduleResponse scheduleResponse = new ScheduleResponse(job);
@@ -406,6 +400,10 @@ public final class WebConsole {
             ErrorResponse response = new ErrorResponse("Application " + maybeApp.get().getAppid() + " is disabled");
             return MAPPER.writeValueAsString(response);
         }
+    }
+
+    public void stop() {
+        Spark.stop();
     }
 }
 

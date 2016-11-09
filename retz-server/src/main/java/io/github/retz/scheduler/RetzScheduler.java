@@ -65,10 +65,6 @@ public class RetzScheduler implements Scheduler {
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
-
-        for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
-            OFFER_STOCK.remove(e.getKey());
-        }
     }
 
     public void stopAllExecutors(SchedulerDriver driver, String appName) {
@@ -140,75 +136,79 @@ public class RetzScheduler implements Scheduler {
         LOG.debug("Resource offer: {}", offers.size());
 
         // Merge fresh offers from Mesos and offers in stock here, declining duplicate offers
-        List<Protos.Offer> available = new LinkedList<>();
-        synchronized (OFFER_STOCK) {
-            // TODO: cleanup this code, optimize for max.stock = 0 case
-            Map<String, List<Protos.Offer>> allOffers = new HashMap<>();
-            for (Protos.Offer offer : OFFER_STOCK.values()) {
-                String key = offer.getSlaveId().getValue();
-                List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
-                list.add(offer);
-                allOffers.put(offer.getSlaveId().getValue(), list);
-            }
-            for (Protos.Offer offer : offers) {
-                String key = offer.getSlaveId().getValue();
-                List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
-                list.add(offer);
-                allOffers.put(offer.getSlaveId().getValue(), list);
-            }
+        Stanchion.schedule(() -> {
+            List<Protos.Offer> available = new LinkedList<>();
+            synchronized (OFFER_STOCK) {
+                // TODO: cleanup this code, optimize for max.stock = 0 case
+                Map<String, List<Protos.Offer>> allOffers = new HashMap<>();
+                for (Protos.Offer offer : OFFER_STOCK.values()) {
+                    String key = offer.getSlaveId().getValue();
+                    List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
+                    list.add(offer);
+                    allOffers.put(offer.getSlaveId().getValue(), list);
+                }
+                for (Protos.Offer offer : offers) {
+                    String key = offer.getSlaveId().getValue();
+                    List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
+                    list.add(offer);
+                    allOffers.put(offer.getSlaveId().getValue(), list);
+                }
 
-            int declined = 0;
-            for (Map.Entry<String, List<Protos.Offer>> e : allOffers.entrySet()) {
-                if (e.getValue().size() == 1) {
-                    available.add(e.getValue().get(0));
-                } else {
-                    for (Protos.Offer dup : e.getValue()) {
-                        driver.declineOffer(dup.getId(), filters);
-                        declined += 1;
+                int declined = 0;
+                for (Map.Entry<String, List<Protos.Offer>> e : allOffers.entrySet()) {
+                    if (e.getValue().size() == 1) {
+                        available.add(e.getValue().get(0));
+                    } else {
+                        for (Protos.Offer dup : e.getValue()) {
+                            driver.declineOffer(dup.getId(), filters);
+                            declined += 1;
+                        }
                     }
                 }
+                if (conf.fileConfig.getMaxStockSize() > 0) {
+                    LOG.info("Offer stock renewal: {} offers available ({} declined from stock)", available.size(), declined);
+                }
+                OFFER_STOCK.clear();
             }
-            if (conf.fileConfig.getMaxStockSize() > 0) {
-                LOG.info("Offer stock renewal: {} offers available ({} declined from stock)", available.size(), declined);
+
+            int totalCpu = 0;
+            int totalMem = 0;
+            for (Protos.Offer offer : available) {
+                LOG.debug("offer: {}", offer);
+                Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+                totalCpu += resource.cpu();
+                totalMem += resource.memMB();
             }
-            OFFER_STOCK.clear();
-        }
 
-        int totalCpu = 0;
-        int totalMem = 0;
-        for (Protos.Offer offer : available) {
-            LOG.debug("offer: {}", offer);
-            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-            totalCpu += resource.cpu();
-            totalMem += resource.memMB();
-        }
-
-        // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
-        List<Job> jobs = JobQueue.findFit(totalCpu, totalMem);
-        handleAll(available, jobs, driver);
+            // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
+            List<Job> jobs = JobQueue.findFit(totalCpu, totalMem);
+            handleAll(available, jobs, driver);
+        });
     }
 
     public void maybeInvokeNow(SchedulerDriver driver, Job job) {
-        try {
-            List<Job> queued = JobQueue.queued(1);
-            if (queued.size() == 1 && queued.get(0).id() == job.id()) {
-                // OK
-            } else {
+        Stanchion.schedule(() -> {
+            try {
+                List<Job> queued = JobQueue.queued(1);
+                if (queued.size() == 1 && queued.get(0).id() == job.id()) {
+                    // OK
+                } else {
+                    return;
+                }
+            } catch (Exception e) {
+                LOG.error("maybeInvokeNow failed: {}", e.toString());
                 return;
             }
-        }catch (Exception e) {
-            LOG.error("maybeInvokeNow failed: {}", e.toString());
-            return;
-        }
 
-        List<Protos.Offer> available = new LinkedList<>();
-        synchronized (OFFER_STOCK) {
-            available.addAll(OFFER_STOCK.values());
-            OFFER_STOCK.clear();
-        }
-        // Only if the queue is empty, and with offer stock, try job invocation
-        List<Job> jobs = Arrays.asList(job);
-        handleAll(available, jobs, driver);
+            List<Protos.Offer> available = new LinkedList<>();
+            synchronized (OFFER_STOCK) {
+                available.addAll(OFFER_STOCK.values());
+                OFFER_STOCK.clear();
+            }
+            // Only if the queue is empty, and with offer stock, try job invocation
+            List<Job> jobs = Arrays.asList(job);
+            handleAll(available, jobs, driver);
+        });
     }
 
     public void handleAll(List<Protos.Offer> offers, List<Job> jobs, SchedulerDriver driver) {
@@ -279,50 +279,49 @@ public class RetzScheduler implements Scheduler {
         }
 
         // TODO: remove **ONLY** tasks that is running on the failed slave
-        // REVIEW: :+1:
-        //JobQueue.recoverRunning();
-        // TODO: reimplement with RDBMS clean query
-        // throw new AssertionError("Not implemented yet");
+        Stanchion.schedule(() -> maybeRecoverRunning(driver));
     }
 
     @Override
     public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus status) {
         LOG.info("Status update of task {}: {} / {}", status.getTaskId().getValue(), status.getState().name(), status.getMessage());
 
-        switch (status.getState().getNumber()) {
-            case Protos.TaskState.TASK_FINISHED_VALUE: {
-                finished(status);
-                break;
-            }
-            case Protos.TaskState.TASK_ERROR_VALUE:
-            case Protos.TaskState.TASK_FAILED_VALUE:
-            case Protos.TaskState.TASK_KILLED_VALUE: {
-                failed(status);
-                break;
-            }
-            case Protos.TaskState.TASK_LOST_VALUE: {
-                retry(status);
-                break;
-            }
-            case Protos.TaskState.TASK_KILLING_VALUE:
-                break;
-            case Protos.TaskState.TASK_RUNNING_VALUE:
-                started(status);
-                break;
-            case Protos.TaskState.TASK_STAGING_VALUE:
-                break;
-            case Protos.TaskState.TASK_STARTING_VALUE:
-                LOG.debug("Task {} starting", status.getTaskId().getValue());
-                Optional<Job> job = JobQueue.getFromTaskId(status.getTaskId().getValue());
-                if (job.isPresent()) {
-                    JobQueue.starting(job.get(), MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                            status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                            status.getExecutorId().getValue()), status.getTaskId().getValue());
+        Stanchion.schedule(() -> {
+            switch (status.getState().getNumber()) {
+                case Protos.TaskState.TASK_FINISHED_VALUE: {
+                    finished(status);
+                    break;
                 }
-                break;
-            default:
-                break;
-        }
+                case Protos.TaskState.TASK_ERROR_VALUE:
+                case Protos.TaskState.TASK_FAILED_VALUE:
+                case Protos.TaskState.TASK_KILLED_VALUE: {
+                    failed(status);
+                    break;
+                }
+                case Protos.TaskState.TASK_LOST_VALUE: {
+                    retry(status);
+                    break;
+                }
+                case Protos.TaskState.TASK_KILLING_VALUE:
+                    break;
+                case Protos.TaskState.TASK_RUNNING_VALUE:
+                    started(status);
+                    break;
+                case Protos.TaskState.TASK_STAGING_VALUE:
+                    break;
+                case Protos.TaskState.TASK_STARTING_VALUE:
+                    LOG.debug("Task {} starting", status.getTaskId().getValue());
+                    Optional<Job> job = JobQueue.getFromTaskId(status.getTaskId().getValue());
+                    if (job.isPresent()) {
+                        JobQueue.starting(job.get(), MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                                status.getExecutorId().getValue()), status.getTaskId().getValue());
+                    }
+                    break;
+                default:
+                    break;
+            }
+        });
     }
 
     // Maybe Retry
