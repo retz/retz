@@ -33,7 +33,7 @@ public class ServerConfigurationTest {
     public void tryLoadConfig() throws Exception {
         ServerConfiguration config = new ServerConfiguration("src/test/resources/retz.properties");
 
-        assertEquals(config.getMesosMaster(), "localhost:5050");
+        assertEquals(config.getMesosMaster(), "mesos.example.com:5050");
         assertEquals(config.getUri(), new URI("http://localhost:9090"));
         assertEquals(config.getKeystoreFile(), "path/to/keystore.jsk");
         assertEquals(config.getKeystorePass(), "foobar");
