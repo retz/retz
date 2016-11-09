@@ -2,6 +2,8 @@
 
 ## 0.0.30
 
+* 'localhost', '127.0.0.1' and '0.0.0.0' are officially not allowed as
+  a value of 'retz.mesos' in Retz server configuration.
 * Add port range allocation which is supported by Mesos - available at
   'run' and 'schedule' subcommand with '-ports' option specifying *amount*
   of ports, which will be provided as environment variables '$PORT0',

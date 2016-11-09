@@ -17,17 +17,17 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
+import org.eclipse.jetty.server.Server;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by kuenishi on 2016/11/04.
- */
 public class ServerConfigurationTest {
     @Test
     public void tryLoadConfig() throws Exception {
@@ -40,5 +40,19 @@ public class ServerConfigurationTest {
         assertFalse(config.checkCert());
         assertTrue(config.authenticationEnabled());
         assertEquals(0, config.getMaxStockSize());
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void wrongConfig() throws Exception {
+        String s = "retz.mesos = localhost:5050\nretz.bind = http://example.com:9090\nretz.access.key = foobar\nretz.access.secret = bazbax";
+        System.err.println(s);
+        new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void wrongConfig2() throws Exception {
+        String s = "retz.mesos = mesos.example.com:5050\nretz.bind = http://example.com:90\nretz.access.key = foobar\nretz.access.secret = bazbax";
+        System.err.println(s);
+        new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
     }
 }

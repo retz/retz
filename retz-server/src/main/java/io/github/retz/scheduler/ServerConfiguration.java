@@ -17,7 +17,6 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
-import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,33 +25,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 public class ServerConfiguration extends FileConfiguration {
-    private static final Logger LOG = LoggerFactory.getLogger(ServerConfiguration.class);
 
+    // System Limits
+    public static final String MAX_SIMULTANEOUS_JOBS = "retz.max.running";
+    public static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "128";
+    public static final String MAX_STOCK_SIZE = "retz.max.stock";
+    public static final String DEFAULT_MAX_STOCK_SIZE = "16";
+
+    // Mesos connections and so on
     static final String MESOS_LOC_KEY = "retz.mesos";
     // TODO: Sparkjava (http://sparkjava.com) only binds to 0.0.0.0, but it must be any IP address
     static final String BIND_ADDRESS = "retz.bind";
     static final String MESOS_ROLE = "retz.mesos.role";
-
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
     static final String DEFAULT_MESOS_PRINCIPAL = "retz";
-
     static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
     static final String USE_GPU = "retz.gpu";
-
-    // System Limits
-    public static final String MAX_SIMULTANEOUS_JOBS = "retz.max.running";
-    static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "128";
-    static final String MAX_STOCK_SIZE = "retz.max.stock";
-    static final String DEFAULT_MAX_STOCK_SIZE = "16";
     // Not yet used
     static final String QUEUE_MAX = "retz.max.queue";
     static final String SCHEDULE_RESULTS = "retz.results";
     static final String SCHEDULE_RETRY = "retz.retry";
-
     // Persistence
     static final String DATABASE_URL = "retz.database.url";
     static final String DEFAULT_DATABASE_URL = "jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1";
@@ -60,10 +58,10 @@ public class ServerConfiguration extends FileConfiguration {
     static final String DEFAULT_DATABASE_DRIVER_CLASS = "org.h2.Driver";
     static final String DATABASE_USERNAME = "retz.database.user";
     static final String DATABASE_PASSWORD = "retz.database.pass";
-
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
-
+    static final String[] INVALID_BIND_ADDRESS = {"0.0.0.0", "localhost", "127.0.0.1"};
+    private static final Logger LOG = LoggerFactory.getLogger(ServerConfiguration.class);
     private final URI uri;
     private final int maxSimultaneousJobs;
     private final String databaseURL;
@@ -73,10 +71,20 @@ public class ServerConfiguration extends FileConfiguration {
     public ServerConfiguration(InputStream in) throws IOException, URISyntaxException {
         super(in);
 
+        List<String> invalidBindAddresses = Arrays.asList(INVALID_BIND_ADDRESS);
+
         Objects.requireNonNull(properties.getProperty(BIND_ADDRESS), "Host and port are required");
+        Objects.requireNonNull(getMesosMaster(), "Mesos address must not be empty");
+
+        if (invalidBindAddresses.contains(getMesosMaster().split(":")[0])) {
+            LOG.error("{} (now {}) must not be any of {}", MESOS_LOC_KEY, getMesosMaster(),
+                    String.join(", ", invalidBindAddresses));
+            throw new IllegalArgumentException();
+        }
 
         uri = new URI(properties.getProperty(BIND_ADDRESS));
-        if( uri.getHost().equals("0.0.0.0")) {
+        // loopback addresses must also be checked, but for now inttest uses localhost address
+        if (uri.getHost().equals("0.0.0.0")) {
             LOG.error("retz.bind is told to Mesos; {}/32 should not be assigned", uri.getHost());
             throw new IllegalArgumentException();
         }
@@ -95,7 +103,7 @@ public class ServerConfiguration extends FileConfiguration {
         }
 
         maxSimultaneousJobs = Integer.parseInt(properties.getProperty(MAX_SIMULTANEOUS_JOBS, DEFAULT_MAX_SIMULTANEOUS_JOBS));
-        if(maxSimultaneousJobs < 1) {
+        if (maxSimultaneousJobs < 1) {
             throw new IllegalArgumentException(MAX_SIMULTANEOUS_JOBS + " must be positive");
         }
 
@@ -106,12 +114,10 @@ public class ServerConfiguration extends FileConfiguration {
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize());
-
     }
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
         this(new FileInputStream(file));
-
     }
 
     public String getMesosMaster() {
@@ -134,10 +140,12 @@ public class ServerConfiguration extends FileConfiguration {
         }
         return principal;
     }
+
     public boolean hasSecretFile() {
         return getSecretFile() != null;
     }
-    public String getSecretFile()  {
+
+    public String getSecretFile() {
         return properties.getProperty(MESOS_SECRET_FILE);
     }
 
