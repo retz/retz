@@ -19,7 +19,7 @@ package io.github.retz.localexecutor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.protobuf.ByteString;
-import io.github.retz.mesos.ResourceConstructor;
+import io.github.retz.scheduler.ResourceConstructor;
 import io.github.retz.protocol.data.*;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.mesos.Protos;

@@ -16,8 +16,8 @@
  */
 package io.github.retz.localexecutor;
 
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
+import io.github.retz.scheduler.Resource;
+import io.github.retz.scheduler.ResourceConstructor;
 import io.github.retz.protocol.data.MetaJob;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;

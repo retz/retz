@@ -78,7 +78,6 @@ project(':retz-common') {
     dependencies {
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.+'
         compile group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jdk8', version: '2.+'
-        compile 'org.apache.mesos:mesos:1.0.1'
     }
 }
 

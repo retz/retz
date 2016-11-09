@@ -14,7 +14,8 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-import io.github.retz.mesos.{ResourceConstructor, Resource => RetzResource}
+package io.github.retz.scheduler
+
 import org.apache.mesos.Protos.{Resource => MesosResource}
 import org.junit.Test
 import org.scalacheck.{Gen, Prop}
@@ -35,7 +36,7 @@ class ResourceProp extends JUnitSuite {
         println(cpus, mem, disk, gpu)
 
         val mesosResources = ResourceConstructor.construct(cpus, mem, disk, gpu)
-        val retzResource: RetzResource = ResourceConstructor.decode(mesosResources)
+        val retzResource: Resource = ResourceConstructor.decode(mesosResources)
         println(mesosResources)
         retzResource.cpu() == cpus && retzResource.cpu() > 0 &&
           retzResource.memMB() == mem && retzResource.memMB() > 0 &&

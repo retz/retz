@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.mesos;
+package io.github.retz.scheduler;
 
 import org.apache.mesos.Protos;
 import org.junit.Test;

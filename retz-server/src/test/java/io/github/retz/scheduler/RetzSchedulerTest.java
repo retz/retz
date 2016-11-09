@@ -19,9 +19,7 @@ package io.github.retz.scheduler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
-import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.junit.After;
@@ -30,7 +28,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Optional;

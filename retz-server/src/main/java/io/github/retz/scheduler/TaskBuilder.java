@@ -18,8 +18,6 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
@@ -27,8 +25,6 @@ import io.github.retz.protocol.data.MesosContainer;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
 
 import static io.github.retz.scheduler.Applications.appToCommandInfo;
 import static io.github.retz.scheduler.Applications.appToContainerInfo;

@@ -17,11 +17,8 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.mesos.Resource;
-import io.github.retz.mesos.ResourceConstructor;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
