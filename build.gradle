@@ -177,24 +177,25 @@ project(':retz-server') {
 
     ospackage {
         os = LINUX
-        group = "nogroup"
+        user = "root"
+        summary = "A Job Scheduler on Mesos"
+        license = "Apache 2.0"
+        packager = 'Nautilus Technologies, Inc.'
+        url = "https://retz.github.io/"
     }
     buildRpm {
-        user = "retz"
         release = '1.el7'
         arch = 'X86_64'
 
-        preInstall 'adduser --system retz'
-        postInstall 'chown -R retz:nobody /opt/retz-server'
-        postUninstall 'userdel retz'
+        into '/opt/retz-server'
+        from('src/main/dist/etc') {
+            fileType CONFIG | NOREPLACE
+            into 'etc'
+        }
     }
     buildDeb {
-        user = "retz"
+        configurationFile('/opt/retz-server/etc/retz.properties')
         arch = 'AMD64'
-
-        preInstall 'adduser --system --disabled-login retz'
-        postInstall 'chown -R retz:nogroup /opt/retz-server'
-        postUninstall 'deluser --system retz'
     }
 }
 

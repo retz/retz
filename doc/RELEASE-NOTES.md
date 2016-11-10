@@ -2,6 +2,9 @@
 
 ## 0.0.32
 
+* Package installation of both RPM and DEB does not create 'retz' user any
+  more. 'retz' user is to be created by operators depending on its setup.
+  Now package installer also preserves existing '/opt/retz-server/etc/retz.properties'.
 * Fix a race condition ( #69 ) where Jetty thread and Mesos client callback
   thread both read a job from database and launch task *s* with different
   offers. This causes the job (task) with same task id refused by Mesos

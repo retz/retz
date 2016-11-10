@@ -202,6 +202,7 @@ supervisor configuration at
 ``/opt/retz-server/etc/retz-server.conf.supervisord-example``. To run
 Retz under Supervisord::
 
+  # adduser --system --group --no-create-home --disabled-login retz
   # cp /opt/retz-server/etc/retz-server.conf.supervisord-example /etc/supervisor/conf.d/retz-server.conf
   # systemctl restart supervisor
   # tail -f /var/log/retz-server.log
