@@ -49,7 +49,7 @@ public class ListFilesRequest extends Request {
     public String resource() {
         StringBuilder builder = new StringBuilder("/job/")
                 .append(id)
-                .append("/path/").append(path);
+                .append("/dir?path=").append(path);
         return builder.toString();
     }
 
@@ -64,6 +64,6 @@ public class ListFilesRequest extends Request {
     }
 
     public static String resourcePattern() {
-        return "/job/:id/path/:path";
+        return "/job/:id/dir";
     }
 }

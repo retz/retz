@@ -43,7 +43,7 @@ public class CommandGetFile implements SubCommand {
     @Parameter(names = {"-R", "--resultdir"}, description = "Local directory to save the file ('-' to print)")
     private String resultDir = "-";
 
-    @Parameter(names = "--fetch", description = "Remote file to fetch")
+    @Parameter(names = "--path", description = "Remote file to fetch")
     private String filename;
 
     @Parameter(names = "--poll", description = "Keep polling the file until a job finishes")

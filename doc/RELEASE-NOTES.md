@@ -2,6 +2,10 @@
 
 ## 0.0.30
 
+* Fix a bug (#38) where files and directories in a directory in the sandbox
+  cannot be downloaded or listed. This introduces *incompatible changes*
+  to the client-server protocol. Also, options of "list-files" and 'get-file'
+  are changed.
 * 'localhost', '127.0.0.1' and '0.0.0.0' are officially not allowed as
   a value of 'retz.mesos' in Retz server configuration.
 * Add port range allocation which is supported by Mesos - available at

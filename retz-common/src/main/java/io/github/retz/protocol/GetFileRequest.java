@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -62,10 +65,17 @@ public class GetFileRequest extends Request {
 
     @Override
     public String resource() {
+        String encodedFile = file;
+        try {
+            encodedFile = URLEncoder.encode(file, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+        }
+
         StringBuilder builder = new StringBuilder("/job/")
                 .append(id)
-                .append("/file/").append(file)
-                .append("?offset=").append(offset)
+                .append("/file")
+                .append("?path=").append(encodedFile)
+                .append("&offset=").append(offset)
                 .append("&length=").append(length);
 
         return builder.toString();
@@ -82,6 +92,6 @@ public class GetFileRequest extends Request {
     }
 
     public static String resourcePattern() {
-        return "/job/:id/file/:file";
+        return "/job/:id/file";
     }
 }

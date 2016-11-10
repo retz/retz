@@ -20,10 +20,12 @@ import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.*;
 
 import java.io.ByteArrayOutputStream;
@@ -112,29 +114,50 @@ public class RetzIntTest {
         assertThat(listRes.status(), is("ok"));
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
-        String echoText = "hoge from echo-app via Retz!";
-        Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256, 0, 1);
-        Job runRes = client.run(job);
-        assertThat(runRes.result(), is(RES_OK));
-        assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
-        String toDir = "build/log/";
-        // These downloaded files are not inspected now, useful for debugging test cases, maybe
+        {
+            String echoText = "hoge from echo-app via Retz";
+            Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256, 0, 1);
+            Job runRes = client.run(job);
+            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
-        ClientHelper.getWholeFile(client, runRes.id(), "stdout", toDir);
-        ClientHelper.getWholeFile(client, runRes.id(), "stderr", toDir);
+            String toDir = "build/log/";
+            // These downloaded files are not inspected now, useful for debugging test cases, maybe
 
-        String actualText = catStdout(client, runRes);
-        List<String> lines = Arrays.asList(actualText.split("\n"));
-        assertThat(lines, hasItem(echoText));
-        assertThat(lines, hasItem("Received SUBSCRIBED event"));
-        assertThat(lines, hasItem("Received LAUNCH event"));
+            ClientHelper.getWholeFile(client, runRes.id(), "stdout", toDir);
+            ClientHelper.getWholeFile(client, runRes.id(), "stderr", toDir);
+
+            String actualText = catStdout(client, runRes);
+            List<String> lines = Arrays.asList(actualText.split("\n"));
+            assertThat(lines, hasItem(echoText));
+            assertThat(lines, hasItem("Received SUBSCRIBED event"));
+            assertThat(lines, hasItem("Received LAUNCH event"));
+        }
 
         ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
         assertThat(listJobResponse.finished().size(), greaterThan(0));
         assertThat(listJobResponse.running().size(), is(0));
         assertThat(listJobResponse.queue().size(), is(0));
 
+        {
+            String echoText = "PPAP";
+            Job job = new Job("echo-app", "mkdir -p a/b/c/d; echo " + echoText + " > a/b/c/e", new Properties(), 1, 32);
+            Job runRes = client.run(job);
+            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.state(), is(Job.JobState.FINISHED));
+
+            Response response = client.getFile(runRes.id(), "a/b/c/e", 0, 1024);
+            System.err.println(response.status());
+            GetFileResponse getFileResponse = (GetFileResponse)response;
+            assertEquals(echoText + "\n", getFileResponse.file().get().data());
+
+            ListFilesResponse listFilesResponse = (ListFilesResponse)client.listFiles(runRes.id(), "a/b/c");
+            assertEquals(2, listFilesResponse.entries().size());
+            List<String> files = listFilesResponse.entries().stream().map(e -> FilenameUtils.getName(e.path())).collect(Collectors.toList());
+            assertEquals("d", files.get(0));
+            assertEquals("e", files.get(1));
+        }
         UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
         assertThat(unloadRes.status(), is("ok"));
 

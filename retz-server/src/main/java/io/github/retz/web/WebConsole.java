@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static spark.Spark.*;
 
@@ -57,8 +58,6 @@ public final class WebConsole {
     private static Optional<SchedulerDriver> driver = Optional.empty();
 
     private static final List<String> NO_AUTH_PAGES;
-
-    private Thread clientMonitorThread;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
@@ -171,7 +170,7 @@ public final class WebConsole {
         // Get a file
         get(GetFileRequest.resourcePattern(), JobRequestRouter::getFile);
         // Get file list
-        get(ListFilesRequest.resourcePattern(), JobRequestRouter::getPath);
+        get(ListFilesRequest.resourcePattern(), JobRequestRouter::getDir);
 
         put(ScheduleRequest.resourcePattern(), WebConsole::schedule);
 

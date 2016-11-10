@@ -37,7 +37,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -72,7 +74,7 @@ public class JobRequestRouter {
     public static String getFile(spark.Request req, spark.Response res) throws IOException {
         int id = Integer.parseInt(req.params(":id"));
 
-        String file = req.params("file");
+        String file = req.queryParams("path");
         int offset = Integer.parseInt(req.queryParams("offset"));
         int length = Integer.parseInt(req.queryParams("length"));
         Optional<Job> job = JobQueue.getJob(id);
@@ -95,13 +97,12 @@ public class JobRequestRouter {
         res.status(200);
 
         return MAPPER.writeValueAsString(getFileResponse);
-
     }
 
-    public static String getPath(spark.Request req, spark.Response res) throws IOException {
+    public static String getDir(spark.Request req, spark.Response res) throws IOException {
         int id = Integer.parseInt(req.params(":id"));
 
-        String path = req.params("path");
+        String path = req.queryParams("path");
         Optional<Job> job = JobQueue.getJob(id);
 
         LOG.debug("get-path: id={}, path={}", id, path);
