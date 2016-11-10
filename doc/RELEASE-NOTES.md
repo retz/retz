@@ -1,5 +1,11 @@
 # Retz release notes
 
+## 0.0.31
+
+* Fix a bug in a cluster where > 2 Mesos agents serving same port range
+  causes a crash before accepting offers. This was introduced at 0.0.30
+  ( `c1fe39c998fdb433d` ).
+
 ## 0.0.30
 
 * Fix a bug (#38) where files and directories in a directory in the sandbox

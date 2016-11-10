@@ -174,13 +174,17 @@ public class RetzScheduler implements Scheduler {
             OFFER_STOCK.clear();
         }
 
-        Resource resource = new Resource(0, 0, 0);
+        int totalCpu = 0;
+        int totalMem = 0;
         for (Protos.Offer offer : available) {
             LOG.debug("offer: {}", offer);
-            resource.merge(ResourceConstructor.decode(offer.getResourcesList()));
+            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+            totalCpu += resource.cpu();
+            totalMem += resource.memMB();
         }
 
-        List<Job> jobs = JobQueue.findFit((int) resource.cpu(), resource.memMB());
+        // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
+        List<Job> jobs = JobQueue.findFit(totalCpu, totalMem);
         handleAll(available, jobs, driver);
     }
 
