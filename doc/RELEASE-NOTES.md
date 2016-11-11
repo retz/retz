@@ -2,6 +2,7 @@
 
 ## 0.0.32
 
+* Fix a bug that date format of output of list-files (#78).
 * Package installation of both RPM and DEB does not create 'retz' user any
   more. 'retz' user is to be created by operators depending on its setup.
   Now package installer also preserves existing '/opt/retz-server/etc/retz.properties'.

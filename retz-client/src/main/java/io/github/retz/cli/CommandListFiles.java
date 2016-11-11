@@ -76,7 +76,7 @@ public class CommandListFiles implements SubCommand {
                     //LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
                     TableFormatter formatter = new TableFormatter("gid", "mode", "uid", "mtime", "size", "path");
 
-                    DateFormat df = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+                    DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     for (DirEntry e : listFilesResponse.entries()) {
                         String filename = e.path();
                         Path file = Paths.get(filename).getFileName();
