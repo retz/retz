@@ -48,7 +48,10 @@ public class ClientHelper {
 
     // Gets whole file until the job finishes and streams out to 'out'!!!
     public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out) throws IOException {
-        int offset = 0;
+        return getWholeFile(c, id, filename, poll, out, 0);
+    }
+
+    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out, int offset) throws IOException {
         int interval = INITAL_INTERVAL_MSEC;
         Job.JobState currentState = Job.JobState.QUEUED;
         Optional<Job> current;
