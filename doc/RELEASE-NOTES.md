@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.0.33
+
+* Fix large file size failure on 'list-files' and 'get-file' (#81)
+* Return 404 when a job is not found on requests (#83)
+
 ## 0.0.32
 
 * Avoid Resource.merge in case of counting the amount of ports ( #74 ).
