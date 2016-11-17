@@ -99,17 +99,27 @@ public class NaivePlanner implements Planner {
         }
     }
 
-    private static boolean resourceSufficient(Resource resource, List<AppJobPair> jobs) {
+    private static boolean resourceSufficient(List<Protos.Offer> offers, List<AppJobPair> jobs) {
+
+        int totalCpu = 0, totalMem = 0, totalGPU = 0, totalPorts = 0;
+        for(Protos.Offer offer : offers) {
+            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+            totalCpu += resource.cpu();
+            totalMem += resource.memMB();
+            totalGPU += resource.gpu();
+            totalPorts += resource.portAmount();
+        }
+
         Optional<Resource> needs = jobs.stream().map(appjob -> new Resource(appjob.job().cpu(), appjob.job().memMB(), 0, appjob.job().gpu(), Arrays.asList())).reduce((lhs, rhs) -> {
             lhs.merge(rhs);
             return lhs;
         });
         int portNeeds = jobs.stream().mapToInt(appJobPair -> appJobPair.job().ports()).sum();
         return needs.isPresent() &&
-                needs.get().cpu() <= resource.cpu() &&
-                needs.get().memMB() <= resource.memMB() &&
-                needs.get().gpu() <= resource.gpu() &&
-                portNeeds <= resource.portAmount();
+                needs.get().cpu() <= totalCpu &&
+                needs.get().memMB() <= totalMem &&
+                needs.get().gpu() <= totalGPU &&
+                portNeeds <= totalPorts;
     }
 
     @Override
@@ -148,11 +158,8 @@ public class NaivePlanner implements Planner {
     // INPUT: jobs - candidates for task launch, most likely chosen from database or else
     @Override
     public Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock) {
-        Resource total = new Resource(0, 0, 0, 0, new LinkedList<>());
-        for (Protos.Offer offer : offers) {
-            total.merge(ResourceConstructor.decode(offer.getResourcesList()));
-        }
-        if (!resourceSufficient(total, jobs)) {
+
+        if (!resourceSufficient(offers, jobs)) {
 
             List<Protos.Offer> toStock;
             List<Protos.OfferID> toDecline;

@@ -23,6 +23,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// TODO: overall cleanup is needed; is this is just for counting the amount of resources?
+// This is because non-scalar resources conflicts (which is not commutative), while scalar resources does not conflict
+// Otherwise, merge should be done only for the *same* slave, which is not clear
 public class Resource {
 
     private double cpu;
@@ -43,6 +46,7 @@ public class Resource {
         this.gpu = gpu;
     }
 
+    //Shouldn't do merge, which should be done by Mesos
     public void merge(Resource rhs) {
         this.cpu += rhs.cpu();
         this.memMB += rhs.memMB();
