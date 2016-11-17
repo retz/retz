@@ -22,6 +22,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.db.JobNotFoundException;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
@@ -146,6 +147,18 @@ public final class WebConsole {
                     req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
         });
 
+        exception(JobNotFoundException.class, (exception, request, response) -> {
+            LOG.debug("Exception: {}", exception.toString(), exception);
+            response.status(404);
+            ErrorResponse errorResponse = new ErrorResponse(exception.toString());
+            try {
+                response.body(MAPPER.writeValueAsString(errorResponse));
+            } catch (JsonProcessingException e) {
+                LOG.error(e.toString(), e);
+                response.body(e.toString());
+            }
+        });
+
         // APIs to be in vanilla HTTP
         get("/ping", (req, res) -> "OK");
         get("/status", WebConsole::status);
@@ -172,7 +185,7 @@ public final class WebConsole {
         put(ScheduleRequest.resourcePattern(), WebConsole::schedule);
 
         delete(KillRequest.resourcePattern(), (req, res) -> {
-            LOG.info("kill", req.params(":id"));
+            LOG.debug("kill", req.params(":id"));
             int id = Integer.parseInt(req.params(":id")); // or 400 when failed?
             WebConsole.kill(id);
             res.status(200);
