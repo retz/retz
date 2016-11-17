@@ -75,8 +75,8 @@ public class JobRequestRouter {
         int id = Integer.parseInt(req.params(":id"));
 
         String file = req.queryParams("path");
-        int offset = Integer.parseInt(req.queryParams("offset"));
-        int length = Integer.parseInt(req.queryParams("length"));
+        long offset = Long.parseLong(req.queryParams("offset"));
+        long length = Long.parseLong(req.queryParams("length"));
         Optional<Job> job = JobQueue.getJob(id);
 
         LOG.debug("get-file: id={}, path={}, offset={}, length={}", id, file, offset, length);
@@ -204,7 +204,7 @@ public class JobRequestRouter {
 
     }
 
-    public static String fetchHTTPFile(String url, String name, int offset, int length) throws MalformedURLException, IOException {
+    public static String fetchHTTPFile(String url, String name, long offset, long length) throws MalformedURLException, IOException {
         String addr = url.replace("files/browse", "files/read") + "%2F" + name
                 + "&offset=" + offset + "&length=" + length;
         return fetchHTTP(addr);

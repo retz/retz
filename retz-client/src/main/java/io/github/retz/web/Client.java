@@ -143,7 +143,7 @@ public class Client implements AutoCloseable {
         return rpc(new GetJobRequest(id));
     }
 
-    public Response getFile(int id, String file, int offset, int length) throws IOException {
+    public Response getFile(int id, String file, long offset, long length) throws IOException {
         return rpc(new GetFileRequest(id, file, offset, length));
     }
 

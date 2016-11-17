@@ -85,8 +85,7 @@ public class CommandListFiles implements SubCommand {
                             filename = file.toString();
                         }
                         Date date = new Date(e.mtime() * 1000);
-                        formatter.feed(e.gid(), e.mode(), e.uid(), df.format(date), Integer.toString(e.size()), filename);
-                        //LOG.info(e.toString());
+                        formatter.feed(e.gid(), e.mode(), e.uid(), df.format(date), Long.toString(e.size()), filename);
                     }
                     LOG.info(formatter.titles());
                     for (String line : formatter) {

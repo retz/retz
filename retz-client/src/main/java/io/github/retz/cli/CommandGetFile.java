@@ -50,10 +50,10 @@ public class CommandGetFile implements SubCommand {
     private boolean poll = false;
 
     @Parameter(names = "--offset", description = "Offset")
-    private int offset = 0;
+    private long offset = 0;
 
     @Parameter(names = "--length", description = "Length")
-    private int length = -1; // -1 means get all file
+    private long length = -1; // -1 means get all file
 
     @Override
     public String description() {

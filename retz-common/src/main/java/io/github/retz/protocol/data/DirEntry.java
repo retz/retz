@@ -28,7 +28,7 @@ public class DirEntry {
     private long mtime;
     private int nlink;
     private String path;
-    private int size;
+    private long size;
     private String uid;
 
     @JsonCreator
@@ -37,7 +37,7 @@ public class DirEntry {
                     @JsonProperty("mtime") long mtime,
                     @JsonProperty("nlink") int nlink,
                     @JsonProperty("path") String path,
-                    @JsonProperty("size") int size,
+                    @JsonProperty("size") long size,
                     @JsonProperty("uid") String uid) {
         this.gid = gid;
         this.mode = mode;
@@ -69,7 +69,7 @@ public class DirEntry {
         return path;
     }
     @JsonGetter("size")
-    public int size() {
+    public long size() {
         return size;
     }
     @JsonGetter("uid")

@@ -51,12 +51,12 @@ public class ClientHelper {
         return getWholeFile(c, id, filename, poll, out, 0);
     }
 
-    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out, int offset) throws IOException {
+    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out, long offset) throws IOException {
         int interval = INITAL_INTERVAL_MSEC;
         Job.JobState currentState = Job.JobState.QUEUED;
         Optional<Job> current;
 
-        int bytesRead = readFileUntilEmpty(c, id, filename, offset, out);
+        long bytesRead = readFileUntilEmpty(c, id, filename, offset, out);
         offset = offset + bytesRead;
 
         do {
@@ -101,9 +101,9 @@ public class ClientHelper {
         return current;
     }
 
-    static int readFileUntilEmpty(Client c, int id, String filename, int offset, OutputStream out) throws IOException {
+    static long readFileUntilEmpty(Client c, int id, String filename, long offset, OutputStream out) throws IOException {
         int length = 65536;
-        int current = offset;
+        long current = offset;
 
         while (true) {
             Response res = c.getFile(id, filename, current, length);

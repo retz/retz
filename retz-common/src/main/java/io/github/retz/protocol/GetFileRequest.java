@@ -29,14 +29,14 @@ import java.util.Optional;
 public class GetFileRequest extends Request {
     private int id;
     private String file;
-    private int offset;
-    private int length;
+    private long offset;
+    private long length;
 
     @JsonCreator
     public GetFileRequest(@JsonProperty(value = "id", required = true) int id,
                           @JsonProperty(value = "file", required = true) String file,
-                          @JsonProperty(value = "offset") int offset,
-                          @JsonProperty(value = "length") int length) {
+                          @JsonProperty(value = "offset") long offset,
+                          @JsonProperty(value = "length") long length) {
         this.id = id;
         this.file = Objects.requireNonNull(file);
         this.offset = offset;
@@ -54,12 +54,12 @@ public class GetFileRequest extends Request {
     }
 
     @JsonGetter("offset")
-    public int offset() {
+    public long offset() {
         return offset;
     }
 
     @JsonGetter("length")
-    public int length() {
+    public long length() {
         return length;
     }
 

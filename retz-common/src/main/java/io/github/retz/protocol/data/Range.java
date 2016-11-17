@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Range {
+    // TODO: these should be long integer
     public int min;
     public int max;
 

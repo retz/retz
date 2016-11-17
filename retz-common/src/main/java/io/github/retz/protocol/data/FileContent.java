@@ -24,11 +24,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 // See http://mesos.apache.org/documentation/latest/endpoints/files/read/
 public class FileContent {
     private String data;
-    private int offset;
+    private long offset;
 
     @JsonCreator
     public FileContent(@JsonProperty(value = "data", required = true) String data,
-                       @JsonProperty(value = "offset", required = true) int offset) {
+                       @JsonProperty(value = "offset", required = true) long offset) {
         this.data = data;
         this.offset = offset;
     }
@@ -39,7 +39,7 @@ public class FileContent {
     }
 
     @JsonGetter("offset")
-    public int offset() {
+    public long offset() {
         return offset;
     }
 }
