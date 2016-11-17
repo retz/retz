@@ -2,6 +2,7 @@
 
 ## 0.0.32
 
+* Avoid Resource.merge in case of counting the amount of ports ( #74 ).
 * Fix a bug that date format of output of list-files (#78).
 * Package installation of both RPM and DEB does not create 'retz' user any
   more. 'retz' user is to be created by operators depending on its setup.
@@ -15,7 +16,7 @@
 
 * Fix a bug ( #74) in a cluster where > 2 Mesos agents serving same port range
   causes a crash before accepting offers. This was introduced at 0.0.30
-  ( `c1fe39c998fdb433d` ).
+  ( `c1fe39c998fdb433d` ). *This was not actually fixed by this change*
 
 ## 0.0.30
 
