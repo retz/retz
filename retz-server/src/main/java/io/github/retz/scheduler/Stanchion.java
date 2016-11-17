@@ -16,15 +16,26 @@
  */
 package io.github.retz.scheduler;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
+// An executor that serializes all request processing here
 public class Stanchion {
+    private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
+
     static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
     static void schedule(Runnable runnable) {
-        EXECUTOR.submit(runnable);
+        EXECUTOR.submit( () -> {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                LOG.error("Exception in Stanchion: {}", e.toString(), e);
+            }
+        });
     }
 
 }
