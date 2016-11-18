@@ -2,7 +2,12 @@
 
 ## 0.0.33
 
+* 'get-file' reports if a file is not present (#80)
+* `ClientHelper.getWholeFile()` now returns `JobNotFoundException` when
+  a job is not found.
 * Fix large file size failure on 'list-files' and 'get-file' (#81)
+  This introduced incompatible change to client-server communication 
+  protocol.
 * Return 404 when a job is not found on requests (#83)
 
 ## 0.0.32

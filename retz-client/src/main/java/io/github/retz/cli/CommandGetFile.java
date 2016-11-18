@@ -21,6 +21,7 @@ import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.GetFileResponse;
 import io.github.retz.protocol.Response;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.apache.commons.io.FilenameUtils;
@@ -32,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
+import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -79,17 +81,11 @@ public class CommandGetFile implements SubCommand {
 
             LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
 
-            if (!ClientHelper.fileExists(webClient, id, filename)) {
-                LOG.error("File {} does not exist in Mesos sandbox.", filename);
-                return -1;
-            }
-
             if (length < 0) {
                 if ("-".equals(resultDir)) {
                     LOG.info("============== printing {} of job id={} ================", filename, id);
                 }
                 ClientHelper.getWholeFile(webClient, id, filename, poll, out);
-                return 0;
             }
 
             Response res = webClient.getFile(id, filename, offset, length);
@@ -122,6 +118,8 @@ public class CommandGetFile implements SubCommand {
                 LOG.error("Error: {}", errorResponse.status());
             }
 
+        } catch (JobNotFoundException e) {
+            LOG.error("Cannot get file: {}", e.toString());
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
         } catch (IOException e) {

@@ -19,6 +19,7 @@ package io.github.retz.web;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,20 +60,41 @@ public class ClientHelper {
             getWholeFile(c, id, filename, false, out);
         } catch (FileNotFoundException e) {
             LOG.error(e.toString());
+        } catch (JobNotFoundException e) {
+            LOG.error(e.toString());
         } catch (IOException e) {
             LOG.error(e.toString());
         }
     }
 
     // Gets whole file until the job finishes and streams out to 'out'!!!
-    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out) throws IOException {
+    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out)
+            throws IOException, JobNotFoundException {
         return getWholeFile(c, id, filename, poll, out, 0);
     }
 
-    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out, long offset) throws IOException {
+    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out, long offset)
+            throws IOException, JobNotFoundException {
+        Optional<Job> current;
+
+        {
+            Response res = c.getJob(id);
+            if (!(res instanceof GetJobResponse)) {
+                LOG.error(res.status());
+                throw new IOException(res.status());
+            }
+            GetJobResponse getJobResponse = (GetJobResponse)res;
+            if (! getJobResponse.job().isPresent()) {
+                throw new JobNotFoundException(id);
+            }
+        }
+
+        if (!ClientHelper.fileExists(c, id, filename)) {
+            throw new FileNotFoundException(filename);
+        }
+
         int interval = INITAL_INTERVAL_MSEC;
         Job.JobState currentState = Job.JobState.QUEUED;
-        Optional<Job> current;
 
         long bytesRead = readFileUntilEmpty(c, id, filename, offset, out);
         offset = offset + bytesRead;
@@ -83,7 +105,6 @@ public class ClientHelper {
                 LOG.error(res.status());
                 throw new IOException(res.status());
             }
-
             GetJobResponse getJobResponse = (GetJobResponse) res;
             current = getJobResponse.job();
 

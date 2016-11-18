@@ -18,7 +18,7 @@ package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.db.JobNotFoundException;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;

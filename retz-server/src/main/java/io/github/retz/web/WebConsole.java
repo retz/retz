@@ -22,7 +22,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.db.JobNotFoundException;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;

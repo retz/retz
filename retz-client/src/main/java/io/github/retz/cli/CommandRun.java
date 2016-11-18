@@ -20,6 +20,7 @@ import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.Response;
 import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.slf4j.Logger;
@@ -117,6 +118,8 @@ public class CommandRun implements SubCommand {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
+        } catch (JobNotFoundException e) {
+            LOG.error("This is not supposed to happen", e);
         }
         return -1;
     }

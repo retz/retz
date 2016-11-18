@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.db.JobNotFoundException;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;

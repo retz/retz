@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.db;
+package io.github.retz.protocol.exception;
 
 public class JobNotFoundException extends Exception {
     private int id;
