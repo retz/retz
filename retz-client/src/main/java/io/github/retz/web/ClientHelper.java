@@ -19,13 +19,12 @@ package io.github.retz.web;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.util.List;
 import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -34,6 +33,25 @@ public class ClientHelper {
     static final Logger LOG = LoggerFactory.getLogger(ClientHelper.class);
     static final int MAX_INTERVAL_MSEC = 32768;
     static final int INITAL_INTERVAL_MSEC = 512;
+
+    public static boolean fileExists(Client c, int id, String filename) throws IOException {
+        String directory = new File(filename).getParent();
+        if (directory == null) {
+            directory = ListFilesRequest.DEFAULT_SANDBOX_PATH;
+        }
+        Response response = c.listFiles(id, directory);
+        if (response instanceof ListFilesResponse) {
+            ListFilesResponse listFilesResponse = (ListFilesResponse) response;
+            for (DirEntry e : listFilesResponse.entries()) {
+                if (e.path().endsWith(filename)) {
+                    return true;
+                }
+            }
+        } else {
+            LOG.warn(response.status());
+        }
+        return false;
+    }
 
     public static void getWholeFile(Client c, int id, String filename, String resultDir) {
         String path = resultDir + "/" + filename;
@@ -131,23 +149,6 @@ public class ClientHelper {
                 throw new IOException(res.status());
             }
         }
-    }
-
-    // By default it gets standard out of user program - RetzExecutor writes it to stdout-<jobid>
-    // while default CommandInfo (when in Docker) writes it down to stdout
-    public static String maybeGetStdout(int id, Client c) throws IOException {
-        Response res = c.listFiles(id, ListFilesRequest.DEFAULT_SANDBOX_PATH);
-        if (!(res instanceof ListFilesResponse)) {
-            throw new IOException(res.status());
-        }
-        ListFilesResponse listFilesResponse = (ListFilesResponse) res;
-        String maybeRetzExecutor = "stdout-" + id;
-        for (DirEntry e : listFilesResponse.entries()) {
-            if (e.path().endsWith(maybeRetzExecutor)) {
-                return maybeRetzExecutor;
-            }
-        }
-        return "stdout";
     }
 
     public static Job waitForStart(Job job, Client c) throws IOException {

@@ -205,7 +205,7 @@ public class WebConsoleTest {
             assertThat(maybeJob.get(0).cmd(), is(cmd));
             assertThat(maybeJob.get(0).appid(), is("foobar"));
 
-            ListFilesResponse listFilesResponse = (ListFilesResponse) webClient.listFiles(sres.job.id(), "$MESOS_SANDBOX");
+            ListFilesResponse listFilesResponse = (ListFilesResponse) webClient.listFiles(sres.job.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
             assertTrue(listFilesResponse.entries().isEmpty());
 
             GetFileResponse getFileResponse = (GetFileResponse) webClient.getFile(sres.job.id(), "stdout", 0, 20000);

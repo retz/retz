@@ -45,7 +45,7 @@ public class CommandGetFile implements SubCommand {
     private String resultDir = "-";
 
     @Parameter(names = "--path", description = "Remote file path to fetch")
-    private String filename;
+    private String filename = "stdout";
 
     @Parameter(names = "--poll", description = "Keep polling the file until a job finishes")
     private boolean poll = false;
@@ -70,78 +70,68 @@ public class CommandGetFile implements SubCommand {
     public int handle(ClientCLIConfig fileConfig) {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
-        OutputStream out = null;
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .enableAuthentication(fileConfig.authenticationEnabled())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(fileConfig.checkCert())
-                .build()) {
+                .build();
+             OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename)) {
 
-            if (filename == null) {
-                filename = ClientHelper.maybeGetStdout(id, webClient);
-            }
             LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
-            out = this.tentativeOutputStream(webClient, resultDir, filename);
+
+            if (!ClientHelper.fileExists(webClient, id, filename)) {
+                LOG.error("File {} does not exist in Mesos sandbox.", filename);
+                return -1;
+            }
 
             if (length < 0) {
+                if ("-".equals(resultDir)) {
+                    LOG.info("============== printing {} of job id={} ================", filename, id);
+                }
                 ClientHelper.getWholeFile(webClient, id, filename, poll, out);
+                return 0;
+            }
 
-            } else {
-                Response res = webClient.getFile(id, filename, offset, length);
-                if (res instanceof GetFileResponse) {
-                    GetFileResponse getFileResponse = (GetFileResponse) res;
+            Response res = webClient.getFile(id, filename, offset, length);
 
-                    if (getFileResponse.job().isPresent()) {
-                        Job job = getFileResponse.job().get();
+            if (res instanceof GetFileResponse) {
+                GetFileResponse getFileResponse = (GetFileResponse) res;
 
-                        if (getFileResponse.file().isPresent()) {
-                            LOG.info("offset={}", getFileResponse.file().get().offset());
-                            out.write(getFileResponse.file().get().data().getBytes(UTF_8));
-                            
-                        } else {
-                            LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
-                            LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
-                        }
+                if (getFileResponse.job().isPresent()) {
+                    Job job = getFileResponse.job().get();
 
-                        if (out != null && "-".equals(resultDir)) {
-                            out.close();
-                        }
-                        return 0;
+                    if (getFileResponse.file().isPresent()) {
+                        LOG.info("offset={}", getFileResponse.file().get().offset());
+                        out.write(getFileResponse.file().get().data().getBytes(UTF_8));
 
                     } else {
-                        LOG.error("No such job: id={}", id);
-                        if (out != null && "-".equals(resultDir)) {
-                            out.close();
-                        }
+                        LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
+                        LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
                     }
-                } else {
+
                     if (out != null && "-".equals(resultDir)) {
                         out.close();
                     }
-                    ErrorResponse errorResponse = (ErrorResponse) res;
-                    LOG.error("Error: {}", errorResponse.status());
+                    return 0;
+
+                } else {
+                    LOG.error("No such job: id={}", id);
                 }
+            } else {
+                ErrorResponse errorResponse = (ErrorResponse) res;
+                LOG.error("Error: {}", errorResponse.status());
             }
 
         } catch (ConnectException e) {
             LOG.error("Cannot connect to server {}", fileConfig.getUri());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
-
-        } finally {
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (Exception e) {
-                }
-            }
         }
         return -1;
     }
 
     private OutputStream tentativeOutputStream(Client c, String resultDir, String filename) throws FileNotFoundException {
         if ("-".equals(resultDir)) {
-            LOG.info("============== printing {} of job id={} ================", filename, id);
             return System.out;
         } else {
             String basename = FilenameUtils.getName(filename);
