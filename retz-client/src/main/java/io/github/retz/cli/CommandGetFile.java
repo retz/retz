@@ -23,6 +23,7 @@ import io.github.retz.protocol.Response;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +44,7 @@ public class CommandGetFile implements SubCommand {
     @Parameter(names = {"-R", "--resultdir"}, description = "Local directory to save the file ('-' to print)")
     private String resultDir = "-";
 
-    @Parameter(names = "--path", description = "Remote file to fetch")
+    @Parameter(names = "--path", description = "Remote file path to fetch")
     private String filename;
 
     @Parameter(names = "--poll", description = "Keep polling the file until a job finishes")
@@ -79,12 +80,10 @@ public class CommandGetFile implements SubCommand {
             if (filename == null) {
                 filename = ClientHelper.maybeGetStdout(id, webClient);
             }
+            LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
             out = this.tentativeOutputStream(webClient, resultDir, filename);
 
-            LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
-
             if (length < 0) {
-                LOG.info("============== printing {} of job id={} ================", filename, id);
                 ClientHelper.getWholeFile(webClient, id, filename, poll, out);
 
             } else {
@@ -95,12 +94,13 @@ public class CommandGetFile implements SubCommand {
                     if (getFileResponse.job().isPresent()) {
                         Job job = getFileResponse.job().get();
 
-                        LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
-                        LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
-
                         if (getFileResponse.file().isPresent()) {
                             LOG.info("offset={}", getFileResponse.file().get().offset());
                             out.write(getFileResponse.file().get().data().getBytes(UTF_8));
+                            
+                        } else {
+                            LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
+                            LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
                         }
 
                         if (out != null && "-".equals(resultDir)) {
@@ -141,9 +141,12 @@ public class CommandGetFile implements SubCommand {
 
     private OutputStream tentativeOutputStream(Client c, String resultDir, String filename) throws FileNotFoundException {
         if ("-".equals(resultDir)) {
+            LOG.info("============== printing {} of job id={} ================", filename, id);
             return System.out;
         } else {
-            String path = resultDir + "/" + filename;
+            String basename = FilenameUtils.getName(filename);
+            String path = resultDir + "/" + basename;
+            LOG.info("Saving {} to {}", filename, path);
             return new FileOutputStream(path);
         }
     }
