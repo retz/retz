@@ -20,13 +20,16 @@ import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.apache.commons.io.FilenameUtils;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -46,8 +49,8 @@ import static org.junit.Assert.*;
  */
 public class RetzIntTest {
     private static final int RES_OK = 0;
-    private static ClosableContainer container;
     private static final String configfile = "retz-c.properties";
+    private static ClosableContainer container;
     protected ClientCLIConfig config;
 
     @BeforeClass
@@ -149,10 +152,10 @@ public class RetzIntTest {
 
             Response response = client.getFile(runRes.id(), "a/b/c/e", 0, 1024);
             System.err.println(response.status());
-            GetFileResponse getFileResponse = (GetFileResponse)response;
+            GetFileResponse getFileResponse = (GetFileResponse) response;
             assertEquals(echoText + "\n", getFileResponse.file().get().data());
 
-            ListFilesResponse listFilesResponse = (ListFilesResponse)client.listFiles(runRes.id(), "a/b/c");
+            ListFilesResponse listFilesResponse = (ListFilesResponse) client.listFiles(runRes.id(), "a/b/c");
             assertEquals(2, listFilesResponse.entries().size());
             List<String> files = listFilesResponse.entries().stream().map(e -> FilenameUtils.getName(e.path())).collect(Collectors.toList());
             assertEquals("d", files.get(0));
@@ -390,6 +393,40 @@ public class RetzIntTest {
 
             UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo3");
             assertThat(unloadRes.status(), is("ok"));
+        }
+    }
+
+    @Test(expected = JobNotFoundException.class)
+    public void jobNotFoundTest() throws Exception {
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+        try (Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
+            Response response = client.getJob(102345);
+            System.err.println(response.status());
+            GetJobResponse getJobResponse = (GetJobResponse)response;
+            assertTrue(!getJobResponse.job().isPresent());
+            ClientHelper.getWholeFile(client, 102345, "stdout", false, System.out);
+        }
+    }
+
+    @Test
+    public void fileNotFoundTest() throws Exception {
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+        try (Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
+            {
+                loadSimpleApp(client, "echo");
+                Job job = new Job("echo", "echo 42", new Properties(), 1, 32);
+                Job ran = client.run(job);
+                Response response = client.getFile(ran.id(), "non-existent-file", 0, -1);
+                GetFileResponse getFileResponse = (GetFileResponse) response;
+                assertTrue(getFileResponse.job().isPresent());
+                assertTrue(!getFileResponse.file().isPresent());
+            }
         }
     }
 
