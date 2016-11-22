@@ -2,6 +2,11 @@
 
 ## 0.0.33
 
+* Make 'Authorization' header "must" so as to identify users of all requests
+  as well as add `NoopAuthenticator` to enable free authorization mode.
+  This fixes broken non-authentication mode (`retz.authentication = false`, #61).
+  Non-authentication mode now requires `retz.access.key` while secret can
+  be empty.
 * Change verb of 'schedule' protocol from `PUT` to `POST` for cleaner HTTP
   API. This introduces incompatible change to client-server protocol.
 * Fix failures in 'list-files' when '+' included in the path (#79). Retz

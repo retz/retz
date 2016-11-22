@@ -19,22 +19,19 @@ package io.github.retz.web;
 import io.github.retz.auth.Authenticator;
 
 import java.net.URI;
-import java.util.Objects;
-import java.util.Optional;
 
 public class ClientBuilder {
 
-    private Optional<Authenticator> authenticatorOptional = Optional.empty();
+    private Authenticator authenticator = null;
     private boolean checkCert = true;
-    private boolean authenticationEnabled = true;
     private URI uri;
 
-    protected ClientBuilder(URI uri){
+    protected ClientBuilder(URI uri) {
         this.uri = uri;
     }
 
     public ClientBuilder setAuthenticator(Authenticator authenticator) throws IllegalArgumentException {
-        authenticatorOptional = Optional.ofNullable(authenticator);
+        this.authenticator = authenticator;
         return this;
     }
 
@@ -43,18 +40,11 @@ public class ClientBuilder {
         return this;
     }
 
-    public ClientBuilder enableAuthentication(boolean authenticationEnabled) {
-        this.authenticationEnabled = authenticationEnabled;
-        return this;
-    }
     public Client build() {
-        if (authenticationEnabled) {
-            if (authenticatorOptional.isPresent()) {
-                return new Client(uri, authenticatorOptional, checkCert);
-            } else {
-                throw new IllegalArgumentException("When authentication is enabled, key and secret must be present.");
-            }
+        if (authenticator != null) {
+            return new Client(uri, authenticator, checkCert);
+        } else {
+            throw new IllegalArgumentException("Authenticator (retz.access.key) must be set");
         }
-        return new Client(uri, Optional.empty(), checkCert);
     }
 }

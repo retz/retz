@@ -17,6 +17,8 @@
 package io.github.retz.cli;
 
 import io.github.retz.auth.Authenticator;
+import io.github.retz.auth.HmacSHA256Authenticator;
+import io.github.retz.auth.NoopAuthenticator;
 import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,11 +140,16 @@ public class FileConfiguration {
 
     public Authenticator getAuthenticator() {
         String key = properties.getProperty(ACCESS_KEY);
-        String secret = properties.getProperty(ACCESS_SECRET);
-        if (key == null || secret == null) {
-            return null;
+        if (authenticationEnabled()) {
+            String secret = properties.getProperty(ACCESS_SECRET);
+            if (key == null || secret == null) {
+                return null;
+            }
+            return new HmacSHA256Authenticator(key, secret);
+        } else {
+            LOG.warn("Authentication is disabled.");
+            return new NoopAuthenticator(key);
         }
-        return new Authenticator(key, secret);
     }
 
     public static String userAsConfig(User u) {

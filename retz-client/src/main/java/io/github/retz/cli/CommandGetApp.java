@@ -49,7 +49,6 @@ public class CommandGetApp implements SubCommand {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
-                .enableAuthentication(fileConfig.authenticationEnabled())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(fileConfig.checkCert())
                 .build()) {

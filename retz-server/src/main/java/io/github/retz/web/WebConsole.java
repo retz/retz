@@ -19,7 +19,10 @@ package io.github.retz.web;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.auth.AuthHeader;
 import io.github.retz.auth.Authenticator;
+import io.github.retz.auth.HmacSHA256Authenticator;
+import io.github.retz.auth.NoopAuthenticator;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.exception.JobNotFoundException;
@@ -111,9 +114,9 @@ public final class WebConsole {
                 return;
             }
 
-            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
             if (!authHeaderValue.isPresent()) {
-                halt(401, "Bad Authorization header: " + req.headers(Authenticator.AUTHORIZATION));
+                halt(401, "Bad Authorization header: " + req.headers(AuthHeader.AUTHORIZATION));
             }
 
             Authenticator authenticator;
@@ -126,7 +129,11 @@ public final class WebConsole {
                 if (!u.isPresent()) {
                     halt(403, "No such user");
                 }
-                authenticator = new Authenticator(u.get().keyId(), u.get().secret());
+                if (config.authenticationEnabled()) {
+                    authenticator = new HmacSHA256Authenticator(u.get().keyId(), u.get().secret());
+                } else {
+                    authenticator = new NoopAuthenticator(u.get().keyId());
+                }
             }
 
             if (!authenticator.authenticate(verb, md5, date, resource,
@@ -166,7 +173,7 @@ public final class WebConsole {
         // TODO: XXX: validate application owner at ALL job-related APIs
         // /jobs GET -> list
         get(ListJobRequest.resourcePattern(), (req, res) -> {
-            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
             LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
 
             ListJobResponse listJobResponse = WebConsole.list(authHeaderValue.get().key(), -1);
@@ -196,7 +203,7 @@ public final class WebConsole {
 
         // /apps GET -> list-app
         get(ListAppRequest.resourcePattern(), (req, res) -> {
-            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
             LOG.info("Listing all apps owned by {}", authHeaderValue.get().key());
             ListAppResponse response = new ListAppResponse(Applications.getAll(authHeaderValue.get().key()));
             response.ok();
@@ -206,7 +213,7 @@ public final class WebConsole {
         // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
         put(LoadAppRequest.resourcePattern(), (req, res) -> {
             LOG.debug(LoadAppRequest.resourcePattern());
-            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
             res.type("application/json");
 
             // TODO: check key from Authorization header matches a key in Application object
@@ -243,7 +250,7 @@ public final class WebConsole {
 
         get(GetAppRequest.resourcePattern(), (req, res) -> {
             LOG.debug(LoadAppRequest.resourcePattern());
-            Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
 
             String appname = req.params(":name");
             LOG.debug("deleting app {} requested by {}", appname, authHeaderValue.get().key());
@@ -303,15 +310,15 @@ public final class WebConsole {
         }
     }
 
-    static Optional<Authenticator.AuthHeaderValue> getAuthInfo(Request req) {
-        String givenSignature = req.headers(Authenticator.AUTHORIZATION);
+    static Optional<AuthHeader> getAuthInfo(Request req) {
+        String givenSignature = req.headers(AuthHeader.AUTHORIZATION);
         LOG.debug("Signature from client: {}", givenSignature);
 
-        return Authenticator.parseHeaderValue(givenSignature);
+        return AuthHeader.parseHeaderValue(givenSignature);
     }
 
     static void validateOwner(Request req, Application app) {
-        Optional<Authenticator.AuthHeaderValue> authHeaderValue = getAuthInfo(req);
+        Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
         if (!app.getOwner().equals(authHeaderValue.get().key())) {
             LOG.debug("Invalid request: requester and owner does not match");
             halt(400, "Invalid request: requester and owner does not match");

@@ -67,7 +67,6 @@ public class CommandSchedule implements SubCommand {
         job.setTrustPVFiles(trustPVFiles);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
-                .enableAuthentication(fileConfig.authenticationEnabled())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(fileConfig.checkCert())
                 .build()) {

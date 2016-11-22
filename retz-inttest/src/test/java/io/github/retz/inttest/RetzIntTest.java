@@ -86,7 +86,6 @@ public class RetzIntTest {
     public void listAppTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build();
         Response res = client.listApp();
@@ -105,7 +104,6 @@ public class RetzIntTest {
     public void runAppTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build();
         Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList("file:///spawn_retz_server.sh"),
@@ -172,7 +170,6 @@ public class RetzIntTest {
     public void killTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build();
 
@@ -226,7 +223,6 @@ public class RetzIntTest {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 
         try (Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build()) {
             loadSimpleApp(client, "echo2");
@@ -344,7 +340,6 @@ public class RetzIntTest {
     public void scheduleAppTest2() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build()) {
             loadSimpleApp(client, "echo3");
@@ -401,7 +396,6 @@ public class RetzIntTest {
     public void listFilesTest() throws Exception { //Regression test for #79 : https://github.com/retz/retz/issues/79
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build()) {
             loadSimpleApp(client, "touch-many");
@@ -441,7 +435,6 @@ public class RetzIntTest {
     public void jobNotFoundTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build()) {
             Response response = client.getJob(102345);
@@ -456,7 +449,6 @@ public class RetzIntTest {
     public void fileNotFoundTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
-                .enableAuthentication(config.authenticationEnabled())
                 .setAuthenticator(config.getAuthenticator())
                 .build()) {
             {

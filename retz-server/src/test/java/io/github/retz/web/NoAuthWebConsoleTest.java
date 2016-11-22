@@ -19,10 +19,11 @@ package io.github.retz.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.ClientCLIConfig;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.*;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.junit.After;
@@ -44,7 +45,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static spark.Spark.awaitInitialization;
 
-public class WebConsoleTest {
+public class NoAuthWebConsoleTest {
     private WebConsole webConsole;
     private Client webClient;
     private ObjectMapper mapper;
@@ -68,7 +69,7 @@ public class WebConsoleTest {
         // on Non-TLS setup too. I believe his is because Sparkjava does not cleanly clear TLS setting in
         // Spark.stop(), because with retz.properties it succeeds alone, but fails when right after TLS tests.
         // TODO: investigate and report this to sparkjava
-        InputStream in = Launcher.class.getResourceAsStream("/retz-tls.properties");
+        InputStream in = Launcher.class.getResourceAsStream("/retz-noauth.properties");
         Launcher.Configuration conf = new Launcher.Configuration(new ServerConfiguration(in));
 
         mapper = new ObjectMapper();
@@ -82,7 +83,7 @@ public class WebConsoleTest {
 
         Database.getInstance().init(config);
 
-        cliConfig = new ClientCLIConfig("src/test/resources/retz-tls-client.properties");
+        cliConfig = new ClientCLIConfig("src/test/resources/retz-noauth-client.properties");
         System.err.println(config.authenticationEnabled());
         System.err.println(config.toString());
         webClient = Client.newBuilder(cliConfig.getUri())
@@ -113,6 +114,8 @@ public class WebConsoleTest {
      */
     @Test
     public void list() throws Exception {
+        Response resposer = webClient.list(10);
+        System.err.println(">>>" + resposer.status());
         ListJobResponse res = (ListJobResponse) webClient.list(64);
         assertTrue(res.queue().isEmpty());
         assertTrue(res.running().isEmpty());

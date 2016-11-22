@@ -23,6 +23,7 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.command.ExecStartResultCallback;
+import io.github.retz.auth.NoopAuthenticator;
 import io.github.retz.web.Client;
 
 import java.io.ByteArrayOutputStream;
@@ -163,7 +164,7 @@ public class ClosableContainer implements AutoCloseable {
         System.err.println(uri.toASCIIString());
         waitFor(
                 () -> {
-                    try (Client client = Client.newBuilder(uri).enableAuthentication(false).build()) {
+                    try (Client client = Client.newBuilder(uri).setAuthenticator(new NoopAuthenticator("anon")).build()) {
                         return client.ping();
                     } catch (Exception e) {
                         e.printStackTrace();

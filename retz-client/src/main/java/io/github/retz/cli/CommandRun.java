@@ -74,7 +74,6 @@ public class CommandRun implements SubCommand {
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
-                .enableAuthentication(fileConfig.authenticationEnabled())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(fileConfig.checkCert())
                 .build()) {

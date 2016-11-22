@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-import io.github.retz.auth.Authenticator
+import io.github.retz.auth.{AuthHeader, HmacSHA256Authenticator}
 import io.github.retz.cli.TimestampHelper
 import org.junit.Test
 import org.scalacheck.{Gen, Prop}
@@ -30,12 +30,12 @@ class AuthenticatorProp extends JUnitSuite {
   def encodeDecode(): Unit = {
     Checkers.check(Prop.forAll(nonEmptyString, nonEmptyString, nonEmptyString, verb, nonEmptyString) {
       (key: String, secret: String, path: String, verb: String, md5: String) => {
-        val authenticator = new Authenticator(key, secret)
+        val authenticator = new HmacSHA256Authenticator(key, secret)
         val timestamp = TimestampHelper.now()
         val signature = authenticator.signature(verb, md5, timestamp, path)
-        val header = authenticator.buildHeaderValue(verb, md5, timestamp, path)
+        val header = authenticator.header(verb, md5, timestamp, path)
         println(header)
-        val optionalHeader = Authenticator.parseHeaderValue(header)
+        val optionalHeader = AuthHeader.parseHeaderValue(header.buildHeader())
         key == optionalHeader.get().key && signature == optionalHeader.get().signature
       }
     })

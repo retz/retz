@@ -79,7 +79,7 @@ public class PersistenceTest {
                 user.keyId(), new MesosContainer(), true);
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 
-        try (Client client = Client.newBuilder(uri).enableAuthentication(true).setAuthenticator(config.getAuthenticator()).build()) {
+        try (Client client = Client.newBuilder(uri).setAuthenticator(config.getAuthenticator()).build()) {
 
             client.load(application);
 
@@ -117,7 +117,7 @@ public class PersistenceTest {
     }
 
     void checkApp(URI uri, Application application, List<Job> jobs) throws Exception {
-        try (Client client = Client.newBuilder(uri).enableAuthentication(true).setAuthenticator(config.getAuthenticator()).build()) {
+        try (Client client = Client.newBuilder(uri).setAuthenticator(config.getAuthenticator()).build()) {
             {
                 Response response = client.listApp();
                 ListAppResponse listAppResponse = (ListAppResponse) response;

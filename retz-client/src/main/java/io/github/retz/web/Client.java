@@ -18,6 +18,7 @@ package io.github.retz.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.auth.AuthHeader;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
@@ -37,7 +38,6 @@ import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -55,10 +55,10 @@ public class Client implements AutoCloseable {
     private final String scheme;
     private final String host;
     private final int port;
-    private final Optional<io.github.retz.auth.Authenticator> authenticator;
+    private final Authenticator authenticator;
     private MessageDigest DIGEST = null; //TODO this could be final, though...
 
-    protected Client(URI uri, Optional<Authenticator> authenticator) {
+    protected Client(URI uri, Authenticator authenticator) {
         this.scheme = uri.getScheme();
         this.host = uri.getHost();
         this.port = uri.getPort();
@@ -73,11 +73,7 @@ public class Client implements AutoCloseable {
         }
     }
 
-    protected Client(URI uri) {
-        this(uri, Optional.empty());
-    }
-
-    protected Client(URI uri, Optional<Authenticator> authenticator, boolean checkCert) {
+    protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
         this(uri, authenticator);
         if (uri.getScheme().equals("https") && !checkCert) {
             try {
@@ -238,10 +234,10 @@ public class Client implements AutoCloseable {
             String date = TimestampHelper.now();
             conn.setRequestProperty("Date", date);
 
-            if (authenticator.isPresent()) {
-                String signature = authenticator.get().buildHeaderValue(req.method(), md5, date, req.resource());
-                conn.setRequestProperty(Authenticator.AUTHORIZATION, signature);
-            }
+            //String signature = authenticator.signature(req.method(), md5, date, req.resource());
+            String header = authenticator.header(req.method(), md5, date, req.resource()).buildHeader();
+            conn.setRequestProperty(AuthHeader.AUTHORIZATION, header);
+            LOG.debug("Signature:{}", header);
 
             if (req.hasPayload()) {
                 conn.getOutputStream().write(payload.getBytes(UTF_8));
