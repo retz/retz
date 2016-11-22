@@ -2,6 +2,8 @@
 
 ## 0.0.33
 
+* Change verb of 'schedule' protocol from `PUT` to `POST` for cleaner HTTP
+  API. This introduces incompatible change to client-server protocol.
 * Fix failures in 'list-files' when '+' included in the path (#79). Retz
   server also requested to Mesos master with non-URL-encoded URL and got 404.
 * 'get-file' reports if a file is not present (#80)

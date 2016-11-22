@@ -43,7 +43,7 @@ public class ScheduleRequest extends Request {
 
     @Override
     public String method() {
-        return PUT;
+        return POST;
     }
 
     @Override

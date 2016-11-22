@@ -182,7 +182,7 @@ public final class WebConsole {
         // Get file list
         get(ListFilesRequest.resourcePattern(), JobRequestRouter::getDir);
 
-        put(ScheduleRequest.resourcePattern(), WebConsole::schedule);
+        post(ScheduleRequest.resourcePattern(), WebConsole::schedule);
 
         delete(KillRequest.resourcePattern(), (req, res) -> {
             LOG.debug("kill", req.params(":id"));
