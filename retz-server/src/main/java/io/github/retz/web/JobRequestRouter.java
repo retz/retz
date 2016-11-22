@@ -28,13 +28,11 @@ import io.github.retz.scheduler.JobQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -129,13 +127,13 @@ public class JobRequestRouter {
         }
 
         ListFilesResponse listFilesResponse = new ListFilesResponse(job, ret);
-
+        listFilesResponse.status("ok");
         return MAPPER.writeValueAsString(listFilesResponse);
     }
 
 
     public static boolean statHTTPFile(String url, String name) {
-        String addr = url.replace("files/browse", "files/download") + "%2F" + name;
+        String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
 
         HttpURLConnection conn = null;
         try {
@@ -205,14 +203,21 @@ public class JobRequestRouter {
     }
 
     public static String fetchHTTPFile(String url, String name, long offset, long length) throws MalformedURLException, IOException {
-        String addr = url.replace("files/browse", "files/read") + "%2F" + name
+        String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
                 + "&offset=" + offset + "&length=" + length;
         return fetchHTTP(addr);
     }
 
     public static String fetchHTTPDir(String url, String path) throws MalformedURLException, IOException {
         // Just do 'files/browse and get JSON
-        String addr = url + "%2F" + path;
+        String addr = url + "%2F" + maybeURLEncode(path);
         return fetchHTTP(addr);
+    }
+    private static String maybeURLEncode(String file) {
+        try {
+            return URLEncoder.encode(file, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return file;
+        }
     }
 }

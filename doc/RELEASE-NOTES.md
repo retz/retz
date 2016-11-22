@@ -2,6 +2,8 @@
 
 ## 0.0.33
 
+* Fix failures in 'list-files' when '+' included in the path (#79). Retz
+  server also requested to Mesos master with non-URL-encoded URL and got 404.
 * 'get-file' reports if a file is not present (#80)
 * `ClientHelper.getWholeFile()` now returns `JobNotFoundException` when
   a job is not found.

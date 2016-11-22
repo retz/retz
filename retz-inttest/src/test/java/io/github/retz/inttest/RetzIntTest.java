@@ -20,6 +20,7 @@ import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.exception.JobNotFoundException;
@@ -396,6 +397,46 @@ public class RetzIntTest {
         }
     }
 
+    @Test
+    public void listFilesTest() throws Exception { //Regression test for #79 : https://github.com/retz/retz/issues/79
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+        try (Client client = Client.newBuilder(uri)
+                .enableAuthentication(config.authenticationEnabled())
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
+            loadSimpleApp(client, "touch-many");
+            {
+                Job job = new Job("touch-many", "mkdir d++; touch d++/e++; touch d++/f", new Properties(), 1, 32);
+                Job ran = client.run(job);
+                Response response = client.listFiles(ran.id(), "d++");
+                assertEquals("ok", response.status());
+                ListFilesResponse listFilesResponse = (ListFilesResponse) response;
+                assertEquals(2, listFilesResponse.entries().size());
+                assertTrue(listFilesResponse.entries().get(0).path().endsWith("d++/e++"));
+                assertTrue(listFilesResponse.entries().get(1).path().endsWith("d++/f"));
+            }
+
+            { //Test unicode paths
+                Job job = new Job("touch-many", "mkdir d++; touch ε=ε=ε=ε=ε=ε= ◟⚫͈ω⚫̤◞", new Properties(), 1, 32);
+                Job ran = client.run(job);
+
+                Response response = client.listFiles(ran.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
+                ListFilesResponse listFilesResponse = (ListFilesResponse) response;
+
+                for (DirEntry e : listFilesResponse.entries()) {
+                    System.err.println(e.path());
+                }
+
+                assertEquals(5, listFilesResponse.entries().size());
+                assertTrue(listFilesResponse.entries().get(0).path().endsWith("d++"));
+                assertTrue(listFilesResponse.entries().get(1).path().endsWith("stderr"));
+                assertTrue(listFilesResponse.entries().get(2).path().endsWith("stdout"));
+                assertTrue(listFilesResponse.entries().get(3).path().endsWith("ε=ε=ε=ε=ε=ε="));
+                assertTrue(listFilesResponse.entries().get(4).path().endsWith("◟⚫͈ω⚫̤◞"));
+            }
+        }
+    }
+
     @Test(expected = JobNotFoundException.class)
     public void jobNotFoundTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
@@ -405,7 +446,7 @@ public class RetzIntTest {
                 .build()) {
             Response response = client.getJob(102345);
             System.err.println(response.status());
-            GetJobResponse getJobResponse = (GetJobResponse)response;
+            GetJobResponse getJobResponse = (GetJobResponse) response;
             assertTrue(!getJobResponse.job().isPresent());
             ClientHelper.getWholeFile(client, 102345, "stdout", false, System.out);
         }
