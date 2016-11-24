@@ -276,8 +276,6 @@ Also, Retz has many knobs to control its setup
 * ``retz.mesos.role = retz`` - Role name in Mesos
 * ``retz.mesos.secret.file`` - A file path containing mesos
   authentication secret (optional, no line breaks allowed in the file)
-* ``retz.gpu = false`` - If your Mesos agent clusters has GPUs and you
-  want to assign GPUs to your task, set this to true.
 * ``retz.max.running = 128`` - A maximum number of simaltenous jobs that
   run under single Retz queue. This is to limit Retz usage of whole
   Mesos cluster.
@@ -285,7 +283,12 @@ Also, Retz has many knobs to control its setup
   kept in Retz after they are offered from Mesos. This will improve
   job execution latency on the cluster with light load. To disable
   stocking, explicitly set this to 0.
-
+* ``retz.max.cpus = 8`` - Maximum number of CPUs per single job
+* ``retz.max.mem = 31744``  - Maximum size of RAM per single job in MBs
+* ``retz.max.gpus = 0`` Set maximum number of GPUs per single job - If
+   your Mesos agent clusters has GPUs and you want to assign GPUs to
+   your task, set this to 1 or more.
+* ``retz.max.disk = 1024``  - Maximum size of disk usage per single job in MBs
 
 Database configurations - by default Retz stores all information on
 memory.

@@ -463,6 +463,22 @@ public class RetzIntTest {
         }
     }
 
+    @Test
+    public void tooMuchResourceRequested() throws Exception {
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+        try (Client client = Client.newBuilder(uri)
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
+            {
+                loadSimpleApp(client, "echo");
+                Job job = new Job("echo", "echo 42", new Properties(), 1024, 32);
+                Response response = client.schedule(job);
+                // TODO: how do we indicate this is from WebConsole::schedule, ResourceQuantitiy#fits(job)?
+                assertTrue(response instanceof ErrorResponse);
+            }
+        }
+    }
+
     private String catStdout(Client c, Job job) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ClientHelper.getWholeFile(c, job.id(), "stdout", true, out);

@@ -245,7 +245,7 @@ public class Client implements AutoCloseable {
 
             return mapper.readValue(conn.getInputStream(), Response.class);
         } catch (IOException e) {
-            LOG.debug(e.toString());
+            LOG.debug(e.toString(), e);
             return new ErrorResponse(e.toString());
         } finally {
             if (conn != null) {

@@ -53,7 +53,6 @@ public class ServerConfiguration extends FileConfiguration {
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
     static final String DEFAULT_MESOS_PRINCIPAL = "retz";
     static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
-    static final String USE_GPU = "retz.gpu";
     // Not yet used
     static final String QUEUE_MAX = "retz.max.queue";
     static final String SCHEDULE_RESULTS = "retz.results";
@@ -73,7 +72,6 @@ public class ServerConfiguration extends FileConfiguration {
     private final int maxSimultaneousJobs;
     private final String databaseURL;
     private final String databaseDriver;
-    private final boolean useGPU;
 
     public ServerConfiguration(InputStream in) throws IOException, URISyntaxException {
         super(in);
@@ -98,16 +96,6 @@ public class ServerConfiguration extends FileConfiguration {
         if (uri.getPort() < 1024 || 65536 < uri.getPort()) {
             LOG.error("retz.bind must not use well known port, or just too large: {}", uri.getPort());
             throw new IllegalArgumentException();
-        }
-
-        // TODO: deprecate this; duplicate with MAX_GPU
-        String gpu = properties.getProperty(USE_GPU, "false");
-        if (gpu.equals("true")) {
-            useGPU = true;
-        } else if (gpu.equals("false")) {
-            useGPU = false;
-        } else {
-            throw new IllegalArgumentException(USE_GPU + "must be boolean");
         }
 
         maxSimultaneousJobs = Integer.parseInt(properties.getProperty(MAX_SIMULTANEOUS_JOBS, DEFAULT_MAX_SIMULTANEOUS_JOBS));
@@ -167,7 +155,7 @@ public class ServerConfiguration extends FileConfiguration {
     }
 
     public boolean useGPU() {
-        return useGPU;
+        return Integer.parseInt(properties.getProperty(MAX_GPUS, DEFAULT_MAX_GPUS)) > 0;
     }
 
     public int getMaxSimultaneousJobs() {

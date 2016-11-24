@@ -2,6 +2,8 @@
 
 ## 0.0.33
 
+* Remove 'retz.gpu' from server configuration file. It's replacement is
+  'retz.max.gpus' - setting 0 or a positive integer.
 * Introduce a new system limit 'retz.max.cpus', 'retz.max.mem', 'retz.max.gpus'
   'retz.max.ports' and 'retz.max.disk', which limits the size of every job when it being scheduled.
   Default values are 8, 31744 MB, 0, 10 and 1024 MB. This is to prevent default
