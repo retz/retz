@@ -40,6 +40,7 @@ public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
     public static final String HTTP_SERVER_NAME;
     private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
+    private final ResourceQuantity MAX_JOB_SIZE;
 
     static {
         // TODO: stop hard coding and get the file name in more generic way
@@ -65,6 +66,7 @@ public class RetzScheduler implements Scheduler {
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
+        MAX_JOB_SIZE = conf.getServerConfig().getMaxJobSize();
     }
 
     public void stopAllExecutors(SchedulerDriver driver, String appName) {
@@ -422,5 +424,11 @@ public class RetzScheduler implements Scheduler {
         Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
     }
 
+    public boolean validateJob(Job job) {
+        return MAX_JOB_SIZE.fits(job);
+    }
 
+    public ResourceQuantity maxJobSize() {
+        return MAX_JOB_SIZE;
+    }
 }

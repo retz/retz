@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class ServerConfiguration extends FileConfiguration {
 
@@ -37,6 +34,16 @@ public class ServerConfiguration extends FileConfiguration {
     public static final String DEFAULT_MAX_SIMULTANEOUS_JOBS = "128";
     public static final String MAX_STOCK_SIZE = "retz.max.stock";
     public static final String DEFAULT_MAX_STOCK_SIZE = "16";
+    public static final String MAX_CPUS = "retz.max.cpus";
+    public static final String DEFAULT_MAX_CPUS = "8";
+    public static final String MAX_MEM = "retz.max.mem";
+    public static final String DEFAULT_MAX_MEM = "31744"; // (32 - 1) * 1024 MB
+    public static final String MAX_GPUS = "retz.max.gpus";
+    public static final String DEFAULT_MAX_GPUS = "0";
+    public static final String MAX_PORTS = "retz.max.ports";
+    public static final String DEFAULT_MAX_PORTS = "10";
+    public static final String MAX_DISK = "retz.max.disk";
+    public static final String DEFAULT_MAX_DISK = "1024"; // in MB
 
     // Mesos connections and so on
     static final String MESOS_LOC_KEY = "retz.mesos";
@@ -93,6 +100,7 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException();
         }
 
+        // TODO: deprecate this; duplicate with MAX_GPU
         String gpu = properties.getProperty(USE_GPU, "false");
         if (gpu.equals("true")) {
             useGPU = true;
@@ -186,6 +194,14 @@ public class ServerConfiguration extends FileConfiguration {
         return Optional.ofNullable(properties.getProperty(DATABASE_PASSWORD));
     }
 
+    public ResourceQuantity getMaxJobSize() {
+        return new ResourceQuantity(
+                Integer.parseInt(properties.getProperty(MAX_CPUS, DEFAULT_MAX_CPUS)),
+                Integer.parseInt(properties.getProperty(MAX_MEM, DEFAULT_MAX_MEM)),
+                Integer.parseInt(properties.getProperty(MAX_GPUS, DEFAULT_MAX_GPUS)),
+                Integer.parseInt(properties.getProperty(MAX_PORTS, DEFAULT_MAX_PORTS)),
+                Integer.parseInt(properties.getProperty(MAX_DISK, DEFAULT_MAX_DISK)));
+    }
     @Override
     public String toString() {
         return new StringBuffer()

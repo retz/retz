@@ -16,7 +16,9 @@
  */
 package io.github.retz.scheduler
 
-import org.apache.mesos.Protos.{Resource => MesosResource}
+import java.util.Properties
+
+import io.github.retz.protocol.data.Job
 import org.junit.Test
 import org.scalacheck.{Gen, Prop}
 import org.scalatest.junit.JUnitSuite
@@ -42,6 +44,27 @@ class ResourceProp extends JUnitSuite {
           retzResource.memMB() == mem && retzResource.memMB() > 0 &&
           retzResource.diskMB() == disk &&
           retzResource.gpu == gpu
+      }
+    })
+  }
+
+  val resourceQuantity: Gen[ResourceQuantity] =
+    for {cpus <- Gen.posNum[Int]
+         mem <- Gen.posNum[Int]
+         gpus <- Gen.posNum[Int]
+         ports <- Gen.posNum[Int]
+         disk <- Gen.posNum[Int]}
+      yield new ResourceQuantity(cpus, mem, gpus, ports, disk)
+
+  @Test
+  def resourceQuantityProp(): Unit = {
+    Checkers.check(Prop.forAll(Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], resourceQuantity) {
+      (cpus: Int, mem: Int, gpus: Int, ports: Int, q: ResourceQuantity) => {
+        val job = new Job("x", "a", new Properties(), cpus+1, mem + 32, gpus, ports)
+        val fit = q.fits(job)
+        val nofit = cpus+1> q.getCpu || mem + 32 > q.getMemMB || gpus > q.getGpu || ports > q.getPorts || 0 > q.getDiskMB
+        println(cpus+1, mem+32, gpus, ports, q, fit, nofit, fit != nofit)
+        fit != nofit
       }
     })
   }

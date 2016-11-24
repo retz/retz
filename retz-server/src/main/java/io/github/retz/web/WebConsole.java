@@ -31,10 +31,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
-import io.github.retz.scheduler.Applications;
-import io.github.retz.scheduler.JobQueue;
-import io.github.retz.scheduler.RetzScheduler;
-import io.github.retz.scheduler.ServerConfiguration;
+import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
@@ -78,6 +75,7 @@ public final class WebConsole {
         } else {
             LOG.info("HTTPS disabled. Scheme: {}", config.getUri().getScheme());
         }
+
         port(config.getUri().getPort());
         staticFileLocation("/public");
 
@@ -388,6 +386,7 @@ public final class WebConsole {
         res.type("application/json");
         Optional<Application> maybeApp = Applications.get(scheduleRequest.job().appid()); // TODO check owner right here
         if (!maybeApp.isPresent()) {
+            // TODO: this warn log cannot be written in real stable release
             LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
             ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
             res.status(404);
@@ -398,6 +397,15 @@ public final class WebConsole {
             validateOwner(req, maybeApp.get());
 
             Job job = scheduleRequest.job();
+            if (scheduler.isPresent()) {
+                if (! scheduler.get().validateJob(job)) {
+                    String msg = "Job " + job.toString() + " does not fit system limit " + scheduler.get().maxJobSize();
+                    // TODO: this warn log cannot be written in real stable release
+                    LOG.warn(msg);
+                    halt(400, msg);
+                }
+            }
+
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
 
             JobQueue.push(job);

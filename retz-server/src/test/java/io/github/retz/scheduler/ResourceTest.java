@@ -16,13 +16,16 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ResourceTest {
     @Test
@@ -39,6 +42,20 @@ public class ResourceTest {
             Resource cut = resource.cut(1, 32, 0, 1, 0);
             System.err.println(cut);
             assertEquals(1, cut.portAmount());
+        }
+    }
+
+    @Test
+    public void quantity() {
+        {
+            Job job = new Job("x", "a", new Properties(), 1, 32, 0, 0);
+            ResourceQuantity resourceQuantity = new ResourceQuantity(10, 1024, 0, 1, 1024);
+            assertTrue(resourceQuantity.fits(job));
+        }
+        {
+            Job job = new Job("x", "a", new Properties(), 20243, 65536, 0, 319);
+            ResourceQuantity resourceQuantity = new ResourceQuantity(22827, 65536, 65536, 36372, 41658);
+            assertTrue(resourceQuantity.fits(job));
         }
     }
 }
