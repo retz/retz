@@ -35,14 +35,14 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
 
-    @Parameter(names = {"-F", "--file"}, description = "Smaller files")
+    @Parameter(names = {"-F", "--file"}, description = "Smaller files in <scheme>://<resource-path> style (available scheme: https, http, hdfs, file)")
     List<String> files = new LinkedList<>();
     //"http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
 
-    @Parameter(names = {"-L", "--large-file"}, description = "Large files that will be cached at agents")
+    @Parameter(names = {"-L", "--large-file"}, description = "Large files that will be cached at agents, same style as '--file' option")
     List<String> largeFiles = new LinkedList<>();
 
-    @Parameter(names = {"-U", "--user"}, description = "User name to run task")
+    @Parameter(names = {"-U", "--user"}, description = "Unix user name to run task at remote Mesos agent")
     private String user;
 
     //@Parameter(names = "-disk", description = "Disk size for sandbox in MB")

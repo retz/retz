@@ -141,15 +141,6 @@ This may take time, but finally you'll get:
    I15:40:48 Job(id=11, cmd='echo 'hello, retz'') finished in 0.364 seconds and returned 0
 
 
-After you successfully run your first command, let's remove your application:
-
-::
-
-   $ retz-client unload-app -A your-test-app
-   $ retz-client get-app -A your-test-app
-   I15:56:33 java.io.FileNotFoundException: http://retz.example.com:9090/app/your-test-app
-
-
 Defining your application environment
 =====================================
 
