@@ -29,19 +29,6 @@ following requirements.
 - Optimization in resource usage efficiency
   
 
-
-
-
-これに加えて、 Asakusa on M3BP のジョブを管理するフレームワークとし
-て Retz を開発する。Retz が持つ機能は、
-
-* Asakusa on M3BP ジョブの実行およびキューイング（オンメモリ）
-* Asakusa on M3BP に必要なアプリケーションのデプロイ、管理
-
-である。図は、高可用構成で構築した環境である。高可用性が不要でダウンタ
-イムやバッチの再実行を許容できる環境では、ZooKeeperおよびMarathonを省
-略することができる（単にZooKeeperを1台構成で起動してもよい）。
-
 Architecture and components
 ---------------------------
 
