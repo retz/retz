@@ -68,6 +68,7 @@ Client CLI and API
 ``retz-client [-C|--config <path/to/retz.properties>] <subcommand> OPTIONS``
 
    Starts Retz client with a configuration file described above.
+   With installer, ``retz-client`` will be installed to ``/opt/retz-client/bin``.
 
 ``retz-client help``
 
@@ -110,7 +111,8 @@ in Java API
 
 * ``-A <appname>`` : Defines an application name (required)
 * ``-cmd <commandline>``:   Defines command line to run (required)
-* ``-E env=value``      :   Defines environment values
+* ``-E env=value`` : Defines environment values. ``$HOME`` and
+  ``$MESOS_*`` are overwritten by Mesos executor.
 * ``-cpu <int>``        :   Defines number of CPUs required for the job (default: 1)
 * ``-mem <int>``        :   Defines amount of RAM in MiB required for the job (default: 32MB)
 * ``-ports <int>``      :   Defines number of IP ports required for the job (default: 0)
@@ -260,6 +262,7 @@ Retz Server
 
 
 Starts Retz server, writing logs out to standard output.
+With installer, ``retz-server`` will be installed to ``/opt/retz-server/bin``.
 
 
 * ``-C </opt/retz-server/etc/retz.properties>``: Specify configuration
@@ -339,4 +342,5 @@ Retz Administartion Tool
 
 ``retz-admin`` is an administration tool that supports
 ``create-user``, ``disable-user``, ``enable-user``, ``list-user`` and
-``usage``.
+``usage``. With installer, ``retz-admin`` will be installed to
+``/opt/retz-admin/bin``.

@@ -260,6 +260,7 @@ optional for Retz, but strongly recommended.
   drivers. ``cgroups/cpu,cgroups/mem`` means cgroups is used to isolate
   CPU and memory between tasks under same agent. ``cgroups/devices`` is
   used with ``gpu/nvidia`` to show GPU devices on Mesos containerizers.
+  This uses ``cgroups/mesos`` namespace.
 * ``/etc/mesos-agent/image_providers`` - Define container image
   providers. If you use Docker as Retz applictaion environment, just
   write ``docker`` to this file.
@@ -350,3 +351,30 @@ all dependencies bundled. To run Retz server with a jar file::
   # java -jar ./retz-server/build/libs/retz-server-x.y.z-all.jar -C retz.properties
 
 for the jar version in your repository.
+
+
+FAQ
+===
+
+Q.
+   Dockerized application fails with ``Message from Mesos executor: Abnormal executor termination``
+A.
+   Mesos Agent's configuration ``--containerizers`` does not have ``docker`` .
+   Write ``mesos,docker`` to ``/etc/mesos-slave/containerizers``
+
+Q.
+   Asakusa on M3BP Batch fails with ``execute.sh`` not found  (FileNotFoundException)
+A.  YAESS has one path that moves to ``$HOME``, with invalid home
+   directory set. Workaround is adding ``-E
+   YAESS_OPTS='-Duser.home=.'`` to ``schedule/run`` option.
+
+
+**Q.**
+   Too many logs: ``/opt/retz-server/bin/retz-server`` outputs too many ``W0704
+  17:29:51.465764 4270 sched.cpp:696] Ignoring framework registered
+  message because it was sent from 'master@192.168.100.121:5050'
+  instead of the leading master 'master@127.0.0.1:5050'``
+
+**A.** Mesos is bound to invalid address such as `0.0.0.0:5050` or
+`127.0.0.1:5050` .  Set an accessible IP address to both
+``/etc/mesos-master/ip`` and ``retz.mesos`` in ``retz.properties``.
