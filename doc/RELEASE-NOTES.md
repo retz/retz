@@ -2,26 +2,30 @@
 
 ## 0.0.33
 
-* Remove 'retz.gpu' from server configuration file. It's replacement is
-  'retz.max.gpus' - setting 0 or a positive integer.
-* Introduce a new system limit 'retz.max.cpus', 'retz.max.mem', 'retz.max.gpus'
-  'retz.max.ports' and 'retz.max.disk', which limits the size of every job when it being scheduled.
-  Default values are 8, 31744 MB, 0, 10 and 1024 MB. This is to prevent default
-  FIFO behaviour of `NaivePlanner` getting stuck by a single large job in the top.
-* Make 'Authorization' header "must" so as to identify users of all requests
-  as well as add `NoopAuthenticator` to enable free authorization mode.
-  This fixes broken non-authentication mode (`retz.authentication = false`, #61).
-  Non-authentication mode now requires `retz.access.key` while secret can
-  be empty.
-* Change verb of 'schedule' protocol from `PUT` to `POST` for cleaner HTTP
-  API. This introduces incompatible change to client-server protocol.
-* Fix failures in 'list-files' when '+' included in the path (#79). Retz
-  server also requested to Mesos master with non-URL-encoded URL and got 404.
+* Remove 'retz.gpu' from server configuration file. It's replacement
+  is 'retz.max.gpus' - setting 0 or a positive integer.
+* Introduce a new system limit 'retz.max.cpus', 'retz.max.mem',
+  'retz.max.gpus' 'retz.max.ports' and 'retz.max.disk', which limits
+  the size of every job when it being scheduled.  Default values are
+  8, 31744 MB, 0, 10 and 1024 MB. This is to prevent default FIFO
+  behaviour of `NaivePlanner` getting stuck by a single large job in
+  the top.
+* Make 'Authorization' header "must" so as to identify users of all
+  requests as well as add `NoopAuthenticator` to enable free
+  authorization mode.  This fixes broken non-authentication mode
+  (`retz.authentication = false`, #61).  Non-authentication mode now
+  requires `retz.access.key` while secret can be empty.
+* Change verb of 'schedule' protocol from `PUT` to `POST` for cleaner
+  HTTP API. This introduces incompatible change to client-server
+  protocol.
+* Fix failures in 'list-files' when '+' included in the path
+  (#79). Retz server also requested to Mesos master with
+  non-URL-encoded URL and got 404.
 * 'get-file' reports if a file is not present (#80)
-* `ClientHelper.getWholeFile()` now returns `JobNotFoundException` when
-  a job is not found.
+* `ClientHelper.getWholeFile()` now returns `JobNotFoundException`
+  when a job is not found.
 * Fix large file size failure on 'list-files' and 'get-file' (#81)
-  This introduced incompatible change to client-server communication 
+  This introduced incompatible change to client-server communication
   protocol.
 * Return 404 when a job is not found on requests (#83)
 
@@ -29,13 +33,14 @@
 
 * Avoid Resource.merge in case of counting the amount of ports ( #74 ).
 * Fix a bug that date format of output of list-files (#78).
-* Package installation of both RPM and DEB does not create 'retz' user any
-  more. 'retz' user is to be created by operators depending on its setup.
-  Now package installer also preserves existing '/opt/retz-server/etc/retz.properties'.
-* Fix a race condition ( #69 ) where Jetty thread and Mesos client callback
-  thread both read a job from database and launch task *s* with different
-  offers. This causes the job (task) with same task id refused by Mesos
-  and the latter returns by "TASK_ERROR".
+* Package installation of both RPM and DEB does not create 'retz' user
+  any more. 'retz' user is to be created by operators depending on its
+  setup.  Now package installer also preserves existing
+  '/opt/retz-server/etc/retz.properties'.
+* Fix a race condition ( #69 ) where Jetty thread and Mesos client
+  callback thread both read a job from database and launch task *s*
+  with different offers. This causes the job (task) with same task id
+  refused by Mesos and the latter returns by "TASK_ERROR".
 
 ## 0.0.31
 
