@@ -73,6 +73,10 @@ public class ServerConfiguration extends FileConfiguration {
     private final String databaseURL;
     private final String databaseDriver;
 
+    private final String PLANNER_NAME = "retz.planner.name";
+    private final String DEFAULT_PLANNER_NAME = "naive";
+    private final String[] PLANNER_NAMES = {"naive", "priority"};
+
     public ServerConfiguration(InputStream in) throws IOException, URISyntaxException {
         super(in);
 
@@ -106,6 +110,11 @@ public class ServerConfiguration extends FileConfiguration {
         databaseURL = properties.getProperty(DATABASE_URL, DEFAULT_DATABASE_URL);
         databaseDriver = properties.getProperty(DATABASE_DRIVER_CLASS, DEFAULT_DATABASE_DRIVER_CLASS);
 
+        String planner = properties.getProperty(PLANNER_NAME, DEFAULT_PLANNER_NAME);
+        if (!Arrays.asList(PLANNER_NAMES).contains(planner)) {
+            LOG.error("Planner must be one of ({}): found {}", String.join(", ", PLANNER_NAMES), planner);
+            throw new IllegalArgumentException("Unknown planner " + planner);
+        }
         LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
@@ -190,6 +199,11 @@ public class ServerConfiguration extends FileConfiguration {
                 Integer.parseInt(properties.getProperty(MAX_PORTS, DEFAULT_MAX_PORTS)),
                 Integer.parseInt(properties.getProperty(MAX_DISK, DEFAULT_MAX_DISK)));
     }
+
+    public String getPlannerName() {
+        return properties.getProperty(PLANNER_NAME, DEFAULT_PLANNER_NAME);
+    }
+
     @Override
     public String toString() {
         return new StringBuffer()

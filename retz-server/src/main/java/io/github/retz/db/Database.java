@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -466,10 +467,12 @@ public class Database {
         return ret;
     }
 
-    public List<Job> findFit(int cpu, int memMB) throws IOException {
+    // orderBy must not have any duplication
+    public List<Job> findFit(List<String> orderBy, int cpu, int memMB) throws IOException {
         List<Job> ret = new LinkedList<>();
+        String orders = String.join(", ", orderBy.stream().map(s -> s + " ASC").collect(Collectors.toList()));
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
-             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC")) {
+             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY " + orders)) {
             conn.setAutoCommit(true);
 
             try (ResultSet res = p.executeQuery()) {
@@ -522,14 +525,15 @@ public class Database {
     }
 
     public void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
-        try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?)")) {
+        try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());
             p.setInt(2, j.id());
             p.setString(3, j.appid());
             p.setString(4, j.cmd());
-            p.setString(5, j.taskId());
-            p.setString(6, j.state().toString());
-            p.setString(7, MAPPER.writeValueAsString(j));
+            p.setInt(5, j.priority());
+            p.setString(6, j.taskId());
+            p.setString(7, j.state().toString());
+            p.setString(8, MAPPER.writeValueAsString(j));
             p.execute();
         }
     }

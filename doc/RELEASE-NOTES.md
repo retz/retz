@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.0.34
+
+* Priority planner is added as well as ``-prio`` option to CLI (#26).
+
 ## 0.0.33
 
 * Remove 'retz.gpu' from server configuration file. It's replacement

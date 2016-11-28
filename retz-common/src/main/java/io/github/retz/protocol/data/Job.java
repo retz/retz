@@ -280,6 +280,10 @@ public class Job {
         this.state = KILLED;
     }
 
+    public void setPriority(int p) {
+        this.priority = p;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{")
@@ -300,6 +304,7 @@ public class Job {
         if (ports > 0) {
             sb.append(", ports=").append(ports);
         }
+        sb.append(", priority=").append(priority);
         if (scheduled != null) {
             sb.append(", scheduled=").append(scheduled);
         }
@@ -340,6 +345,7 @@ public class Job {
         if (ports > 0) {
             sb.append(", ports=").append(ports);
         }
+        sb.append(", priority=").append(priority);
         if (scheduled != null) {
             sb.append(", scheduled=").append(scheduled);
         }

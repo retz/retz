@@ -55,7 +55,7 @@ public class RetzScheduler implements Scheduler {
 
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final Map<String, Protos.Offer> OFFER_STOCK = new ConcurrentHashMap<>();
-    private final Planner PLANNER = (Planner) new NaivePlanner();
+    private final Planner PLANNER;
     private final Protos.Filters filters = Protos.Filters.newBuilder().setRefuseSeconds(1).build();
     private Launcher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
@@ -63,6 +63,7 @@ public class RetzScheduler implements Scheduler {
 
     public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
         MAPPER.registerModule(new Jdk8Module());
+        PLANNER = PlannerFactory.create(conf.getServerConfig().getPlannerName());
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
@@ -173,18 +174,19 @@ public class RetzScheduler implements Scheduler {
                 OFFER_STOCK.clear();
             }
 
-            int totalCpu = 0;
-            int totalMem = 0;
+            ResourceQuantity total = new ResourceQuantity();
             for (Protos.Offer offer : available) {
                 LOG.debug("offer: {}", offer);
                 Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-                totalCpu += resource.cpu();
-                totalMem += resource.memMB();
+                total.add(resource);
             }
 
             // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
-            List<Job> jobs = JobQueue.findFit(totalCpu, totalMem);
+            List<Job> jobs = JobQueue.findFit(PLANNER.orderBy(), total);
             handleAll(available, jobs, driver);
+            // As this section is whole serialized by Stanchion, it is safe to do fetching jobs
+            // from database and updating database state change from queued => starting at
+            // separate transactions
         });
     }
 

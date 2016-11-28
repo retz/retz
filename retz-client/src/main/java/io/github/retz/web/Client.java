@@ -132,6 +132,9 @@ public class Client implements AutoCloseable {
     }
 
     public Response schedule(Job job) throws IOException {
+        if (job.priority() < -20 || 19 < job.priority()) {
+            throw new IllegalArgumentException("Priority must be [-19, 20]");
+        }
         return rpc(new ScheduleRequest(job));
     }
 
@@ -148,7 +151,7 @@ public class Client implements AutoCloseable {
     }
 
     public Job run(Job job) throws IOException {
-        Response res = rpc(new ScheduleRequest(job));
+        Response res = schedule(job);
         if (!(res instanceof ScheduleResponse)) {
             LOG.error(res.status());
             return null;

@@ -94,9 +94,9 @@ public class JobQueue {
     }
 
     // @doc take as much jobs as in the max cpu/memMB
-    public static List<Job> findFit(int cpu, int memMB) {
+    public static List<Job> findFit(List<String> orderBy, ResourceQuantity total) {
         try {
-            return Database.getInstance().findFit(cpu, memMB);
+            return Database.getInstance().findFit(orderBy, total.getCpu(), total.getMemMB());
         } catch (IOException e) {
             LOG.error(e.toString());
             return new LinkedList<>();

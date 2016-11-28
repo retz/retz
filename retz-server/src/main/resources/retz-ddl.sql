@@ -44,6 +44,7 @@ CREATE TABLE jobs(
     id INTEGER NOT NULL UNIQUE,
     appid varchar(32) not null,
     cmd varchar(1024) not null,
+    priority INTEGER NOT NULL,
 
     started VARCHAR(32),
     finished VARCHAR(32),
@@ -54,6 +55,7 @@ CREATE TABLE jobs(
     PRIMARY KEY (id)
 );
 
+CREATE INDEX priority ON jobs(priority);
 CREATE INDEX taskid ON jobs(taskid);
 CREATE INDEX started ON jobs(started);
 CREATE INDEX finished ON jobs(finished);

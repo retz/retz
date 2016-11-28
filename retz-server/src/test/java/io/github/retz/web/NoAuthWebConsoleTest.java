@@ -51,6 +51,7 @@ public class NoAuthWebConsoleTest {
     private ObjectMapper mapper;
     private ServerConfiguration config;
     private ClientCLIConfig cliConfig;
+    private final List<String> BASE_ORDER_BY = Arrays.asList("id");
 
     /**
      * Initializes the test.
@@ -148,7 +149,7 @@ public class NoAuthWebConsoleTest {
 
     @Test
     public void schedule() throws Exception {
-        List<Job> maybeJob = JobQueue.findFit(10000, 10000);
+        List<Job> maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -157,7 +158,7 @@ public class NoAuthWebConsoleTest {
             Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 256));
             assertThat(res, instanceOf(ErrorResponse.class));
 
-            maybeJob = JobQueue.findFit(1000, 10000);
+            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(1000, 10000, 0, 0, 0));
             assertTrue(maybeJob.isEmpty());
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(235561234);
@@ -183,7 +184,7 @@ public class NoAuthWebConsoleTest {
             assertThat(getAppResponse.application().getAppid(), is("foobar"));
             assertThat(getAppResponse.application().getFiles().size(), is(1));
         }
-        maybeJob = JobQueue.findFit(10000, 10000);
+        maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -202,7 +203,7 @@ public class NoAuthWebConsoleTest {
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(sres.job.id());
             Assert.assertEquals(sres.job.cmd(), getJobResponse.job().get().cmd());
 
-            maybeJob = JobQueue.findFit(10000, 10000);
+            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
             assertFalse(maybeJob.isEmpty());
             assertThat(maybeJob.get(0).cmd(), is(cmd));
             assertThat(maybeJob.get(0).appid(), is("foobar"));
@@ -224,7 +225,7 @@ public class NoAuthWebConsoleTest {
     @Test
     public void runFail() throws Exception {
         JobQueue.clear();
-        List<Job> maybeJob = JobQueue.findFit(10000, 10000);
+        List<Job> maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -234,7 +235,7 @@ public class NoAuthWebConsoleTest {
             Job done = webClient.run(job);
             assertNull(done);
 
-            maybeJob = JobQueue.findFit(10000, 10000);
+            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
             assertTrue(maybeJob.isEmpty());
         }
     }

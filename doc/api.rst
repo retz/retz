@@ -117,7 +117,7 @@ in Java API
 * ``-mem <int>``        :   Defines amount of RAM in MiB required for the job (default: 32MB)
 * ``-ports <int>``      :   Defines number of IP ports required for the job (default: 0)
 * ``-gpu <int>``        :   Defines number of GPUs required for the job (default: 0)
-
+* ``-prio <int>``       :   Defines job priority (default: 0). Priority handling depends on server planner setting.
 
 ``retz-client run OPTIONS``
 
@@ -335,6 +335,21 @@ Server configuration file
 * ``retz.tls.truststore.pass =``
 * ``retz.tls.insecure = false``
 
+* ``retz.planner.name = naive`` : Planner setting. Must be either "naive" or "priority".
+
+Planner choice
+
+naive
+  Setting ``naive`` is default option; server sets up ``NaivePlanner`` as planner object.
+  Job sorting is based on job IDs, which is sequencially generated. With this, jobs are
+  executed on scheduled time order.
+priority
+  Setting ``priority`` lets server set up ``PriorityPlanner`` as planner object. With
+  priority planner, Retz chooses a job based on priority, and next scheduled time order.
+  The number or priority can be given by ``-prio`` option at CLI for example. It must
+  range from -20 to 19, defaults to 0. Altough the range is like Unix nice, but it is
+  different as Unix nice is used for timeslice. Retz's priority planner uses this value
+  just for ordering of jobs like IDs.
 
 
 Retz Administartion Tool

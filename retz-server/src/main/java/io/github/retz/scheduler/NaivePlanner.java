@@ -31,6 +31,12 @@ import java.util.stream.Collectors;
 
 public class NaivePlanner implements Planner {
     private static final Logger LOG = LoggerFactory.getLogger(NaivePlanner.class);
+    private final List<String> ORDER_BY = Arrays.asList("id");
+
+    @Override
+    public List<String> orderBy() {
+        return ORDER_BY;
+    }
 
     // TODO: very naive packing, from left to right, no searching
     static void pack(List<Protos.Offer> offers, List<AppJobPair> appJobs, // Inputs

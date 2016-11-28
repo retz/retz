@@ -25,6 +25,9 @@ public class ResourceQuantity {
     private int ports;
     private int diskMB;
 
+    public ResourceQuantity() {
+        this(0, 0, 0, 0, 0);
+    }
     public ResourceQuantity(int cpu, int memMB, int gpu, int ports, int diskMB) {
         this.cpu = cpu;
         this.memMB = memMB;
@@ -61,6 +64,13 @@ public class ResourceQuantity {
         return diskMB;
     }
 
+    public void add(Resource resource) {
+        this.cpu += resource.cpu();
+        this.memMB += resource.memMB();
+        this.gpu += resource.gpu();
+        this.ports += resource.portAmount();
+        this.diskMB += resource.diskMB();
+    }
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder()

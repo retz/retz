@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -62,7 +63,7 @@ public class JobQueueTest {
         job.schedule(0, TimestampHelper.now());
         JobQueue.push(job);
         {
-            List<Job> job2 = JobQueue.findFit(1001, 100000001);
+            List<Job> job2 = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1001, 100000001, 0, 0, 0));
             for (Job j : job2) {
                 System.err.println(job.appid() + job.name());
             }
@@ -77,7 +78,7 @@ public class JobQueueTest {
 
         {
             JobQueue.started("foobar-taskid", Optional.empty());
-            List<Job> fit = JobQueue.findFit(1000, 100000000);
+            List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0));
             for (Job j : fit) {
                 System.err.println(j.name() + " " +j.cmd());
             }

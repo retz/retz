@@ -19,14 +19,14 @@ package io.github.retz.scheduler;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
 
+import java.util.Arrays;
 import java.util.List;
 
-public interface Planner {
+public class PriorityPlanner extends NaivePlanner implements Planner {
+    private final List<String> ORDER_BY = Arrays.asList("priority", "id");
 
-    List<String> orderBy();
-
-    // TODO: make useGPU and maxStock configuration of each instance
-    List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU);
-
-    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock);
+    @Override
+    public List<String> orderBy() {
+        return ORDER_BY;
+    }
 }

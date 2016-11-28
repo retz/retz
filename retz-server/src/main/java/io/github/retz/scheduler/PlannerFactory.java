@@ -16,17 +16,18 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.protocol.data.Job;
-import org.apache.mesos.Protos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
+public class PlannerFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(PlannerFactory.class);
 
-public interface Planner {
-
-    List<String> orderBy();
-
-    // TODO: make useGPU and maxStock configuration of each instance
-    List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU);
-
-    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock);
+    public static Planner create(String name) {
+        if ("priority".equals(name)) {
+            LOG.info("Using PriorityPlanner({})", name);
+            return new PriorityPlanner();
+        }
+        LOG.info("Using NaivePlanner");
+        return new NaivePlanner();
+    }
 }
