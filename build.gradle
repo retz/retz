@@ -135,7 +135,7 @@ project(':retz-server') {
 
         compile group: 'com.j256.simplejmx', name: 'simplejmx', version: '1.12'
 
-        compile 'org.apache.mesos:mesos:1.0.1'
+        compile 'org.apache.mesos:mesos:1.1.0'
 
         compile 'com.sparkjava:spark-core:2.3'
         compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
