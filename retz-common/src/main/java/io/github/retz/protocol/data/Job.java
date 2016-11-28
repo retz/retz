@@ -67,8 +67,6 @@ public class Job {
 
     private JobState state;
 
-    private boolean trustPVFiles = false;
-
     public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
         this.appid = appName;
         this.cmd = cmd;
@@ -110,7 +108,6 @@ public class Job {
                @JsonProperty("diskMB") int diskMB,
                @JsonProperty("ports") int ports,
                @JsonProperty("taskId") String taskId,
-               @JsonProperty("trustPVFiles") boolean trustPVFiles,
                @JsonProperty("state") JobState state) {
         this.cmd = Objects.requireNonNull(cmd);
         this.scheduled = scheduled;
@@ -133,7 +130,6 @@ public class Job {
         this.ports = ports;
         this.gpu = gpu;
         this.taskId = taskId;
-        this.trustPVFiles = trustPVFiles;
         this.state = Objects.requireNonNull(state);
     }
 
@@ -232,18 +228,9 @@ public class Job {
         return taskId;
     }
 
-    @JsonGetter("trustPVFiles")
-    public boolean trustPVFiles() {
-        return trustPVFiles;
-    }
-
     @JsonGetter("state")
     public JobState state() {
         return state;
-    }
-
-    public void setTrustPVFiles(boolean trustPVFiles) {
-        this.trustPVFiles = trustPVFiles;
     }
 
     public void schedule(int id, String now) {

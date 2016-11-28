@@ -184,7 +184,6 @@ public class DatabaseTest {
                     0,
                     0,
                     null,
-                    false,
                     Job.JobState.QUEUED);
             db.safeAddJob(job);
         }
