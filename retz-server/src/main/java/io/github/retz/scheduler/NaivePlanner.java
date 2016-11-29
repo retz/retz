@@ -23,10 +23,7 @@ import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class NaivePlanner implements Planner {
@@ -39,14 +36,22 @@ public class NaivePlanner implements Planner {
     }
 
     // TODO: very naive packing, from left to right, no searching
-    static void pack(List<Protos.Offer> offers, List<AppJobPair> appJobs, // Inputs
-                     List<Protos.Offer.Operation> ops, List<Job> launch, // Outputs below
-                     List<Job> spill,
-                     List<Protos.Offer> accept,
-                     List<Protos.Offer> remain) {
+    static void pack(List<Protos.Offer> offers,
+                     List<AppJobPair> appJobs, // Inputs
+                     List<OfferAcceptor> acceptors, // output offers to be accepted per SlaveId
+                     List<Job> spill) {
+        Map<String, OfferAcceptor> slaveAcceptors = new HashMap<>();
         for (Protos.Offer offer : offers) {
+            if (slaveAcceptors.containsKey(offer.getSlaveId().getValue())) {
+                slaveAcceptors.get(offer.getSlaveId().getValue()).addOffer(offer);
+            } else {
+                slaveAcceptors.put(offer.getSlaveId().getValue(), new OfferAcceptor(offer));
+            }
+        }
+
+        for (Map.Entry<String, OfferAcceptor> e : slaveAcceptors.entrySet()) {
             Resource assigned = new Resource(0, 0, 0);
-            Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+            Resource resource = e.getValue().totalResource();
             int lastPort = 0;
 
             while (!appJobs.isEmpty() &&
@@ -68,47 +73,34 @@ public class NaivePlanner implements Planner {
                     Resource assign = resource.cut(job.cpu(), job.memMB(), job.gpu(), job.ports(), lastPort);
                     lastPort = assign.lastPort();
                     TaskBuilder tb = new TaskBuilder()
-                            .setResource(assign, offer.getSlaveId())
+                            .setResource(assign, e.getValue().getSlaveID())
                             .setName("retz-" + appJob.application().getAppid() + "-name-" + job.name())
                             .setTaskId("retz-" + appJob.application().getAppid() + "-id-" + id)
                             .setCommand(job, appJob.application());
                     assigned.merge(assign);
 
                     Protos.TaskInfo task = tb.build();
-
-                    Protos.Offer.Operation.Launch l = Protos.Offer.Operation.Launch.newBuilder()
-                            .addTaskInfos(Protos.TaskInfo.newBuilder(task))
-                            .build();
-
                     Protos.TaskID taskId = task.getTaskId();
-
-                    ops.add(Protos.Offer.Operation.newBuilder()
-                            .setType(Protos.Offer.Operation.Type.LAUNCH)
-                            .setLaunch(l).build());
                     job.starting(taskId.getValue(), Optional.empty(), TimestampHelper.now());
-                    launch.add(job);
+
+                    e.getValue().addTask(task, job);
 
                     LOG.info("Job {}(task {}) is to be ran as '{}' at Slave {} with resource {}",
-                            job.id(), taskId.getValue(), job.cmd(), offer.getSlaveId().getValue(), assign);
+                            job.id(), taskId.getValue(), job.cmd(), e.getValue().getSlaveID().getValue(), assign);
                     appJobs.remove(0);
                 } else {
                     break;
                 }
             }
-
-            if (assigned.cpu() > 0) {
-                // Some used;
-                accept.add(offer);
-            } else {
-                remain.add(offer);
-            }
         }
+        acceptors.addAll(slaveAcceptors.values());
+        spill.addAll(appJobs.stream().map(appJobPair -> appJobPair.job()).collect(Collectors.toList()));
     }
 
     private static boolean resourceSufficient(List<Protos.Offer> offers, List<AppJobPair> jobs) {
 
         int totalCpu = 0, totalMem = 0, totalGPU = 0, totalPorts = 0;
-        for(Protos.Offer offer : offers) {
+        for (Protos.Offer offer : offers) {
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
             totalCpu += resource.cpu();
             totalMem += resource.memMB();
@@ -129,11 +121,11 @@ public class NaivePlanner implements Planner {
     }
 
     @Override
-    public List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU) {
+    public List<AppJobPair> filter(List<Job> jobs, List<Job> keep, boolean useGPU) {
         // TODO: better splitter
         // Not using GPU or (using GPU and GPU enabled)
         List<Job> run = jobs.stream().filter(job -> job.gpu() == 0 || useGPU).collect(Collectors.toList());
-        cancel.addAll(jobs.stream()
+        keep.addAll(jobs.stream()
                 .filter(job -> job.gpu() > 0 && !useGPU) // Using GPU && GPU not enabled
                 .map(job -> {
                     String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
@@ -147,7 +139,7 @@ public class NaivePlanner implements Planner {
             return new AppJobPair(app, job);
         }).collect(Collectors.toList());
 
-        cancel.addAll(appJobs.stream()
+        keep.addAll(appJobs.stream()
                 .filter(appJobPair -> !appJobPair.hasApplication())
                 .map(appJobPair -> {
                     Job job = appJobPair.job();
@@ -165,47 +157,38 @@ public class NaivePlanner implements Planner {
     @Override
     public Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock) {
 
+        List<OfferAcceptor> acceptors = new LinkedList<>();
+        List<Protos.Offer> toStock = new LinkedList<>();
+
         if (!resourceSufficient(offers, jobs)) {
-
-            List<Protos.Offer> toStock;
-            List<Protos.OfferID> toDecline;
-            if (offers.size() < maxStock) {
-                toStock = offers;
-                toDecline = Arrays.asList();
-            } else {
-                toStock = offers.subList(0, maxStock);
-                toDecline = offers.subList(maxStock, offers.size()).stream().map(offer -> offer.getId()).collect(Collectors.toList());
+            for (Protos.Offer offer : offers) {
+                if (toStock.size() < maxStock) {
+                    toStock.add(offer);
+                } else {
+                    acceptors.add(new OfferAcceptor(offer));
+                }
             }
-            return new Plan(Arrays.asList(), // Operations
-                    Arrays.asList(), // To be launched
-                    Arrays.asList(), // To be cancelled
-                    Arrays.asList(), // Resources to be accepted
-                    toDecline, toStock);
+
+            return new Plan(acceptors, // OfferAcceptors
+                    jobs.stream().map(appJobPair -> appJobPair.job()).collect(Collectors.toList()),
+                    toStock); // To be cancelled
         }
 
+        List<Job> keep = new LinkedList<>();
 
-        List<Job> cancel = new LinkedList<>();
+        pack(offers, jobs, acceptors, keep);
 
-        // This is ugly, ugh, but I want to keep pack() PURE.
-        List<Protos.Offer.Operation> ops = new LinkedList<>();
-        List<Job> launch = new LinkedList<>();
-        List<Job> spill = new LinkedList<>();
-        List<Protos.Offer> accept = new LinkedList<>();
-        List<Protos.Offer> remain = new LinkedList<>();
-        pack(offers, jobs, ops, launch, spill, accept, remain);
-
-        List<Protos.Offer> toStock;
-        List<Protos.OfferID> toDecline;
-        if (remain.size() < maxStock) {
-            toStock = remain;
-            toDecline = Arrays.asList();
-        } else {
-            toStock = remain.subList(0, maxStock);
-            toDecline = remain.subList(maxStock, remain.size()).stream().map(offer -> offer.getId()).collect(Collectors.toList());
+        List<OfferAcceptor> trueAcceptors = new LinkedList<>();
+        for (OfferAcceptor acceptor : acceptors) {
+            if (acceptor.getJobs().isEmpty() && toStock.size() < maxStock) {
+                for (Protos.Offer offer : acceptor.getOffers()) {
+                    toStock.add(offer);
+                }
+            } else {
+                trueAcceptors.add(acceptor);
+            }
         }
-        spill.addAll(cancel);
-        return new Plan(ops, launch, cancel,
-                accept.stream().map(offer -> offer.getId()).collect(Collectors.toList()),
-                toDecline, toStock);
+
+        return new Plan(trueAcceptors, keep, toStock);
     }
 }

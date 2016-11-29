@@ -213,11 +213,12 @@ public class RetzSchedulerTest {
     }
 
     private Protos.Offer buildOffer(String offerId, int cpus, int mem) {
-        return RetzSchedulerTest.buildOffer(driver.frameworkInfo.getId(), offerId, cpus, mem);
+        return RetzSchedulerTest.buildOffer(driver.frameworkInfo.getId(), 0, offerId, cpus, mem);
     }
-    static Protos.Offer buildOffer(Protos.FrameworkID fid, String offerId, int cpus, int mem) {
+    static Protos.Offer buildOffer(Protos.FrameworkID fid, int slaveNo, String offerId, int cpus, int mem) {
 
-        String slaveId = "slave(1)@127.0.0.1:5051";
+        String hostname = "127.0.0."+ slaveNo + ":5051";
+        String slaveId = "slave("+ slaveNo + ")@" + hostname;
 
         Protos.Offer.Builder builder = Protos.Offer.newBuilder()
                 .addAllResources(ResourceConstructor.construct(cpus, mem))
@@ -225,7 +226,7 @@ public class RetzSchedulerTest {
                         .setValue(slaveId)
                         .build())
                 .setFrameworkId(fid)
-                .setHostname("127.0.0.1:5051")
+                .setHostname(hostname)
                 .setId(Protos.OfferID.newBuilder().setValue(offerId).build());
         return builder.build();
     }

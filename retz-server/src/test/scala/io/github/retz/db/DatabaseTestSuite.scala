@@ -76,7 +76,7 @@ object DatabaseSpec extends Commands {
           val job: Job = MAPPER.readValue(json, classOf[Job])
           if (job == null) throw new AssertionError("Cannot be null!!")
           else if (totalCpu + job.cpu <= cpu && totalMem + job.memMB <= memMB) {
-            ret.add(job)
+            ret.addOffer(job)
             totalCpu += job.cpu
             totalMem += job.memMB
           }
@@ -116,7 +116,7 @@ object DatabaseSpec extends Commands {
   } yield State(Map.empty, Map.empty, Map.empty, Map.empty, name)
 
   // Commands: schedule, scheduled, started, resource offer, job finished, job lost
-  // Add user, add application
+  // Add user, addOffer application
   // Noop for validation...
   override def genCommand(state: State): Gen[Command] =
   if (state.users.isEmpty) {

@@ -20,10 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.JobResult;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
@@ -234,25 +234,25 @@ public class RetzScheduler implements Scheduler {
 
         Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getServerConfig().getMaxStockSize());
 
-        // Update local database, to running
-        for (Job j : bestPlan.getToBeLaunched()) {
-            JobQueue.starting(j, Optional.empty(), j.taskId());
+        int declined = 0;
+        // Accept offers from mesos
+        for (OfferAcceptor acceptor : bestPlan.getOfferAcceptors()) {
+            if (acceptor.getJobs().isEmpty()) {
+                declined += acceptor.declineOffer(driver, filters);
+            } else {
+                for (Job j : acceptor.getJobs()) {
+                    // Update local database, to running
+                    JobQueue.starting(j, Optional.empty(), j.taskId());
+                }
+                acceptor.acceptOffers(driver, filters);
+            }
         }
-        // Accept offers to mesos
-        if (!(bestPlan.getToBeAccepted().isEmpty() && bestPlan.getOperations().isEmpty())) {
-            driver.acceptOffers(bestPlan.getToBeAccepted(), bestPlan.getOperations(), filters);
-        }
-
-        // update database to change all jobs state to KILLED
-        JobQueue.cancelAll(bestPlan.getToCancel());
-
-        // Stock unused offers, return duplicate offers
-        OFFER_STOCK.putAll(bestPlan.getToStock());
-        for (Protos.OfferID id : bestPlan.getToDecline()) {
-            driver.declineOffer(id, filters);
+        for (Protos.Offer offer : bestPlan.getToStock()) {
+            OFFER_STOCK.put(offer.getSlaveId().getValue(), offer);
         }
         LOG.info("{} accepted, {} declined ({} offers back in stock)",
-                bestPlan.getToBeAccepted().size(), bestPlan.getToDecline().size(), bestPlan.getToStock().size());
+                bestPlan.getOfferAcceptors().stream().mapToInt(offerAcceptor -> offerAcceptor.getJobs().size()).sum(),
+                declined, bestPlan.getToStock().size());
     }
 
     @Override

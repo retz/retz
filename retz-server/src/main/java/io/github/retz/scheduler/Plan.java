@@ -19,53 +19,31 @@ package io.github.retz.scheduler;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class Plan {
-    private List<Protos.Offer.Operation> operations;
-    private List<Job> toBeLaunched;
-    private List<Job> toCancel;
-    private List<Protos.OfferID> toBeAccepted;
-    private List<Protos.OfferID> toDecline;
+    private List<OfferAcceptor> offerAcceptors;
+    private List<Job> toKeep;
     private List<Protos.Offer> toStock;
 
-    Plan(List<Protos.Offer.Operation> operations,
-         List<Job> toBeLaunched,
-         List<Job> toCancel,
-         List<Protos.OfferID> toBeAccepted,
-         List<Protos.OfferID> toDecline,
+    Plan(List<OfferAcceptor> offerAcceptors,
+         List<Job> toKeep,
          List<Protos.Offer> toStock) {
-        this.operations = Objects.requireNonNull(operations);
-        this.toBeLaunched = Objects.requireNonNull(toBeLaunched);
-        this.toCancel = Objects.requireNonNull(toCancel);
-        this.toBeAccepted = Objects.requireNonNull(toBeAccepted);
-        this.toDecline = Objects.requireNonNull(toDecline);
+        this.offerAcceptors = Objects.requireNonNull(offerAcceptors);
+        this.toKeep = Objects.requireNonNull(toKeep);
         this.toStock = Objects.requireNonNull(toStock);
     }
 
-    public List<Protos.Offer.Operation> getOperations() {
-        return operations;
+    public List<OfferAcceptor> getOfferAcceptors() {
+        return offerAcceptors;
     }
-    public List<Protos.OfferID> getToBeAccepted() {
-        return toBeAccepted;
+
+    public List<Job> getToKeep() {
+        return toKeep;
     }
-    public List<Job> getToBeLaunched() {
-        return toBeLaunched;
-    }
-    public List<Job> getToCancel() {
-        return toCancel;
-    }
-    public List<Protos.OfferID> getToDecline() {
-        return toDecline;
-    }
-    public Map<String, Protos.Offer> getToStock() {
-        Map<String, Protos.Offer> map = new HashMap<>();
-        for (Protos.Offer o : toStock) {
-            map.put(o.getId().getValue(), o);
-        }
-        return map;
+
+    public List<Protos.Offer> getToStock() {
+        return toStock;
     }
 }

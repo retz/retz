@@ -16,7 +16,6 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Application;
@@ -31,6 +30,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class PlannerTest {
     private Planner planner;
@@ -65,15 +65,12 @@ public class PlannerTest {
             List<AppJobPair> jobs = new LinkedList<>();
             for (int i = 0; i < 8; ++i) {
                 String uuid = UUID.randomUUID().toString();
-                offers.add(RetzSchedulerTest.buildOffer(fid, uuid, 16, 512));
+                offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             Plan p = planner.plan(offers, jobs, 0);
 
-            assertEquals(0, p.getOperations().size());
-            assertEquals(0, p.getToBeAccepted().size());
-            assertEquals(0, p.getToCancel().size());
-            assertEquals(0, p.getToBeLaunched().size());
-            assertEquals(8, p.getToDecline().size());
+            assertEquals(8, p.getOfferAcceptors().size());
+            assertEquals(0, p.getToKeep().size());
             assertEquals(0, p.getToStock().size());
         }
         {
@@ -81,15 +78,12 @@ public class PlannerTest {
             List<AppJobPair> jobs = new LinkedList<>();
             for (int i = 0; i < 8; ++i) {
                 String uuid = UUID.randomUUID().toString();
-                offers.add(RetzSchedulerTest.buildOffer(fid, uuid, 16, 512));
+                offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             Plan p = planner.plan(offers, jobs, 3);
 
-            assertEquals(0, p.getOperations().size());
-            assertEquals(0, p.getToBeAccepted().size());
-            assertEquals(0, p.getToCancel().size());
-            assertEquals(0, p.getToBeLaunched().size());
-            assertEquals(5, p.getToDecline().size());
+            assertEquals(5, p.getOfferAcceptors().size());
+            assertEquals(0, p.getToKeep().size());
             assertEquals(3, p.getToStock().size());
         }
     }
@@ -102,26 +96,23 @@ public class PlannerTest {
         List<AppJobPair> jobs = new LinkedList<>();
         for (int i = 0; i < 2; ++i) {
             String uuid = UUID.randomUUID().toString();
-            offers.add(RetzSchedulerTest.buildOffer(fid, uuid, 16, 512));
+            offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             Job job =  new Job(ANON_APPID, "cmd", new Properties(), 16, 512);
             job.schedule(i, TimestampHelper.now());
             jobs.add(new AppJobPair(app,job));
         }
         Plan p = planner.plan(offers, jobs, 0);
 
-        assertEquals(2, p.getOperations().size());
-        System.out.println(p.getOperations().get(0).getLaunch().getTaskInfosList().get(0).getTaskId().getValue());
-        assertEquals("cmd", p.getOperations().get(0).getLaunch().getTaskInfosList().get(0).getCommand().getValue());
-        assertEquals(2, p.getToBeAccepted().size());
-        assertEquals(0, p.getToCancel().size());
-        assertEquals(2, p.getToBeLaunched().size());
-        for(int i = 0; i < 2; ++i) {
-            assertEquals(i, p.getToBeLaunched().get(i).id());
-            assertEquals("cmd", p.getToBeLaunched().get(i).cmd());
-            assertEquals(Job.JobState.STARTING, p.getToBeLaunched().get(i).state());
-        }
-        assertEquals(0, p.getToDecline().size());
+        assertEquals(2, p.getOfferAcceptors().size());
+        assertEquals(0, p.getToKeep().size());
         assertEquals(0, p.getToStock().size());
+        for(int i = 0; i < 2; ++i) {
+            assertTrue(!p.getOfferAcceptors().get(i).getJobs().isEmpty());
+            Job job = p.getOfferAcceptors().get(i).getJobs().get(0);
+            assertEquals(i, job.id());
+            assertEquals("cmd", job.cmd());
+            assertEquals(Job.JobState.STARTING, job.state());
+        }
     }
 
     @Test
@@ -133,7 +124,7 @@ public class PlannerTest {
             List<AppJobPair> jobs = new LinkedList<>();
             for (int i = 0; i < 2; ++i) {
                 String uuid = UUID.randomUUID().toString();
-                offers.add(RetzSchedulerTest.buildOffer(fid, uuid, 16, 512));
+                offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             for (int i = 0; i < 8; ++i) {
                 Job job = new Job("boom", "cmd", new Properties(), 4, 128);
@@ -143,26 +134,23 @@ public class PlannerTest {
             }
             Plan p = planner.plan(offers, jobs, 0);
 
-            assertEquals(8, p.getOperations().size());
-            System.out.println(p.getOperations().get(0).getLaunch().getTaskInfosList().get(0).getTaskId().getValue());
-            assertEquals("cmd", p.getOperations().get(0).getLaunch().getTaskInfosList().get(0).getCommand().getValue());
-            assertEquals(2, p.getToBeAccepted().size());
-            assertEquals(0, p.getToCancel().size());
-            assertEquals(8, p.getToBeLaunched().size());
-            for (int i = 0; i < 8; ++i) {
-                assertEquals(i, p.getToBeLaunched().get(i).id());
-                assertEquals("cmd", p.getToBeLaunched().get(i).cmd());
-                assertEquals(Job.JobState.STARTING, p.getToBeLaunched().get(i).state());
-            }
-            assertEquals(0, p.getToDecline().size());
+            assertEquals(2, p.getOfferAcceptors().size());
+            assertEquals(0, p.getToKeep().size());
             assertEquals(0, p.getToStock().size());
+            for(int i = 0; i < 8; ++i) {
+                assertTrue(! p.getOfferAcceptors().get(i / 4).getJobs().isEmpty());
+                Job job = p.getOfferAcceptors().get(i / 4).getJobs().get(i % 4);
+                assertEquals(i, job.id());
+                assertEquals("cmd", job.cmd());
+                assertEquals(Job.JobState.STARTING, job.state());
+            }
         }
         {
             List<Protos.Offer> offers = new LinkedList<>();
             List<AppJobPair> jobs = new LinkedList<>();
             for (int i = 0; i < 4; ++i) {
                 String uuid = UUID.randomUUID().toString();
-                offers.add(RetzSchedulerTest.buildOffer(fid, uuid, 16, 512));
+                offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             for (int i = 0; i < 8; ++i) {
                 Job job = new Job("boom", "cmd", new Properties(), 4, 128);
@@ -172,19 +160,19 @@ public class PlannerTest {
             }
             Plan p = planner.plan(offers, jobs, 1);
 
-            assertEquals(8, p.getOperations().size());
-            System.out.println(p.getOperations().get(0).getLaunch().getTaskInfosList().get(0).getTaskId().getValue());
-            assertEquals("cmd", p.getOperations().get(0).getLaunch().getTaskInfosList().get(0).getCommand().getValue());
-            assertEquals(2, p.getToBeAccepted().size());
-            assertEquals(0, p.getToCancel().size());
-            assertEquals(8, p.getToBeLaunched().size());
-            for (int i = 0; i < 8; ++i) {
-                assertEquals(i, p.getToBeLaunched().get(i).id());
-                assertEquals("cmd", p.getToBeLaunched().get(i).cmd());
-                assertEquals(Job.JobState.STARTING, p.getToBeLaunched().get(i).state());
-            }
-            assertEquals(1, p.getToDecline().size());
+            assertEquals(3, p.getOfferAcceptors().size());
+            assertEquals(0, p.getToKeep().size());
             assertEquals(1, p.getToStock().size());
+
+            assertEquals(1, p.getOfferAcceptors().stream().filter(acceptor -> acceptor.getJobs().isEmpty()).count());
+            for(int i = 0; i < 8; ++i) {
+                assertTrue(! p.getOfferAcceptors().get(i / 4).getJobs().isEmpty());
+                Job job = p.getOfferAcceptors().get(i / 4).getJobs().get(i % 4);
+                System.err.println(i);
+                assertEquals(i, job.id());
+                assertEquals("cmd", job.cmd());
+                assertEquals(Job.JobState.STARTING, job.state());
+            }
         }
     }
 

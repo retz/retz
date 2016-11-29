@@ -2,6 +2,9 @@
 
 ## 0.0.34
 
+* Fix a bug where tasks get `TASK_LOST` when multiple slaves and multiple
+  jobs scheduled at once. This is because the scheduler tries to accept
+  offers of multiple agents at once.
 * Priority planner is added as well as ``-prio`` option to CLI (#26).
 
 ## 0.0.33
