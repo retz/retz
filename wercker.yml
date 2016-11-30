@@ -8,7 +8,7 @@ build:
     - script:
       name: gradle build
       code: |
-        ./gradlew -is clean build
+        ./gradlew -is clean build -Dscan
 
   after-steps:
     - slack-notifier:
