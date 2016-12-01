@@ -118,6 +118,7 @@ in Java API
 * ``-ports <int>``      :   Defines number of IP ports required for the job (default: 0)
 * ``-gpu <int>``        :   Defines number of GPUs required for the job (default: 0)
 * ``-prio <int>``       :   Defines job priority (default: 0). Priority handling depends on server planner setting.
+* ``-N|--name <name>``  :   Defines human readable job name.
 
 ``retz-client run OPTIONS``
 

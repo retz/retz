@@ -2,6 +2,9 @@
 
 ## 0.0.35
 
+* Add '-N' (or '--name') option to subcommand 'run' and 'schedule' to
+  set plain job name. The default value of job name has also changed
+  to String value of hash code of command.
 * Add 'retz.mesos.refuse' to control (sort of) interval of resource
   offers from Mesos master, to file configuration of retz-server.
   Default value is 3 seconds.

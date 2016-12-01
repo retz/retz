@@ -54,6 +54,8 @@ public class CommandRun implements SubCommand {
     private String appName;
     @Parameter(names = {"-prio", "-priority"}, description = "Job priority")
     private int priority = 0;
+    @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
+    private String name;
 
     @Override
     public String description() {
@@ -75,6 +77,7 @@ public class CommandRun implements SubCommand {
         }
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
         job.setPriority(priority);
+        job.setName(name);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())

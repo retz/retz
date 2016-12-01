@@ -70,6 +70,7 @@ public class Job {
     public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
         this.appid = appName;
         this.cmd = cmd;
+        this.name = Integer.toString(cmd.hashCode());
         this.props = props;
         assert cpu > 0 && memMB >= 32;
         this.cpu = cpu;
@@ -282,6 +283,11 @@ public class Job {
 
     public void setPriority(int p) {
         this.priority = p;
+    }
+    public void setName(String name) {
+        if (name != null) {
+            this.name = name;
+        }
     }
 
     @Override
