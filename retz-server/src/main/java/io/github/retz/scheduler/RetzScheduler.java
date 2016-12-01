@@ -97,6 +97,11 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Framework Message ({} bytes)", data.length);
     }
 
+    // There is a potential race between offerRescinded and using offer stocks;
+    // in case handleAll trying to schedule tasks, offers are removed from OFFER_STOCK
+    // but being used to schedule tasks - this message can't be in time ...
+    // The task with rescinded offer (slave) might fail in advance; TASK_FAILED or TASK_LOST?
+    // any way in this case it should be retried...
     @Override
     public void offerRescinded(SchedulerDriver driver, Protos.OfferID offerId) {
         LOG.info("Offer rescinded: {}", offerId.getValue());
@@ -130,6 +135,7 @@ public class RetzScheduler implements Scheduler {
     @Override
     public void reregistered(SchedulerDriver driver, Protos.MasterInfo masterInfo) {
         LOG.info("Reconnected to master {}", masterInfo.getHostname());
+        // Maybe long time split brain, recovering all states from master required.
         maybeRecoverRunning(driver);
     }
 
@@ -401,12 +407,14 @@ public class RetzScheduler implements Scheduler {
             totalMem += r.memMB();
             totalGpu += r.gpu();
         }
+        // TODO: use ResourceQuantity instead of Resource
         statusResponse.setOfferStats(OFFER_STOCK.size(), totalCpu, totalMem, totalGpu);
     }
 
     // Get all running jobs and sync its latest state in Mesos
     // If it's not lost, just update state. Otherwise, set its state as QUEUED back.
-    // TODO: offload this from scheduler callback thread
+    // This call must be offloaded from scheduler callback thread if schedule is active;
+    // while if it's not active, it must block all other operations.
     private void maybeRecoverRunning(SchedulerDriver driver) {
         List<Job> jobs = Database.getInstance().getRunning();
         Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
