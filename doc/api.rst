@@ -169,6 +169,11 @@ and `Response
           replaces it with ``$MESOS_SANDBOX`` to avoid empty
           parameter.
 
+.. note:: ``list-files`` is a bit different from popular ls(1) from Unix
+          when listing exact one file. In ls(1) it does print full
+          path or full metadata, but Retz's ``list-files`` does not show
+          anything, as there is no such file. To make sure that the
+          file exists, run ``list-files`` against parent directory.
 
 ``retz-client kill -id <id>``
 

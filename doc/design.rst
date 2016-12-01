@@ -195,7 +195,6 @@ console. In addition, to list the files in the sandbox you may use
 'download all files' interface, users must download each file
 respectively, from a list obtained via ``list-files``.
 
-
 Fault Tolerance
 ~~~~~~~~~~~~~~~
 
