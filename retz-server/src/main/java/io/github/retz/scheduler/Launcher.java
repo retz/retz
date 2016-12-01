@@ -80,9 +80,10 @@ public final class Launcher {
             return -1;
         }
 
-        int jmxPort = 9999;
+        int jmxPort = conf.getServerConfig().getJmxPort();
         JmxServer jmxServer = new JmxServer(jmxPort);
         try {
+
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
             AdminConsole mbean = new AdminConsole();

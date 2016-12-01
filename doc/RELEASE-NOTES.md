@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.0.35
+
+* Add 'retz.jmx.port' to file configuration of retz-server and retz-admin
+  to change port number.
+
 ## 0.0.34
 
 * Fix a bug where tasks get `TASK_LOST` when multiple slaves and multiple

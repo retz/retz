@@ -51,6 +51,10 @@ public class FileConfiguration {
     static final String TRUSTSTORE_PASS = "retz.tls.truststore.pass";
     static final String CHECK_CERT = "retz.tls.insecure";
 
+    // Used in server and admin tool
+    static final String JMX_PORT = "retz.jmx.port";
+    public static final int DEFAULT_JMX_PORT = 9999;
+
     protected Properties properties;
     private final boolean authenticationEnabled;
     private final boolean checkCert;
@@ -149,6 +153,15 @@ public class FileConfiguration {
         } else {
             LOG.warn("Authentication is disabled.");
             return new NoopAuthenticator(key);
+        }
+    }
+
+    public int getJmxPort() {
+        String p = properties.getProperty(JMX_PORT);
+        if (p == null) {
+            return DEFAULT_JMX_PORT;
+        } else {
+            return Integer.parseInt(p);
         }
     }
 

@@ -43,7 +43,8 @@ public class CommandDisableUser implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) throws Throwable {
-        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+        int port = fileConfig.getJmxPort();
+        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             boolean result = client.enableUser(id, false);
             LOG.info("User disabled: {}", result);
             return 0;

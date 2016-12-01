@@ -50,7 +50,8 @@ public class CommandUsage implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) throws Throwable {
-        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+        int port =fileConfig.getJmxPort();
+        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             List<String> lines = client.getUsage(id, start, end);
             for(String line: lines) {
                 LOG.info(line);

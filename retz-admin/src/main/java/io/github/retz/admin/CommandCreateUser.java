@@ -41,7 +41,8 @@ public class CommandCreateUser implements SubCommand {
 
     @Override
     public int handle(FileConfiguration fileConfig) throws Throwable {
-        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", 9999))) {
+        int port = fileConfig.getJmxPort();
+        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             User u = client.createUserAsObject();
             System.out.println(FileConfiguration.userAsConfig(u));
             return 0;

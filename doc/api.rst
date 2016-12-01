@@ -341,6 +341,8 @@ Server configuration file
 * ``retz.tls.insecure = false``
 
 * ``retz.planner.name = naive`` : Planner setting. Must be either "naive" or "priority".
+* ``retz.jmx.port = 9999`` : JMX port number to listen on. Note that server only binds
+  loopback address.
 
 Planner choice
 
@@ -364,3 +366,6 @@ Retz Administartion Tool
 ``create-user``, ``disable-user``, ``enable-user``, ``list-user`` and
 ``usage``. With installer, ``retz-admin`` will be installed to
 ``/opt/retz-admin/bin``.
+
+Administration tool shares configuration file with server (or give it by ``-C`` option
+as well) to see common ``retz.jmx.port``.

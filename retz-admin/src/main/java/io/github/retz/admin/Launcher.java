@@ -74,6 +74,7 @@ public class Launcher {
             } else {
                 LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
                         conf.commands.getConfigFile());
+                LOG.info("Using JMX port {}", conf.fileConfiguration.getJmxPort());
                 return conf.getParsedSubCommand().handle(conf.fileConfiguration);
             }
 
