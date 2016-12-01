@@ -301,6 +301,7 @@ Server configuration file
 * ``retz.mesos.secret.file = path/to/secret-file``: If `authentication in Mesos
    <http://mesos.apache.org/documentation/latest/authentication/>`_ is
    enabled, set a file name that has secret to access Mesos.
+* ``retz.mesos.refuse = 3`` : (sort of) interval of resource offer from Mesos
 * ``retz.bind = http://localhost:9090``: A URL and port number to
    listen. If the scheme is ``https`` Retz tries to serve as an HTTPS
    server with keys defined with ``retz.tls.*`` properties. This value

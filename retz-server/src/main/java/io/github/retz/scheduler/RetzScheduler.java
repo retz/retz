@@ -39,7 +39,6 @@ public class RetzScheduler implements Scheduler {
     public static final String FRAMEWORK_NAME = "Retz-Framework";
     public static final String HTTP_SERVER_NAME;
     private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
-    private final ResourceQuantity MAX_JOB_SIZE;
 
     static {
         // TODO: stop hard coding and get the file name in more generic way
@@ -52,10 +51,11 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Server name in HTTP(S) header: {}", HTTP_SERVER_NAME);
     }
 
+    private final ResourceQuantity MAX_JOB_SIZE;
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final Map<String, Protos.Offer> OFFER_STOCK = new ConcurrentHashMap<>();
     private final Planner PLANNER;
-    private final Protos.Filters filters = Protos.Filters.newBuilder().setRefuseSeconds(1).build();
+    private final Protos.Filters filters;
     private Launcher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
@@ -66,6 +66,7 @@ public class RetzScheduler implements Scheduler {
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
+        this.filters = Protos.Filters.newBuilder().setRefuseSeconds(conf.getServerConfig().getRefuseSeconds()).build();
         MAX_JOB_SIZE = conf.getServerConfig().getMaxJobSize();
     }
 
@@ -90,7 +91,6 @@ public class RetzScheduler implements Scheduler {
         LOG.error(message);
         // 'Framework has been removed' comes here;
     }
-
 
     @Override
     public void frameworkMessage(SchedulerDriver driver, Protos.ExecutorID executorId, Protos.SlaveID slaveId, byte[] data) {

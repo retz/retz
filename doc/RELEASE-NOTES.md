@@ -2,6 +2,9 @@
 
 ## 0.0.35
 
+* Add 'retz.mesos.refuse' to control (sort of) interval of resource
+  offers from Mesos master, to file configuration of retz-server.
+  Default value is 3 seconds.
 * Add 'retz.jmx.port' to file configuration of retz-server and retz-admin
   to change port number.
 

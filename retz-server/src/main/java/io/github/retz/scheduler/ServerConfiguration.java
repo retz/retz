@@ -25,7 +25,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class ServerConfiguration extends FileConfiguration {
 
@@ -53,6 +56,8 @@ public class ServerConfiguration extends FileConfiguration {
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
     static final String DEFAULT_MESOS_PRINCIPAL = "retz";
     static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
+    static final String MESOS_REFUSE_SECONDS = "retz.mesos.refuse";
+    static final int DEFAULT_MESOS_REFUSE_SECONDS = 3;
     // Not yet used
     static final String QUEUE_MAX = "retz.max.queue";
     static final String SCHEDULE_RESULTS = "retz.results";
@@ -115,10 +120,16 @@ public class ServerConfiguration extends FileConfiguration {
             LOG.error("Planner must be one of ({}): found {}", String.join(", ", PLANNER_NAMES), planner);
             throw new IllegalArgumentException("Unknown planner " + planner);
         }
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}",
+
+        if (getRefuseSeconds() < 1) {
+            throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
+        }
+
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
-                MAX_STOCK_SIZE, getMaxStockSize());
+                MAX_STOCK_SIZE, getMaxStockSize(),
+                MESOS_REFUSE_SECONDS, getRefuseSeconds());
     }
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
@@ -202,6 +213,15 @@ public class ServerConfiguration extends FileConfiguration {
 
     public String getPlannerName() {
         return properties.getProperty(PLANNER_NAME, DEFAULT_PLANNER_NAME);
+    }
+
+    public int getRefuseSeconds() {
+        String s = properties.getProperty(MESOS_REFUSE_SECONDS);
+        if (s == null) {
+            return DEFAULT_MESOS_REFUSE_SECONDS;
+        } else {
+            return Integer.parseInt(s);
+        }
     }
 
     @Override
