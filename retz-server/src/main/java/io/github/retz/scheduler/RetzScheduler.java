@@ -22,7 +22,6 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.JobResult;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
@@ -331,12 +330,8 @@ public class RetzScheduler implements Scheduler {
     // Maybe Retry
     void retry(Protos.TaskStatus status) {
         String reason = "";
-        if (status.hasData()) {
-            try {
-                JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
-                reason = jobResult.reason();
-            } catch (IOException e) {
-            }
+        if (status.hasMessage()) {
+            reason = status.getMessage();
         }
         try {
             JobQueue.retry(status.getTaskId().getValue(), reason);
@@ -355,15 +350,6 @@ public class RetzScheduler implements Scheduler {
 
         int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
         String finished = TimestampHelper.now();
-        if (status.hasData()) {
-            try {
-                JobResult jobResult = MAPPER.readValue(status.getData().toByteArray(), JobResult.class);
-                ret = jobResult.result();
-                finished = jobResult.finished();
-            } catch (IOException e) {
-                LOG.error("Exception: {}", e.toString());
-            }
-        }
         try {
             JobQueue.finished(status.getTaskId().getValue(), maybeUrl, ret, finished);
         } catch (SQLException e) {
