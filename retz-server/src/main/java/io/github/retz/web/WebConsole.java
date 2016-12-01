@@ -25,12 +25,12 @@ import io.github.retz.auth.HmacSHA256Authenticator;
 import io.github.retz.auth.NoopAuthenticator;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
@@ -354,19 +354,27 @@ public final class WebConsole {
             return false;
         }
 
-        // TODO: non-application owner is even possible to kill job
-        Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
+        Optional<Boolean> result = Stanchion.call(() -> {
+            // TODO: non-application owner is even possible to kill job
+            Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
 
-        // There's a slight pitfall between cancel above and kill below where
-        // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
-        // Then this protocol returns false for sure.
-        if (maybeTaskId.isPresent()) {
-            Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(maybeTaskId.get()).build();
-            Protos.Status status = driver.get().killTask(taskId);
-            LOG.info("Job id={} was running and killed.");
-            return status == Protos.Status.DRIVER_RUNNING;
+            // There's a slight pitfall between cancel above and kill below where
+            // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
+            // Then this protocol returns false for sure.
+            if (maybeTaskId.isPresent()) {
+                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(maybeTaskId.get()).build();
+                Protos.Status status = driver.get().killTask(taskId);
+                LOG.info("Job id={} was running and killed.");
+                return status == Protos.Status.DRIVER_RUNNING;
+            }
+            return false;
+        });
+
+        if (result.isPresent()) {
+            return result.get();
+        } else {
+            return false;
         }
-        return false;
     }
 
     @Deprecated
@@ -398,7 +406,7 @@ public final class WebConsole {
 
             Job job = scheduleRequest.job();
             if (scheduler.isPresent()) {
-                if (! scheduler.get().validateJob(job)) {
+                if (!scheduler.get().validateJob(job)) {
                     String msg = "Job " + job.toString() + " does not fit system limit " + scheduler.get().maxJobSize();
                     // TODO: this warn log cannot be written in real stable release
                     LOG.warn(msg);

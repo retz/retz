@@ -19,8 +19,8 @@ package io.github.retz.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Optional;
+import java.util.concurrent.*;
 
 // An executor that serializes all request processing here
 public class Stanchion {
@@ -36,6 +36,24 @@ public class Stanchion {
                 LOG.error("Exception in Stanchion: {}", e.toString(), e);
             }
         });
+    }
+
+    public static <R> Optional<R> call(Callable<R> callable) {
+        Future<Optional<R>> future = EXECUTOR.submit( () -> {
+        try {
+            return Optional.of(callable.call());
+        } catch (Exception e) {
+            LOG.debug(e.toString(), e);
+            return Optional.empty();
+        }});
+        try {
+            return future.get();
+        } catch (ExecutionException e) {
+            LOG.error(e.toString(), e);
+        } catch (InterruptedException e) {
+            LOG.error(e.toString(), e);
+        }
+        return Optional.empty();
     }
 
 }
