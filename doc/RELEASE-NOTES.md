@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+* Update simplejmx to 1.13, Jackson to 2.8.5, jcommander to 1.58 and
+  docker-java to 3.0.6.
 * Change server to bind an IP address that is written as 'retz.bind' of
   configuration file (#62).
 * Add '-N' (or '--name') option to subcommand 'run' and 'schedule' to
