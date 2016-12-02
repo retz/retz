@@ -40,6 +40,7 @@ public class ServerConfigurationTest {
         assertFalse(config.checkCert());
         assertTrue(config.authenticationEnabled());
         assertEquals(0, config.getMaxStockSize());
+        assertEquals(7, config.getRefuseSeconds());
     }
 
     @Test(expected=IllegalArgumentException.class)

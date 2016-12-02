@@ -47,9 +47,9 @@ public class CommandSchedule implements SubCommand {
     @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job in Range")
     private int gpu = 0;
     @Parameter(names = {"-prio", "-priority"}, description = "Job priority")
-    private int priority = 0;
+    int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
-    private String name;
+    String name;
 
     @Override
     public String getName() {

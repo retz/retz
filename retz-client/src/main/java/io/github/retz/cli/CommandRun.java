@@ -53,9 +53,9 @@ public class CommandRun implements SubCommand {
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
     @Parameter(names = {"-prio", "-priority"}, description = "Job priority")
-    private int priority = 0;
+    int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
-    private String name;
+    String name;
 
     @Override
     public String description() {

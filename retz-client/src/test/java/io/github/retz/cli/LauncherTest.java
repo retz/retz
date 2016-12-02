@@ -134,9 +134,12 @@ public class LauncherTest {
         }
 
         {
-            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a"};
+            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "-prio", "-2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("schedule", conf.getParsedSubCommand().getName());
+            CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
+            assertEquals("fooname", commandSchedule.name);
+            assertEquals(-2, commandSchedule.priority);
         }
         // TODO: add more pattern tests
     }
@@ -167,6 +170,15 @@ public class LauncherTest {
             assertEquals(32, command.mem);
             assertEquals(1, command.gpu);
             assertTrue(command.stderr);
+        }
+
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "-prio", "-2"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("run", conf.getParsedSubCommand().getName());
+            CommandRun commandRun = (CommandRun)conf.getParsedSubCommand();
+            assertEquals("fooname", commandRun.name);
+            assertEquals(-2, commandRun.priority);
         }
     }
 

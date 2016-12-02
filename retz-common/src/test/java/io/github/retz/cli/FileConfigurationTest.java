@@ -39,6 +39,7 @@ public class FileConfigurationTest {
         assertEquals(config.getKeystorePass(), "foobar");
         assertFalse(config.checkCert());
         assertTrue(config.authenticationEnabled());
+        assertEquals(40822, config.getJmxPort());
     }
 
     @Test
