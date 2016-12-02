@@ -1,6 +1,6 @@
 # Retz release notes
 
-## 0.0.35
+## 0.1.0
 
 * Change server to bind an IP address that is written as 'retz.bind' of
   configuration file (#62).

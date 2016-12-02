@@ -18,13 +18,14 @@ package io.github.retz.inttest;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
-import io.github.retz.cli.FileConfiguration;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
 import java.io.File;
 import java.util.Arrays;
@@ -50,8 +51,8 @@ public class IntTestBase {
         hostBuildDir = new File("./build/").getCanonicalPath();
         boolean _res = new File(hostBuildDir, "log/").mkdirs();
 
-        DockerClientConfig.DockerClientConfigBuilder builder
-                = DockerClientConfig.createDefaultConfigBuilder().withApiVersion("1.12");
+        DefaultDockerClientConfig.Builder builder
+                = DefaultDockerClientConfig.createDefaultConfigBuilder().withApiVersion("1.12");
         Optional<String> dockerHostEnv = Optional.ofNullable(System.getenv("DOCKER_HOST"));
         builder.withDockerHost(dockerHostEnv.orElse("unix:///var/run/docker.sock"));
 
