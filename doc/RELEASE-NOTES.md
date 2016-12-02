@@ -2,6 +2,8 @@
 
 ## 0.0.35
 
+* Change server to bind an IP address that is written as 'retz.bind' of
+  configuration file (#62).
 * Add '-N' (or '--name') option to subcommand 'run' and 'schedule' to
   set plain job name. The default value of job name has also changed
   to String value of hash code of command.

@@ -77,6 +77,7 @@ public final class WebConsole {
         }
 
         port(config.getUri().getPort());
+        ipAddress(config.getUri().getHost());
         staticFileLocation("/public");
 
         before((req, res) -> {

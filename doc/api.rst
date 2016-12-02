@@ -311,12 +311,6 @@ Server configuration file
    Although the default address is ``localhost``, it is recommended to
    use IP address that is accessible from external nodes.
 
-.. note:: Currently Retz binds ``0.0.0.0`` even if any address is
-          specified in ``retz.bind``, but this behaviour is not
-          preferrable and will be changed in future. Watch `issue 62
-          <https://github.com/retz/retz/issues/62>`_ and `issue 45
-          <https://github.com/retz/retz/issues/62>`_ to track this.
-
 * ``retz.authentication = true``:   Enable authentication between client and server. If this is false,
    Retz server does no verification and authentication on server side.
    (``retz.access.key`` is still required in client configuration to
