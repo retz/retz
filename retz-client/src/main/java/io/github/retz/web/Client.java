@@ -16,34 +16,27 @@
  */
 package io.github.retz.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.auth.AuthHeader;
-import io.github.retz.auth.Authenticator;
-import io.github.retz.cli.TimestampHelper;
-import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
+import java.io.IOException;
+import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ResourceBundle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.bind.DatatypeConverter;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyManagementException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
-import java.util.ResourceBundle;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import io.github.retz.auth.Authenticator;
+import io.github.retz.protocol.GetJobResponse;
+import io.github.retz.protocol.Response;
+import io.github.retz.protocol.ScheduleResponse;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.web.feign.Server;
 
 public class Client implements AutoCloseable {
+
     public static final String VERSION_STRING;
+
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
 
     static {
@@ -51,26 +44,10 @@ public class Client implements AutoCloseable {
         VERSION_STRING = labels.getString("version");
     }
 
-    private final ObjectMapper mapper;
-    private final String scheme;
-    private final String host;
-    private final int port;
-    private final Authenticator authenticator;
-    private MessageDigest DIGEST = null; //TODO this could be final, though...
+    private final Server server;
 
     protected Client(URI uri, Authenticator authenticator) {
-        this.scheme = uri.getScheme();
-        this.host = uri.getHost();
-        this.port = uri.getPort();
-        this.mapper = new ObjectMapper();
-        this.mapper.registerModule(new Jdk8Module());
-        this.authenticator = authenticator;
-
-        try {
-            DIGEST = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new AssertionError("No such algorithm callled MD5.");
-        }
+        this.server = Server.connect(uri, authenticator);
     }
 
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
@@ -94,60 +71,31 @@ public class Client implements AutoCloseable {
     public void close() {
     }
 
-
     public boolean ping() throws IOException {
-        URL url;
-        try {
-            url = new URL(scheme + "://" + host + ":" + port + "/ping");
-            LOG.debug("Pinging {}", url);
-        } catch (MalformedURLException e) {
-            LOG.error(e.toString());
-            return false;
-        }
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(false);
-            byte[] buffer = {'n', 'g'};
-            int s = conn.getInputStream().read(buffer, 0, 2);
-            if (s < 0) {
-                return false;
-            }
-            String msg = new String(buffer, StandardCharsets.UTF_8);
-            LOG.info(msg);
-            return "OK".equals(msg);
-        } catch (IOException e) {
-            LOG.debug(e.toString());
-            return false;
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
+        return "OK".equals(server.ping());
     }
 
     public Response list(int limit) throws IOException {
-        return rpc(new ListJobRequest(limit));
+        return Server.tryOrErrorResponse(() -> server.list());
     }
 
     public Response schedule(Job job) throws IOException {
         if (job.priority() < -20 || 19 < job.priority()) {
             throw new IllegalArgumentException("Priority must be [-19, 20]");
         }
-        return rpc(new ScheduleRequest(job));
+        return Server.tryOrErrorResponse(() -> server.schedule(job));
     }
 
     public Response getJob(int id) throws IOException {
-        return rpc(new GetJobRequest(id));
+        return Server.tryOrErrorResponse(() -> server.getJob(id));
     }
 
     public Response getFile(int id, String file, long offset, long length) throws IOException {
-        return rpc(new GetFileRequest(id, file, offset, length));
+        return Server.tryOrErrorResponse(() -> server.getFile(id, file, offset, length));
     }
 
     public Response listFiles(int id, String path) throws IOException {
-        return rpc(new ListFilesRequest(id, path));
+        return Server.tryOrErrorResponse(() -> server.listFiles(id, path));
     }
 
     public Job run(Job job) throws IOException {
@@ -164,7 +112,7 @@ public class Client implements AutoCloseable {
 
     private Job waitPoll(Job job) throws IOException {
         do {
-            Response res = rpc(new GetJobRequest(job.id()));
+            Response res = getJob(job.id());
             if (res instanceof GetJobResponse) {
                 GetJobResponse getJobResponse = (GetJobResponse) res;
                 if (getJobResponse.job().isPresent()) {
@@ -190,70 +138,23 @@ public class Client implements AutoCloseable {
     }
 
     public Response kill(int id) throws IOException {
-        return rpc(new KillRequest(id));
+        return Server.tryOrErrorResponse(() -> server.kill(id));
     }
 
     public Response getApp(String appid) throws IOException {
-        return rpc(new GetAppRequest(appid));
+        return Server.tryOrErrorResponse(() -> server.getApp(appid));
     }
 
     public Response load(Application application) throws IOException {
-        return rpc(new LoadAppRequest(Objects.requireNonNull(application)));
+        return Server.tryOrErrorResponse(() -> server.load(application));
     }
 
     public Response listApp() throws IOException {
-        return rpc(new ListAppRequest());
+        return Server.tryOrErrorResponse(() -> server.listApp());
     }
 
     @Deprecated
     public Response unload(String appName) throws IOException {
-        return rpc(new UnloadAppRequest(appName));
-    }
-
-    private <ReqType extends Request> Response rpc(ReqType req) throws IOException {
-        URL url;
-        try {
-            url = new URL(scheme + "://" + host + ":" + port + req.resource());
-            LOG.debug("Connecting {}", url);
-        } catch (MalformedURLException e) {
-            return new ErrorResponse(e.toString());
-        }
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod(req.method());
-            conn.setDoOutput(req.hasPayload());
-
-            String md5 = "";
-            String payload = "";
-            if (req.hasPayload()) {
-                payload = mapper.writeValueAsString(req);
-                LOG.debug("Sending {} request with payload '{}'", req.method(), payload);
-                md5 = DatatypeConverter.printHexBinary(DIGEST.digest(payload.getBytes(UTF_8)));
-                conn.setRequestProperty("Content-MD5", md5);
-                conn.setRequestProperty("Content-Length", Integer.toString(payload.length()));
-            }
-
-            String date = TimestampHelper.now();
-            conn.setRequestProperty("Date", date);
-
-            //String signature = authenticator.signature(req.method(), md5, date, req.resource());
-            String header = authenticator.header(req.method(), md5, date, req.resource()).buildHeader();
-            conn.setRequestProperty(AuthHeader.AUTHORIZATION, header);
-            LOG.debug("Signature:{}", header);
-
-            if (req.hasPayload()) {
-                conn.getOutputStream().write(payload.getBytes(UTF_8));
-            }
-
-            return mapper.readValue(conn.getInputStream(), Response.class);
-        } catch (IOException e) {
-            LOG.debug(e.toString(), e);
-            return new ErrorResponse(e.toString());
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
+        return Server.tryOrErrorResponse(() -> server.unload(appName));
     }
 }

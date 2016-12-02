@@ -166,7 +166,7 @@ public final class WebConsole {
         });
 
         // APIs to be in vanilla HTTP
-        get("/ping", (req, res) -> "OK");
+        get("/ping", (req, res) -> "\"OK\"");
         get("/status", WebConsole::status);
 
         // TODO: XXX: validate application owner at ALL job-related APIs
