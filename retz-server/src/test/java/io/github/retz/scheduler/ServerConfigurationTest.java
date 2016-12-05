@@ -16,17 +16,13 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.cli.FileConfiguration;
-import org.eclipse.jetty.server.Server;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ServerConfigurationTest {
     @Test
@@ -41,6 +37,8 @@ public class ServerConfigurationTest {
         assertTrue(config.authenticationEnabled());
         assertEquals(0, config.getMaxStockSize());
         assertEquals(7, config.getRefuseSeconds());
+        assertEquals(42, config.getGcLeeway());
+        assertEquals(3, config.getGcInterval());
     }
 
     @Test(expected=IllegalArgumentException.class)

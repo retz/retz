@@ -82,6 +82,19 @@ public class ServerConfiguration extends FileConfiguration {
     private final String DEFAULT_PLANNER_NAME = "naive";
     private final String[] PLANNER_NAMES = {"naive", "priority"};
 
+    // Leeway seconds before old job entries get deleted by Retz.
+    // As we may think of many race conditions on task finish at Mesos
+    // and retry from Retz, updates, this value must be reasonably
+    // large number, like several days that old tasks my not reincarnate.
+    // For example, if a cluster usage accounting batch is scheduled
+    // every week, this must be long enough that *all* jobs are
+    // accounted and not deleted before any batch.
+    private final String GC_LEEWAY = "retz.gc.leeway";
+    private final int DEFAULT_GC_LEEWAY = 7 * 86400; // a week in seconds
+    private final String GC_INTERVAL = "retz.gc.interval";
+    private final int DEFAULT_GC_INTERVAL = 600; // 10 minutes in seconds
+
+
     public ServerConfiguration(InputStream in) throws IOException, URISyntaxException {
         super(in);
 
@@ -125,11 +138,13 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}",
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize(),
-                MESOS_REFUSE_SECONDS, getRefuseSeconds());
+                MESOS_REFUSE_SECONDS, getRefuseSeconds(),
+                GC_LEEWAY, getGcLeeway(),
+                GC_INTERVAL, getGcInterval());
     }
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
@@ -216,9 +231,29 @@ public class ServerConfiguration extends FileConfiguration {
     }
 
     public int getRefuseSeconds() {
-        String s = properties.getProperty(MESOS_REFUSE_SECONDS);
+        return getLowerboundedIntProperty(MESOS_REFUSE_SECONDS, DEFAULT_MESOS_REFUSE_SECONDS, 1);
+    }
+
+    public int getGcLeeway() {
+        return getLowerboundedIntProperty(GC_LEEWAY, DEFAULT_GC_LEEWAY, 0);
+    }
+
+    public int getGcInterval() {
+        return getLowerboundedIntProperty(GC_INTERVAL, DEFAULT_GC_INTERVAL, 1);
+    }
+
+    private int getLowerboundedIntProperty(String name, int dflt, int lb) {
+        int i = getIntProperty(name, dflt);
+        if (i >= lb) {
+            return i;
+        } else {
+            throw new IllegalArgumentException(name + "(=" + i + ") must be >= " + lb);
+        }
+    }
+    private int getIntProperty(String name, int dflt) {
+        String s = properties.getProperty(name);
         if (s == null) {
-            return DEFAULT_MESOS_REFUSE_SECONDS;
+            return dflt;
         } else {
             return Integer.parseInt(s);
         }

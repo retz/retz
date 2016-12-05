@@ -35,9 +35,11 @@ public class AdminConsole implements AdminConsoleMXBean {
     private static final Logger LOG = LoggerFactory.getLogger(AdminConsole.class);
 
     private final ObjectMapper MAPPER = new ObjectMapper();
+    private final int LEEWAY;
 
-    public AdminConsole() {
+    public AdminConsole(int leeway) {
         MAPPER.registerModule(new Jdk8Module());
+        this.LEEWAY = leeway;
     }
 
     @Override
@@ -46,7 +48,7 @@ public class AdminConsole implements AdminConsoleMXBean {
         try {
             User user = Database.getInstance().createUser();
             return maybeEncodeAsJSON(user);
-        } catch (SQLException e){
+        } catch (SQLException e) {
             return errorJSON(e.toString());
         }
     }
@@ -77,6 +79,24 @@ public class AdminConsole implements AdminConsoleMXBean {
         LOG.info("AdminConsole.listUser()");
         List<User> users = Database.getInstance().allUsers();
         return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean gc() {
+        return gc(LEEWAY);
+    }
+
+    @Override
+    public boolean gc(int leeway) {
+        try {
+            // TODO: do we do mutex to avoid concurrent execution even though it has transaction?
+            LOG.info("Job GC invocation from JMX: leeway={}s", leeway);
+            Database.getInstance().deleteOldJobs(LEEWAY);
+            return true;
+        } catch (Throwable t) {
+            LOG.info(t.toString(), t);
+            return false;
+        }
     }
 
     private String maybeEncodeAsJSON(Object o) {

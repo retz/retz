@@ -618,6 +618,15 @@ public class Database {
         }
     }
 
+    public void deleteOldJobs(int leeway) {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            new Jobs(conn, MAPPER).collect(leeway);
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+        }
+    }
+
     public void setJobStarting(int id, Optional<String> maybeUrl, String taskId) throws IOException, SQLException, JobNotFoundException {
         updateJob(id, job -> {
             job.starting(taskId, maybeUrl, TimestampHelper.now());

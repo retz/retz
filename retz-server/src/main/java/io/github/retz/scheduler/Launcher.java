@@ -66,6 +66,7 @@ public final class Launcher {
                 LOG.warn("Make sure a valid certificate is being used or RetzExecutor may not work.");
             }
             Database.getInstance().init(conf.getServerConfig());
+            GarbageJobCollector.start(conf.getServerConfig().getGcLeeway(), conf.getServerConfig().getGcInterval());
         } catch (ParseException e) {
             LOG.error(e.toString());
             return -1;
@@ -86,7 +87,7 @@ public final class Launcher {
 
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
             ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
-            AdminConsole mbean = new AdminConsole();
+            AdminConsole mbean = new AdminConsole(conf.getServerConfig().getGcLeeway());
             mbs.registerMBean(mbean, name);
             jmxServer.start();
             LOG.info("JMX enabled listening to {}", jmxPort);
@@ -141,6 +142,7 @@ public final class Launcher {
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());
 
         webConsole.stop(); // Stop web server
+        GarbageJobCollector.stop();
         Database.getInstance().stop();
         jmxServer.stop();
 

@@ -1,5 +1,16 @@
 # Retz release notes
 
+## 0.1.1
+
+* Add garbage job history collection, which periodically collects
+  (deletes from database)`FINISHED` and `KILLED` jobs that finished
+  several periods ago (defined as 'retz.gc.leeway' in seconds). The
+  collector is invoked repeatedly with predefined interval (defined
+  as 'retz.gc.interval'). This is to prevent job execution history
+  occupies the backend data store, in case of H2 database it might
+  make JVM garbage collector heavier day by day. The garbage collector
+  may also be invoked manually, with admin tool `ret-admin gc`.
+
 ## 0.1.0
 
 * Update simplejmx to 1.13, Jackson to 2.8.5, jcommander to 1.58 and

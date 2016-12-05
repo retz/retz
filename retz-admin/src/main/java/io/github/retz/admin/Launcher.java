@@ -50,6 +50,7 @@ public class Launcher {
                 new CommandCreateUser(),
                 new CommandDisableUser(),
                 new CommandEnableUser(),
+                new CommandGC(),
                 new CommandGetUser(),
                 new CommandHelp(),
                 new CommandListUser(),

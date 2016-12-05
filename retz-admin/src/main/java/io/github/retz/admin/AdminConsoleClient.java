@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
     static final Logger LOG = LoggerFactory.getLogger(AdminConsoleClient.class);
@@ -43,6 +42,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
     public AdminConsoleClient(String host, int port) throws JMException {
         this(new JmxClient(host, port));
     }
+
     public AdminConsoleClient(JmxClient client) throws MalformedObjectNameException {
         this.client = Objects.requireNonNull(client);
         objectName = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
@@ -105,6 +105,24 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
             return (String) client.invokeOperation(objectName, "getUser", keyId);
         } catch (Exception o) {
             return "{}";
+        }
+    }
+
+    @Override
+    public boolean gc() {
+        try {
+            return (boolean) client.invokeOperation(objectName, "gc");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean gc(int leeway) {
+        try {
+            return (boolean) client.invokeOperation(objectName, "gc", leeway);
+        } catch (Exception e) {
+            return false;
         }
     }
 

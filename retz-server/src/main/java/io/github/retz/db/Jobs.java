@@ -18,6 +18,7 @@ package io.github.retz.db;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.data.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,6 +110,16 @@ public class Jobs {
             p.setString(9, mapper.writeValueAsString(j));
             p.setInt(10, j.id());
             p.execute();
+        }
+    }
+
+    public void collect(int leeway) throws SQLException {
+        String last = TimestampHelper.past(leeway);
+        try (PreparedStatement p = conn.prepareStatement("DELETE jobs WHERE finished < ? AND (state='FINISHED' OR state='KILLED')"))
+        {
+            LOG.info("Deleting old jobs finished before {}...", last);
+            p.setString(1, last);
+            p.execute(); // returns true as the result of DELETE query is null.
         }
     }
 }

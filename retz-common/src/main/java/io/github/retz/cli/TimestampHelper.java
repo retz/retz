@@ -31,6 +31,11 @@ public class TimestampHelper {
         }
     }
 
+    public static String past(int seconds) {
+        synchronized (DATE_FORMAT) {
+            return DATE_FORMAT.format(new Date(Calendar.getInstance().getTime().getTime() - seconds * 1000));
+        }
+    }
     // Returns duration in second
     public static long diffMillisec(String lhs, String rhs) throws ParseException {
         synchronized (DATE_FORMAT) {
@@ -40,4 +45,5 @@ public class TimestampHelper {
             return l.getTime() - r.getTime();
         }
     }
+
 }
