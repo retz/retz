@@ -66,7 +66,11 @@ public final class Launcher {
                 LOG.warn("Make sure a valid certificate is being used or RetzExecutor may not work.");
             }
             Database.getInstance().init(conf.getServerConfig());
-            GarbageJobCollector.start(conf.getServerConfig().getGcLeeway(), conf.getServerConfig().getGcInterval());
+            if (conf.getServerConfig().getGc()) {
+                GarbageJobCollector.start(conf.getServerConfig().getGcLeeway(), conf.getServerConfig().getGcInterval());
+            } else {
+                LOG.info("Automatic garbage collection is turned off; use retz-admin gc to collect old jobs");
+            }
         } catch (ParseException e) {
             LOG.error(e.toString());
             return -1;

@@ -340,6 +340,11 @@ Server configuration file
 * ``retz.jmx.port = 9999`` : JMX port number to listen on. Note that server only binds
   loopback address.
 
+* ``retz.gc = true`` : A knob to turn off automatic job garbage collection
+* ``retz.gc.leeway = 7 * 86400`` : Leeway seconds where finished/killed jobs are deleted
+* ``retz.gc.interval = 600`` : Interval in seconds that old job garbage collection
+  process is invoked
+
 Planner choice
 
 naive

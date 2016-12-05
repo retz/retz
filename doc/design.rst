@@ -221,7 +221,21 @@ service discovery update accross failover may need setup like
 as [Reference]
 (https://open.mesosphere.com/tutorials/service-discovery/).
 
+Space Reclaim
+~~~~~~~~~~~~~
 
+In a busy Retz setup such that runs hundreds of jobs every day,
+old entry of finished or killed jobs in database uses memory or
+disk space in a database but they are rarely used. At most it
+may be referred several times for cluster usage accounting.
+Such jobs are to be deleted after leeway period has passed by
+Retz server. It has internal service that periodically finds
+and deletes jobs that is older than now from leeway period,
+and its state is either ``FINISHED`` or ``KILLED`` .
+
+Administrators should know job information life cycle and take
+enough time until it gets deleted with 'retz.gc.leeway' setting,
+or disable by setting 'retz.gc = false'.
 
 Retz administration tool
 ------------------------

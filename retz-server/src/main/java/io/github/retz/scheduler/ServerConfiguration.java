@@ -89,6 +89,7 @@ public class ServerConfiguration extends FileConfiguration {
     // For example, if a cluster usage accounting batch is scheduled
     // every week, this must be long enough that *all* jobs are
     // accounted and not deleted before any batch.
+    private final String GC = "retz.gc";
     private final String GC_LEEWAY = "retz.gc.leeway";
     private final int DEFAULT_GC_LEEWAY = 7 * 86400; // a week in seconds
     private final String GC_INTERVAL = "retz.gc.interval";
@@ -234,29 +235,16 @@ public class ServerConfiguration extends FileConfiguration {
         return getLowerboundedIntProperty(MESOS_REFUSE_SECONDS, DEFAULT_MESOS_REFUSE_SECONDS, 1);
     }
 
+    public boolean getGc() {
+        return getBoolProperty(GC, true);
+    }
+
     public int getGcLeeway() {
         return getLowerboundedIntProperty(GC_LEEWAY, DEFAULT_GC_LEEWAY, 0);
     }
 
     public int getGcInterval() {
         return getLowerboundedIntProperty(GC_INTERVAL, DEFAULT_GC_INTERVAL, 1);
-    }
-
-    private int getLowerboundedIntProperty(String name, int dflt, int lb) {
-        int i = getIntProperty(name, dflt);
-        if (i >= lb) {
-            return i;
-        } else {
-            throw new IllegalArgumentException(name + "(=" + i + ") must be >= " + lb);
-        }
-    }
-    private int getIntProperty(String name, int dflt) {
-        String s = properties.getProperty(name);
-        if (s == null) {
-            return dflt;
-        } else {
-            return Integer.parseInt(s);
-        }
     }
 
     @Override

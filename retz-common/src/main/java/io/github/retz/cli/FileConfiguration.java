@@ -27,10 +27,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 
 // TODO: Most of items here have become server-specific. Move them out of common to server with proper abstraction
@@ -171,5 +167,32 @@ public class FileConfiguration {
                 .append(ACCESS_KEY).append(" = ").append(u.keyId()).append("\n")
                 .append(ACCESS_SECRET).append(" = ").append(u.secret()).append("\n");
         return builder.toString();
+    }
+
+
+    protected boolean getBoolProperty(String name, boolean dflt) {
+        String b = properties.getProperty(name);
+        if (b == null) {
+            return dflt;
+        } else {
+            return Boolean.parseBoolean(b);
+        }
+    }
+
+    protected int getLowerboundedIntProperty(String name, int dflt, int lb) {
+        int i = getIntProperty(name, dflt);
+        if (i >= lb) {
+            return i;
+        } else {
+            throw new IllegalArgumentException(name + "(=" + i + ") must be >= " + lb);
+        }
+    }
+    protected int getIntProperty(String name, int dflt) {
+        String s = properties.getProperty(name);
+        if (s == null) {
+            return dflt;
+        } else {
+            return Integer.parseInt(s);
+        }
     }
 }
