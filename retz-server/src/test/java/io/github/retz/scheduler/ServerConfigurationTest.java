@@ -33,7 +33,7 @@ public class ServerConfigurationTest {
         assertEquals(config.getUri(), new URI("http://localhost:9090"));
         assertEquals(config.getKeystoreFile(), "path/to/keystore.jsk");
         assertEquals(config.getKeystorePass(), "foobar");
-        assertFalse(config.insecure());
+        assertTrue(config.insecure());
         assertTrue(config.authenticationEnabled());
         assertEquals(0, config.getMaxStockSize());
         assertEquals(7, config.getRefuseSeconds());

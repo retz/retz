@@ -87,7 +87,7 @@ public class WebConsoleTest {
         System.err.println(config.toString());
         webClient = Client.newBuilder(cliConfig.getUri())
                 .setAuthenticator(cliConfig.getAuthenticator())
-                .checkCert(cliConfig.insecure())
+                .checkCert(!cliConfig.insecure())
                 .build();
     }
 
@@ -246,7 +246,7 @@ public class WebConsoleTest {
     public void ping() throws IOException {
         Client c = Client.newBuilder(config.getUri())
                 .setAuthenticator(config.getAuthenticator())
-                .checkCert(config.insecure())
+                .checkCert(!config.insecure())
                 .build();
         assertTrue(c.ping());
     }
