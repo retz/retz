@@ -24,22 +24,37 @@ def gitVersion() {
 apply plugin: 'com.gradle.build-scan'
 apply plugin: 'nebula-aggregate-javadocs'
 
-subprojects {
+allprojects {
     apply plugin: 'java'
+    apply plugin: "com.github.hierynomus.license"
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    license {
+        header rootProject.file('LICENSE-HEADER.template')
+        strictCheck true
+        ext.year = '2016'
+        ext.name = 'Nautilus Technologies, Inc.'
+
+        excludes(["**/*.json", "**/*.jks"])
+    }
+}
+
+subprojects {
+    apply plugin: 'jacoco'
     apply plugin: 'scala'
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
-    apply plugin: "com.github.hierynomus.license"
 
     group = 'io.github.retz'
     // Note: You can't create RPM with hyphen included in version name
     version = '0.1.1-SNAPSHOT'
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
+
     dependencies {
         compile 'org.slf4j:slf4j-api:1.7.21'
 
@@ -67,17 +82,24 @@ subprojects {
         archives project.tasks.sourcesJar
     }
 
-    license {
-        header rootProject.file('LICENSE-HEADER.template')
-        strictCheck true
-        ext.year = '2016'
-        ext.name = 'Nautilus Technologies, Inc.'
-
-        excludes(["**/*.json", "**/*.jks"])
-    }
-
     eclipse {
         project.buildCommand 'org.eclipse.jdt.core.javabuilder'
+    }
+
+    test {
+        useJUnit()
+        testLogging { // Show that tests are run in the command-line output
+            events 'failed', 'passed'
+        }
+    }
+
+    jacocoTestReport {
+        reports {
+            html.enabled = true
+            xml.enabled = true
+            csv.enabled = false
+            html.destination "${buildDir}/reports/jacoco"
+        }
     }
 }
 
@@ -148,13 +170,6 @@ project(':retz-server') {
         compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.5.+'
 
         testCompile project(":retz-client")
-    }
-
-    test {
-        useJUnit()
-        testLogging { // Show that tests are run in the command-line output
-            events 'started', 'passed'
-        }
     }
 
     task processResources.doLast {

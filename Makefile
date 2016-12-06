@@ -12,7 +12,7 @@ inttest:
 	$(GRADLE) test -Dinttest -is
 
 build:
-	$(GRADLE) build
+	$(GRADLE) build jacocoTestReport
 
 clean:
 	$(GRADLE) clean

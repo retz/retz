@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-import io.github.retz.auth.{AuthHeader, HmacSHA256Authenticator}
+import io.github.retz.auth.{AuthHeader, HmacSHA256Authenticator, NoopAuthenticator}
 import io.github.retz.cli.TimestampHelper
 import org.junit.Test
 import org.scalacheck.{Gen, Prop}
@@ -36,7 +36,19 @@ class AuthenticatorProp extends JUnitSuite {
         val header = authenticator.header(verb, md5, timestamp, path)
         println(header)
         val optionalHeader = AuthHeader.parseHeaderValue(header.buildHeader())
-        key == optionalHeader.get().key && signature == optionalHeader.get().signature
+        key.equals(optionalHeader.get().key) && signature.equals(optionalHeader.get().signature) &&
+        authenticator.authenticate(verb, md5, timestamp, path, key, signature)
+      }
+    })
+  }
+
+  @Test
+  def noop(): Unit = {
+    Checkers.check(Prop.forAll(nonEmptyString, nonEmptyString, nonEmptyString, verb, nonEmptyString) {
+      (key: String, signature: String, path: String, verb: String, md5: String) => {
+        val authenticator = new NoopAuthenticator(key)
+        val date = TimestampHelper.now()
+        authenticator.authenticate(verb, md5, date, path, key, signature)
       }
     })
   }
