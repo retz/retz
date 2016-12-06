@@ -67,6 +67,7 @@ public class ProtocolTest {
         {
             String appString = "{\"appid\":\"my-one-of-42-apps\", \"files\":[\"http://example.com/app.tar.gz\"], \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\"}";
             Application app = mapper.readValue(appString, Application.class);
+            System.err.println(app.toString());
             assertThat(app.getAppid(), is("my-one-of-42-apps"));
             assertNotNull(app.getFiles());
             assertThat(app.getFiles().size(), is(1));

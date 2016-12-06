@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,13 +46,13 @@ public class Application {
                        @JsonProperty("files") List<String> files,
                        @JsonProperty("diskMB") Optional<Integer> diskMB,
                        @JsonProperty("user") Optional<String> user,
-                       @JsonProperty("owner") String owner,
+                       @JsonProperty(value = "owner", required = true) String owner,
                        @JsonProperty("container") Container container,
                        @JsonProperty("enabled") boolean enabled) {
         this.appid = Objects.requireNonNull(appid);
         this.persistentFiles = persistentFiles;
-        this.largeFiles = largeFiles;
-        this.files = files;
+        this.largeFiles = (largeFiles == null) ? Arrays.asList() : largeFiles;
+        this.files = (files == null) ? Arrays.asList() : files;
         this.diskMB = diskMB;
         this.owner = Objects.requireNonNull(owner);
         this.user = user;
@@ -108,30 +109,8 @@ public class Application {
         container = Objects.requireNonNull(c);
     }
 
-    public String toVolumeId() {
-        return Application.toVolumeId(getAppid());
-    }
-
-    public static String toVolumeId(String appId) {
-        // http://mesos.apache.org/documentation/latest/persistent-volume/
-        // "Volume IDs must be unique per role on each agent. However, it is strongly recommended
-        // that frameworks use globally unique volume IDs, to avoid potential confusion between
-        // volumes on different agents that use the same volume ID. Note also that the agent ID
-        // where a volume resides might change over time."
-        StringBuilder sb = new StringBuilder()
-                .append("retz-")
-                .append(appId);
-        return sb.toString();
-    }
-
     @Override
     public String toString() {
-        StringBuilder persistent = new StringBuilder();
-        if (! getPersistentFiles().isEmpty()) {
-            persistent.append("persistent")
-                    .append("(").append(getDiskMB().get()).append("MB):files=")
-                    .append(String.join(",", getPersistentFiles()));
-        }
         String maybeUser = "";
         if (user.isPresent()) {
             maybeUser = "user=" + user.get();
@@ -140,15 +119,14 @@ public class Application {
         if (!enabled) {
             enabledStr = "(disabled)";
         }
-        return String.format("Application%s name=%s: owner=%s %s container=%s: files=%s/%s: %s",
+        return String.format("Application%s name=%s: owner=%s %s container=%s: files=%s/%s",
                 enabledStr,
                 getAppid(),
                 owner,
                 maybeUser,
                 container().getClass().getSimpleName(),
                 String.join(",", getFiles()),
-                String.join(",", getLargeFiles()),
-                persistent.toString());
+                String.join(",", getLargeFiles()));
     }
 }
 

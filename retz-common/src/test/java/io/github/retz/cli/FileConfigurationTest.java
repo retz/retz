@@ -17,12 +17,11 @@
 package io.github.retz.cli;
 
 import io.github.retz.auth.Authenticator;
+import io.github.retz.protocol.data.User;
 import org.junit.Test;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.net.URI;
 import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -37,9 +36,22 @@ public class FileConfigurationTest {
 
         assertEquals(config.getKeystoreFile(), "path/to/keystore.jsk");
         assertEquals(config.getKeystorePass(), "foobar");
-        assertFalse(config.checkCert());
+        assertEquals(null, config.getTruststoreFile());
+        assertEquals(null, config.getTruststorePass());
+        assertEquals("cafebabe", config.getAccessKey());
+        assertEquals("cafebabe", config.getUser().keyId());
+        assertEquals("deadbeef", config.getUser().secret());
+        assertTrue(config.insecure());
         assertTrue(config.authenticationEnabled());
         assertEquals(40822, config.getJmxPort());
+
+        User u = new User("me", "you", true);
+        assertEquals("retz.authentication = true\nretz.access.key = me\nretz.access.secret = you\n",
+                FileConfiguration.userAsConfig(u));
+
+        assertEquals(true, config.getBoolProperty(FileConfiguration.AUTHENTICATION, true));
+        assertEquals(40822, config.getLowerboundedIntProperty(FileConfiguration.JMX_PORT, 9999,1024));
+        assertEquals(42, config.getIntProperty("nosuch.property", 42));
     }
 
     @Test

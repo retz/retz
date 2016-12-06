@@ -253,7 +253,7 @@ public class ServerConfiguration extends FileConfiguration {
                 .append("[uri=").append(uri)
                 .append(", props=").append(properties)
                 .append(", ").append(MAX_STOCK_SIZE).append("=").append(getMaxStockSize())
-                .append(", checkCert=").append(checkCert())
+                .append(", insecure=").append(insecure())
                 .append("]")
                 .toString();
     }

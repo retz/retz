@@ -34,7 +34,8 @@ class AuthenticatorProp extends JUnitSuite {
         val timestamp = TimestampHelper.now()
         val signature = authenticator.signature(verb, md5, timestamp, path)
         val header = authenticator.header(verb, md5, timestamp, path)
-        println(header)
+        println(authenticator.getKey)
+        println(header, authenticator)
         val optionalHeader = AuthHeader.parseHeaderValue(header.buildHeader())
         key.equals(optionalHeader.get().key) && signature.equals(optionalHeader.get().signature) &&
         authenticator.authenticate(verb, md5, timestamp, path, key, signature)

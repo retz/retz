@@ -45,16 +45,14 @@ public class FileConfiguration {
     static final String KEYSTORE_PASS = "retz.tls.keystore.pass";
     static final String TRUSTSTORE_FILE = "retz.tls.truststore.file";
     static final String TRUSTSTORE_PASS = "retz.tls.truststore.pass";
-    static final String CHECK_CERT = "retz.tls.insecure";
+    // Flag name is 'insecure' but this must be treated as right name
+    static final String INSECURE_TLS = "retz.tls.insecure";
 
     // Used in server and admin tool
     static final String JMX_PORT = "retz.jmx.port";
     public static final int DEFAULT_JMX_PORT = 9999;
 
     protected Properties properties;
-    private final boolean authenticationEnabled;
-    private final boolean checkCert;
-
 
     public FileConfiguration(String path) throws IOException {
         this(new File(path));
@@ -78,9 +76,7 @@ public class FileConfiguration {
             Objects.requireNonNull(properties.getProperty(KEYSTORE_PASS));
         } */
 
-        String authentication = properties.getProperty(AUTHENTICATION, "true");
-        authenticationEnabled = ! authentication.equals("false");
-        if (authenticationEnabled) {
+        if (authenticationEnabled()) {
             LOG.info("Authentication enabled");
             if (properties.getProperty(ACCESS_SECRET) == null
                     || properties.getProperty(ACCESS_KEY) == null) {
@@ -91,18 +87,10 @@ public class FileConfiguration {
         } else {
             LOG.warn("Authentication is disabled");
         }
-
-        // Flag name is 'insecure' but this must be treated as right name
-        String insecure = properties.getProperty(CHECK_CERT, "false");
-        if (insecure.equals("true")) {
-            this.checkCert = false;
-        } else {
-            this.checkCert = true;
-        }
     }
 
-    public boolean checkCert() {
-        return checkCert;
+    public boolean insecure() {
+        return getBoolProperty(INSECURE_TLS,false);
     }
     public String getKeystoreFile() {
         return properties.getProperty(KEYSTORE_FILE);
@@ -117,7 +105,7 @@ public class FileConfiguration {
         return properties.getProperty(TRUSTSTORE_PASS);
     }
     public boolean authenticationEnabled() {
-        return authenticationEnabled;
+        return getBoolProperty(AUTHENTICATION, true);
     }
 
     public String getAccessKey() {
@@ -153,12 +141,7 @@ public class FileConfiguration {
     }
 
     public int getJmxPort() {
-        String p = properties.getProperty(JMX_PORT);
-        if (p == null) {
-            return DEFAULT_JMX_PORT;
-        } else {
-            return Integer.parseInt(p);
-        }
+        return getBoundedIntProperty(JMX_PORT, DEFAULT_JMX_PORT, 1024, 65536);
     }
 
     public static String userAsConfig(User u) {
@@ -169,7 +152,6 @@ public class FileConfiguration {
         return builder.toString();
     }
 
-
     protected boolean getBoolProperty(String name, boolean dflt) {
         String b = properties.getProperty(name);
         if (b == null) {
@@ -179,13 +161,17 @@ public class FileConfiguration {
         }
     }
 
-    protected int getLowerboundedIntProperty(String name, int dflt, int lb) {
+    protected int getBoundedIntProperty(String name, int dflt, int lb, int ub) {
         int i = getIntProperty(name, dflt);
-        if (i >= lb) {
+        if (lb <= i && i <= ub) {
             return i;
         } else {
-            throw new IllegalArgumentException(name + "(=" + i + ") must be >= " + lb);
+            throw new IllegalArgumentException(name + "(=" + i + ") must be in [" + lb + ", " + ub + "]");
         }
+    }
+
+    protected int getLowerboundedIntProperty(String name, int dflt, int lb) {
+        return getBoundedIntProperty(name, dflt, lb, Integer.MAX_VALUE);
     }
     protected int getIntProperty(String name, int dflt) {
         String s = properties.getProperty(name);

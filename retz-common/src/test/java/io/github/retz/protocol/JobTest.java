@@ -24,6 +24,8 @@ import org.junit.Test;
 import java.util.Optional;
 import java.util.Properties;
 
+import static org.junit.Assert.assertEquals;
+
 public class JobTest {
 
     private Job job;
@@ -48,42 +50,61 @@ public class JobTest {
                 0,
                 0,
                 "sample-app",
-                "job=name",
+                null,
                 32,
                 65536,
                 8,
                 0,
                 0,
                 "my-sample-taskid",
-                Job.JobState.QUEUED);
+                Job.JobState.CREATED);
+        job.setName("job=name");
+        job.setPriority(-10);
     }
 
 
     @Test
     public void ppQueued() {
+        job.schedule(100000042, TimestampHelper.now());
+        System.err.println(job.toString());
         System.err.println(job.pp());
+        assertEquals(Job.JobState.QUEUED, job.state());
     }
-
 
     @Test
     public void ppStarting() {
         job.starting("retz-new-task-id-2354", Optional.empty(), TimestampHelper.now());
+        System.err.println(job.toString());
         System.err.println(job.pp());
+        assertEquals(Job.JobState.STARTING, job.state());
     }
 
     @Test public void ppStarted() {
         job.started("retz-new-task-id-2354", Optional.empty(), TimestampHelper.now());
+        System.err.println(job.toString());
         System.err.println(job.pp());
+        assertEquals(Job.JobState.STARTED, job.state());
     }
 
     @Test public void ppFinished() {
         job.finished(TimestampHelper.now(), Optional.empty(), 0);
+        System.err.println(job.toString());
         System.err.println(job.pp());
+        assertEquals(Job.JobState.FINISHED, job.state());
     }
 
     @Test public void ppKilled() {
         job.killed(TimestampHelper.now(), Optional.empty(), "deadly important stupid some reason");
+        System.err.println(job.toString());
         System.err.println(job.pp());
+        assertEquals(Job.JobState.KILLED, job.state());
     }
 
+    @Test
+    public void ppRetry() {
+        job.doRetry();
+        System.err.println(job.toString());
+        System.err.println(job.pp());
+        assertEquals(Job.JobState.QUEUED, job.state());
+    }
 }

@@ -19,7 +19,6 @@ package io.github.retz.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.ClientCLIConfig;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.*;
@@ -88,7 +87,7 @@ public class WebConsoleTest {
         System.err.println(config.toString());
         webClient = Client.newBuilder(cliConfig.getUri())
                 .setAuthenticator(cliConfig.getAuthenticator())
-                .checkCert(cliConfig.checkCert())
+                .checkCert(cliConfig.insecure())
                 .build();
     }
 
@@ -247,7 +246,7 @@ public class WebConsoleTest {
     public void ping() throws IOException {
         Client c = Client.newBuilder(config.getUri())
                 .setAuthenticator(config.getAuthenticator())
-                .checkCert(config.checkCert())
+                .checkCert(config.insecure())
                 .build();
         assertTrue(c.ping());
     }

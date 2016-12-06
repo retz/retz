@@ -81,7 +81,7 @@ public class CommandRun implements SubCommand {
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
-                .checkCert(fileConfig.checkCert())
+                .checkCert(!fileConfig.insecure())
                 .build()) {
 
             LOG.info("Sending job {} to App {}", job.cmd(), job.appid());

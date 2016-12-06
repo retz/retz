@@ -59,7 +59,7 @@ public class CommandListFiles implements SubCommand {
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
-                .checkCert(fileConfig.checkCert())
+                .checkCert(!fileConfig.insecure())
                 .build()) {
 
             LOG.info("Listing files in {} of a job(id={})", path, id);

@@ -46,7 +46,7 @@ public class CommandList implements SubCommand {
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
-                .checkCert(fileConfig.checkCert())
+                .checkCert(!fileConfig.insecure())
                 .build()) {
 
             Response res = webClient.list(64); // TODO: make this CLI argument

@@ -33,7 +33,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
-import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -74,7 +73,7 @@ public class CommandGetFile implements SubCommand {
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
-                .checkCert(fileConfig.checkCert())
+                .checkCert(!fileConfig.insecure())
                 .build();
              OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename)) {
 

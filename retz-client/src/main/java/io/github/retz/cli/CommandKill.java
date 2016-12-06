@@ -49,7 +49,7 @@ public class CommandKill implements SubCommand {
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
-                .checkCert(fileConfig.checkCert())
+                .checkCert(!fileConfig.insecure())
                 .build()) {
 
             LOG.info("Killing job detail id={}", id);
