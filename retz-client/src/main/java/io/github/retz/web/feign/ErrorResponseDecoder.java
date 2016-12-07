@@ -62,10 +62,14 @@ public class ErrorResponseDecoder implements ErrorDecoder {
                                     fex.status(), fex.getMessage(),
                                     mapper.readValue(value, ErrorResponse.class));
                         } catch (IOException e) {
-                            return ex;
+                            return new ErrorResponseException(
+                                    fex.status(), fex.getMessage(),
+                                    new ErrorResponse(value));
                         }
                     })
-                    .orElseGet(() -> ex);
+                    .orElseGet(() -> new ErrorResponseException(
+                            fex.status(), fex.getMessage(),
+                            new ErrorResponse(fex.toString())));
         } else {
             return ex;
         }
