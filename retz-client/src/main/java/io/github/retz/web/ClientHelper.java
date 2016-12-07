@@ -20,12 +20,10 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.List;
 import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -89,10 +87,6 @@ public class ClientHelper {
             }
         }
 
-        if (!ClientHelper.fileExists(c, id, filename)) {
-            throw new FileNotFoundException(filename);
-        }
-
         int interval = INITAL_INTERVAL_MSEC;
         Job.JobState currentState = Job.JobState.QUEUED;
 
@@ -136,6 +130,11 @@ public class ClientHelper {
             }
         }
         while (currentState != Job.JobState.FINISHED && currentState != Job.JobState.KILLED);
+
+        if (!ClientHelper.fileExists(c, id, filename)) {
+            // TODO: remove a file if it's already created
+            throw new FileNotFoundException(filename);
+        }
 
         return current;
     }

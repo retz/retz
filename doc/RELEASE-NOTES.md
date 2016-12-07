@@ -2,6 +2,10 @@
 
 ## 0.1.1
 
+* Remove file check right after schedule succeeded on 'run' subcommand.
+  Without this, false `FileNotFoundException` could have been throws
+  when a client is too fast that starts polling the file before the
+  file is created in sandbox.
 * Package installers of `retz-client` now recognizes
   ``/opt/retz-client/etc/retz.properties` as configuration file,
   not removing them on package updates.
