@@ -90,10 +90,9 @@ as highly available.
 Retz server
 -----------
 
+::
 
-```sh
-# /opt/retz-server/bin/retz-server
-```
+   # /opt/retz-server/bin/retz-server
 
 The server requires correct address of Mesos master - otherwise
 it cannot start as a Mesos framework scheduler.
