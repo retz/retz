@@ -182,8 +182,7 @@ Both ``run`` and ``schedule`` have same options:
 * ``-cpu``, ``-mem``, ``-gpu`` - numbers of resources you want. CPU is for
   number of cores (default is 1), memory is for RAM size in MBs
   (default is 32), GPU is for numbers of GPUs to be visible at
-  container (default is 0 [#]_ ). Those numbers are available at the shell
-  and command as ``$RETZ_CPU``, ``$RETZ_MEM`` .
+  container (default is 0 [#]_ ).
 * ``-cmd`` - set command one liner - shell variables are to be evaluated.
 
 .. [#] Whether GPU is available or not depends on system setup,
@@ -191,8 +190,8 @@ Both ``run`` and ``schedule`` have same options:
 
 Example run::
 
-  $ retz-client run -A your-app -E YOUR_APP_ENV '-Xmx$RETZ_MEMm' \
-    -cmd 'your-app-cmd -thread $RETZ_CPU' -mem 65536
+  $ retz-client run -A your-app -E YOUR_APP_ENV '-Xmx65536m' \
+    -cmd 'your-app-cmd -thread 16' -cpu 16 -mem 65536
 
 This command blocks until Retz accepts the job, wait for resource
 offer from Mesos, environment fetch, command invocation and its finish
@@ -205,8 +204,8 @@ available, which sends SIGTERM to your command (or Docker container).
 
 Or example schedule::
 
-  $ retz-client schedule -A your-app -E YOUR_APP_ENV '-Xmx$RETZ_MEMm' \
-    -cmd 'your-app-cmd -thread $RETZ_CPU' -mem 65536
+  $ retz-client schedule -A your-app -E YOUR_APP_ENV '-Xmx65536m' \
+    -cmd 'your-app-cmd -thread 16' -cpu 16 -mem 65536
 
 Watching your job status
 ========================

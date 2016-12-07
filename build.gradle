@@ -51,7 +51,7 @@ subprojects {
 
     group = 'io.github.retz'
     // Note: You can't create RPM with hyphen included in version name
-    version = '0.1.1-SNAPSHOT'
+    version = '0.1.1'
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
