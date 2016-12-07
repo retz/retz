@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import feign.FeignException;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.protocol.GetJobResponse;
 import io.github.retz.protocol.Response;
@@ -72,7 +73,12 @@ public class Client implements AutoCloseable {
     }
 
     public boolean ping() throws IOException {
-        return "OK".equals(server.ping());
+        try {
+            return "OK".equals(server.ping());
+        } catch (FeignException e) {
+            LOG.debug(e.toString());
+            return false;
+        }
     }
 
     public Response list(int limit) throws IOException {
