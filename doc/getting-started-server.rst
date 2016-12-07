@@ -378,3 +378,13 @@ A.  YAESS has one path that moves to ``$HOME``, with invalid home
 **A.** Mesos is bound to invalid address such as `0.0.0.0:5050` or
 `127.0.0.1:5050` .  Set an accessible IP address to both
 ``/etc/mesos-master/ip`` and ``retz.mesos`` in ``retz.properties``.
+
+Q.
+   How to output debug log for diagnosis?
+A.  Add ``-Dlogback.configurationFile=/path/to/logback-debug.xml`` to
+   JVM boot option.  For Retz servers installed with package managers,
+   set environment variable ``RETZ_SERVER_OPTS`` like this: ``export
+   RETZ_SERVER_OPTS=-Dlogback.configurationFile=/opt/retz-server/etc/logback.xml``
+   For fat jar file users, ``java
+   -Dlogback.configurationFile=/path/to/logback-debug.xml -jar
+   path/to/retz-server-0.1.0-all.jar -C retz.properties``
