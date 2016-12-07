@@ -252,9 +252,16 @@ project(':retz-client') {
     buildRpm {
         release = '1.el7'
         arch = 'X86_64'
+
+        into '/opt/retz-client'
+        from('src/main/dist/etc') {
+            fileType CONFIG | NOREPLACE
+            into 'etc'
+        }
     }
     buildDeb {
         arch = 'AMD64'
+        configurationFile('/opt/retz-client/etc/retz.properties')
     }
 }
 

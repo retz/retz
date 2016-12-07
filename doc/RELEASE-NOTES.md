@@ -2,6 +2,9 @@
 
 ## 0.1.1
 
+* Package installers of `retz-client` now recognizes
+  ``/opt/retz-client/etc/retz.properties` as configuration file,
+  not removing them on package updates.
 * Add garbage job history collection, which periodically collects
   (deletes from database)`FINISHED` and `KILLED` jobs that finished
   several periods ago (defined as 'retz.gc.leeway' in seconds). The
