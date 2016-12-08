@@ -36,7 +36,7 @@ import io.github.retz.protocol.ScheduleRequest;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 
-public interface Server {
+public interface Retz {
 
     @RequestLine("GET /ping")
     String ping();
@@ -91,7 +91,7 @@ public interface Server {
     @RequestLine("DELETE /app/{appid}")
     Response unload(@Param("appid") String appid);
 
-    static Server connect(URI uri, Authenticator authenticator) {
+    static Retz connect(URI uri, Authenticator authenticator) {
         String url = Objects.requireNonNull(uri, "uri cannot be null").toString();
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
@@ -100,7 +100,7 @@ public interface Server {
                 .decoder(new JacksonDecoder(mapper))
                 .errorDecoder(new ErrorResponseDecoder(mapper))
                 .requestInterceptor(new AuthHeaderInterceptor(authenticator))
-                .target(Server.class, url);
+                .target(Retz.class, url);
     }
 
     static Response tryOrErrorResponse(Supplier<Response> supplier) throws IOException {
