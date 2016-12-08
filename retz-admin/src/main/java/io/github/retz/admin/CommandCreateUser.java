@@ -29,6 +29,9 @@ import javax.management.ObjectName;
 public class CommandCreateUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandCreateUser.class);
 
+    @Parameter(names = "--info", description = "Additional field to remember in database")
+    String info = "";
+
     @Override
     public String description() {
         return "Create a user";
@@ -42,8 +45,13 @@ public class CommandCreateUser implements SubCommand {
     @Override
     public int handle(FileConfiguration fileConfig) throws Throwable {
         int port = fileConfig.getJmxPort();
+
+        if (info.length() > 1024) {
+            LOG.error("--info must be smaller than 1024 MBs: {}", info);
+        }
+
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
-            User u = client.createUserAsObject();
+            User u = client.createUserAsObject(info);
             System.out.println(FileConfiguration.userAsConfig(u));
             return 0;
         }

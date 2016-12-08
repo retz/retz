@@ -45,7 +45,7 @@ public class FileConfigurationTest {
         assertTrue(config.authenticationEnabled());
         assertEquals(40822, config.getJmxPort());
 
-        User u = new User("me", "you", true);
+        User u = new User("me", "you", true, "test account");
         assertEquals("retz.authentication = true\nretz.access.key = me\nretz.access.secret = you\n",
                 FileConfiguration.userAsConfig(u));
 

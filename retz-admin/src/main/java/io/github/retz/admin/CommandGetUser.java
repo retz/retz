@@ -47,7 +47,7 @@ public class CommandGetUser implements SubCommand {
         int port = fileConfig.getJmxPort();
         try (AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             User user = client.getUserAsObject(id);
-            LOG.info("User id={}, enabled={}", user.keyId(), user.enabled());
+            LOG.info("User id={}, enabled={}, info={}", user.keyId(), user.enabled(), user.info());
             return 0;
         }
     }

@@ -120,10 +120,10 @@ public class FileConfiguration {
             throw new RuntimeException("Key cannot be null...."); // TODO: authentication must be always enabled
         }
         if (secret == null) {
-            enabled = false;
+            enabled = !authenticationEnabled(); // no need for secret when authentication is disabled
             secret = "";
         }
-        return new User(key, secret, enabled);
+        return new User(key, secret, enabled, "Admin user");
     }
 
     public Authenticator getAuthenticator() {

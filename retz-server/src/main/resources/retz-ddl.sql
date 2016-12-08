@@ -20,6 +20,7 @@ CREATE TABLE users (
     key_id VARCHAR(32) NOT NULL UNIQUE,
     secret VARCHAR(64) NOT NULL,
     enabled BOOLEAN NOT NULL,
+    json TEXT NOT NULL,
     PRIMARY KEY (key_id)
 );
 

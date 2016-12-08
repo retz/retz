@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,12 +44,14 @@ public class AdminConsole implements AdminConsoleMXBean {
     }
 
     @Override
-    public String createUser() {
-        LOG.info("AdminConsole.createUser()");
+    public String createUser(String info) {
+        LOG.info("AdminConsole.createUser({})", info);
         try {
-            User user = Database.getInstance().createUser();
+            User user = Database.getInstance().createUser(info);
             return maybeEncodeAsJSON(user);
         } catch (SQLException e) {
+            return errorJSON(e.toString());
+        } catch (IOException e) {
             return errorJSON(e.toString());
         }
     }
@@ -56,8 +59,13 @@ public class AdminConsole implements AdminConsoleMXBean {
     @Override
     public String getUser(String name) {
         LOG.info("AdminConsole.getUser({})", name);
-        Optional<User> maybeUser = Database.getInstance().getUser(name);
-        return maybeEncodeAsJSON(maybeUser);
+        try {
+            Optional<User> maybeUser = Database.getInstance().getUser(name);
+            return maybeEncodeAsJSON(maybeUser);
+        } catch (IOException e) {
+            LOG.error(e.toString());
+            return errorJSON(e.toString());
+        }
     }
 
     @Override
@@ -77,8 +85,13 @@ public class AdminConsole implements AdminConsoleMXBean {
     @Override
     public List<String> listUser() {
         LOG.info("AdminConsole.listUser()");
-        List<User> users = Database.getInstance().allUsers();
-        return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
+        try {
+            List<User> users = Database.getInstance().allUsers();
+            return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
+        } catch (IOException e) {
+            LOG.error(e.toString());
+            return Arrays.asList();
+        }
     }
 
     @Override

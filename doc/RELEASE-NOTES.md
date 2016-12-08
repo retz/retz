@@ -1,5 +1,13 @@
 # Retz release notes
 
+## 0.1.2
+
+* Add '--info' option to 'retz-admin' command to annotate each user with
+  additional information, such as mail address or any other arbitrary
+  string. **This requires database update or reset, adding a column**.
+  Also, this introduces incompatibility to a protocol between retz-server
+  and retz-admin.
+
 ## 0.1.1
 
 * Remove file check right after schedule succeeded on 'run' subcommand.

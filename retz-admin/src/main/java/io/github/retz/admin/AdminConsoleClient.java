@@ -80,13 +80,13 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         }
     }
 
-    public User createUserAsObject() throws IOException {
-        String s = createUser();
+    public User createUserAsObject(String info) throws IOException {
+        String s = createUser(info);
         return mapper.readValue(s, User.class);
     }
 
     @Override
-    public String createUser() {
+    public String createUser(String info) {
         try {
             return (String) client.invokeOperation(objectName, "createUser");
         } catch (Exception o) {

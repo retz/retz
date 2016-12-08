@@ -53,13 +53,13 @@ public class DatabaseTest {
 
     @Test
     public void user() throws Exception {
-        db.addUser(new User("cafebabe", "foobar", true));
+        db.addUser(new User("cafebabe", "foobar", true, "test user"));
 
         assertFalse(db.getUser("non-pooh-bar").isPresent());
         assertTrue(db.getUser("cafebabe").isPresent());
         assertEquals("foobar", db.getUser("cafebabe").get().secret());
 
-        User u = db.createUser();
+        User u = db.createUser("test user user()");
         assertTrue(db.getUser(u.keyId()).isPresent());
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
 
@@ -75,7 +75,7 @@ public class DatabaseTest {
 
     @Test
     public void application() throws Exception {
-        User u = db.createUser();
+        User u = db.createUser("test user");
         assertTrue(db.getUser(u.keyId()).isPresent());
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
@@ -105,7 +105,7 @@ public class DatabaseTest {
 
     @Test
     public void job() throws Exception {
-        User u = db.createUser();
+        User u = db.createUser("test user");
         assertTrue(db.getUser(u.keyId()).isPresent());
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
@@ -151,7 +151,7 @@ public class DatabaseTest {
     public void multiUsers() throws Exception {
         List<User> users = new LinkedList<>();
         for (int i = 0; i < 10; ++i) {
-            users.add(db.createUser());
+            users.add(db.createUser("test user " + i));
         }
         assertEquals(10, users.size());
 

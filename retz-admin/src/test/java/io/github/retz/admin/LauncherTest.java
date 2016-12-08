@@ -29,6 +29,13 @@ public class LauncherTest {
             assertEquals("create-user", conf.getParsedSubCommand().getName());
         }
         {
+            String[] argv = {"create-user", "--info", "{it's a json}"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("create-user", conf.getParsedSubCommand().getName());
+            assertEquals("{it's a json}", ((CommandCreateUser)conf.getParsedSubCommand()).info);
+        }
+
+        {
             String[] argv = {"disable-user", "-id", "kao"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("disable-user", conf.getParsedSubCommand().getName());

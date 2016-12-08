@@ -46,6 +46,9 @@ public class Applications {
             return Database.getInstance().addApplication(application);
         } catch (JsonProcessingException e) {
             return false; // Maybe this must be handled inside addApplication...
+        } catch (IOException e) {
+            LOG.error(e.toString(), e);
+            return false;
         }
     }
 

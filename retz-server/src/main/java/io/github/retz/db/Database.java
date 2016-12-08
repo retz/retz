@@ -199,7 +199,7 @@ public class Database {
         }
     }
 
-    public List<User> allUsers() {
+    public List<User> allUsers() throws IOException {
         List<User> ret = new LinkedList<>();
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         //try (Connection conn = pool.getConnection();
@@ -209,7 +209,7 @@ public class Database {
 
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
-                    User u = new User(res.getString("key_id"), res.getString("secret"), res.getBoolean("enabled"));
+                    User u = MAPPER.readValue(res.getString("json"), User.class);
                     ret.add(u);
                 }
             }
@@ -221,31 +221,32 @@ public class Database {
     }
 
     // Maybe this must return Optional<User> ?
-    public User createUser() throws SQLException {
+    public User createUser(String info) throws SQLException, JsonProcessingException {
 
         String keyId = UUID.randomUUID().toString().replace("-", "");
         String secret = UUID.randomUUID().toString().replace("-", "");
-        User u = new User(keyId, secret, true);
+        User u = new User(keyId, secret, true, info);
         LOG.info("new (key_id, secret) = ({}, {})", keyId, secret);
         addUser(u);
         return u;
     }
 
-    public boolean addUser(User u) throws SQLException {
+    public boolean addUser(User u) throws SQLException, JsonProcessingException {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
-             PreparedStatement p = conn.prepareStatement("INSERT INTO users(key_id, secret, enabled) values(?, ?, ?)")) {
+             PreparedStatement p = conn.prepareStatement("INSERT INTO users(key_id, secret, enabled, json) values(?, ?, ?, ?)")) {
             conn.setAutoCommit(true);
 
             p.setString(1, u.keyId());
             p.setString(2, u.secret());
             p.setBoolean(3, true);
+            p.setString(4, MAPPER.writeValueAsString(u));
             p.execute();
             return true;
         }
     }
 
-    public Optional<User> getUser(String keyId) {
+    public Optional<User> getUser(String keyId) throws IOException {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
@@ -259,7 +260,7 @@ public class Database {
         }
     }
 
-    public Optional<User> getUser(Connection conn, String keyId) throws SQLException {
+    public Optional<User> getUser(Connection conn, String keyId) throws SQLException, IOException {
         if (conn.getAutoCommit()) {
             throw new RuntimeException("Autocommit on");
         }
@@ -268,7 +269,8 @@ public class Database {
             p.setString(1, keyId);
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
-                    return Optional.of(new User(res.getString("key_id"), res.getString("secret"), res.getBoolean("enabled")));
+                    User u = MAPPER.readValue(res.getString("json"), User.class);
+                    return Optional.of(u);
                 }
             }
             // User not found
@@ -326,15 +328,19 @@ public class Database {
         return ret;
     }
 
-    public boolean addApplication(Application a) throws JsonProcessingException {
+    public boolean addApplication(Application a) throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("INSERT INTO applications(appid, owner, json) values(?, ?, ?)")) {
             conn.setAutoCommit(false);
 
             Optional<User> u = getUser(conn, a.getOwner());
-            if (!u.isPresent() || !u.get().enabled()) {
-                LOG.warn("{} tried to load application {} while {} is disabled or not present",
-                        a.getOwner(), a.getAppid(), a.getOwner());
+            if (!u.isPresent()) {
+                LOG.warn("{} tried to load application {}, but the user not present",
+                        a.getOwner(), a.getAppid());
+                return false;
+            } else if (!u.get().enabled()) {
+                LOG.warn("{} tried to load application {}, but user.enabled={}",
+                        a.getOwner(), a.getAppid(), u.get().enabled());
                 return false;
             }
 

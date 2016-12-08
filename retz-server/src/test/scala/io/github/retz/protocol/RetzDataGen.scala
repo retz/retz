@@ -38,7 +38,8 @@ object RetzDataGen {
   def user: Gen[User] = for {
     key <- RetzGen.nonEmpty(32)
     secret <- RetzGen.nonEmpty(64)
-  } yield new User(key, secret, true)
+    info <- Gen.alphaStr
+  } yield new User(key, secret, true, info)
 
   def application(owner: String): Gen[Application] = for {
     appid <- RetzGen.nonEmpty(32)

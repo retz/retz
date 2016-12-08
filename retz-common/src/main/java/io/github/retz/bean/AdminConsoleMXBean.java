@@ -20,7 +20,7 @@ import java.util.List;
 
 public interface AdminConsoleMXBean {
     List<String> listUser();
-    String createUser();
+    String createUser(String info);
     String getUser(String keyId);
     boolean enableUser(String id, boolean enabled);
 

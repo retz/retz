@@ -26,14 +26,17 @@ public class User {
     private String keyId;
     private String secret;
     private boolean enabled;
+    private String info;
 
     @JsonCreator
     public User(@JsonProperty(value = "key_id", required = true) String keyId,
                 @JsonProperty(value = "secret", required = true) String secret,
-                @JsonProperty(value = "enabled", required = true) boolean enabled) {
+                @JsonProperty(value = "enabled", required = true) boolean enabled,
+                @JsonProperty(value = "info") String info) {
         this.keyId = Objects.requireNonNull(keyId);
         this.secret = Objects.requireNonNull(secret);
         this.enabled = enabled;
+        this.info = info;
     }
 
     @JsonGetter("key_id")
@@ -49,5 +52,10 @@ public class User {
     @JsonGetter("enabled")
     public boolean enabled() {
         return enabled;
+    }
+
+    @JsonGetter("info")
+    public String info() {
+        return info;
     }
 }

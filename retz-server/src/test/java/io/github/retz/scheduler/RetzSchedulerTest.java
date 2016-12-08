@@ -136,7 +136,7 @@ public class RetzSchedulerTest {
     @Test
     public void notEnough() throws Exception {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true));
+        Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true, "notEnough test user"));
         Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef", new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
