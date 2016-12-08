@@ -45,10 +45,13 @@ public class Client implements AutoCloseable {
         VERSION_STRING = labels.getString("version");
     }
 
-    private final Server server;
+    private final URI uri;
+
+    private final Authenticator authenticator;
 
     protected Client(URI uri, Authenticator authenticator) {
-        this.server = Server.connect(uri, authenticator);
+        this.uri = uri;
+        this.authenticator = authenticator;
     }
 
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
@@ -74,7 +77,7 @@ public class Client implements AutoCloseable {
 
     public boolean ping() throws IOException {
         try {
-            return "OK".equals(server.ping());
+            return "OK".equals(Server.connect(uri, authenticator).ping());
         } catch (FeignException e) {
             LOG.debug(e.toString());
             return false;
@@ -82,26 +85,31 @@ public class Client implements AutoCloseable {
     }
 
     public Response list(int limit) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.list());
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).list());
     }
 
     public Response schedule(Job job) throws IOException {
         if (job.priority() < -20 || 19 < job.priority()) {
             throw new IllegalArgumentException("Priority must be [-19, 20]");
         }
-        return Server.tryOrErrorResponse(() -> server.schedule(job));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).schedule(job));
     }
 
     public Response getJob(int id) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.getJob(id));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).getJob(id));
     }
 
     public Response getFile(int id, String file, long offset, long length) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.getFile(id, file, offset, length));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).getFile(id, file, offset, length));
     }
 
     public Response listFiles(int id, String path) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.listFiles(id, path));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).listFiles(id, path));
     }
 
     public Job run(Job job) throws IOException {
@@ -144,23 +152,28 @@ public class Client implements AutoCloseable {
     }
 
     public Response kill(int id) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.kill(id));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).kill(id));
     }
 
     public Response getApp(String appid) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.getApp(appid));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).getApp(appid));
     }
 
     public Response load(Application application) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.load(application));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).load(application));
     }
 
     public Response listApp() throws IOException {
-        return Server.tryOrErrorResponse(() -> server.listApp());
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).listApp());
     }
 
     @Deprecated
     public Response unload(String appName) throws IOException {
-        return Server.tryOrErrorResponse(() -> server.unload(appName));
+        return Server.tryOrErrorResponse(
+                () -> Server.connect(uri, authenticator).unload(appName));
     }
 }
