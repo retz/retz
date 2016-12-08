@@ -32,7 +32,7 @@ import io.github.retz.protocol.Response;
 import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.web.feign.Server;
+import io.github.retz.web.feign.Retz;
 
 public class Client implements AutoCloseable {
 
@@ -77,7 +77,7 @@ public class Client implements AutoCloseable {
 
     public boolean ping() throws IOException {
         try {
-            return "OK".equals(Server.connect(uri, authenticator).ping());
+            return "OK".equals(Retz.connect(uri, authenticator).ping());
         } catch (FeignException e) {
             LOG.debug(e.toString());
             return false;
@@ -85,31 +85,31 @@ public class Client implements AutoCloseable {
     }
 
     public Response list(int limit) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).list());
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).list());
     }
 
     public Response schedule(Job job) throws IOException {
         if (job.priority() < -20 || 19 < job.priority()) {
             throw new IllegalArgumentException("Priority must be [-19, 20]");
         }
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).schedule(job));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).schedule(job));
     }
 
     public Response getJob(int id) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).getJob(id));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).getJob(id));
     }
 
     public Response getFile(int id, String file, long offset, long length) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).getFile(id, file, offset, length));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).getFile(id, file, offset, length));
     }
 
     public Response listFiles(int id, String path) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).listFiles(id, path));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).listFiles(id, path));
     }
 
     public Job run(Job job) throws IOException {
@@ -152,28 +152,28 @@ public class Client implements AutoCloseable {
     }
 
     public Response kill(int id) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).kill(id));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).kill(id));
     }
 
     public Response getApp(String appid) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).getApp(appid));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).getApp(appid));
     }
 
     public Response load(Application application) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).load(application));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).load(application));
     }
 
     public Response listApp() throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).listApp());
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).listApp());
     }
 
     @Deprecated
     public Response unload(String appName) throws IOException {
-        return Server.tryOrErrorResponse(
-                () -> Server.connect(uri, authenticator).unload(appName));
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator).unload(appName));
     }
 }
