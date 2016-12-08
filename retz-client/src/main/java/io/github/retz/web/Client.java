@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import org.slf4j.Logger;
@@ -94,7 +95,8 @@ public class Client implements AutoCloseable {
             throw new IllegalArgumentException("Priority must be [-19, 20]");
         }
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).schedule(job));
+                () -> Retz.connect(uri, authenticator)
+                        .schedule(Objects.requireNonNull(job)));
     }
 
     public Response getJob(int id) throws IOException {
@@ -104,12 +106,14 @@ public class Client implements AutoCloseable {
 
     public Response getFile(int id, String file, long offset, long length) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).getFile(id, file, offset, length));
+                () -> Retz.connect(uri, authenticator)
+                        .getFile(id, Objects.requireNonNull(file), offset, length));
     }
 
     public Response listFiles(int id, String path) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).listFiles(id, path));
+                () -> Retz.connect(uri, authenticator)
+                        .listFiles(id, Objects.requireNonNull(path)));
     }
 
     public Job run(Job job) throws IOException {
@@ -163,7 +167,8 @@ public class Client implements AutoCloseable {
 
     public Response load(Application application) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).load(application));
+                () -> Retz.connect(uri, authenticator)
+                        .load(Objects.requireNonNull(application)));
     }
 
     public Response listApp() throws IOException {
@@ -174,6 +179,7 @@ public class Client implements AutoCloseable {
     @Deprecated
     public Response unload(String appName) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).unload(appName));
+                () -> Retz.connect(uri, authenticator)
+                        .unload(Objects.requireNonNull(appName)));
     }
 }
