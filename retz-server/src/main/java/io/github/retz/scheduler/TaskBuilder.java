@@ -75,7 +75,12 @@ public class TaskBuilder {
             LOG.error("Unknown container: {}", application.container());
             throw new AssertionError();
         }
-
+        if (application.getGracePeriod() > 0) {
+            // seconds to nanoseconds
+            long d = 1000000000L * application.getGracePeriod();
+            builder.setKillPolicy(Protos.KillPolicy.newBuilder()
+                    .setGracePeriod(Protos.DurationInfo.newBuilder().setNanoseconds(d)));
+        }
         return this;
     }
 

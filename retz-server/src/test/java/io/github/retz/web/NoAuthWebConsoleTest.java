@@ -128,7 +128,8 @@ public class NoAuthWebConsoleTest {
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
-                    Optional.empty(), Optional.empty(), config.getUser().keyId(), new MesosContainer(), true);
+                    Optional.empty(), Optional.empty(), config.getUser().keyId(),
+                    0, new MesosContainer(), true);
             Response res = webClient.load(app);
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
@@ -168,7 +169,8 @@ public class NoAuthWebConsoleTest {
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
-                    Optional.empty(), Optional.empty(), config.getUser().keyId(), new MesosContainer(), true);
+                    Optional.empty(), Optional.empty(), config.getUser().keyId(),
+                    0, new MesosContainer(), true);
             Response res = webClient.load(app);
             System.err.println(res.status());
             assertThat(res, instanceOf(LoadAppResponse.class));
@@ -258,7 +260,8 @@ public class NoAuthWebConsoleTest {
     @Test
     public void status() throws Exception {
         Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), config.getUser().keyId(), new MesosContainer(), true);
+                Optional.empty(), Optional.empty(), config.getUser().keyId(),
+                0, new MesosContainer(), true);
         Database.getInstance().addApplication(app);
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
         JobQueue.push(job);

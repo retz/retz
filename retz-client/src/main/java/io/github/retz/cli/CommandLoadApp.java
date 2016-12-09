@@ -48,6 +48,9 @@ public class CommandLoadApp implements SubCommand {
     //@Parameter(names = "-disk", description = "Disk size for sandbox in MB")
     private int disk = 0;
 
+    @Parameter(names = {"--grace-period"}, description = "Grace period to kill task")
+    private int gracePeriod;
+
     @Parameter(names = "--container", description = "Container in which job is run 'mesos' or 'docker'")
     String container = "mesos";
 
@@ -111,8 +114,8 @@ public class CommandLoadApp implements SubCommand {
         }
         Application application = new Application(appName,
                 Arrays.asList(), largeFiles, files, maybeDisk,
-                Optional.ofNullable(user), fileConfig.getAccessKey(), c,
-                enabled);
+                Optional.ofNullable(user), fileConfig.getAccessKey(),
+                gracePeriod, c, enabled);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())

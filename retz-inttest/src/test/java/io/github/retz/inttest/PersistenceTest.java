@@ -76,7 +76,7 @@ public class PersistenceTest {
         User user = config.getUser();
         List<String> e = Arrays.asList();
         Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
-                user.keyId(), new MesosContainer(), true);
+                user.keyId(), 0, new MesosContainer(), true);
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 
         try (Client client = Client.newBuilder(uri).setAuthenticator(config.getAuthenticator()).build()) {

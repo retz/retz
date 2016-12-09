@@ -2,6 +2,12 @@
 
 ## 0.1.2
 
+* Add '--grace-period' option to 'retz-client load-app' command to set
+  grace period before Mesos sends `SIGKILL` . Its allowed range is 0 ~ 1024,
+  where 0 means default value of Mesos (it should depend on Mesos version).
+  At the same time a new entry in `Application` is added. This change
+  breaks backward compatibility, which prevents new clients later
+  than this from connecting to old servers ( #100 ).
 * Add '--info' option to 'retz-admin' command to annotate each user with
   additional information, such as mail address or any other arbitrary
   string. **This requires database update or reset, adding a column**.

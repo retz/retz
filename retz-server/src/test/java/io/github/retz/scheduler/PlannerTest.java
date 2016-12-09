@@ -50,7 +50,7 @@ public class PlannerTest {
          Application anon =
                 new Application(ANON_APPID, Arrays.asList(), Arrays.asList(), Arrays.asList(),
                         Optional.empty(), Optional.empty(), conf.getServerConfig().getUser().keyId(),
-                        new MesosContainer(), true);
+                        0, new MesosContainer(), true);
         Applications.load(anon);
     }
     @After

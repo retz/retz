@@ -35,6 +35,7 @@ public class Application {
     private Optional<String> user;
     // Owner is Retz access key
     private String owner;
+    private int gracePeriod = 0; // if 0, no KillPolicy will be added to CommandInfo
 
     private Container container;
     private boolean enabled;
@@ -47,6 +48,7 @@ public class Application {
                        @JsonProperty("diskMB") Optional<Integer> diskMB,
                        @JsonProperty("user") Optional<String> user,
                        @JsonProperty(value = "owner", required = true) String owner,
+                       @JsonProperty("gracePeriod") int gracePeriod,
                        @JsonProperty("container") Container container,
                        @JsonProperty("enabled") boolean enabled) {
         this.appid = Objects.requireNonNull(appid);
@@ -56,6 +58,12 @@ public class Application {
         this.diskMB = diskMB;
         this.owner = Objects.requireNonNull(owner);
         this.user = user;
+        if (gracePeriod > 0) {
+            if (gracePeriod > 1024) {
+                throw new IllegalArgumentException("Too large value for grace period: " + gracePeriod);
+            }
+            this.gracePeriod = gracePeriod;
+        }
         this.container = (container != null) ? container : new MesosContainer();
         this.enabled = enabled;
     }
@@ -95,6 +103,11 @@ public class Application {
         return owner;
     }
 
+    @JsonGetter("gracePeriod")
+    public int getGracePeriod() {
+        return gracePeriod;
+    }
+
     @JsonGetter("container")
     public Container container() {
         return container;
@@ -119,11 +132,16 @@ public class Application {
         if (!enabled) {
             enabledStr = "(disabled)";
         }
-        return String.format("Application%s name=%s: owner=%s %s container=%s: files=%s/%s",
+        String maybeGracePriod = "";
+        if (gracePeriod > 0) {
+            maybeGracePriod = "gracePeriod=" + gracePeriod;
+        }
+        return String.format("Application%s name=%s: owner=%s %s %s container=%s: files=%s/%s",
                 enabledStr,
                 getAppid(),
                 owner,
                 maybeUser,
+                maybeGracePriod,
                 container().getClass().getSimpleName(),
                 String.join(",", getFiles()),
                 String.join(",", getLargeFiles()));

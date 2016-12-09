@@ -47,10 +47,12 @@ object RetzDataGen {
     largeFiles <- Gen.containerOf[List, String](RetzGen.url)
     files <- Gen.containerOf[List, String](RetzGen.url)
     diskMB <- Gen.chooseNum(0, 10)
+    gracePeriod <- Gen.chooseNum[Int](0, 1024)
     unixUser <- RetzGen.nonEmpty
   } yield new Application(appid,
     persistentFiles.asJava, largeFiles.asJava, files.asJava,
-    java.util.Optional.of(diskMB), Optional.of(unixUser), owner, new MesosContainer(), true)
+    java.util.Optional.of(diskMB), Optional.of(unixUser), owner,
+    gracePeriod, new MesosContainer(), true)
 
   def job(appid: String) : Gen[Job] = for {
     name <- RetzGen.nonEmpty

@@ -244,6 +244,10 @@ Options follows:
   downloading again at next time it runs same task.
 * ``--enabled`` : with ``false`` specified, the application is
   disabled and cannot be used for job invocation.
+* ``--grace-period`` : Defines KillPolicy to each task that belongs
+  to the application with duration in seconds. Default value is 0,
+  whose meaning is "setting no KillPolicy and adopt Mesos default
+  behaviour".
 
 Other HTTP endpoints
 ~~~~~~~~~~~~~~~~~~~~
