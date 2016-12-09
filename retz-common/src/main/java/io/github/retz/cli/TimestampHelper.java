@@ -27,15 +27,14 @@ public class TimestampHelper {
 
     public static String now() {
         synchronized (DATE_FORMAT) {
-            return DATE_FORMAT.format(Calendar.getInstance().getTime());
+            return DATE_FORMAT.format(nowDate());
         }
     }
 
     public static String past(int seconds) {
-        synchronized (DATE_FORMAT) {
-            return DATE_FORMAT.format(new Date(Calendar.getInstance().getTime().getTime() - seconds * 1000));
-        }
+        return past(Calendar.getInstance().getTime().getTime(), seconds);
     }
+
     // Returns duration in second
     public static long diffMillisec(String lhs, String rhs) throws ParseException {
         synchronized (DATE_FORMAT) {
@@ -46,4 +45,19 @@ public class TimestampHelper {
         }
     }
 
+    static Date nowDate() {
+        return Calendar.getInstance().getTime();
+    }
+
+    static String now(Date date) {
+        synchronized (DATE_FORMAT) {
+            return DATE_FORMAT.format(date);
+        }
+    }
+
+    static String past(long timestampMsec, int seconds) {
+        synchronized (DATE_FORMAT) {
+            return DATE_FORMAT.format(new Date(timestampMsec - seconds * 1000));
+        }
+    }
 }
