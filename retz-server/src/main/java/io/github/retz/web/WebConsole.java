@@ -42,6 +42,7 @@ import spark.Spark;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,6 +55,7 @@ public final class WebConsole {
     private static final Logger LOG = LoggerFactory.getLogger(WebConsole.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final List<String> NO_AUTH_PAGES;
+    private static ServerConfiguration config;
 
     private static Optional<RetzScheduler> scheduler = Optional.empty();
 
@@ -65,7 +67,7 @@ public final class WebConsole {
         NO_AUTH_PAGES = Arrays.asList(noAuthPages);
     }
 
-    public WebConsole(ServerConfiguration config) {
+    public static void start(ServerConfiguration config) {
 
         if (config.isTLS()) {
             LOG.info("HTTPS enabled. Keystore file={}, keystore pass={} chars, Truststore file={}, Truststorepass={} chars",
@@ -80,72 +82,8 @@ public final class WebConsole {
         ipAddress(config.getUri().getHost());
         staticFileLocation("/public");
 
-        before((req, res) -> {
-            res.header("Server", RetzScheduler.HTTP_SERVER_NAME);
-
-            String resource;
-
-            if (req.raw().getQueryString() != null) {
-                resource = new StringBuilder().append(new URI(req.url()).getPath())
-                        .append("?").append(req.raw().getQueryString()).toString();
-            } else {
-                resource = new URI(req.url()).getPath();
-            }
-            LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
-
-            // TODO: authenticator must be per each user and single admin user
-            Optional<Authenticator> adminAuthenticator = Optional.ofNullable(config.getAuthenticator());
-            if (!adminAuthenticator.isPresent()) {
-                // No authentication required
-                return;
-            }
-
-            String verb = req.requestMethod();
-            String md5 = req.headers("content-md5");
-            if (md5 == null) {
-                md5 = "";
-            }
-            String date = req.headers("date");
-
-            LOG.debug("req={}, res={}, resource=", req, res, resource);
-            // These don't require authentication to simplify operation
-            if (NO_AUTH_PAGES.contains(resource)) {
-                return;
-            }
-
-            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
-            if (!authHeaderValue.isPresent()) {
-                halt(401, "Bad Authorization header: " + req.headers(AuthHeader.AUTHORIZATION));
-            }
-
-            Authenticator authenticator;
-            if (adminAuthenticator.get().getKey().equals(authHeaderValue.get().key())) {
-                // Admin
-                authenticator = adminAuthenticator.get();
-            } else {
-                // Not admin
-                Optional<User> u = Database.getInstance().getUser(authHeaderValue.get().key());
-                if (!u.isPresent()) {
-                    halt(403, "No such user");
-                }
-                if (config.authenticationEnabled()) {
-                    authenticator = new HmacSHA256Authenticator(u.get().keyId(), u.get().secret());
-                } else {
-                    authenticator = new NoopAuthenticator(u.get().keyId());
-                }
-            }
-
-            if (!authenticator.authenticate(verb, md5, date, resource,
-                    authHeaderValue.get().key(), authHeaderValue.get().signature())) {
-                String string2sign = authenticator.string2sign(verb, md5, date, resource);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
-                            authenticator.signature(verb, md5, date, resource),
-                            authHeaderValue.get().signature());
-                }
-                halt(401, "Authentication failed. String to sign: " + string2sign);
-            }
-        });
+        WebConsole.config = config;
+        before( WebConsole::authenticate );
 
         after((req, res) -> {
             LOG.debug("{} {} {} {} from {} {}",
@@ -199,6 +137,73 @@ public final class WebConsole {
         scheduler = Optional.of(sched);
     }
 
+    static void authenticate(Request req, Response res) throws IOException, URISyntaxException {
+        res.header("Server", RetzScheduler.HTTP_SERVER_NAME);
+
+        String resource;
+
+        if (req.raw().getQueryString() != null) {
+            resource = new StringBuilder().append(new URI(req.url()).getPath())
+                    .append("?").append(req.raw().getQueryString()).toString();
+        } else {
+            resource = new URI(req.url()).getPath();
+        }
+        LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
+
+        // TODO: authenticator must be per each user and single admin user
+        Optional<Authenticator> adminAuthenticator = Optional.ofNullable(config.getAuthenticator());
+        if (!adminAuthenticator.isPresent()) {
+            // No authentication required
+            return;
+        }
+
+        String verb = req.requestMethod();
+        String md5 = req.headers("content-md5");
+        if (md5 == null) {
+            md5 = "";
+        }
+        String date = req.headers("date");
+
+        LOG.debug("req={}, res={}, resource=", req, res, resource);
+        // These don't require authentication to simplify operation
+        if (NO_AUTH_PAGES.contains(resource)) {
+            return;
+        }
+
+        Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
+        if (!authHeaderValue.isPresent()) {
+            halt(401, "Bad Authorization header: " + req.headers(AuthHeader.AUTHORIZATION));
+        }
+
+        Authenticator authenticator;
+        if (adminAuthenticator.get().getKey().equals(authHeaderValue.get().key())) {
+            // Admin
+            authenticator = adminAuthenticator.get();
+        } else {
+            // Not admin
+            Optional<User> u = Database.getInstance().getUser(authHeaderValue.get().key());
+            if (!u.isPresent()) {
+                halt(403, "No such user");
+            }
+            if (config.authenticationEnabled()) {
+                authenticator = new HmacSHA256Authenticator(u.get().keyId(), u.get().secret());
+            } else {
+                authenticator = new NoopAuthenticator(u.get().keyId());
+            }
+        }
+
+        if (!authenticator.authenticate(verb, md5, date, resource,
+                authHeaderValue.get().key(), authHeaderValue.get().signature())) {
+            String string2sign = authenticator.string2sign(verb, md5, date, resource);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
+                        authenticator.signature(verb, md5, date, resource),
+                        authHeaderValue.get().signature());
+            }
+            halt(401, "Authentication failed. String to sign: " + string2sign);
+        }
+    }
+
     static String status(Request request, Response response) {
         io.github.retz.protocol.Response res;
         if (scheduler.isPresent()) {
@@ -232,7 +237,7 @@ public final class WebConsole {
         }
     }
 
-    public void stop() {
+    public static void stop() {
         Spark.stop();
     }
 }

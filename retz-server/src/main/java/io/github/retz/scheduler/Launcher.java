@@ -133,18 +133,18 @@ public final class Launcher {
         LOG.info("Mesos scheduler started: {}", status.name());
 
         // Start web server
-        WebConsole webConsole = new WebConsole(conf.fileConfig);
+        WebConsole.start(conf.fileConfig);
         WebConsole.set(scheduler, driver);
         LOG.info("Web console has started with port {}", conf.getPort());
 
-        java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(webConsole, driver));
+        java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(driver));
 
         // Stop them all, usually don't come here
         // Wait for Mesos framework stop
         status = driver.join();
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());
 
-        webConsole.stop(); // Stop web server
+        WebConsole.stop(); // Stop web server
         GarbageJobCollector.stop();
         Database.getInstance().stop();
         jmxServer.stop();

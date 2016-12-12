@@ -25,9 +25,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import feign.Response;
 import feign.codec.ErrorDecoder;
+import io.github.retz.auth.ProtocolTester;
 import io.github.retz.protocol.ErrorResponse;
+import io.github.retz.web.Client;
+import io.github.retz.web.ClientHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ErrorResponseDecoder implements ErrorDecoder {
+    static final Logger LOG = LoggerFactory.getLogger(ErrorResponseDecoder.class);
 
     private final ObjectMapper mapper;
 
@@ -51,9 +57,14 @@ public class ErrorResponseDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {
         Exception ex = delegate.decode(methodKey, response);
+
+        String server = String.join(", ", response.headers().get("Server"));
+        new ProtocolTester(server, Client.VERSION_STRING).test();
+
         if (ex instanceof ErrorResponseException) {
             return ex;
         } else if (ex instanceof FeignException) {
+
             FeignException fex = (FeignException) ex;
             return extractor.apply(fex.getMessage())
                     .map(value -> {

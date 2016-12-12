@@ -73,7 +73,6 @@ public class JobRequestHandler {
     static String listJob(spark.Request req, spark.Response res) throws JsonProcessingException {
         Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
         LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
-
         ListJobResponse listJobResponse = list(authHeaderValue.get().key(), -1);
         listJobResponse.ok();
         res.status(200);

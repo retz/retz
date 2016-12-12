@@ -2,6 +2,8 @@
 
 ## 0.1.2
 
+* Add server version checker to client - just warns when version
+  mistmatch found in major and minor version numbers.
 * Change CLI output of retz-admin and retz-client to print out to System.out
   from System.err. Thread name and class name are also removed from every line.
 * Fix and change 'retz-admin usage' command which was not working, to

@@ -47,7 +47,6 @@ import static spark.Spark.awaitInitialization;
 
 public class NoAuthWebConsoleTest {
     private final List<String> BASE_ORDER_BY = Arrays.asList("id");
-    private WebConsole webConsole;
     private Client webClient;
     private ObjectMapper mapper;
     private ServerConfiguration config;
@@ -78,8 +77,8 @@ public class NoAuthWebConsoleTest {
 
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
         config = conf.getServerConfig();
-        webConsole = new WebConsole(config);
         WebConsole.set(scheduler, null);
+        WebConsole.start(config);
         awaitInitialization();
 
         Database.getInstance().init(config);
@@ -101,7 +100,7 @@ public class NoAuthWebConsoleTest {
     @After
     public void tearDown() throws Exception {
         webClient.close();
-        webConsole.stop();
+        WebConsole.stop();
         Database.getInstance().clear();
         Database.getInstance().stop();
     }

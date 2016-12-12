@@ -35,6 +35,9 @@ import io.github.retz.protocol.Response;
 import io.github.retz.protocol.ScheduleRequest;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.web.Client;
+import org.slf4j.LoggerFactory;
+import org.slf4j.impl.SimpleLoggerFactory;
 
 public interface Retz {
 

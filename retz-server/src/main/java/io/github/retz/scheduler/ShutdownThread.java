@@ -25,18 +25,16 @@ import org.slf4j.LoggerFactory;
 public class ShutdownThread extends Thread {
     private static final Logger LOG = LoggerFactory.getLogger(ShutdownThread.class);
 
-    private WebConsole console;
     private SchedulerDriver driver;
 
-    public ShutdownThread(WebConsole console, SchedulerDriver driver) {
-        this.console = console;
+    public ShutdownThread(SchedulerDriver driver) {
         this.driver = driver;
     }
     public void run() {
         LOG.info("Retz shutting down");
         // TODO: graceful stop
         // Close up all incoming requests to prevent database update
-        console.stop();
+        WebConsole.stop();
         // Close all database connections; it may take time
         Database.getInstance().stop();
         // Shut down connection to Mesos; always will be preserved for failover
