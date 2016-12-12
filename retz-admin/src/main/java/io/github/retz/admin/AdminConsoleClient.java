@@ -61,9 +61,9 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
 
 
     @Override
-    public List<String> getUsage(String keyId, String start, String end) {
+    public List<String> getUsage(String start, String end) {
         try {
-            String[] jsons = (String[]) client.invokeOperation(objectName, "getUsage", keyId, start, end);
+            String[] jsons = (String[]) client.invokeOperation(objectName, "getUsage", start, end);
             return Arrays.asList(jsons);
         } catch (Exception o) {
             return Arrays.asList();

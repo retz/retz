@@ -2,6 +2,9 @@
 
 ## 0.1.2
 
+* Fix and change 'retz-admin usage' command which was not working, to
+  return **all** finished jobs within the period regardless of the application
+  owner. As a consequence, '-id' option was removed.
 * Add '--grace-period' option to 'retz-client load-app' command to set
   grace period before Mesos sends `SIGKILL` . Its allowed range is 0 ~ 1024,
   where 0 means default value of Mesos (it should depend on Mesos version).

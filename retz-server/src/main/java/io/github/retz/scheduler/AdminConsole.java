@@ -76,9 +76,9 @@ public class AdminConsole implements AdminConsoleMXBean {
     }
 
     @Override
-    public List<String> getUsage(String user, String start, String end) {
-        LOG.info("Querying usage of {} at [{}, {})", user, start, end); //TODO
-        List<Job> jobs = Database.getInstance().finishedJobs(user, start, end);
+    public List<String> getUsage(String start, String end) {
+        LOG.info("Querying usage at [{}, {})", start, end); //TODO
+        List<Job> jobs = Database.getInstance().finishedJobs(start, end);
         return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
     }
 

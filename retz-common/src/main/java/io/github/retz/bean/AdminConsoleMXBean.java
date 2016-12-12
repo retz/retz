@@ -24,7 +24,7 @@ public interface AdminConsoleMXBean {
     String getUser(String keyId);
     boolean enableUser(String id, boolean enabled);
 
-    List<String> getUsage(String keyId, String start, String end);
+    List<String> getUsage(String start, String end);
     boolean gc();
     boolean gc(int leeway);
 }

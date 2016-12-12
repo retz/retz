@@ -445,12 +445,14 @@ public class Database {
     }
 
     // Selects all "finished" jobs
-    public List<Job> finishedJobs(String id, String start, String end) {
+    public List<Job> finishedJobs(String start, String end) {
         List<Job> ret = new LinkedList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
-             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE owner=? AND ? <= finished AND finished < ?")) {
+             PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE ? <= finished AND finished < ?")) {
             conn.setAutoCommit(true);
 
+            p.setString(1, start);
+            p.setString(2, end);
             try (ResultSet res = p.executeQuery()) {
 
                 while (res.next()) {

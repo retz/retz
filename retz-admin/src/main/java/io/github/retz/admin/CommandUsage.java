@@ -29,18 +29,15 @@ import java.util.List;
 public class CommandUsage implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUsage.class);
 
-    @Parameter(names = "-id", description = "Get usage of a user", required = true)
-    private String id;
+    @Parameter(names = "-start", description = "Starting time of a period to fetch")
+    private String start = "0000-01-01";
 
-    @Parameter(names = "-start", description = "")
-    private String start = "0";
-
-    @Parameter(names = "-end", description = "")
-    private String end = "9";
+    @Parameter(names = "-end", description = "End time of a period to fetch")
+    private String end = "9999-12-32";
 
     @Override
     public String description() {
-        return "Get usage of a user";
+        return "Get usage of all users (time range is compared as String)";
     }
 
     @Override
@@ -52,7 +49,7 @@ public class CommandUsage implements SubCommand {
     public int handle(FileConfiguration fileConfig) throws Throwable {
         int port =fileConfig.getJmxPort();
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
-            List<String> lines = client.getUsage(id, start, end);
+            List<String> lines = client.getUsage(start, end);
             for(String line: lines) {
                 LOG.info(line);
             }
