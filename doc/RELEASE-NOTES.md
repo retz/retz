@@ -2,6 +2,8 @@
 
 ## 0.1.2
 
+* Change CLI output of retz-admin and retz-client to print out to System.out
+  from System.err. Thread name and class name are also removed from every line.
 * Fix and change 'retz-admin usage' command which was not working, to
   return **all** finished jobs within the period regardless of the application
   owner. As a consequence, '-id' option was removed.
