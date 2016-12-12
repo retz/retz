@@ -61,7 +61,7 @@ public class LauncherTest {
             assertEquals("list-user", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"usage", "-id", "kao"};
+            String[] argv = {"usage", "-start", "2033"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("usage", conf.getParsedSubCommand().getName());
         }
