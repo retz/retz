@@ -134,8 +134,7 @@ public final class Launcher {
 
         // Start web server
         WebConsole webConsole = new WebConsole(conf.fileConfig);
-        WebConsole.setScheduler(scheduler);
-        WebConsole.setDriver(driver);
+        WebConsole.set(scheduler, driver);
         LOG.info("Web console has started with port {}", conf.getPort());
 
         java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(webConsole, driver));

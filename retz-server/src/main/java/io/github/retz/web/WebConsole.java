@@ -54,8 +54,8 @@ public final class WebConsole {
     private static final Logger LOG = LoggerFactory.getLogger(WebConsole.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final List<String> NO_AUTH_PAGES;
+
     private static Optional<RetzScheduler> scheduler = Optional.empty();
-    private static Optional<SchedulerDriver> driver = Optional.empty();
 
     static {
         MAPPER.registerModule(new Jdk8Module());
@@ -171,127 +171,35 @@ public final class WebConsole {
 
         // TODO: XXX: validate application owner at ALL job-related APIs
         // /jobs GET -> list
-        get(ListJobRequest.resourcePattern(), (req, res) -> {
-            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
-            LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
-
-            ListJobResponse listJobResponse = WebConsole.list(authHeaderValue.get().key(), -1);
-            listJobResponse.ok();
-            res.status(200);
-            res.type("application/json");
-            return MAPPER.writeValueAsString(listJobResponse);
-        });
+        get(ListJobRequest.resourcePattern(), JobRequestHandler::listJob);
         // /job  PUT -> schedule, GET -> get-job, DELETE -> kill
-        get(GetJobRequest.resourcePattern(), JobRequestRouter::getJob);
+        get(GetJobRequest.resourcePattern(), JobRequestHandler::getJob);
+        post(ScheduleRequest.resourcePattern(), JobRequestHandler::schedule);
+        delete(KillRequest.resourcePattern(), JobRequestHandler::kill);
         // Get a file
-        get(GetFileRequest.resourcePattern(), JobRequestRouter::getFile);
+        get(GetFileRequest.resourcePattern(), JobRequestHandler::getFile);
         // Get file list
-        get(ListFilesRequest.resourcePattern(), JobRequestRouter::getDir);
+        get(ListFilesRequest.resourcePattern(), JobRequestHandler::getDir);
 
-        post(ScheduleRequest.resourcePattern(), WebConsole::schedule);
-
-        delete(KillRequest.resourcePattern(), (req, res) -> {
-            LOG.debug("kill", req.params(":id"));
-            int id = Integer.parseInt(req.params(":id")); // or 400 when failed?
-            WebConsole.kill(id);
-            res.status(200);
-            KillResponse response = new KillResponse();
-            response.ok();
-            return MAPPER.writeValueAsString(response);
-        });
 
         // /apps GET -> list-app
-        get(ListAppRequest.resourcePattern(), (req, res) -> {
-            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
-            LOG.info("Listing all apps owned by {}", authHeaderValue.get().key());
-            ListAppResponse response = new ListAppResponse(Applications.getAll(authHeaderValue.get().key()));
-            response.ok();
-            return MAPPER.writeValueAsString(response);
-        });
+        get(ListAppRequest.resourcePattern(), AppRequestHandler::listApp);
 
         // /app  PUT -> load, GET -> get-app, DELETE -> unload-app
-        put(LoadAppRequest.resourcePattern(), (req, res) -> {
-            LOG.debug(LoadAppRequest.resourcePattern());
-            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
-            res.type("application/json");
-
-            // TODO: check key from Authorization header matches a key in Application object
-            LoadAppRequest loadAppRequest = MAPPER.readValue(req.bodyAsBytes(), LoadAppRequest.class);
-            LOG.debug("app (id={}, owner={}), requested by {}",
-                    loadAppRequest.application().getAppid(), loadAppRequest.application().getOwner(),
-                    authHeaderValue.get().key());
-
-            // Compare application owner and requester
-            validateOwner(req, loadAppRequest.application());
-
-            if (!(loadAppRequest.application().container() instanceof DockerContainer)) {
-                if (loadAppRequest.application().getUser().isPresent() &&
-                        loadAppRequest.application().getUser().get().equals("root")) {
-                    res.status(400);
-                    return MAPPER.writeValueAsString(new ErrorResponse("root user is only allowed with Docker container"));
-                }
-            }
-
-            Application app = loadAppRequest.application();
-            LOG.info("Registering application name={} owner={}", app.getAppid(), app.getOwner());
-            boolean result = Applications.load(app);
-
-            if (result) {
-                res.status(200);
-                LoadAppResponse response = new LoadAppResponse();
-                response.ok();
-                return MAPPER.writeValueAsString(response);
-            } else {
-                res.status(400);
-                return MAPPER.writeValueAsString(new ErrorResponse("cannot load application"));
-            }
-        });
-
-        get(GetAppRequest.resourcePattern(), (req, res) -> {
-            LOG.debug(LoadAppRequest.resourcePattern());
-            Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
-
-            String appname = req.params(":name");
-            LOG.debug("deleting app {} requested by {}", appname, authHeaderValue.get().key());
-            Optional<Application> maybeApp = Applications.get(appname);
-            res.type("application/json");
-            if (maybeApp.isPresent()) {
-                // Compare application owner and requester
-                validateOwner(req, maybeApp.get());
-
-                res.status(200);
-                GetAppResponse getAppResponse = new GetAppResponse(maybeApp.get());
-                getAppResponse.ok();
-                return MAPPER.writeValueAsString(getAppResponse);
-
-            } else {
-                ErrorResponse response = new ErrorResponse("No such application: " + appname);
-                res.status(404);
-                return MAPPER.writeValueAsString(response);
-            }
-        });
-
-        delete(UnloadAppRequest.resourcePattern(), (req, res) -> {
-            String appname = req.params(":name");
-            LOG.warn("deleting app {} (This API is deprecated)", appname);
-            WebConsole.unload(appname);
-            UnloadAppResponse response = new UnloadAppResponse();
-            response.ok();
-            return MAPPER.writeValueAsString(response);
-        });
+        put(LoadAppRequest.resourcePattern(), AppRequestHandler::loadApp);
+        get(GetAppRequest.resourcePattern(), AppRequestHandler::getApp);
+        delete(UnloadAppRequest.resourcePattern(), AppRequestHandler::unloadAppRequest);
 
         init();
     }
 
-    public static void setScheduler(RetzScheduler scheduler) {
-        WebConsole.scheduler = Optional.ofNullable(scheduler);
+    public static void set(RetzScheduler sched, SchedulerDriver driver) {
+        JobRequestHandler.setDriver(driver);
+        JobRequestHandler.setScheduler(sched);
+        scheduler = Optional.of(sched);
     }
 
-    public static void setDriver(SchedulerDriver driver) {
-        WebConsole.driver = Optional.ofNullable(driver);
-    }
-
-    public static String status(Request request, Response response) {
+    static String status(Request request, Response response) {
         io.github.retz.protocol.Response res;
         if (scheduler.isPresent()) {
             StatusResponse statusResponse = new StatusResponse();
@@ -321,121 +229,6 @@ public final class WebConsole {
         if (!app.getOwner().equals(authHeaderValue.get().key())) {
             LOG.debug("Invalid request: requester and owner does not match");
             halt(400, "Invalid request: requester and owner does not match");
-        }
-    }
-
-    public static ListJobResponse list(String id, int limit) {
-        List<Job> queue = new LinkedList<>(); //JobQueue.getAll();
-        List<Job> running = new LinkedList<>();
-        List<Job> finished = new LinkedList<>();
-
-        for (Job job : JobQueue.getAll(id)) {
-            switch (job.state()) {
-                case QUEUED:
-                    queue.add(job);
-                    break;
-                case STARTING:
-                case STARTED:
-                    running.add(job);
-                    break;
-                case FINISHED:
-                case KILLED:
-                    finished.add(job);
-                    break;
-                default:
-                    LOG.error("Cannot be here: id={}, state={}", job.id(), job.state());
-            }
-        }
-        return new ListJobResponse(queue, running, finished);
-    }
-
-    public static boolean kill(int id) throws Exception {
-        if (!driver.isPresent()) {
-            LOG.error("Driver is not present; this setup should be wrong");
-            return false;
-        }
-
-        Optional<Boolean> result = Stanchion.call(() -> {
-            // TODO: non-application owner is even possible to kill job
-            Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
-
-            // There's a slight pitfall between cancel above and kill below where
-            // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
-            // Then this protocol returns false for sure.
-            if (maybeTaskId.isPresent()) {
-                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(maybeTaskId.get()).build();
-                Protos.Status status = driver.get().killTask(taskId);
-                LOG.info("Job id={} was running and killed.");
-                return status == Protos.Status.DRIVER_RUNNING;
-            }
-            return false;
-        });
-
-        if (result.isPresent()) {
-            return result.get();
-        } else {
-            return false;
-        }
-    }
-
-    @Deprecated
-    public static void unload(String appName) {
-        // TODO: non-application owner is even possible to kill job
-        Applications.unload(appName);
-        LOG.info("Unloaded {}", appName);
-        if (WebConsole.driver.isPresent() &&
-                WebConsole.scheduler.isPresent()) {
-            WebConsole.scheduler.get().stopAllExecutors(WebConsole.driver.get(), appName);
-        }
-        LOG.info("Stopped all executors invoked as {}", appName);
-    }
-
-    public static String schedule(Request req, Response res) throws IOException, InterruptedException {
-        ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
-        res.type("application/json");
-        Optional<Application> maybeApp = Applications.get(scheduleRequest.job().appid()); // TODO check owner right here
-        if (!maybeApp.isPresent()) {
-            // TODO: this warn log cannot be written in real stable release
-            LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
-            ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
-            res.status(404);
-            return MAPPER.writeValueAsString(response);
-
-        } else if (maybeApp.get().enabled()) {
-
-            validateOwner(req, maybeApp.get());
-
-            Job job = scheduleRequest.job();
-            if (scheduler.isPresent()) {
-                if (!scheduler.get().validateJob(job)) {
-                    String msg = "Job " + job.toString() + " does not fit system limit " + scheduler.get().maxJobSize();
-                    // TODO: this warn log cannot be written in real stable release
-                    LOG.warn(msg);
-                    halt(400, msg);
-                }
-            }
-
-            job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
-
-            JobQueue.push(job);
-            if (scheduler.isPresent() && driver.isPresent()) {
-                LOG.info("Trying invocation from offer stock: {}", job);
-                scheduler.get().maybeInvokeNow(driver.get(), job);
-
-            }
-
-            ScheduleResponse scheduleResponse = new ScheduleResponse(job);
-            scheduleResponse.ok();
-            LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
-
-            res.status(201);
-            return MAPPER.writeValueAsString(scheduleResponse);
-
-        } else {
-            // Application is currently disabled
-            res.status(401);
-            ErrorResponse response = new ErrorResponse("Application " + maybeApp.get().getAppid() + " is disabled");
-            return MAPPER.writeValueAsString(response);
         }
     }
 

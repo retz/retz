@@ -46,12 +46,12 @@ import static org.junit.Assert.*;
 import static spark.Spark.awaitInitialization;
 
 public class NoAuthWebConsoleTest {
+    private final List<String> BASE_ORDER_BY = Arrays.asList("id");
     private WebConsole webConsole;
     private Client webClient;
     private ObjectMapper mapper;
     private ServerConfiguration config;
     private ClientCLIConfig cliConfig;
-    private final List<String> BASE_ORDER_BY = Arrays.asList("id");
 
     /**
      * Initializes the test.
@@ -79,7 +79,7 @@ public class NoAuthWebConsoleTest {
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
         config = conf.getServerConfig();
         webConsole = new WebConsole(config);
-        WebConsole.setScheduler(scheduler);
+        WebConsole.set(scheduler, null);
         awaitInitialization();
 
         Database.getInstance().init(config);
@@ -110,6 +110,7 @@ public class NoAuthWebConsoleTest {
     public void version() {
         System.err.println(Client.VERSION_STRING);
     }
+
     /**
      * @throws Exception if failed
      */

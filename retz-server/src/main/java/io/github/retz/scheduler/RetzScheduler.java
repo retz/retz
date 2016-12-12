@@ -70,17 +70,6 @@ public class RetzScheduler implements Scheduler {
         MAX_JOB_SIZE = conf.getServerConfig().getMaxJobSize();
     }
 
-    public void stopAllExecutors(SchedulerDriver driver, String appName) {
-        List<Protos.SlaveID> slaves = this.slaves.get(appName);
-        Protos.ExecutorID executorID = Protos.ExecutorID.newBuilder().setValue(appName).build();
-        byte[] msg = {'s', 't', 'o', 'p'};
-        if (slaves != null) {
-            for (Protos.SlaveID slave : slaves) {
-                driver.sendFrameworkMessage(executorID, slave, msg);
-            }
-        }
-    }
-
     @Override
     public void disconnected(SchedulerDriver driver) {
         LOG.warn("Disconnected from cluster");

@@ -20,13 +20,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.auth.AuthHeader;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.scheduler.Applications;
 import io.github.retz.scheduler.JobQueue;
+import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.scheduler.Stanchion;
+import org.apache.mesos.Protos;
+import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Request;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -34,22 +43,45 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
+import static io.github.retz.web.WebConsole.validateOwner;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static spark.Spark.halt;
 
-public class JobRequestRouter {
-    private static final Logger LOG = LoggerFactory.getLogger(JobRequestRouter.class);
+public class JobRequestHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(JobRequestHandler.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static Optional<RetzScheduler> scheduler = Optional.empty();
+    private static Optional<SchedulerDriver> driver = Optional.empty();
 
     static {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    public static String getJob(spark.Request req, spark.Response res) throws JsonProcessingException, IOException {
+    static void setScheduler(RetzScheduler sched) {
+        scheduler = Optional.ofNullable(sched);
+    }
+
+    static void setDriver(SchedulerDriver d) {
+        driver = Optional.ofNullable(d);
+    }
+
+    static String listJob(spark.Request req, spark.Response res) throws JsonProcessingException {
+        Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
+        LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
+
+        ListJobResponse listJobResponse = list(authHeaderValue.get().key(), -1);
+        listJobResponse.ok();
+        res.status(200);
+        res.type("application/json");
+        return MAPPER.writeValueAsString(listJobResponse);
+    }
+
+    static String getJob(spark.Request req, spark.Response res) throws JsonProcessingException, IOException {
         int id = Integer.parseInt(req.params(":id"));
 
         LOG.debug("get job id={}, path={}, file={}", id);
@@ -69,7 +101,7 @@ public class JobRequestRouter {
 
     }
 
-    public static String getFile(spark.Request req, spark.Response res) throws IOException {
+    static String getFile(spark.Request req, spark.Response res) throws IOException {
         int id = Integer.parseInt(req.params(":id"));
 
         String file = req.queryParams("path");
@@ -97,7 +129,7 @@ public class JobRequestRouter {
         return MAPPER.writeValueAsString(getFileResponse);
     }
 
-    public static String getDir(spark.Request req, spark.Response res) throws IOException {
+    static String getDir(spark.Request req, spark.Response res) throws IOException {
         int id = Integer.parseInt(req.params(":id"));
 
         String path = req.queryParams("path");
@@ -213,11 +245,125 @@ public class JobRequestRouter {
         String addr = url + "%2F" + maybeURLEncode(path);
         return fetchHTTP(addr);
     }
+
     private static String maybeURLEncode(String file) {
         try {
             return URLEncoder.encode(file, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             return file;
+        }
+    }
+
+    private static ListJobResponse list(String id, int limit) {
+        List<Job> queue = new LinkedList<>(); //JobQueue.getAll();
+        List<Job> running = new LinkedList<>();
+        List<Job> finished = new LinkedList<>();
+
+        for (Job job : JobQueue.getAll(id)) {
+            switch (job.state()) {
+                case QUEUED:
+                    queue.add(job);
+                    break;
+                case STARTING:
+                case STARTED:
+                    running.add(job);
+                    break;
+                case FINISHED:
+                case KILLED:
+                    finished.add(job);
+                    break;
+                default:
+                    LOG.error("Cannot be here: id={}, state={}", job.id(), job.state());
+            }
+        }
+        return new ListJobResponse(queue, running, finished);
+    }
+
+    static String kill(Request req, spark.Response res) throws JsonProcessingException {
+        LOG.debug("kill", req.params(":id"));
+        int id = Integer.parseInt(req.params(":id")); // or 400 when failed?
+        kill(id);
+        res.status(200);
+        KillResponse response = new KillResponse();
+        response.ok();
+        return MAPPER.writeValueAsString(response);
+    }
+
+    private static boolean kill(int id) {
+        if (!driver.isPresent()) {
+            LOG.error("Driver is not present; this setup should be wrong");
+            return false;
+        }
+
+        Optional<Boolean> result = Stanchion.call(() -> {
+            // TODO: non-application owner is even possible to kill job
+            Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
+
+            // There's a slight pitfall between cancel above and kill below where
+            // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
+            // Then this protocol returns false for sure.
+            if (maybeTaskId.isPresent()) {
+                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(maybeTaskId.get()).build();
+                Protos.Status status = driver.get().killTask(taskId);
+                LOG.info("Job id={} was running and killed.");
+                return status == Protos.Status.DRIVER_RUNNING;
+            }
+            return false;
+        });
+
+        if (result.isPresent()) {
+            return result.get();
+        } else {
+            return false;
+        }
+    }
+
+    static String schedule(spark.Request req, spark.Response res) throws IOException, InterruptedException {
+        ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
+        res.type("application/json");
+        Optional<Application> maybeApp = Applications.get(scheduleRequest.job().appid()); // TODO check owner right here
+        if (!maybeApp.isPresent()) {
+            // TODO: this warn log cannot be written in real stable release
+            LOG.warn("No such application loaded: {}", scheduleRequest.job().appid());
+            ErrorResponse response = new ErrorResponse("No such application: " + scheduleRequest.job().appid());
+            res.status(404);
+            return MAPPER.writeValueAsString(response);
+
+        } else if (maybeApp.get().enabled()) {
+
+            validateOwner(req, maybeApp.get());
+
+            Job job = scheduleRequest.job();
+            if (scheduler.isPresent()) {
+                if (!scheduler.get().validateJob(job)) {
+                    String msg = "Job " + job.toString() + " does not fit system limit " + scheduler.get().maxJobSize();
+                    // TODO: this warn log cannot be written in real stable release
+                    LOG.warn(msg);
+                    halt(400, msg);
+                }
+            }
+
+            job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
+
+            JobQueue.push(job);
+            if (scheduler.isPresent() && driver.isPresent()) {
+                LOG.info("Trying invocation from offer stock: {}", job);
+                scheduler.get().maybeInvokeNow(driver.get(), job);
+
+            }
+
+            ScheduleResponse scheduleResponse = new ScheduleResponse(job);
+            scheduleResponse.ok();
+            LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
+
+            res.status(201);
+            return MAPPER.writeValueAsString(scheduleResponse);
+
+        } else {
+            // Application is currently disabled
+            res.status(401);
+            ErrorResponse response = new ErrorResponse("Application " + maybeApp.get().getAppid() + " is disabled");
+            return MAPPER.writeValueAsString(response);
         }
     }
 }

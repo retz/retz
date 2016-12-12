@@ -21,7 +21,9 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.*;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.junit.After;
@@ -77,7 +79,7 @@ public class WebConsoleTest {
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
         config = conf.getServerConfig();
         webConsole = new WebConsole(config);
-        WebConsole.setScheduler(scheduler);
+        WebConsole.set(scheduler, null);
         awaitInitialization();
 
         Database.getInstance().init(config);
@@ -108,6 +110,7 @@ public class WebConsoleTest {
     public void version() {
         System.err.println(Client.VERSION_STRING);
     }
+
     /**
      * @throws Exception if failed
      */
@@ -168,7 +171,7 @@ public class WebConsoleTest {
                     Optional.empty(), Optional.empty(), config.getUser().keyId(),
                     0, new MesosContainer(), true);
             Response res = webClient.load(app);
-            System.err.println(res.status());
+            System.err.println(">>>" + res.status());
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 

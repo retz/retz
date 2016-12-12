@@ -55,9 +55,9 @@ public class Application {
         this.persistentFiles = persistentFiles;
         this.largeFiles = (largeFiles == null) ? Arrays.asList() : largeFiles;
         this.files = (files == null) ? Arrays.asList() : files;
-        this.diskMB = diskMB;
+        this.diskMB = (diskMB == null) ? Optional.empty() : diskMB;
         this.owner = Objects.requireNonNull(owner);
-        this.user = user;
+        this.user = (user == null) ? Optional.empty() : user;
         if (gracePeriod > 0) {
             if (gracePeriod > 1024) {
                 throw new IllegalArgumentException("Too large value for grace period: " + gracePeriod);
