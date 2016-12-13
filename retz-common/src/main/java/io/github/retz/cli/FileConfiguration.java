@@ -76,34 +76,43 @@ public class FileConfiguration {
             Objects.requireNonNull(properties.getProperty(KEYSTORE_PASS));
         } */
 
+        if (properties.getProperty(ACCESS_KEY) == null) {
+            LOG.error("{} should always be present in your configuration file", ACCESS_KEY);
+            throw new IllegalArgumentException("Authentication access key lacking");
+        }
+
         if (authenticationEnabled()) {
-            LOG.info("Authentication enabled");
-            if (properties.getProperty(ACCESS_SECRET) == null
-                    || properties.getProperty(ACCESS_KEY) == null) {
-                LOG.error("Both {} and {} should be present in your configuration file",
-                        ACCESS_KEY, ACCESS_SECRET);
-                throw new IllegalArgumentException("Authentication info lacking");
+            LOG.info("Authentication enabled={}", authenticationEnabled());
+            if (properties.getProperty(ACCESS_SECRET) == null) {
+                LOG.error("{} should be present in your configuration file when authentication is enabled",
+                        ACCESS_SECRET);
+                throw new IllegalArgumentException("Authentication access secret lacking");
             }
         } else {
-            LOG.warn("Authentication is disabled");
+            LOG.warn("Authentication enabled={}", authenticationEnabled());
         }
     }
 
     public boolean insecure() {
-        return getBoolProperty(INSECURE_TLS,false);
+        return getBoolProperty(INSECURE_TLS, false);
     }
+
     public String getKeystoreFile() {
         return properties.getProperty(KEYSTORE_FILE);
     }
+
     public String getKeystorePass() {
         return properties.getProperty(KEYSTORE_PASS);
     }
+
     public String getTruststoreFile() {
         return properties.getProperty(TRUSTSTORE_FILE);
     }
+
     public String getTruststorePass() {
         return properties.getProperty(TRUSTSTORE_PASS);
     }
+
     public boolean authenticationEnabled() {
         return getBoolProperty(AUTHENTICATION, true);
     }
@@ -173,6 +182,7 @@ public class FileConfiguration {
     protected int getLowerboundedIntProperty(String name, int dflt, int lb) {
         return getBoundedIntProperty(name, dflt, lb, Integer.MAX_VALUE);
     }
+
     protected int getIntProperty(String name, int dflt) {
         String s = properties.getProperty(name);
         if (s == null) {
