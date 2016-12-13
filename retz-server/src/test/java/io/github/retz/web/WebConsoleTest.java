@@ -103,6 +103,11 @@ public class WebConsoleTest {
         WebConsole.stop();
         Database.getInstance().clear();
         Database.getInstance().stop();
+        // This is because Spark.stop() is impelemented in asynchronous way,
+        // there are no way to wait for spark.Service.initialized become false.
+        // If this sleep is too short, IllegalStateException("This must be done before route mapping has begun");
+        // will be thrown.
+        Thread.sleep(1024);
     }
 
     @Test

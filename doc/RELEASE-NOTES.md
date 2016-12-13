@@ -2,6 +2,7 @@
 
 ## 0.1.2
 
+* Update Sparkjava to 2.5.3 from 2.3.
 * Add server version checker to client - just warns when version
   mistmatch found in major and minor version numbers.
 * Change CLI output of retz-admin and retz-client to print out to System.out
