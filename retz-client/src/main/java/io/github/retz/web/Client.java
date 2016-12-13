@@ -53,6 +53,7 @@ public class Client implements AutoCloseable {
     protected Client(URI uri, Authenticator authenticator) {
         this.uri = uri;
         this.authenticator = authenticator;
+        System.setProperty("http.agent", Client.VERSION_STRING);
     }
 
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {

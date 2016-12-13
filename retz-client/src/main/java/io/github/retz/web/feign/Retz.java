@@ -16,14 +16,8 @@
  */
 package io.github.retz.web.feign;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Objects;
-import java.util.function.Supplier;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-
 import feign.Feign;
 import feign.Param;
 import feign.RequestLine;
@@ -35,9 +29,11 @@ import io.github.retz.protocol.Response;
 import io.github.retz.protocol.ScheduleRequest;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.web.Client;
-import org.slf4j.LoggerFactory;
-import org.slf4j.impl.SimpleLoggerFactory;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 public interface Retz {
 
