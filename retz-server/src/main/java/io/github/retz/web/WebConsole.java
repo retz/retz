@@ -86,7 +86,7 @@ public final class WebConsole {
         before( WebConsole::authenticate );
 
         after((req, res) -> {
-            LOG.debug("{} {} {} {} from {} {}",
+            LOG.info("{} {} {} {} from {} {}",
                     res.raw().getStatus(),
                     req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
         });
@@ -148,7 +148,7 @@ public final class WebConsole {
         } else {
             resource = new URI(req.url()).getPath();
         }
-        LOG.info("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
+        LOG.debug("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
 
         // TODO: authenticator must be per each user and single admin user
         Optional<Authenticator> adminAuthenticator = Optional.ofNullable(config.getAuthenticator());
