@@ -56,7 +56,7 @@ public class Launcher {
     }
 
     public static int execute(String... argv) {
-        LOG.info(Client.VERSION_STRING);
+        LOG.debug(Client.VERSION_STRING);
         try {
             Configuration conf = parseConfiguration(argv);
             JCommander commander = conf.commander;
@@ -65,21 +65,23 @@ public class Launcher {
                 LOG.error("Invalid subcommand");
                 help(SUB_COMMANDS);
             } else {
-                LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
-                        conf.commands.getConfigFile());
+                LOG.info("Command={}, Config={}, Client version={}",
+                        commander.getParsedCommand(),
+                        conf.commands.getConfigFile(),
+                        Client.VERSION_STRING);
                 LOG.debug("Configuration: {}", conf.configuration.toString());
                 return conf.getParsedSubCommand().handle(conf.configuration);
             }
 
         } catch (IOException e) {
-            LOG.error("Invalid configuration file: {}", e.toString());
+            LOG.error("Invalid configuration file: {}", e.toString(), e);
         } catch (URISyntaxException e) {
-            LOG.error("Bad file format: {}", e.toString());
+            LOG.error("Bad file format: {}", e.toString(), e);
         } catch (MissingCommandException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             help(SUB_COMMANDS);
         } catch (ParameterException e) {
-            LOG.error("{}", e.toString());
+            LOG.error(e.toString(), e);
             help(SUB_COMMANDS);
         }
         return -1;

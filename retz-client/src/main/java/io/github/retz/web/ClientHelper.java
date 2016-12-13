@@ -66,6 +66,7 @@ public class ClientHelper {
     }
 
     // Gets whole file until the job finishes and streams out to 'out'!!!
+    // Throws FileNotFoundException when no file found, unlike getFile
     public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out)
             throws IOException, JobNotFoundException {
         return getWholeFile(c, id, filename, poll, out, 0);
@@ -109,7 +110,7 @@ public class ClientHelper {
                 currentState = current.get().state();
                 if ((currentState == Job.JobState.FINISHED || currentState == Job.JobState.KILLED)
                         && bytesRead == 0) {
-                    return current;
+                    break;
                 }
             }
 
@@ -126,7 +127,7 @@ public class ClientHelper {
                     interval = INITAL_INTERVAL_MSEC;
                 }
             } else {
-                return current;
+                break;
             }
         }
         while (currentState != Job.JobState.FINISHED && currentState != Job.JobState.KILLED);

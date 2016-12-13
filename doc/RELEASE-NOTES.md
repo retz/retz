@@ -2,6 +2,8 @@
 
 ## 0.1.2
 
+* Fix a bug where System.out was closed and no error message is printed
+  when no file is found in sandbox on 'get-file'. (#80)
 * Add original User-Agent header line to HTTP request of retz-client.
 * Update Sparkjava to 2.5.3 from 2.3.
 * Add server version checker to client - just warns when version

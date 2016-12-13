@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -446,7 +447,7 @@ public class RetzIntTest {
         }
     }
 
-    @Test
+    @Test(expected = FileNotFoundException.class)
     public void fileNotFoundTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
@@ -460,6 +461,7 @@ public class RetzIntTest {
                 GetFileResponse getFileResponse = (GetFileResponse) response;
                 assertTrue(getFileResponse.job().isPresent());
                 assertTrue(!getFileResponse.file().isPresent());
+                ClientHelper.getWholeFile(client, ran.id(), "no-such-file", false, System.out);
             }
         }
     }

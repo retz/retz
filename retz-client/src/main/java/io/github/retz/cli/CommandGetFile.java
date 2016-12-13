@@ -74,8 +74,8 @@ public class CommandGetFile implements SubCommand {
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
-                .build();
-             OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename)) {
+                .build()) {
+            OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename);
 
             LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
 
@@ -84,6 +84,7 @@ public class CommandGetFile implements SubCommand {
                     LOG.info("============== printing {} of job id={} ================", filename, id);
                 }
                 ClientHelper.getWholeFile(webClient, id, filename, poll, out);
+                return 0;
             }
 
             Response res = webClient.getFile(id, filename, offset, length);
@@ -115,11 +116,12 @@ public class CommandGetFile implements SubCommand {
                 ErrorResponse errorResponse = (ErrorResponse) res;
                 LOG.error("Error: {}", errorResponse.status());
             }
-
         } catch (JobNotFoundException e) {
-            LOG.error("Cannot get file: {}", e.toString());
+            LOG.error("Cannot get file", e);
+        } catch (FileNotFoundException e) {
+            LOG.error(e.toString(), e);
         } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
+            LOG.error("Cannot connect to server {}", fileConfig.getUri(), e);
         } catch (IOException e) {
             LOG.error(e.toString(), e);
         }
