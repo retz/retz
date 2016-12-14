@@ -22,6 +22,9 @@ public class MainCommand {
     @Parameter(names={"--config", "-C"})
     private String configFile;
 
+    @Parameter(names={"--verbose", "-v"})
+    boolean verbose = false;
+
     public String getConfigFile() {
         if (configFile == null) {
             configFile = "/opt/retz-client/etc/retz.properties";

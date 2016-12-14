@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.util.List;
 import java.util.Properties;
 
@@ -62,7 +61,7 @@ public class CommandSchedule implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws IOException {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
@@ -72,9 +71,12 @@ public class CommandSchedule implements SubCommand {
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
-            LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
+            if (verbose) {
+                LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
+            }
             Response res = webClient.schedule(job);
             if (res instanceof ScheduleResponse) {
                 ScheduleResponse res1 = (ScheduleResponse) res;
@@ -84,12 +86,7 @@ public class CommandSchedule implements SubCommand {
                 LOG.error("Error: " + res.status());
                 return -1;
             }
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
-        return -1;
     }
 }
 

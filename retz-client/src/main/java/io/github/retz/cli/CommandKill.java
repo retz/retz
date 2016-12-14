@@ -24,9 +24,6 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
-
 public class CommandKill implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandKill.class);
 
@@ -44,15 +41,18 @@ public class CommandKill implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
-            LOG.info("Killing job detail id={}", id);
+            if (verbose) {
+                LOG.info("Killing job detail id={}", id);
+            }
             Response res = webClient.kill(id);
             if (res instanceof KillResponse) {
                 KillResponse killResponse = (KillResponse) res;
@@ -63,11 +63,6 @@ public class CommandKill implements SubCommand {
                 ErrorResponse errorResponse = (ErrorResponse) res;
                 LOG.error("Error: {}", errorResponse.status());
             }
-
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
         return -1;
 

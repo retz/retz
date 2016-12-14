@@ -2,6 +2,7 @@
 
 ## 0.1.2
 
+* Add '-v' and '--verbose' option to client CLI.
 * Fix a bug where System.out was closed and no error message is printed
   when no file is found in sandbox on 'get-file'. (#80)
 * Add original User-Agent header line to HTTP request of retz-client.

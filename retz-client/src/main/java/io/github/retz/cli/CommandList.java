@@ -17,15 +17,14 @@
 package io.github.retz.cli;
 
 import io.github.retz.protocol.ErrorResponse;
-import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.ListJobResponse;
 import io.github.retz.protocol.Response;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -41,12 +40,15 @@ public class CommandList implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
-        LOG.info("Configuration: {}", fileConfig.toString());
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
+        if (verbose) {
+            LOG.info("Configuration: {}", fileConfig.toString());
+        }
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
             Response res = webClient.list(64); // TODO: make this CLI argument
@@ -64,7 +66,7 @@ public class CommandList implements SubCommand {
                     "TaskId", "State", "AppName", "Command", "Result", "Duration",
                     "Scheduled", "Started", "Finished", "Reason");
 
-            jobs.sort((a, b) -> a.id() - b.id());
+            jobs.sort(Comparator.comparingInt(job -> job.id()));
 
             for (Job job : jobs) {
                 String reason = "-";
@@ -90,12 +92,7 @@ public class CommandList implements SubCommand {
                 LOG.info(line);
             }
             return 0;
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
-        return -1;
     }
 
     @Override

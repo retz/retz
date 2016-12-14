@@ -23,9 +23,6 @@ import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.JMException;
-import javax.management.ObjectName;
-
 public class CommandCreateUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandCreateUser.class);
 
@@ -43,7 +40,7 @@ public class CommandCreateUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) throws Throwable {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port = fileConfig.getJmxPort();
 
         if (info.length() > 1024) {

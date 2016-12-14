@@ -73,10 +73,12 @@ public class Launcher {
                 LOG.error("Invalid subcommand");
                 help(SUB_COMMANDS);
             } else {
-                LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
-                        conf.commands.getConfigFile());
-                LOG.info("Using JMX port {}", conf.fileConfiguration.getJmxPort());
-                return conf.getParsedSubCommand().handle(conf.fileConfiguration);
+                if (conf.commands.verbose) {
+                    LOG.info("Command: {}, Config file: {}", commander.getParsedCommand(),
+                            conf.commands.getConfigFile());
+                    LOG.info("Using JMX port {}", conf.fileConfiguration.getJmxPort());
+                }
+                return conf.getParsedSubCommand().handle(conf.fileConfiguration, conf.commands.verbose);
             }
 
         } catch (IOException e) {

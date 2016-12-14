@@ -46,7 +46,7 @@ public class CommandHelp implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         if (command == null) {
             Launcher.help();
         } else {

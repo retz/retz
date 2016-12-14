@@ -22,12 +22,11 @@ import io.github.retz.protocol.ListFilesRequest;
 import io.github.retz.protocol.ListFilesResponse;
 import io.github.retz.protocol.Response;
 import io.github.retz.protocol.data.DirEntry;
+import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -54,25 +53,29 @@ public class CommandListFiles implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose)throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
+                .setVerboseLog(verbose)
                 .checkCert(!fileConfig.insecure())
                 .build()) {
 
-            LOG.info("Listing files in {} of a job(id={})", path, id);
+            if (verbose) {
+                LOG.info("Listing files in {} of a job(id={})", path, id);
+            }
 
             Response res = webClient.listFiles(id, path);
             if (res instanceof ListFilesResponse) {
                 ListFilesResponse listFilesResponse = (ListFilesResponse) res;
 
                 if (listFilesResponse.job().isPresent()) {
-                    //Job job = getJobResponse.job().get();
 
-                    //LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
-                    //LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
+                    if (verbose) {
+                        Job job = listFilesResponse.job().get();
+                        LOG.info("Job: {}", job);
+                    }
                     TableFormatter formatter = new TableFormatter("gid", "mode", "uid", "mtime", "size", "path");
 
                     DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -90,7 +93,6 @@ public class CommandListFiles implements SubCommand {
                     for (String line : formatter) {
                         LOG.info(line);
                     }
-
                     return 0;
 
                 } else {
@@ -100,11 +102,6 @@ public class CommandListFiles implements SubCommand {
                 ErrorResponse errorResponse = (ErrorResponse) res;
                 LOG.error("Error: {}", errorResponse.status());
             }
-
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
         return -1;
 

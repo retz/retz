@@ -16,7 +16,6 @@
  */
 package io.github.retz.cli;
 
-import com.beust.jcommander.JCommander;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,7 @@ public class CommandConfig implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         LOG.info("Configuration: {}", fileConfig.toString());
         return 0;
     }

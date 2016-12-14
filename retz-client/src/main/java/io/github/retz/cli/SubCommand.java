@@ -29,7 +29,7 @@ public interface SubCommand {
 
     String description();
 
-    int handle(ClientCLIConfig fileConfig);
+    int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable;
 
     String getName();
 

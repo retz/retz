@@ -24,6 +24,9 @@ public class MainCommand {
     @Parameter(names={"--config", "-C"})
     private String configFile;
 
+    @Parameter(names={"--verbose", "-v"})
+    boolean verbose = false;
+
     public String getConfigFile() {
         // Allowing null for now; no configuration file may even work
         return configFile;

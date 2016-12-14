@@ -30,7 +30,7 @@ public interface SubCommand {
 
     String description();
 
-    int handle(FileConfiguration fileConfig) throws Throwable;
+    int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable;
 
     String getName();
 

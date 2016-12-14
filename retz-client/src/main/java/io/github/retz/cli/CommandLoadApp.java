@@ -24,8 +24,6 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,12 +72,8 @@ public class CommandLoadApp implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
-
-        if (files.isEmpty()) {
-            LOG.warn("No files specified; mesos-execute would rather suite your use case.");
-        }
 
         Container c;
         if ("docker".equals(container)) {
@@ -120,23 +114,19 @@ public class CommandLoadApp implements SubCommand {
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
             Response r = webClient.load(application);
 
-            LOG.info(r.status());
-
             if (r instanceof ErrorResponse) {
+                LOG.error(r.status());
                 return -1;
             }
-            return 0;
 
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LOG.info("Application {} has been registered.", appName);
+            return 0;
         }
-        return -1;
     }
 
     static List<DockerVolume> parseDockerVolumeSpecs(List<String> volumeSpecs) {

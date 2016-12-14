@@ -16,16 +16,13 @@
  */
 package io.github.retz.cli;
 
-import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.ListAppResponse;
 import io.github.retz.protocol.Response;
+import io.github.retz.protocol.data.Application;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.net.ConnectException;
 
 public class CommandListApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);
@@ -41,12 +38,13 @@ public class CommandListApp implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose)throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
             Response res = webClient.listApp();
@@ -63,12 +61,6 @@ public class CommandListApp implements SubCommand {
             }
             return 0;
 
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
-        return -1;
     }
 }

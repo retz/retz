@@ -23,11 +23,9 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -47,7 +45,7 @@ public class HmacSHA256Authenticator implements Authenticator {
             Date start = Calendar.getInstance().getTime();
             mac = Mac.getInstance(ALGORITHM);
             Date end = Calendar.getInstance().getTime();
-            LOG.info("javax.crypto.Mac instance with {} initialized in {} ms.",
+            LOG.debug("javax.crypto.Mac instance with {} initialized in {} ms.",
                     ALGORITHM, end.getTime() - start.getTime());
         } catch (NoSuchAlgorithmException e) {
             LOG.error(e.toString(), e);

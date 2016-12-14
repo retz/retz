@@ -39,7 +39,7 @@ public class CommandGC implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) throws Throwable  {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable  {
         int port = fileConfig.getJmxPort();
         try (AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             if (leeway < 0) {

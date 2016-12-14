@@ -18,12 +18,9 @@ package io.github.retz.admin;
 
 import com.j256.simplejmx.client.JmxClient;
 import io.github.retz.cli.FileConfiguration;
-import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.JMException;
-import javax.management.ObjectName;
 import java.util.List;
 
 public class CommandListUser implements SubCommand {
@@ -40,7 +37,7 @@ public class CommandListUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) throws Throwable {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port = fileConfig.getJmxPort();
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             List<String> users = client.listUser();

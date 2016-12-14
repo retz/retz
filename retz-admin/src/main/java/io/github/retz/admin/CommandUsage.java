@@ -22,8 +22,6 @@ import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.JMException;
-import javax.management.ObjectName;
 import java.util.List;
 
 public class CommandUsage implements SubCommand {
@@ -46,7 +44,7 @@ public class CommandUsage implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) throws Throwable {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port =fileConfig.getJmxPort();
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             List<String> lines = client.getUsage(start, end);

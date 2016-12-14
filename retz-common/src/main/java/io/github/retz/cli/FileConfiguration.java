@@ -82,7 +82,7 @@ public class FileConfiguration {
         }
 
         if (authenticationEnabled()) {
-            LOG.info("Authentication enabled={}", authenticationEnabled());
+            LOG.debug("Authentication enabled={}", authenticationEnabled());
             if (properties.getProperty(ACCESS_SECRET) == null) {
                 LOG.error("{} should be present in your configuration file when authentication is enabled",
                         ACCESS_SECRET);
@@ -190,5 +190,29 @@ public class FileConfiguration {
         } else {
             return Integer.parseInt(s);
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder()
+                .append("insecure=").append(insecure())
+                .append(",keystore=").append(getKeystoreFile());
+
+        if (getKeystorePass() != null) {
+            builder.append(",keystorepass=").append("********");
+        }
+
+        builder.append(",truststorefile=").append(getTruststoreFile());
+        if (getTruststorePass() != null) {
+            builder.append(",truststorepass=").append("********");
+        }
+
+        builder.append(",authentication=").append(authenticationEnabled())
+                .append(",accessKey=").append(getAccessKey())
+                .append(",user=").append(getUser())
+                .append(",authenticator=").append(getAuthenticator().getClass().getName())
+                .append(",jmxPort=").append(getJmxPort());
+
+        return builder.toString();
     }
 }

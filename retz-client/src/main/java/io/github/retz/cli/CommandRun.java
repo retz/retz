@@ -68,7 +68,7 @@ public class CommandRun implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         if (ports < 0 || 1000 < ports) {
@@ -82,9 +82,12 @@ public class CommandRun implements SubCommand {
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
-            LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
+            if (verbose) {
+                LOG.info("Sending job {} to App {}", job.cmd(), job.appid());
+            }
             Response res = webClient.schedule(job);
 
             if (!(res instanceof ScheduleResponse)) {
@@ -92,10 +95,14 @@ public class CommandRun implements SubCommand {
                 return -1;
             }
             Job scheduled = ((ScheduleResponse) res).job();
-            LOG.info("job {} scheduled", scheduled.id(), scheduled.state());
+            if (verbose) {
+                LOG.info("job {} scheduled", scheduled.id(), scheduled.state());
+            }
 
             Job running = ClientHelper.waitForStart(scheduled, webClient);
-            LOG.info("job {} started: {}", running.id(), running.state());
+            if (verbose) {
+                LOG.info("job {} started: {}", running.id(), running.state());
+            }
 
             LOG.info("============ stdout of job {} sandbox start ===========", running.id());
             Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), "stdout", true, System.out);

@@ -65,24 +65,24 @@ public class Launcher {
                 LOG.error("Invalid subcommand");
                 help(SUB_COMMANDS);
             } else {
-                LOG.info("Command={}, Config={}, Client version={}",
-                        commander.getParsedCommand(),
-                        conf.commands.getConfigFile(),
-                        Client.VERSION_STRING);
-                LOG.debug("Configuration: {}", conf.configuration.toString());
-                return conf.getParsedSubCommand().handle(conf.configuration);
+                if (conf.commands.verbose) {
+                    LOG.info("Command={}, Config={}, Client version={}",
+                            commander.getParsedCommand(),
+                            conf.commands.getConfigFile(),
+                            Client.VERSION_STRING);
+                    LOG.info("Configuration: {}", conf.configuration.toString());
+                }
+                return conf.getParsedSubCommand().handle(conf.configuration, conf.commands.verbose);
             }
 
-        } catch (IOException e) {
-            LOG.error("Invalid configuration file: {}", e.toString(), e);
-        } catch (URISyntaxException e) {
-            LOG.error("Bad file format: {}", e.toString(), e);
         } catch (MissingCommandException e) {
             LOG.error(e.toString(), e);
             help(SUB_COMMANDS);
         } catch (ParameterException e) {
             LOG.error(e.toString(), e);
             help(SUB_COMMANDS);
+        } catch (Throwable t) {
+            LOG.error(t.toString(), t);
         }
         return -1;
     }

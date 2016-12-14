@@ -33,7 +33,7 @@ public class ClientCLIConfig extends FileConfiguration {
     public ClientCLIConfig(String file) throws IOException, URISyntaxException {
         super(file);
         retzServerUri = new URI(Objects.requireNonNull(super.properties.getProperty(RETZ_SERVER_URI)));
-        LOG.info("Client only config: {}={}", RETZ_SERVER_URI, retzServerUri);
+        LOG.debug("Client only config: {}={}", RETZ_SERVER_URI, retzServerUri);
     }
 
     public URI getUri() {

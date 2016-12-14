@@ -25,6 +25,7 @@ public class ClientBuilder {
     private Authenticator authenticator = null;
     private boolean checkCert = true;
     private URI uri;
+    private boolean verbose;
 
     protected ClientBuilder(URI uri) {
         this.uri = uri;
@@ -40,9 +41,16 @@ public class ClientBuilder {
         return this;
     }
 
+    public ClientBuilder setVerboseLog(boolean verbose) {
+        this.verbose = verbose;
+        return this;
+    }
+
     public Client build() {
         if (authenticator != null) {
-            return new Client(uri, authenticator, checkCert);
+            Client c = new Client(uri, authenticator, checkCert);
+            c.setVerboseLog(this.verbose);
+            return c;
         } else {
             throw new IllegalArgumentException("Authenticator (retz.access.key) must be set");
         }

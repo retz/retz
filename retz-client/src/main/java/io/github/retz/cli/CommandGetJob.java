@@ -45,15 +45,18 @@ public class CommandGetJob implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
 
-            LOG.info("Fetching job detail id={}", id);
+            if (verbose) {
+                LOG.info("Fetching job detail id={}", id);
+            }
 
             Response res = webClient.getJob(id);
             if (res instanceof GetJobResponse) {

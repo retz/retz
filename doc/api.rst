@@ -15,8 +15,6 @@ Retz Client
 Retz client CLI consists of several subcommands that corresponds
 mostly 1:1 to HTTP/JSON API, as well as Java API.
 
-
-
 Client configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -65,7 +63,7 @@ Note that ``Resource`` does not include parameters like ``?a=b``, or
 Client CLI and API
 ~~~~~~~~~~~~~~~~~~
 
-``retz-client [-C|--config <path/to/retz.properties>] <subcommand> OPTIONS``
+``retz-client [-C|--config <path/to/retz.properties>] [-v|--verbose] <subcommand> OPTIONS``
 
    Starts Retz client with a configuration file described above.
    With installer, ``retz-client`` will be installed to ``/opt/retz-client/bin``.

@@ -22,7 +22,6 @@ import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.JMException;
 import javax.management.ObjectName;
 
 public class CommandEnableUser implements SubCommand {
@@ -42,7 +41,7 @@ public class CommandEnableUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) throws Throwable {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port = fileConfig.getJmxPort();
         try(JmxClient jmxClient = new JmxClient("localhost", port)) {
             Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "enableUser", id, true);

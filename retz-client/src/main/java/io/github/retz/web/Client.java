@@ -16,16 +16,6 @@
  */
 package io.github.retz.web;
 
-import java.io.IOException;
-import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
-import java.util.ResourceBundle;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import feign.FeignException;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.protocol.GetJobResponse;
@@ -34,6 +24,15 @@ import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.feign.Retz;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 public class Client implements AutoCloseable {
 
@@ -47,8 +46,8 @@ public class Client implements AutoCloseable {
     }
 
     private final URI uri;
-
     private final Authenticator authenticator;
+    private boolean verboseLog = false;
 
     protected Client(URI uri, Authenticator authenticator) {
         this.uri = uri;
@@ -69,6 +68,9 @@ public class Client implements AutoCloseable {
         }
     }
 
+    public void setVerboseLog(boolean b) {
+        verboseLog = b;
+    }
     public static ClientBuilder newBuilder(URI uri) {
         return new ClientBuilder(uri);
     }

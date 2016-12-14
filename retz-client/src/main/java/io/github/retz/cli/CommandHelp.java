@@ -31,7 +31,6 @@ public class CommandHelp implements SubCommand {
         commander.addCommand(getName(), this, description());
     }
 
-
     @Parameter(names = {"-s", "--subcommand"}, description = "Subcommand to see help")
     private String command;
 
@@ -46,7 +45,7 @@ public class CommandHelp implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         if (command == null) {
             Launcher.help();
         } else {

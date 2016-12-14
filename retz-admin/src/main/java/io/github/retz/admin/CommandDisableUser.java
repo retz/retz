@@ -22,9 +22,6 @@ import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.JMException;
-import javax.management.ObjectName;
-
 public class CommandDisableUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandDisableUser.class);
 
@@ -42,7 +39,7 @@ public class CommandDisableUser implements SubCommand {
     }
 
     @Override
-    public int handle(FileConfiguration fileConfig) throws Throwable {
+    public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port = fileConfig.getJmxPort();
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             boolean result = client.enableUser(id, false);

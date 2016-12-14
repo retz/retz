@@ -30,9 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
-import java.net.ConnectException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -68,21 +66,21 @@ public class CommandGetFile implements SubCommand {
     }
 
     @Override
-    public int handle(ClientCLIConfig fileConfig) {
+    public int handle(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())
+                .setVerboseLog(verbose)
                 .build()) {
             OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename);
 
-            LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
+            if (verbose) {
+                LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
+            }
 
             if (length < 0) {
-                if ("-".equals(resultDir)) {
-                    LOG.info("============== printing {} of job id={} ================", filename, id);
-                }
                 ClientHelper.getWholeFile(webClient, id, filename, poll, out);
                 return 0;
             }
@@ -96,12 +94,13 @@ public class CommandGetFile implements SubCommand {
                     Job job = getFileResponse.job().get();
 
                     if (getFileResponse.file().isPresent()) {
-                        LOG.info("offset={}", getFileResponse.file().get().offset());
+                        if (verbose) {
+                            LOG.info("offset={}", getFileResponse.file().get().offset());
+                        }
                         out.write(getFileResponse.file().get().data().getBytes(UTF_8));
 
-                    } else {
-                        LOG.info("Job: appid={}, id={}, scheduled={}, cmd='{}'", job.appid(), job.id(), job.scheduled(), job.cmd());
-                        LOG.info("\tstarted={}, finished={}, state={}, result={}", job.started(), job.finished(), job.state(), job.result());
+                    } else if (verbose) {
+                        LOG.info("Job: {}", job);
                     }
 
                     if (out != null && "-".equals(resultDir)) {
@@ -119,10 +118,6 @@ public class CommandGetFile implements SubCommand {
         } catch (JobNotFoundException e) {
             LOG.error("Cannot get file", e);
         } catch (FileNotFoundException e) {
-            LOG.error(e.toString(), e);
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri(), e);
-        } catch (IOException e) {
             LOG.error(e.toString(), e);
         }
         return -1;
