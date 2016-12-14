@@ -22,9 +22,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by kuenishi on 16/12/12.
- */
 public class VersionCheckTest {
     @Test
     public void current() {
