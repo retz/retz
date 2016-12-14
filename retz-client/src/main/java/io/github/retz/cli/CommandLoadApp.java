@@ -46,7 +46,7 @@ public class CommandLoadApp implements SubCommand {
     //@Parameter(names = "-disk", description = "Disk size for sandbox in MB")
     private int disk = 0;
 
-    @Parameter(names = {"--grace-period"}, description = "Grace period to kill task")
+    @Parameter(names = {"--grace-period"}, description = "Grace period to kill task (default is 0: use Mesos default")
     private int gracePeriod;
 
     @Parameter(names = "--container", description = "Container in which job is run 'mesos' or 'docker'")
