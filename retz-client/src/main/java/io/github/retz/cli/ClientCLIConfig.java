@@ -16,6 +16,7 @@
  */
 package io.github.retz.cli;
 
+import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +37,19 @@ public class ClientCLIConfig extends FileConfiguration {
         LOG.debug("Client only config: {}={}", RETZ_SERVER_URI, retzServerUri);
     }
 
+    public ClientCLIConfig(ClientCLIConfig c) {
+        super(c.properties);
+        retzServerUri = c.getUri();
+    }
+
     public URI getUri() {
         return retzServerUri;
+    }
+
+    // For test purpose in retz-server
+    public void setUser(User u) {
+        properties.setProperty(ACCESS_KEY, u.keyId());
+        properties.setProperty(ACCESS_SECRET, u.secret());
     }
 
     @Override

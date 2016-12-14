@@ -93,6 +93,10 @@ public class FileConfiguration {
         }
     }
 
+    protected FileConfiguration(Properties p) {
+        this.properties = p;
+    }
+
     public boolean insecure() {
         return getBoolProperty(INSECURE_TLS, false);
     }

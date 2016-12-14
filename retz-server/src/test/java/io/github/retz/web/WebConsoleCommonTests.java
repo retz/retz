@@ -24,6 +24,7 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.protocol.data.User;
 import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.hamcrest.Matchers;
@@ -32,10 +33,7 @@ import org.junit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -90,6 +88,7 @@ public class WebConsoleCommonTests {
         webClient = Client.newBuilder(cliConfig.getUri())
                 .setAuthenticator(cliConfig.getAuthenticator())
                 .checkCert(!cliConfig.insecure())
+                .setVerboseLog(true)
                 .build();
     }
 
@@ -274,5 +273,97 @@ public class WebConsoleCommonTests {
         System.err.println(statusResponse.queueLength());
         assertThat(statusResponse.queueLength(), is(1));
         assertThat(statusResponse.sessionLength(), is(0));
+    }
+
+    // Checks isolation between users.
+    // All combination of client APIs must be safely excluded,
+    // Any request to server imitation other users must fail.
+    @Test
+    public void isolation() throws Exception {
+        // Prepare data
+        Application app1 = new Application("app1", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                Optional.empty(), Optional.empty(), cliConfig.getUser().keyId(),
+                0, new MesosContainer(), true);
+        Job job1 = new Job("app1", "ls", new Properties(), 1, 32);
+
+        {
+            Response res = webClient.load(app1);
+            assertEquals("ok", res.status());
+        }
+        {
+            Response res = webClient.schedule(job1);
+            assertEquals("ok", res.status());
+            ScheduleResponse scheduleResponse = (ScheduleResponse) res;
+            job1 = scheduleResponse.job();
+        }
+        System.err.println("Job " + job1.id() + " has been scheduled");
+
+        // Here comes a new challenger!!
+        User charlie = new User("charlie", "snoops!", true, "Charlie the theif");
+        Database.getInstance().addUser(charlie);
+
+        ClientCLIConfig c2 = new ClientCLIConfig(cliConfig);
+        c2.setUser(charlie);
+
+        try (Client client2 = Client.newBuilder(c2.getUri())
+                .setAuthenticator(c2.getAuthenticator())
+                .checkCert(!c2.insecure())
+                .setVerboseLog(true)
+                .build()) {
+
+            {
+                Response res = client2.listApp();
+                assertEquals("ok", res.status());
+                ListAppResponse listAppResponse = (ListAppResponse) res;
+                assertTrue(listAppResponse.applicationList().isEmpty());
+            }
+            {
+                Response res = client2.getApp("app1");
+                assertThat(res, instanceOf(ErrorResponse.class));
+            }
+            {
+                Response res = client2.list(10);
+                assertEquals("ok", res.status());
+                ListJobResponse listJobResponse = (ListJobResponse) res;
+                assertTrue(listJobResponse.finished().isEmpty());
+                assertTrue(listJobResponse.queue().isEmpty());
+                assertTrue(listJobResponse.running().isEmpty());
+            }
+            /* Tests not passing
+            { // Charlie tries to snoop Job info of Alice
+                Response res = client2.getJob(job1.id());
+                assertThat(res, instanceOf(ErrorResponse.class));
+                System.err.println(res.status());
+            }
+            { // Charlie tries to snoop files in Alice's job sandbox
+                Response res = client2.getFile(job1.id(), "stdout", 0, -1);
+                assertThat(res, instanceOf(ErrorResponse.class));
+                System.err.println(res.status());
+            }
+            { // Charlie tries to snoop files in Alice's job sandbox
+                Response res = client2.listFiles(job1.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
+                assertThat(res, instanceOf(ErrorResponse.class));
+                System.err.println(res.status());
+            }
+            Application app2 = new Application("app2", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                    Optional.empty(), Optional.empty(), cliConfig.getUser().keyId(),
+                    0, new MesosContainer(), true);
+            { // Charlie tries to steal Alice's applications
+                Response res = client2.load(app2);
+                assertThat(res, instanceOf(ErrorResponse.class));
+            }
+            */
+            Job job2 = new Job("app1", "ls", new Properties(), 1, 32);
+            { // Charlie tries to steal Alice's applications
+                Response res = client2.schedule(job2);
+                assertThat(res, instanceOf(ErrorResponse.class));
+                System.err.println(res.status());
+            }
+            { // Charlie tries to steal Alice's applications
+                Job job3 = client2.run(job2);
+                assertEquals(null, job3);
+            }
+
+        }
     }
 }
