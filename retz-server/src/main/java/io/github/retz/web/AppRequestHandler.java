@@ -65,6 +65,15 @@ public class AppRequestHandler {
         // Compare application owner and requester
         validateOwner(req, loadAppRequest.application());
 
+        Optional<Application> tmp = Applications.get(loadAppRequest.application().getAppid());
+        if (tmp.isPresent()) {
+            if (!tmp.get().getOwner().equals(loadAppRequest.application().getOwner())) {
+                res.status(403);
+                LOG.error("Application {} is already owned by ", loadAppRequest.application().getAppid(), tmp.get().getOwner());
+                return MAPPER.writeValueAsString(new ErrorResponse("The application name is already used by other user"));
+            }
+        }
+
         if (!(loadAppRequest.application().container() instanceof DockerContainer)) {
             if (loadAppRequest.application().getUser().isPresent() &&
                     loadAppRequest.application().getUser().get().equals("root")) {

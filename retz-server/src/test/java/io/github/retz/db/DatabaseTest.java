@@ -21,6 +21,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.User;
+import io.github.retz.scheduler.AppJobPair;
 import io.github.retz.scheduler.JobQueue;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -147,6 +148,13 @@ public class DatabaseTest {
                 System.err.println(j.id() + j.taskId() + j.state());
             }
             assertTrue(db.getJobFromTaskId(taskId).isPresent());
+        }
+        {
+            Optional<AppJobPair> maybePair = db.getAppJob(id);
+            assertTrue(maybePair.isPresent());
+            AppJobPair pair = maybePair.get();
+            assertEquals(id, pair.job().id());
+            assertEquals(a.getAppid(), pair.application().getAppid());
         }
     }
 

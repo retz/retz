@@ -305,6 +305,9 @@ public class WebConsoleCommonTests {
         ClientCLIConfig c2 = new ClientCLIConfig(cliConfig);
         c2.setUser(charlie);
 
+        assertEquals("deadbeef", cliConfig.getUser().keyId());
+        assertEquals("charlie", c2.getUser().keyId()        );
+
         try (Client client2 = Client.newBuilder(c2.getUri())
                 .setAuthenticator(c2.getAuthenticator())
                 .checkCert(!c2.insecure())
@@ -329,30 +332,53 @@ public class WebConsoleCommonTests {
                 assertTrue(listJobResponse.queue().isEmpty());
                 assertTrue(listJobResponse.running().isEmpty());
             }
-            /* Tests not passing
             { // Charlie tries to snoop Job info of Alice
                 Response res = client2.getJob(job1.id());
-                assertThat(res, instanceOf(ErrorResponse.class));
+                assertThat(res, instanceOf(GetJobResponse.class));
+                GetJobResponse getJobResponse = (GetJobResponse) res;
+                assertFalse(getJobResponse.job().isPresent());
                 System.err.println(res.status());
             }
             { // Charlie tries to snoop files in Alice's job sandbox
                 Response res = client2.getFile(job1.id(), "stdout", 0, -1);
-                assertThat(res, instanceOf(ErrorResponse.class));
+                assertThat(res, instanceOf(GetFileResponse.class));
+                GetFileResponse getFileResponse = (GetFileResponse) res;
+                assertFalse(getFileResponse.job().isPresent());
+                assertFalse(getFileResponse.file().isPresent());
                 System.err.println(res.status());
             }
             { // Charlie tries to snoop files in Alice's job sandbox
                 Response res = client2.listFiles(job1.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
+                assertThat(res, instanceOf(ListFilesResponse.class));
+                ListFilesResponse listFilesResponse = (ListFilesResponse) res;
+                assertFalse(listFilesResponse.job().isPresent());
+                assertTrue(listFilesResponse.entries().isEmpty());
+                System.err.println(res.status());
+            }
+            {
+                // Charlie tries to steal Alice's whole application
+                Response res = client2.load(app1);
                 assertThat(res, instanceOf(ErrorResponse.class));
                 System.err.println(res.status());
             }
-            Application app2 = new Application("app2", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                    Optional.empty(), Optional.empty(), cliConfig.getUser().keyId(),
-                    0, new MesosContainer(), true);
-            { // Charlie tries to steal Alice's applications
+            { // Charlie tries to steal Alice's application name
+                Application app2 = new Application("app1", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                        Optional.empty(), Optional.empty(), c2.getUser().keyId(),
+                        0, new MesosContainer(), true);
                 Response res = client2.load(app2);
                 assertThat(res, instanceOf(ErrorResponse.class));
+                System.err.println(res.status());
             }
-            */
+            { // Charlie tries to be Alice
+                System.err.println(cliConfig.getUser().keyId());
+                Application app2 = new Application("app2", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+                        Optional.empty(), Optional.empty(), cliConfig.getUser().keyId(),
+                        0, new MesosContainer(), true);
+                Response res = client2.load(app2);
+                assertThat(res, instanceOf(ErrorResponse.class));
+                System.err.println(res.status());
+            }
+
             Job job2 = new Job("app1", "ls", new Properties(), 1, 32);
             { // Charlie tries to steal Alice's applications
                 Response res = client2.schedule(job2);
@@ -363,7 +389,6 @@ public class WebConsoleCommonTests {
                 Job job3 = client2.run(job2);
                 assertEquals(null, job3);
             }
-
         }
     }
 }

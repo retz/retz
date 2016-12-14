@@ -2,6 +2,8 @@
 
 ## 0.1.2
 
+* Fix a severe bug where users may see or use others' applications
+  jobs (#103).
 * Change client options to standard conventions e.g. [GNU Coding Standards](https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html).
 * Add '-v' and '--verbose' option to client CLI.
 * Fix a bug where System.out was closed and no error message is printed

@@ -34,11 +34,11 @@ public class AppJobPair {
         return app.isPresent();
     }
 
-    Application application() {
+    public Application application() {
         return app.get();
     }
 
-    Job job() {
+    public Job job() {
         return job;
     }
 }

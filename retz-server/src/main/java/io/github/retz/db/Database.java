@@ -24,6 +24,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
+import io.github.retz.scheduler.AppJobPair;
 import io.github.retz.scheduler.Launcher;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.tomcat.jdbc.pool.DataSource;
@@ -565,6 +566,31 @@ public class Database {
         }
     }
 
+    public Optional<AppJobPair> getAppJob(int id) throws IOException {
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
+             PreparedStatement p = conn.prepareStatement("SELECT j.json, a.json FROM jobs j, applications a WHERE id = ? AND j.appid = a.appid")) {
+            conn.setAutoCommit(true);
+            p.setInt(1, id);
+            try (ResultSet res = p.executeQuery()) {
+                if (res.next()) {
+                    String jjson = res.getString(1);
+                    Job job = MAPPER.readValue(jjson, Job.class);
+                    if (id != job.id()) {
+                        LOG.error("{} != {} in Database", id, job.id());
+                        throw new AssertionError("id in JSON must be equal to the column");
+                    }
+                    String ajson = res.getString(2);
+                    Application app = MAPPER.readValue(ajson, Application.class);
+
+                    return Optional.of(new AppJobPair(Optional.of(app), job));
+                }
+                // No such application
+            }
+        } catch (SQLException e) {
+            LOG.error(e.toString());
+        }
+        return Optional.empty();
+    }
     public Optional<Job> getJob(int id) throws JsonProcessingException, IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE id = ?")) {

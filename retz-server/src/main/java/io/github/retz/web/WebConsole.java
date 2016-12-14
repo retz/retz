@@ -23,16 +23,14 @@ import io.github.retz.auth.AuthHeader;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.auth.HmacSHA256Authenticator;
 import io.github.retz.auth.NoopAuthenticator;
-import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.DockerContainer;
-import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.scheduler.*;
-import org.apache.mesos.Protos;
+import io.github.retz.scheduler.JobQueue;
+import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +42,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -118,7 +115,6 @@ public final class WebConsole {
         get(GetFileRequest.resourcePattern(), JobRequestHandler::getFile);
         // Get file list
         get(ListFilesRequest.resourcePattern(), JobRequestHandler::getDir);
-
 
         // /apps GET -> list-app
         get(ListAppRequest.resourcePattern(), AppRequestHandler::listApp);

@@ -94,7 +94,7 @@ public class FileConfiguration {
     }
 
     protected FileConfiguration(Properties p) {
-        this.properties = p;
+        this.properties = (Properties)p.clone();
     }
 
     public boolean insecure() {

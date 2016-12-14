@@ -22,15 +22,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.auth.AuthHeader;
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.scheduler.Applications;
-import io.github.retz.scheduler.JobQueue;
-import io.github.retz.scheduler.RetzScheduler;
-import io.github.retz.scheduler.Stanchion;
+import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
@@ -80,35 +78,45 @@ public class JobRequestHandler {
         return MAPPER.writeValueAsString(listJobResponse);
     }
 
-    static String getJob(spark.Request req, spark.Response res) throws JsonProcessingException, IOException {
+    private static Optional<Job> getJobAndVerify(Request req) throws IOException {
         int id = Integer.parseInt(req.params(":id"));
+        Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
 
-        LOG.debug("get job id={}, path={}, file={}", id);
+        if (! authHeaderValue.isPresent()) {
+            LOG.debug("Authorization header lacking?");
+            return Optional.empty();
+        }
+        LOG.debug("get-xxx id={}, user={}", id, authHeaderValue.get().key());
+
+        Optional<AppJobPair> maybePair = Database.getInstance().getAppJob(id);
+        if (maybePair.isPresent()) {
+            AppJobPair pair = maybePair.get();
+            if (pair.application().getOwner().equals(authHeaderValue.get().key())) {
+                return Optional.of(pair.job());
+            }
+        }
+        return Optional.empty();
+    }
+
+    static String getJob(spark.Request req, spark.Response res) throws IOException {
+        Optional<Job> maybeJob = getJobAndVerify(req);
+
         res.type("application/json");
 
-        Optional<Job> job = JobQueue.getJob(id);
-
-        Response response;
-        // Search job from JobQueue with matching id
-        GetJobResponse getJobResponse = new GetJobResponse(job);
-        getJobResponse.ok();
+        Response response = new GetJobResponse(maybeJob);
+        response.status("ok");
         res.status(200);
-
-        response = getJobResponse;
-
         return MAPPER.writeValueAsString(response);
-
     }
 
     static String getFile(spark.Request req, spark.Response res) throws IOException {
-        int id = Integer.parseInt(req.params(":id"));
+        Optional<Job> job = getJobAndVerify(req);
 
         String file = req.queryParams("path");
         long offset = Long.parseLong(req.queryParams("offset"));
         long length = Long.parseLong(req.queryParams("length"));
-        Optional<Job> job = JobQueue.getJob(id);
 
-        LOG.debug("get-file: id={}, path={}, offset={}, length={}", id, file, offset, length);
+        LOG.debug("get-file: path={}, offset={}, length={}", file, offset, length);
         res.type("application/json");
 
         Optional<FileContent> fileContent;
@@ -129,12 +137,10 @@ public class JobRequestHandler {
     }
 
     static String getDir(spark.Request req, spark.Response res) throws IOException {
-        int id = Integer.parseInt(req.params(":id"));
+        Optional<Job> job = getJobAndVerify(req);
 
         String path = req.queryParams("path");
-        Optional<Job> job = JobQueue.getJob(id);
-
-        LOG.debug("get-path: id={}, path={}", id, path);
+        LOG.debug("get-path: path={}", path);
         res.type("application/json");
 
         // Translating default as SparkJava's router doesn't route '.' or empty string
