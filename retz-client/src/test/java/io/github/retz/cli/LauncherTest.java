@@ -134,7 +134,7 @@ public class LauncherTest {
         }
 
         {
-            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "-prio", "-2"};
+            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "--prio", "-2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("schedule", conf.getParsedSubCommand().getName());
             CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
@@ -173,7 +173,7 @@ public class LauncherTest {
         }
 
         {
-            String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "-prio", "-2"};
+            String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "--prio", "-2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("run", conf.getParsedSubCommand().getName());
             CommandRun commandRun = (CommandRun)conf.getParsedSubCommand();

@@ -108,14 +108,14 @@ in Java API
 ``OPTIONS`` follows:
 
 * ``-A <appname>`` : Defines an application name (required)
-* ``-cmd <commandline>``:   Defines command line to run (required)
+* ``-c|--command <commandline>``:   Defines command line to run (required)
 * ``-E env=value`` : Defines environment values. ``$HOME`` and
   ``$MESOS_*`` are overwritten by Mesos executor.
-* ``-cpu <int>``        :   Defines number of CPUs required for the job (default: 1)
-* ``-mem <int>``        :   Defines amount of RAM in MiB required for the job (default: 32MB)
-* ``-ports <int>``      :   Defines number of IP ports required for the job (default: 0)
-* ``-gpu <int>``        :   Defines number of GPUs required for the job (default: 0)
-* ``-prio <int>``       :   Defines job priority (default: 0). Priority handling depends on server planner setting.
+* ``--cpu <int>``        :   Defines number of CPUs required for the job (default: 1)
+* ``--mem <int>``        :   Defines amount of RAM in MiB required for the job (default: 32MB)
+* ``--ports <int>``      :   Defines number of IP ports required for the job (default: 0)
+* ``--gpu <int>``        :   Defines number of GPUs required for the job (default: 0)
+* ``--prio|--priority <int>``       :   Defines job priority (default: 0). Priority handling depends on server planner setting.
 * ``-N|--name <name>``  :   Defines human readable job name.
 
 ``retz-client run OPTIONS``
@@ -130,7 +130,7 @@ and ``GetFileRequest``.
 
 * ``--stderr`` : Prints stderr after the job finished to standard error when this option is specified.
 
-``retz-client get-job -id <id>``
+``retz-client get-job -i <id>``
 
 Fetches and prints a job spec and status from Retz server.
 
@@ -139,7 +139,7 @@ This uses ``GET /job/<id>`` endpoint with empty body.  `Request
 and `Response
 <https://retz.github.io/javadoc/io/github/retz/protocol/GetJobResponse.html>`_
 
-``retz-client get-file -id <id> OPTIONS``
+``retz-client get-file -i <id> OPTIONS``
 
 Fetches a file from job sandbox and outputs to a path specified with
 ``-R``.
@@ -156,7 +156,7 @@ and
 * ``--offset <offset>``: Define offset to start fetch with (default: 0)
 * ``--length <length>`` : Define length to fetch (default: -1; get the whole file)
 
-``retz-client list-files -id <id>``
+``retz-client list-files -i <id>``
 
 List files in a directory in sandbox. This uses ``GET /job/<id>/dir?path=<path>`` endpoint with empty body.
 `Request
@@ -174,7 +174,7 @@ and `Response
           anything, as there is no such file. To make sure that the
           file exists, run ``list-files`` against parent directory.
 
-``retz-client kill -id <id>``
+``retz-client kill -i <id>``
 
 Kills a job, even if it is already running in Mesos agent. When the
 job is still in the queue, Retz changes the state from ``QUEUED`` to

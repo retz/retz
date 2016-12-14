@@ -38,21 +38,21 @@ public class CommandRun implements SubCommand {
     @Parameter(names = {"-E", "--env"},
             description = "Pairs of environment variable names and values, like '-E ASAKUSA_M3BP_OPTS='-Xmx32g' -E SPARK_CMD=path/to/spark-cmd'")
     List<String> envs;
-    @Parameter(names = "-cpu", description = "Number of CPU cores assigned to the job")
+    @Parameter(names = {"--cpu", "-cpu"}, description = "Number of CPU cores assigned to the job")
     int cpu = 1;
-    @Parameter(names = "-mem", description = "Number of size of RAM(MB) assigned to the job")
+    @Parameter(names = {"--mem", "-mem"}, description = "Number of size of RAM(MB) assigned to the job")
     int mem = 32;
-    @Parameter(names = "-gpu", description = "Number of GPU cards assigned to the job")
+    @Parameter(names = {"--gpu", "-gpu"}, description = "Number of GPU cards assigned to the job")
     int gpu = 0;
-    @Parameter(names = "-ports", description = "Number of ports (up to 1000) required to the job; Ports will be given as $PORT0, $PORT1, ...")
+    @Parameter(names = {"--ports", "-ports"}, description = "Number of ports (up to 1000) required to the job; Ports will be given as $PORT0, $PORT1, ...")
     int ports = 0;
-    @Parameter(names = "-stderr", description = "Print stderr after the task finished to standard error")
+    @Parameter(names = {"--stderr", "-stderr"}, description = "Print stderr after the task finished to standard error")
     boolean stderr = false;
-    @Parameter(names = "-cmd", required = true, description = "Remote command")
+    @Parameter(names = {"-c", "--command", "-cmd"}, required = true, description = "Remote command")
     private String remoteCmd;
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
-    @Parameter(names = {"-prio", "-priority"}, description = "Job priority")
+    @Parameter(names = {"--prio", "--priority"}, description = "Job priority")
     int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
@@ -72,7 +72,7 @@ public class CommandRun implements SubCommand {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
         if (ports < 0 || 1000 < ports) {
-            LOG.error("-ports must be within 0 to 1000: {} given.", ports);
+            LOG.error("--ports must be within 0 to 1000: {} given.", ports);
             return -1;
         }
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);

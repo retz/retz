@@ -31,7 +31,7 @@ import java.net.ConnectException;
 public class CommandGetJob implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetJob.class);
 
-    @Parameter(names = "-id", description = "Job ID whose state and details you want", required = true)
+    @Parameter(names = {"-i", "--id", "-id"}, description = "Job ID whose state and details you want", required = true)
     private int id;
 
     @Override

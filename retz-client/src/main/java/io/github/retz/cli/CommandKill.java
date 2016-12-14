@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 public class CommandKill implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandKill.class);
 
-    @Parameter(names = "-id", description = "Job ID which you want to kill", required = true)
+    @Parameter(names = {"-i", "--id", "-id"}, description = "Job ID which you want to kill", required = true)
     private int id;
 
     @Override

@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public class CommandGetUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetUser.class);
 
-    @Parameter(names = "-id", description = "Get user", required = true)
+    @Parameter(names = {"--user-id", "-id"}, description = "Get user", required = true)
     private String id;
 
     @Override

@@ -37,7 +37,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class CommandGetFile implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetFile.class);
 
-    @Parameter(names = "-id", description = "Job ID whose state and details you want", required = true)
+    @Parameter(names = {"-i", "--id", "-id"}, description = "Job ID whose state and details you want", required = true)
     private int id;
 
     @Parameter(names = {"-R", "--resultdir"}, description = "Local directory to save the file ('-' to print)")

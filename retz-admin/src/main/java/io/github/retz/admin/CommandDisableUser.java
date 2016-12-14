@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 public class CommandDisableUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandDisableUser.class);
 
-    @Parameter(names = "-id", description = "User ID you want to disable", required = true)
+    @Parameter(names = {"--user-id", "-id"}, description = "User ID you want to disable", required = true)
     private String id;
 
     @Override

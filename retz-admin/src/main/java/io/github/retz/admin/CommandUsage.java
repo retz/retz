@@ -27,10 +27,10 @@ import java.util.List;
 public class CommandUsage implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUsage.class);
 
-    @Parameter(names = "-start", description = "Starting time of a period to fetch")
+    @Parameter(names = {"--start", "-start"}, description = "Starting time of a period to fetch")
     private String start = "0000-01-01";
 
-    @Parameter(names = "-end", description = "End time of a period to fetch")
+    @Parameter(names = {"--end", "-end"}, description = "End time of a period to fetch")
     private String end = "9999-12-32";
 
     @Override

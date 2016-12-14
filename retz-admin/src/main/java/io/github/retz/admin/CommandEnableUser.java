@@ -27,7 +27,7 @@ import javax.management.ObjectName;
 public class CommandEnableUser implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandEnableUser.class);
 
-    @Parameter(names = "-id", description = "User ID you want to enable", required = true)
+    @Parameter(names = {"--user-id", "-id"}, description = "User ID you want to enable", required = true)
     private String id;
 
     @Override

@@ -36,7 +36,7 @@ import java.util.Date;
 public class CommandListFiles implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListFiles.class);
 
-    @Parameter(names = "-id", description = "Job ID whose state and details you want", required = true)
+    @Parameter(names = {"-i", "--id", "-id"}, description = "Job ID whose state and details you want", required = true)
     private int id;
 
     @Parameter(names = "--path", description = "Remote sandbox path to list")
