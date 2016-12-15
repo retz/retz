@@ -18,6 +18,8 @@ package io.github.retz.web.feign;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+
+import feign.Client;
 import feign.Feign;
 import feign.Param;
 import feign.RequestLine;
@@ -35,10 +37,16 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+
 public interface Retz {
 
     @RequestLine("GET /ping")
     String ping();
+
+    @RequestLine("GET /status")
+    Response status();
 
     @RequestLine("GET /jobs")
     Response list();
@@ -90,11 +98,16 @@ public interface Retz {
     @RequestLine("DELETE /app/{appid}")
     Response unload(@Param("appid") String appid);
 
-    static Retz connect(URI uri, Authenticator authenticator) {
+    static Retz connect(
+            URI uri,
+            Authenticator authenticator,
+            SSLSocketFactory socketFactory,
+            HostnameVerifier hostnameVerifier) {
         String url = Objects.requireNonNull(uri, "uri cannot be null").toString();
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
         return Feign.builder()
+                .client(new Client.Default(socketFactory, hostnameVerifier))
                 .encoder(new JacksonEncoder(mapper))
                 .decoder(new JacksonDecoder(mapper))
                 .errorDecoder(new ErrorResponseDecoder(mapper))

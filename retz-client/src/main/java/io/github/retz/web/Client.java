@@ -16,6 +16,21 @@
  */
 package io.github.retz.web;
 
+import java.io.IOException;
+import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import feign.FeignException;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.protocol.GetJobResponse;
@@ -24,16 +39,6 @@ import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.feign.Retz;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.ssl.HttpsURLConnection;
-import java.io.IOException;
-import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
-import java.util.ResourceBundle;
 
 public class Client implements AutoCloseable {
 
@@ -48,7 +53,8 @@ public class Client implements AutoCloseable {
 
     private final URI uri;
     private final Authenticator authenticator;
-    private final boolean checkCert;
+    private final SSLSocketFactory socketFactory;
+    private final HostnameVerifier hostnameVerifier;
     private boolean verboseLog = false;
 
     protected Client(URI uri, Authenticator authenticator) {
@@ -58,47 +64,55 @@ public class Client implements AutoCloseable {
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
         this.uri = uri;
         this.authenticator = authenticator;
-        this.checkCert = checkCert;
-        System.setProperty("http.agent", Client.VERSION_STRING);
         if (uri.getScheme().equals("https") && !checkCert) {
+            LOG.warn("DANGER ZONE: TLS certificate check is disabled. Set 'retz.tls.insecure = false' at config file to supress this message.");
             try {
-                // TODO: this should be per HttpUrlConnection, but there's feign between now
-                WrongTrustManager.disableTLS();
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, new TrustManager[] { new WrongTrustManager() }, new java.security.SecureRandom());
+                this.socketFactory = sc.getSocketFactory();
+                this.hostnameVerifier = new NoOpHostnameVerifier();
             } catch (NoSuchAlgorithmException e) {
                 throw new AssertionError(e.toString());
             } catch (KeyManagementException e) {
                 throw new AssertionError(e.toString());
             }
+        } else {
+            this.socketFactory = null;
+            this.hostnameVerifier = null;
         }
+        System.setProperty("http.agent", Client.VERSION_STRING);
     }
 
     public void setVerboseLog(boolean b) {
         verboseLog = b;
     }
+
     public static ClientBuilder newBuilder(URI uri) {
         return new ClientBuilder(uri);
     }
 
     @Override
     public void close() {
-        if (uri.getScheme().equals("https") && !checkCert) {
-            // TODO: this may break existing client instances withing the same process
-            WrongTrustManager.enableTLS();
-        }
     }
 
     public boolean ping() throws IOException {
         try {
-            return "OK".equals(Retz.connect(uri, authenticator).ping());
+            return "OK".equals(
+                    Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).ping());
         } catch (FeignException e) {
             LOG.debug(e.toString());
             return false;
         }
     }
 
+    public Response status() throws IOException {
+        return Retz.tryOrErrorResponse(
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).status());
+    }
+
     public Response list(int limit) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).list());
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).list());
     }
 
     public Response schedule(Job job) throws IOException {
@@ -106,25 +120,25 @@ public class Client implements AutoCloseable {
             throw new IllegalArgumentException("Priority must be [-19, 20]");
         }
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator)
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier)
                         .schedule(Objects.requireNonNull(job)));
     }
 
     public Response getJob(int id) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).getJob(id));
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).getJob(id));
     }
 
     public Response getFile(int id, String file, long offset, long length) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator)
-                        .getFile(id, Objects.requireNonNull(file), offset, length));
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).getFile(id,
+                        Objects.requireNonNull(file), offset, length));
     }
 
     public Response listFiles(int id, String path) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator)
-                        .listFiles(id, Objects.requireNonNull(path)));
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).listFiles(id,
+                        Objects.requireNonNull(path)));
     }
 
     public Job run(Job job) throws IOException {
@@ -168,29 +182,29 @@ public class Client implements AutoCloseable {
 
     public Response kill(int id) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).kill(id));
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).kill(id));
     }
 
     public Response getApp(String appid) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).getApp(appid));
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).getApp(appid));
     }
 
     public Response load(Application application) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator)
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier)
                         .load(Objects.requireNonNull(application)));
     }
 
     public Response listApp() throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator).listApp());
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).listApp());
     }
 
     @Deprecated
     public Response unload(String appName) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator)
+                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier)
                         .unload(Objects.requireNonNull(appName)));
     }
 }

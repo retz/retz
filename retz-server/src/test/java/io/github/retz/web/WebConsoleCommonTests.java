@@ -261,18 +261,18 @@ public class WebConsoleCommonTests {
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
         JobQueue.push(job);
 
-        URL url = new URL(config.getUri().toASCIIString() + "/status");
-        System.err.println(url);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setDoOutput(true);
-        Response res = mapper.readValue(conn.getInputStream(), Response.class);
-        assertThat(res, instanceOf(StatusResponse.class));
-        StatusResponse statusResponse = (StatusResponse) res;
+        try (Client c = Client.newBuilder(config.getUri())
+                .setAuthenticator(config.getAuthenticator())
+                .checkCert(!config.insecure())
+                .build()) {
+            Response res = c.status();
+            assertThat(res, instanceOf(StatusResponse.class));
+            StatusResponse statusResponse = (StatusResponse) res;
 
-        System.err.println(statusResponse.queueLength());
-        assertThat(statusResponse.queueLength(), is(1));
-        assertThat(statusResponse.sessionLength(), is(0));
+            System.err.println(statusResponse.queueLength());
+            assertThat(statusResponse.queueLength(), is(1));
+            assertThat(statusResponse.sessionLength(), is(0));
+        }
     }
 
     // Checks isolation between users.
