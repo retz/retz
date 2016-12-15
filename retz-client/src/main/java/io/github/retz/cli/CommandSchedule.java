@@ -85,9 +85,9 @@ public class CommandSchedule implements SubCommand {
                 return 0;
             } else {
                 LOG.error("Error: " + res.status());
-                return -1;
             }
         }
+        return -1;
     }
 }
 

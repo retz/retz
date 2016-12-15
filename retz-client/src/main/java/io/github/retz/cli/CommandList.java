@@ -53,7 +53,7 @@ public class CommandList implements SubCommand {
 
             Response res = webClient.list(64); // TODO: make this CLI argument
             if (res instanceof ErrorResponse) {
-                LOG.info(res.status());
+                LOG.error(res.status());
                 return -1;
             }
             ListJobResponse r = (ListJobResponse) res;

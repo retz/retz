@@ -21,7 +21,6 @@ import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.GetFileResponse;
 import io.github.retz.protocol.Response;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.apache.commons.io.FilenameUtils;
@@ -115,10 +114,6 @@ public class CommandGetFile implements SubCommand {
                 ErrorResponse errorResponse = (ErrorResponse) res;
                 LOG.error("Error: {}", errorResponse.status());
             }
-        } catch (JobNotFoundException e) {
-            LOG.error("Cannot get file", e);
-        } catch (FileNotFoundException e) {
-            LOG.error(e.toString(), e);
         }
         return -1;
     }

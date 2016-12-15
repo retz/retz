@@ -25,9 +25,6 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
-
 public class CommandGetJob implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetJob.class);
 
@@ -74,11 +71,6 @@ public class CommandGetJob implements SubCommand {
                 ErrorResponse errorResponse = (ErrorResponse) res;
                 LOG.error("Error: {}", errorResponse.status());
             }
-
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
         return -1;
 

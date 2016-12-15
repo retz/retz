@@ -20,15 +20,11 @@ import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.Response;
 import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
-import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -123,15 +119,6 @@ public class CommandRun implements SubCommand {
             } else {
                 LOG.error("Failed to fetch last state of job id={}", running.id());
             }
-
-        } catch (ParseException e) {
-            LOG.error(e.toString());
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
-        } catch (JobNotFoundException e) {
-            LOG.error("This is not supposed to happen", e);
         }
         return -1;
     }

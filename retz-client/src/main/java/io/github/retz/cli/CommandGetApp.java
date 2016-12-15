@@ -25,9 +25,6 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
-
 public class CommandGetApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandGetApp.class);
 
@@ -55,20 +52,14 @@ public class CommandGetApp implements SubCommand {
                 .build()) {
 
             Response res = webClient.getApp(appName);
-            LOG.info(res.status());
             if (res instanceof ErrorResponse) {
-                return -1;
+                LOG.error(res.status());
             } else if (res instanceof GetAppResponse) {
                 GetAppResponse getAppResponse = (GetAppResponse) res;
                 Application app = getAppResponse.application();
                 LOG.info(app.toString());
+                return 0;
             }
-            return 0;
-
-        } catch (ConnectException e) {
-            LOG.error("Cannot connect to server {}", fileConfig.getUri());
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
         }
         return -1;
     }

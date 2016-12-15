@@ -50,11 +50,10 @@ public class CommandListApp implements SubCommand {
             Response res = webClient.listApp();
 
             if (res instanceof ErrorResponse) {
-                LOG.info(res.status());
+                LOG.error(res.status());
                 return -1;
             }
             ListAppResponse r = (ListAppResponse) res;
-
 
             for (Application a : r.applicationList()) {
                 LOG.info(a.toString());
