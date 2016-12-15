@@ -24,17 +24,26 @@ import javax.security.cert.X509Certificate;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // DANGER ZONE: this disables TLS certification and allow self-signed certificate
 // do not use this over internet
 // Copyright notice: this function is based on StackOverflow:19540289
 public class WrongTrustManager implements X509TrustManager {
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
+    static final HostnameVerifier originalHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+    static final SSLSocketFactory originalSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+    static final AtomicInteger ref = new AtomicInteger(0);
 
-    static void disableTLS() throws NoSuchAlgorithmException, KeyManagementException {
+    static synchronized void disableTLS() throws NoSuchAlgorithmException, KeyManagementException {
+        if (ref.getAndIncrement() > 0) { // somebody's already using
+            return;
+        }
+
         LOG.warn("DANGER ZONE: TLS certificate check is disabled. Set 'retz.tls.insecure = false' at config file to supress this message.");
         TrustManager[] trustAllCerts = new TrustManager[]{new WrongTrustManager()};
 
+        HttpsURLConnection.getDefaultHostnameVerifier();
         // Install the all-trusting trust manager
         SSLContext sc = SSLContext.getInstance("SSL");
         sc.init(null, trustAllCerts, new java.security.SecureRandom());
@@ -46,6 +55,16 @@ public class WrongTrustManager implements X509TrustManager {
         HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
         HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
     }
+
+    static synchronized void enableTLS() {
+        if (ref.decrementAndGet() > 0) { // somebody's still using
+            return;
+        }
+
+        HttpsURLConnection.setDefaultHostnameVerifier(originalHostnameVerifier);
+        HttpsURLConnection.setDefaultSSLSocketFactory(originalSSLSocketFactory);
+    }
+
 
     public java.security.cert.X509Certificate[] getAcceptedIssuers() {
         return null;

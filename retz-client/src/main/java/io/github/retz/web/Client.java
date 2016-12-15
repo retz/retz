@@ -27,6 +27,7 @@ import io.github.retz.web.feign.Retz;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.URI;
 import java.security.KeyManagementException;
@@ -47,18 +48,21 @@ public class Client implements AutoCloseable {
 
     private final URI uri;
     private final Authenticator authenticator;
+    private final boolean checkCert;
     private boolean verboseLog = false;
 
     protected Client(URI uri, Authenticator authenticator) {
-        this.uri = uri;
-        this.authenticator = authenticator;
-        System.setProperty("http.agent", Client.VERSION_STRING);
+        this(uri, authenticator, true);
     }
 
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
-        this(uri, authenticator);
+        this.uri = uri;
+        this.authenticator = authenticator;
+        this.checkCert = checkCert;
+        System.setProperty("http.agent", Client.VERSION_STRING);
         if (uri.getScheme().equals("https") && !checkCert) {
             try {
+                // TODO: this should be per HttpUrlConnection, but there's feign between now
                 WrongTrustManager.disableTLS();
             } catch (NoSuchAlgorithmException e) {
                 throw new AssertionError(e.toString());
@@ -77,6 +81,10 @@ public class Client implements AutoCloseable {
 
     @Override
     public void close() {
+        if (uri.getScheme().equals("https") && !checkCert) {
+            // TODO: this may break existing client instances withing the same process
+            WrongTrustManager.enableTLS();
+        }
     }
 
     public boolean ping() throws IOException {
