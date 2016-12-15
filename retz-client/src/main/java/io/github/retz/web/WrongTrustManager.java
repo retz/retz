@@ -59,6 +59,8 @@ public class WrongTrustManager implements X509TrustManager {
     static synchronized void enableTLS() {
         if (ref.decrementAndGet() > 0) { // somebody's still using
             return;
+        } else if (ref.get() < 0) {
+            ref.set(0);
         }
 
         HttpsURLConnection.setDefaultHostnameVerifier(originalHostnameVerifier);
