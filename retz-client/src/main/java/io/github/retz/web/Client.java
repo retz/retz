@@ -51,10 +51,7 @@ public class Client implements AutoCloseable {
         VERSION_STRING = labels.getString("version");
     }
 
-    private final URI uri;
-    private final Authenticator authenticator;
-    private final SSLSocketFactory socketFactory;
-    private final HostnameVerifier hostnameVerifier;
+    private final Retz retz;
     private boolean verboseLog = false;
 
     protected Client(URI uri, Authenticator authenticator) {
@@ -62,24 +59,25 @@ public class Client implements AutoCloseable {
     }
 
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
-        this.uri = uri;
-        this.authenticator = authenticator;
+        SSLSocketFactory socketFactory;
+        HostnameVerifier hostnameVerifier;
         if (uri.getScheme().equals("https") && !checkCert) {
             LOG.warn("DANGER ZONE: TLS certificate check is disabled. Set 'retz.tls.insecure = false' at config file to supress this message.");
             try {
                 SSLContext sc = SSLContext.getInstance("SSL");
                 sc.init(null, new TrustManager[] { new WrongTrustManager() }, new java.security.SecureRandom());
-                this.socketFactory = sc.getSocketFactory();
-                this.hostnameVerifier = new NoOpHostnameVerifier();
+                socketFactory = sc.getSocketFactory();
+                hostnameVerifier = new NoOpHostnameVerifier();
             } catch (NoSuchAlgorithmException e) {
                 throw new AssertionError(e.toString());
             } catch (KeyManagementException e) {
                 throw new AssertionError(e.toString());
             }
         } else {
-            this.socketFactory = null;
-            this.hostnameVerifier = null;
+            socketFactory = null;
+            hostnameVerifier = null;
         }
+        this.retz = Retz.connect(uri, authenticator, socketFactory, hostnameVerifier);
         System.setProperty("http.agent", Client.VERSION_STRING);
     }
 
@@ -97,8 +95,7 @@ public class Client implements AutoCloseable {
 
     public boolean ping() throws IOException {
         try {
-            return "OK".equals(
-                    Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).ping());
+            return "OK".equals(retz.ping());
         } catch (FeignException e) {
             LOG.debug(e.toString());
             return false;
@@ -106,39 +103,32 @@ public class Client implements AutoCloseable {
     }
 
     public Response status() throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).status());
+        return Retz.tryOrErrorResponse(() -> retz.status());
     }
 
     public Response list(int limit) throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).list());
+        return Retz.tryOrErrorResponse(() -> retz.list());
     }
 
     public Response schedule(Job job) throws IOException {
         if (job.priority() < -20 || 19 < job.priority()) {
             throw new IllegalArgumentException("Priority must be [-19, 20]");
         }
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier)
-                        .schedule(Objects.requireNonNull(job)));
+        return Retz.tryOrErrorResponse(() -> retz.schedule(Objects.requireNonNull(job)));
     }
 
     public Response getJob(int id) throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).getJob(id));
+        return Retz.tryOrErrorResponse(() -> retz.getJob(id));
     }
 
     public Response getFile(int id, String file, long offset, long length) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).getFile(id,
-                        Objects.requireNonNull(file), offset, length));
+                () -> retz.getFile(id, Objects.requireNonNull(file), offset, length));
     }
 
     public Response listFiles(int id, String path) throws IOException {
         return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).listFiles(id,
-                        Objects.requireNonNull(path)));
+                () -> retz.listFiles(id, Objects.requireNonNull(path)));
     }
 
     public Job run(Job job) throws IOException {
@@ -181,30 +171,23 @@ public class Client implements AutoCloseable {
     }
 
     public Response kill(int id) throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).kill(id));
+        return Retz.tryOrErrorResponse(() -> retz.kill(id));
     }
 
     public Response getApp(String appid) throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).getApp(appid));
+        return Retz.tryOrErrorResponse(() -> retz.getApp(appid));
     }
 
     public Response load(Application application) throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier)
-                        .load(Objects.requireNonNull(application)));
+        return Retz.tryOrErrorResponse(() -> retz.load(Objects.requireNonNull(application)));
     }
 
     public Response listApp() throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier).listApp());
+        return Retz.tryOrErrorResponse(() -> retz.listApp());
     }
 
     @Deprecated
     public Response unload(String appName) throws IOException {
-        return Retz.tryOrErrorResponse(
-                () -> Retz.connect(uri, authenticator, socketFactory, hostnameVerifier)
-                        .unload(Objects.requireNonNull(appName)));
+        return Retz.tryOrErrorResponse(() -> retz.unload(Objects.requireNonNull(appName)));
     }
 }
