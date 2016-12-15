@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.1.3
+
+* Fix 'list-files' showing 500 error but showing other proper errors (#101)
+
 ## 0.1.2
 
 * Fix a severe bug where users may see or use others' applications

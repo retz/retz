@@ -17,6 +17,8 @@
 package io.github.retz.mesosc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.retz.misc.Either;
+import io.github.retz.misc.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -227,25 +229,32 @@ public class MesosHTTPFetcher {
         }
     }
 
-    private static String fetchHTTP(String addr) throws MalformedURLException, IOException {
+    private static Pair<Integer, String> fetchHTTP(String addr) throws IOException {
         return fetchHTTP(addr, 3);
     }
 
-    private static String fetchHTTP(String addr, int retry) throws MalformedURLException, IOException {
+    private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws IOException {
         LOG.debug("Fetching {}", addr);
         HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
-            LOG.debug(conn.getResponseMessage());
 
-        } catch (MalformedURLException e) {
-            LOG.error(e.toString());
-            throw e;
-        } catch (IOException e) {
-            LOG.error(e.toString());
-            throw e;
+        conn = (HttpURLConnection) new URL(addr).openConnection();
+        conn.setRequestMethod("GET");
+        conn.setDoOutput(true);
+        LOG.debug("{} {} for {}", conn.getResponseCode(), conn.getResponseMessage(), addr);
+
+        if (conn.getResponseCode() != 200) {
+            if (conn.getResponseCode() < 200) {
+                return fetchHTTP(addr, retry - 1);
+            } else if (conn.getResponseCode() < 300) {
+                return new Pair<>(conn.getResponseCode(), ""); // Mostly 204; success
+            } else if (conn.getResponseCode() < 400) {
+                // TODO: Mesos master failover
+                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
+            } else if (conn.getResponseCode() == 404) {
+                throw new FileNotFoundException(addr);
+            } else {
+                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
+            }
         }
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), UTF_8))) {
@@ -256,7 +265,7 @@ public class MesosHTTPFetcher {
                 builder.append(line);
             } while (line != null);
             LOG.debug("Fetched {} bytes from {}", builder.toString().length(), addr);
-            return builder.toString();
+            return new Pair<>(conn.getResponseCode(), builder.toString());
 
         } catch (FileNotFoundException e) {
             throw e;
@@ -273,16 +282,15 @@ public class MesosHTTPFetcher {
         } finally {
             conn.disconnect();
         }
-
     }
 
-    public static String fetchHTTPFile(String url, String name, long offset, long length) throws MalformedURLException, IOException {
+    public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws MalformedURLException, IOException {
         String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
                 + "&offset=" + offset + "&length=" + length;
         return fetchHTTP(addr);
     }
 
-    public static String fetchHTTPDir(String url, String path) throws MalformedURLException, IOException {
+    public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws MalformedURLException, IOException {
         // Just do 'files/browse and get JSON
         String addr = url + "%2F" + maybeURLEncode(path);
         return fetchHTTP(addr);

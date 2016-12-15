@@ -24,6 +24,7 @@ import io.github.retz.auth.AuthHeader;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
+import io.github.retz.misc.Pair;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;
@@ -79,7 +80,7 @@ public class JobRequestHandler {
         int id = Integer.parseInt(req.params(":id"));
         Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
 
-        if (! authHeaderValue.isPresent()) {
+        if (!authHeaderValue.isPresent()) {
             LOG.debug("Authorization header lacking?");
             return Optional.empty();
         }
@@ -119,10 +120,14 @@ public class JobRequestHandler {
         Optional<FileContent> fileContent;
         if (job.isPresent() && job.get().url() != null // If url() is null, the job hasn't yet been started at Mesos
                 && MesosHTTPFetcher.statHTTPFile(job.get().url(), file)) {
-            String payload = MesosHTTPFetcher.fetchHTTPFile(job.get().url(), file, offset, length);
-            LOG.debug("Payload length={}, offset={}", payload.length(), offset);
+            Pair<Integer, String> payload = MesosHTTPFetcher.fetchHTTPFile(job.get().url(), file, offset, length);
+            LOG.debug("Payload length={}, offset={}", payload.right().length(), offset);
             // TODO: what the heck happens when a file is not UTF-8 encodable???? How Mesos works?
-            fileContent = Optional.ofNullable(MAPPER.readValue(payload, FileContent.class));
+            if (payload.left() == 200) {
+                fileContent = Optional.ofNullable(MAPPER.readValue(payload.right(), FileContent.class));
+            } else {
+                return MAPPER.writeValueAsString(new ErrorResponse(payload.right()));
+            }
         } else {
             fileContent = Optional.empty();
         }
@@ -133,8 +138,13 @@ public class JobRequestHandler {
         return MAPPER.writeValueAsString(getFileResponse);
     }
 
-    static String getDir(spark.Request req, spark.Response res) throws IOException {
-        Optional<Job> job = getJobAndVerify(req);
+    static String getDir(spark.Request req, spark.Response res) throws JsonProcessingException {
+        Optional<Job> job;
+        try {
+            job = getJobAndVerify(req);
+        } catch (IOException e) {
+            return MAPPER.writeValueAsString(new ErrorResponse(e.toString()));
+        }
 
         String path = req.queryParams("path");
         LOG.debug("get-path: path={}", path);
@@ -148,13 +158,19 @@ public class JobRequestHandler {
         List ret;
         if (job.isPresent() && job.get().url() != null) {
             try {
-                String json = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
-                ret = MAPPER.readValue(json, new TypeReference<List<DirEntry>>() {
-                });
+                Pair<Integer,String> maybeJson = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
+                if (maybeJson.left() == 200) {
+                    ret = MAPPER.readValue(maybeJson.right(), new TypeReference<List<DirEntry>>() {
+                    });
+                } else {
+                    return MAPPER.writeValueAsString(new ErrorResponse(path + ":" + maybeJson.left() + " " + maybeJson.right()));
+                }
             } catch (FileNotFoundException e) {
                 res.status(404);
                 LOG.warn("path {} not found", path);
                 return MAPPER.writeValueAsString(new ErrorResponse(path + " not found"));
+            } catch (IOException e) {
+                return MAPPER.writeValueAsString(new ErrorResponse(e.toString()));
             }
         } else {
             ret = Arrays.asList();
