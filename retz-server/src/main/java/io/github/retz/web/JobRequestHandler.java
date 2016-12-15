@@ -23,6 +23,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.auth.AuthHeader;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;
@@ -35,18 +36,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
 import static io.github.retz.web.WebConsole.validateOwner;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static spark.Spark.halt;
 
 public class JobRequestHandler {
@@ -121,8 +118,8 @@ public class JobRequestHandler {
 
         Optional<FileContent> fileContent;
         if (job.isPresent() && job.get().url() != null // If url() is null, the job hasn't yet been started at Mesos
-                && statHTTPFile(job.get().url(), file)) {
-            String payload = fetchHTTPFile(job.get().url(), file, offset, length);
+                && MesosHTTPFetcher.statHTTPFile(job.get().url(), file)) {
+            String payload = MesosHTTPFetcher.fetchHTTPFile(job.get().url(), file, offset, length);
             LOG.debug("Payload length={}, offset={}", payload.length(), offset);
             // TODO: what the heck happens when a file is not UTF-8 encodable???? How Mesos works?
             fileContent = Optional.ofNullable(MAPPER.readValue(payload, FileContent.class));
@@ -151,7 +148,7 @@ public class JobRequestHandler {
         List ret;
         if (job.isPresent() && job.get().url() != null) {
             try {
-                String json = fetchHTTPDir(job.get().url(), path);
+                String json = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
                 ret = MAPPER.readValue(json, new TypeReference<List<DirEntry>>() {
                 });
             } catch (FileNotFoundException e) {
@@ -166,97 +163,6 @@ public class JobRequestHandler {
         ListFilesResponse listFilesResponse = new ListFilesResponse(job, ret);
         listFilesResponse.status("ok");
         return MAPPER.writeValueAsString(listFilesResponse);
-    }
-
-
-    public static boolean statHTTPFile(String url, String name) {
-        String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
-
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setRequestMethod("HEAD");
-            conn.setDoOutput(false);
-            LOG.debug(conn.getResponseMessage());
-            return conn.getResponseCode() == 200 ||
-                    conn.getResponseCode() == 204;
-        } catch (IOException e) {
-            LOG.debug("Failed to fetch {}: {}", addr, e.toString());
-            return false;
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
-        }
-    }
-
-    private static String fetchHTTP(String addr) throws MalformedURLException, IOException {
-        return fetchHTTP(addr, 3);
-    }
-
-    private static String fetchHTTP(String addr, int retry) throws MalformedURLException, IOException {
-        LOG.debug("Fetching {}", addr);
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
-            LOG.debug(conn.getResponseMessage());
-
-        } catch (MalformedURLException e) {
-            LOG.error(e.toString());
-            throw e;
-        } catch (IOException e) {
-            LOG.error(e.toString());
-            throw e;
-        }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), UTF_8))) {
-            StringBuilder builder = new StringBuilder();
-            String line;
-            do {
-                line = reader.readLine();
-                builder.append(line);
-            } while (line != null);
-            LOG.debug("Fetched {} bytes from {}", builder.toString().length(), addr);
-            return builder.toString();
-
-        } catch (FileNotFoundException e) {
-            throw e;
-        } catch (IOException e) {
-            // Somehow this happens even HTTP was correct
-            LOG.debug("Cannot fetch file {}: {}", addr, e.toString());
-            // Just retry until your stack get stuck; thanks to SO:33340848
-            // and to that crappy HttpURLConnection
-            if (retry < 0) {
-                LOG.error("Retry failed. Last error was: {}", e.toString());
-                throw e;
-            }
-            return fetchHTTP(addr, retry - 1);
-        } finally {
-            conn.disconnect();
-        }
-
-    }
-
-    public static String fetchHTTPFile(String url, String name, long offset, long length) throws MalformedURLException, IOException {
-        String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
-                + "&offset=" + offset + "&length=" + length;
-        return fetchHTTP(addr);
-    }
-
-    public static String fetchHTTPDir(String url, String path) throws MalformedURLException, IOException {
-        // Just do 'files/browse and get JSON
-        String addr = url + "%2F" + maybeURLEncode(path);
-        return fetchHTTP(addr);
-    }
-
-    private static String maybeURLEncode(String file) {
-        try {
-            return URLEncoder.encode(file, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return file;
-        }
     }
 
     private static ListJobResponse list(String id, int limit) {

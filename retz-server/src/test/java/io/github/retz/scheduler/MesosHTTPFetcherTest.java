@@ -16,6 +16,7 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.mesosc.MesosHTTPFetcher;
 import org.junit.Test;
 
 import java.io.IOException;

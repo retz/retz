@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.db.Database;
+import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
