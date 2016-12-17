@@ -1,5 +1,11 @@
 # Retz release notes
 
+## 0.1.4
+
+* Fix a bug where retz-admin fail with NullPointerException when no
+  configuration file found by setting default file '/opt/retz-server/etc/retz.properties'
+  to share JMX port configuration with server
+
 ## 0.1.3
 
 * Change default Unix user name on task execution to 'nobody', secondly

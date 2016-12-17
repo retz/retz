@@ -21,47 +21,48 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public class LauncherTest {
+    static final String CONFIGFILE = "src/test/resources/retz.properties";
     @Test
     public void cli() throws Exception {
         {
-            String[] argv = {"create-user"};
+            String[] argv = {"-C", CONFIGFILE, "create-user"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("create-user", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"create-user", "--info", "{it's a json}"};
+            String[] argv = {"-C", CONFIGFILE, "create-user", "--info", "{it's a json}"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("create-user", conf.getParsedSubCommand().getName());
             assertEquals("{it's a json}", ((CommandCreateUser)conf.getParsedSubCommand()).info);
         }
 
         {
-            String[] argv = {"disable-user", "-id", "kao"};
+            String[] argv = {"-C", CONFIGFILE, "disable-user", "-id", "kao"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("disable-user", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"enable-user", "-id", "kao"};
+            String[] argv = {"-C", CONFIGFILE, "enable-user", "-id", "kao"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("enable-user", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"get-user", "-id", "kao"};
+            String[] argv = {"-C", CONFIGFILE, "get-user", "-id", "kao"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("get-user", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"help", "-s", "get-user"};
+            String[] argv = {"-C", CONFIGFILE, "help", "-s", "get-user"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("help", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"list-user"};
+            String[] argv = {"-C", CONFIGFILE, "list-user"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("list-user", conf.getParsedSubCommand().getName());
         }
         {
-            String[] argv = {"usage", "-start", "2033"};
+            String[] argv = {"-C", CONFIGFILE, "usage", "-start", "2033"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("usage", conf.getParsedSubCommand().getName());
         }

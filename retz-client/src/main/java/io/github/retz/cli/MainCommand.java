@@ -20,15 +20,12 @@ import com.beust.jcommander.Parameter;;
 
 public class MainCommand {
     @Parameter(names={"--config", "-C"})
-    private String configFile;
+    private String configFile = "/opt/retz-client/etc/retz.properties";
 
     @Parameter(names={"--verbose", "-v"})
     boolean verbose = false;
 
     public String getConfigFile() {
-        if (configFile == null) {
-            configFile = "/opt/retz-client/etc/retz.properties";
-        }
         return configFile;
     }
 }
