@@ -148,31 +148,19 @@ public class Database {
     }
 
     boolean allTableExists(Connection conn) throws SQLException {
-        boolean userTableExists = false;
-        boolean applicationTableExists = false;
-        boolean jobTableExists = false;
-        boolean propTableExists = false;
-
         DatabaseMetaData meta = conn.getMetaData();
 
-        ResultSet res = meta.getTables(null, "PUBLIC", null, null);
-
-        while (res.next()) {
-            String tableName = res.getString("TABLE_NAME");
-            if ("USERS".equals(tableName)) {
-                userTableExists = true;
-            } else if ("APPLICATIONS".equals(tableName)) {
-                applicationTableExists = true;
-            } else if ("JOBS".equals(tableName)) {
-                jobTableExists = true;
-            } else if ("PROPERTIES".equals(tableName)) {
-                propTableExists = true;
-            }
-            LOG.info("category={}, scheme={}, name={}, type={}, remarks={}",
-                    res.getString("TABLE_CAT"), res.getString("TABLE_SCHEM"),
-                    res.getString("TABLE_NAME"), res.getString("TABLE_TYPE"),
-                    res.getString("REMARKS"));
-        }
+        // PostgreSQL accepts only lower case names while
+        // H2DB holds such names with upper case names. WHAT IS THE HELL JDBC
+        // TODO: add PostgreSQL inttest
+        boolean userTableExists = tableExists(meta, "public", "users")
+                || tableExists(meta, "PUBLIC", "USERS");
+        boolean applicationTableExists = tableExists(meta, "public", "applications")
+                || tableExists(meta, "PUBLIC", "APPLICATIONS");
+        boolean jobTableExists = tableExists(meta, "public", "jobs")
+                || tableExists(meta, "PUBLIC", "JOBS");
+        boolean propTableExists = tableExists(meta, "public", "properties")
+                || tableExists(meta, "PUBLIC", "PROPERTIES");
 
         if (userTableExists && applicationTableExists && jobTableExists && propTableExists) {
             return true;
@@ -181,6 +169,26 @@ public class Database {
         } else {
             throw new RuntimeException("Database is partially ready: quitting");
         }
+    }
+
+    private boolean tableExists(DatabaseMetaData meta, String schemaPattern, String tableName) throws SQLException {
+        try (ResultSet res = meta.getTables(null,
+                Objects.requireNonNull(schemaPattern),
+                Objects.requireNonNull(tableName),
+                null)) {
+
+            if (res.next()) {
+                String name = res.getString("TABLE_NAME");
+                LOG.info("category={}, schema={}, name={}, type={}, remarks={}",
+                        res.getString("TABLE_CAT"), res.getString("TABLE_SCHEM"),
+                        res.getString("TABLE_NAME"), res.getString("TABLE_TYPE"),
+                        res.getString("REMARKS"));
+                if (name != null) {
+                    return name.equals(tableName);
+                }
+            }
+        }
+        return false;
     }
 
     void maybeCreateTables(Connection conn) throws SQLException, IOException {
@@ -591,6 +599,7 @@ public class Database {
         }
         return Optional.empty();
     }
+
     public Optional<Job> getJob(int id) throws JsonProcessingException, IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE id = ?")) {

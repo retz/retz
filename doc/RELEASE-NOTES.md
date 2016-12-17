@@ -2,6 +2,9 @@
 
 ## 0.1.3
 
+* Fix a bug: when restarting Retz, if tables for Retz (user, jobs, etc.)
+  still remain in PostgreSQL Retz fails to check table existence and
+  cannot start.
 * Fix 'list-files' showing 500 error but showing other proper errors (#101)
 
 ## 0.1.2
