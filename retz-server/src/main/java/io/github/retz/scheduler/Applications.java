@@ -124,10 +124,12 @@ public class Applications {
         return builder.build();
     }
 
-    public static Protos.CommandInfo appToCommandInfo(Application application, Job job, List<Range> ports) {
+    public static Protos.CommandInfo appToCommandInfo(Application application, Job job, List<Range> ports, String defaultUnixUser) {
         Protos.CommandInfo.Builder builder = Protos.CommandInfo.newBuilder();
         if (application.getUser().isPresent()) {
             builder.setUser(application.getUser().get());
+        } else {
+            builder.setUser(defaultUnixUser);
         }
         for (String file : application.getFiles()) {
             builder.addUris(Protos.CommandInfo.URI.newBuilder().setValue(file).setCache(false));

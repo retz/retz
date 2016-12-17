@@ -67,7 +67,7 @@ public class PlannerTest {
                 String uuid = UUID.randomUUID().toString();
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
-            Plan p = planner.plan(offers, jobs, 0);
+            Plan p = planner.plan(offers, jobs, 0, "nobody");
 
             assertEquals(8, p.getOfferAcceptors().size());
             assertEquals(0, p.getToKeep().size());
@@ -80,7 +80,7 @@ public class PlannerTest {
                 String uuid = UUID.randomUUID().toString();
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
-            Plan p = planner.plan(offers, jobs, 3);
+            Plan p = planner.plan(offers, jobs, 3, "nobody");
 
             assertEquals(5, p.getOfferAcceptors().size());
             assertEquals(0, p.getToKeep().size());
@@ -101,7 +101,7 @@ public class PlannerTest {
             job.schedule(i, TimestampHelper.now());
             jobs.add(new AppJobPair(app,job));
         }
-        Plan p = planner.plan(offers, jobs, 0);
+        Plan p = planner.plan(offers, jobs, 0, "nobody");
 
         assertEquals(2, p.getOfferAcceptors().size());
         assertEquals(0, p.getToKeep().size());
@@ -132,7 +132,7 @@ public class PlannerTest {
                 jobs.add(new AppJobPair(app, job));
 
             }
-            Plan p = planner.plan(offers, jobs, 0);
+            Plan p = planner.plan(offers, jobs, 0, "nobody");
 
             assertEquals(2, p.getOfferAcceptors().size());
             assertEquals(0, p.getToKeep().size());
@@ -158,7 +158,7 @@ public class PlannerTest {
                 jobs.add(new AppJobPair(app, job));
 
             }
-            Plan p = planner.plan(offers, jobs, 1);
+            Plan p = planner.plan(offers, jobs, 1, "nobody");
 
             assertEquals(3, p.getOfferAcceptors().size());
             assertEquals(0, p.getToKeep().size());

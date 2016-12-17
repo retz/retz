@@ -28,5 +28,5 @@ public interface Planner {
     // TODO: make useGPU and maxStock configuration of each instance
     List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU);
 
-    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock);
+    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock, String unixUser);
 }

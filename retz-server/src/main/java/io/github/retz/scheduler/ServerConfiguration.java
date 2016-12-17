@@ -58,6 +58,7 @@ public class ServerConfiguration extends FileConfiguration {
     static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
     static final String MESOS_REFUSE_SECONDS = "retz.mesos.refuse";
     static final int DEFAULT_MESOS_REFUSE_SECONDS = 3;
+
     // Not yet used
     static final String QUEUE_MAX = "retz.max.queue";
     static final String SCHEDULE_RESULTS = "retz.results";
@@ -135,14 +136,20 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException("Unknown planner " + planner);
         }
 
+        if ("root".equals(getUserName()) || getUserName().isEmpty()) {
+            LOG.error("{} must not be 'root' nor empty", USER_NAME);
+            throw new IllegalArgumentException("Invalid parameter: " + USER_NAME);
+        }
+
         if (getRefuseSeconds() < 1) {
             throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize(),
+                USER_NAME, getUserName(),
                 MESOS_REFUSE_SECONDS, getRefuseSeconds(),
                 GC_LEEWAY, getGcLeeway(),
                 GC_INTERVAL, getGcInterval());
@@ -187,7 +194,7 @@ public class ServerConfiguration extends FileConfiguration {
     }
 
     public String getUserName() {
-        return properties.getProperty(USER_NAME, System.getProperty("user.name"));
+        return properties.getProperty(USER_NAME, "nobody");
     }
 
     public boolean useGPU() {

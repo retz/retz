@@ -39,6 +39,7 @@ public class ServerConfigurationTest {
         assertEquals(7, config.getRefuseSeconds());
         assertEquals(42, config.getGcLeeway());
         assertEquals(3, config.getGcInterval());
+        assertNotEquals("root", config.getUserName());
     }
 
     @Test(expected=IllegalArgumentException.class)

@@ -2,6 +2,9 @@
 
 ## 0.1.3
 
+* Change default Unix user name on task execution to 'nobody', secondly
+  'retz.user' in configuration, as well as prohibiting 'root'. It is
+  used to initialize framework and remote Unix user.
 * Fix a bug: when restarting Retz, if tables for Retz (user, jobs, etc.)
   still remain in PostgreSQL Retz fails to check table existence and
   cannot start.

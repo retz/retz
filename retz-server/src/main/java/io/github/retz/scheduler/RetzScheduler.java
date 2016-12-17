@@ -227,7 +227,10 @@ public class RetzScheduler implements Scheduler {
         // update database to change all jobs state to KILLED
         JobQueue.cancelAll(cancel);
 
-        Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getServerConfig().getMaxStockSize());
+        // TODO: split pure-planning code and Mesos-related code; don't create TaskInfo and Launches here
+        // TODO: unix user name is used for TaskInfo setup and not related to pure planning.
+        // FIXME: TODO: this↑ is definitely a tech debt!
+        Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getServerConfig().getMaxStockSize(), conf.getServerConfig().getUserName());
 
         int declined = 0;
         // Accept offers from mesos

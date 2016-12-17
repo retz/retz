@@ -63,8 +63,8 @@ public class TaskBuilder {
         return this;
     }
 
-    public TaskBuilder setCommand(Job job, Application application) {
-        Protos.CommandInfo commandInfo = appToCommandInfo(application, job, assigned.ports());
+    public TaskBuilder setCommand(Job job, Application application, String defaultUnixUser) {
+        Protos.CommandInfo commandInfo = appToCommandInfo(application, job, assigned.ports(), defaultUnixUser);
         builder.setCommand(commandInfo);
 
         if (application.container() instanceof DockerContainer) {

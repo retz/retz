@@ -80,7 +80,7 @@ class PlannerPropTest extends JUnitSuite {
        maxStock) => {
         var appJobs = jobs.map(job => new AppJobPair(Optional.of(application), job))
         var planner: Planner = PlannerFactory.create(plannerName);
-        var plan: Plan = planner.plan(offers.asJava, appJobs.asJava, maxStock);
+        var plan: Plan = planner.plan(offers.asJava, appJobs.asJava, maxStock, "nobody");
         var totalJobsToLaunch = plan.getOfferAcceptors.asScala.foldLeft(0)( (sum, acceptor) => sum + acceptor.getJobs.size() )
         println(jobs.size, offers.size, maxStock, "=>", plan.getOfferAcceptors.size(), plan.getToStock.size())
 

@@ -39,7 +39,8 @@ public class NaivePlanner implements Planner {
     static void pack(List<Protos.Offer> offers,
                      List<AppJobPair> appJobs, // Inputs
                      List<OfferAcceptor> acceptors, // output offers to be accepted per SlaveId
-                     List<Job> spill) {
+                     List<Job> spill,
+                     String unixUser) {
         Map<String, OfferAcceptor> slaveAcceptors = new HashMap<>();
         for (Protos.Offer offer : offers) {
             if (slaveAcceptors.containsKey(offer.getSlaveId().getValue())) {
@@ -76,7 +77,7 @@ public class NaivePlanner implements Planner {
                             .setResource(assign, e.getValue().getSlaveID())
                             .setName("retz-" + appJob.application().getAppid() + "-name-" + job.name())
                             .setTaskId("retz-" + appJob.application().getAppid() + "-id-" + id)
-                            .setCommand(job, appJob.application());
+                            .setCommand(job, appJob.application(), unixUser);
                     assigned.merge(assign);
 
                     Protos.TaskInfo task = tb.build();
@@ -154,8 +155,9 @@ public class NaivePlanner implements Planner {
     // Calculate BEST plan ever, this method apparently must be PURE.
     // INPUT: offers currently this Retz instance has
     // INPUT: jobs - candidates for task launch, most likely chosen from database or else
+    // TODO: where to do null-check of unixUser?!
     @Override
-    public Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock) {
+    public Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock, String unixUser) {
 
         List<OfferAcceptor> acceptors = new LinkedList<>();
         List<Protos.Offer> toStock = new LinkedList<>();
@@ -176,7 +178,7 @@ public class NaivePlanner implements Planner {
 
         List<Job> keep = new LinkedList<>();
 
-        pack(offers, jobs, acceptors, keep);
+        pack(offers, jobs, acceptors, keep, Objects.requireNonNull(unixUser));
 
         List<OfferAcceptor> trueAcceptors = new LinkedList<>();
         for (OfferAcceptor acceptor : acceptors) {
