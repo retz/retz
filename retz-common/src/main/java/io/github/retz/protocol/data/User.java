@@ -58,4 +58,8 @@ public class User {
     public String info() {
         return info;
     }
+
+    public void enable(boolean enabled) {
+        this.enabled = enabled;
+    }
 }

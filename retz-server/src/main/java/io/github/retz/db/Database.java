@@ -231,7 +231,6 @@ public class Database {
 
     // Maybe this must return Optional<User> ?
     public User createUser(String info) throws SQLException, JsonProcessingException {
-
         String keyId = UUID.randomUUID().toString().replace("-", "");
         String secret = UUID.randomUUID().toString().replace("-", "");
         User u = new User(keyId, secret, true, info);
@@ -252,6 +251,16 @@ public class Database {
             p.setString(4, MAPPER.writeValueAsString(u));
             p.execute();
             return true;
+        }
+    }
+
+    private void updateUser(Connection conn, User updatedUser) throws SQLException, JsonProcessingException {
+        try (PreparedStatement p = conn.prepareStatement("UPDATE users SET secret=?, enabled=?, json=? WHERE key_id=?")) {
+            p.setString(1, updatedUser.secret());
+            p.setBoolean(2, updatedUser.enabled());
+            p.setString(3, MAPPER.writeValueAsString(updatedUser));
+            p.setString(4, updatedUser.keyId());
+            p.execute();
         }
     }
 
@@ -287,14 +296,17 @@ public class Database {
         }
     }
 
-    public void enableUser(String keyId, boolean enabled) {
-        LOG.warn("enableUser: Not yet implemented"); //TODO
-        throw new RuntimeException("Not yet implemented");
+    public void enableUser(String keyId, boolean enabled) throws SQLException, IOException {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+            Optional<User> user = getUser(conn, keyId);
+            if (user.isPresent()) {
+                user.get().enable(enabled);
+                updateUser(conn, user.get());
+            }
+            conn.commit();
+        }
     }
-
-    // public static void deleteUser(String keyId) {
-    //    throw new RuntimeException("Not yet implemented");
-    //}
 
     public List<Application> getAllApplications() throws IOException {
         return getAllApplications(null);

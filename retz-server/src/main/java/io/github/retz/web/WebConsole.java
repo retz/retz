@@ -80,7 +80,7 @@ public final class WebConsole {
         staticFileLocation("/public");
 
         WebConsole.config = config;
-        before( WebConsole::authenticate );
+        before(WebConsole::authenticate);
 
         after((req, res) -> {
             LOG.info("{} {} {} {} from {} {}",
@@ -172,20 +172,19 @@ public final class WebConsole {
         }
 
         Authenticator authenticator;
-        if (adminAuthenticator.get().getKey().equals(authHeaderValue.get().key())) {
-            // Admin
-            authenticator = adminAuthenticator.get();
+        // Not admin
+        Optional<User> u = Database.getInstance().getUser(authHeaderValue.get().key());
+        if (u.isPresent()) {
+            if (!u.get().enabled()) {
+                halt(403, "User disabled");
+            }
         } else {
-            // Not admin
-            Optional<User> u = Database.getInstance().getUser(authHeaderValue.get().key());
-            if (!u.isPresent()) {
-                halt(403, "No such user");
-            }
-            if (config.authenticationEnabled()) {
-                authenticator = new HmacSHA256Authenticator(u.get().keyId(), u.get().secret());
-            } else {
-                authenticator = new NoopAuthenticator(u.get().keyId());
-            }
+            halt(403, "No such user");
+        }
+        if (config.authenticationEnabled()) {
+            authenticator = new HmacSHA256Authenticator(u.get().keyId(), u.get().secret());
+        } else {
+            authenticator = new NoopAuthenticator(u.get().keyId());
         }
 
         if (!authenticator.authenticate(verb, md5, date, resource,

@@ -85,8 +85,7 @@ public class AdminConsoleTest {
                 System.err.println(client.enableUser("deadbeef", false));
                 User user = client.getUserAsObject("deadbeef");
                 assertNotNull(user);
-                //TODO: implement this
-                //assertFalse(user.enabled());
+                assertFalse(user.enabled());
             }
         }
     }

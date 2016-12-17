@@ -76,8 +76,16 @@ public class AdminConsole implements AdminConsoleMXBean {
     @Override
     public boolean enableUser(String id, boolean enabled) {
         LOG.info("AdminConsole.enableUser({}, {})", id, enabled);
-        Database.getInstance().enableUser(id, enabled);
-        return false;
+        try {
+            Database.getInstance().enableUser(id, enabled);
+            return true;
+        } catch (SQLException e) {
+            LOG.error("Failed to disable user {}", id, e);
+            return false;
+        } catch (IOException e) {
+            LOG.error(e.toString(), e);
+            return false;
+        }
     }
 
     @Override

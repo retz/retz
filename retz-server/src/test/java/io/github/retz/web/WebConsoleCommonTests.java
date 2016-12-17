@@ -31,8 +31,6 @@ import org.hamcrest.Matchers;
 import org.junit.*;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,11 +41,11 @@ import static spark.Spark.awaitInitialization;
 // These tests must pass regardless of any client/server communication configuration
 @Ignore
 public class WebConsoleCommonTests {
+    private final List<String> BASE_ORDER_BY = Arrays.asList("id");
     private Client webClient;
     private ObjectMapper mapper;
     private ServerConfiguration config;
     private ClientCLIConfig cliConfig;
-    private final List<String> BASE_ORDER_BY = Arrays.asList("id");
 
     Launcher.Configuration makeConfig() throws Exception {
         throw new RuntimeException("This class shouldn't be tested");
@@ -306,7 +304,7 @@ public class WebConsoleCommonTests {
         c2.setUser(charlie);
 
         assertEquals("deadbeef", cliConfig.getUser().keyId());
-        assertEquals("charlie", c2.getUser().keyId()        );
+        assertEquals("charlie", c2.getUser().keyId());
 
         try (Client client2 = Client.newBuilder(c2.getUri())
                 .setAuthenticator(c2.getAuthenticator())
@@ -390,5 +388,62 @@ public class WebConsoleCommonTests {
                 assertEquals(null, job3);
             }
         }
+    }
+
+    @Test
+    public void disableUser() throws Exception {
+        User user = config.getUser();
+        List<String> e = Arrays.asList();
+        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
+                user.keyId(), 0, new MesosContainer(), true);
+
+        String jar = "/build/libs/retz-admin-all.jar";
+        String cfg = "/retz-persistent.properties";
+
+        Client client = webClient;
+        Response res;
+
+        res = client.load(application);
+        assertEquals("ok", res.status());
+
+        res = client.schedule(new Job("t", "ls", new Properties(), 1, 32));
+        ScheduleResponse scheduleResponse = (ScheduleResponse) res;
+        Job job1 = scheduleResponse.job();
+
+        System.err.println("Disable user " + user.keyId());
+        Database.getInstance().enableUser(user.keyId(), false);
+        {
+            Optional<User> u = Database.getInstance().getUser(user.keyId());
+            assertFalse(u.get().enabled());
+        }
+
+        res = client.getJob(job1.id());
+        System.err.println(res.status());
+        Assert.assertThat(res, instanceOf(ErrorResponse.class));
+
+        res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+                user.keyId(), 0, new MesosContainer(), true));
+        System.err.println(res.status());
+        Assert.assertThat(res, instanceOf(ErrorResponse.class));
+
+        res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32));
+        System.err.println(res.status());
+        Assert.assertThat(res, instanceOf(ErrorResponse.class));
+
+        System.err.println("Enable user");
+        Database.getInstance().enableUser(user.keyId(), true);
+
+        res = client.getJob(job1.id());
+        System.err.println(res.status());
+        assertEquals("ok", res.status());
+
+        res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+                user.keyId(), 0, new MesosContainer(), true));
+        System.err.println(res.status());
+        assertEquals("ok", res.status());
+
+        res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32));
+        System.err.println(res.status());
+        assertEquals("ok", res.status());
     }
 }

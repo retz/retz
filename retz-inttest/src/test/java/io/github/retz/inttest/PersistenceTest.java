@@ -17,7 +17,6 @@
 package io.github.retz.inttest;
 
 import io.github.retz.cli.ClientCLIConfig;
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
@@ -34,6 +33,7 @@ import java.net.URI;
 import java.util.*;
 
 import static io.github.retz.inttest.IntTestBase.*;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
@@ -197,6 +197,10 @@ public class PersistenceTest {
             verifyCommand(command);
         }
         {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "enable-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
             String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
             verifyCommand(command);
         }
@@ -206,11 +210,72 @@ public class PersistenceTest {
         }
     }
 
-    private void verifyCommand(String[] command) throws  Exception {
+    // No reason for this test to be in persistentTest, possibly could be in RetzIntTest
+    @Test
+    public void disableUser() throws Exception {
+        User user = config.getUser();
+        List<String> e = Arrays.asList();
+        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
+                user.keyId(), 0, new MesosContainer(), true);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+
+        String jar = "/build/libs/retz-admin-all.jar";
+        String cfg = "/retz-persistent.properties";
+
+        try (Client client = Client.newBuilder(uri).setAuthenticator(config.getAuthenticator()).build()) {
+            Response res;
+
+            res = client.load(application);
+            assertEquals("ok", res.status());
+
+            res = client.schedule(new Job("t", "ls", new Properties(), 1, 32));
+            ScheduleResponse scheduleResponse = (ScheduleResponse) res;
+            Job job1 = scheduleResponse.job();
+            {
+                System.err.println("Disable user " + user.keyId());
+                String[] command = {"java", "-jar", jar, "-C", cfg, "disable-user", "-id", user.keyId()};
+                verifyCommand(command);
+            }
+
+            res = client.getJob(job1.id());
+            System.err.println(res.status());
+            assertThat(res, instanceOf(ErrorResponse.class));
+
+            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+                    user.keyId(), 0, new MesosContainer(), true));
+            System.err.println(res.status());
+            assertThat(res, instanceOf(ErrorResponse.class));
+
+            res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32));
+            System.err.println(res.status());
+            assertThat(res, instanceOf(ErrorResponse.class));
+
+            {
+                String[] command = {"java", "-jar", jar, "-C", cfg, "enable-user", "-id", "deadbeef"};
+                verifyCommand(command);
+            }
+
+            res = client.getJob(job1.id());
+            System.err.println(res.status());
+            assertEquals("ok", res.status());
+
+            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+                    user.keyId(), 0, new MesosContainer(), true));
+            System.err.println(res.status());
+            assertEquals("ok", res.status());
+
+            res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32));
+            System.err.println(res.status());
+            assertEquals("ok", res.status());
+        }
+    }
+
+    private void verifyCommand(String[] command) throws Exception {
         String result = container.system(command);
         System.err.println(String.join(" ", command) + " => " + result);
         assertFalse(result, result.contains("ERROR"));
         assertFalse(result, result.contains("Error"));
+        assertFalse(result, result.contains("Exception"));
     }
 
     private void verifyCommandFails(String[] command, String word) throws Exception {

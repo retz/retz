@@ -2,6 +2,8 @@
 
 ## 0.1.4
 
+* Make 'enable-user' and 'disable-user' live, adding implementation to
+  existing mock.
 * Fix a bug where retz-admin 'create-user' fails. This bug has been
   resident since 0.1.2.
 * Fix a bug where retz-admin fails with NullPointerException when no

@@ -60,9 +60,11 @@ public class DatabaseTest {
         assertTrue(db.getUser("cafebabe").isPresent());
         assertEquals("foobar", db.getUser("cafebabe").get().secret());
 
-        User u = db.createUser("test user user()");
-        assertTrue(db.getUser(u.keyId()).isPresent());
-        assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
+        {
+            User u = db.createUser("test user user()");
+            assertTrue(db.getUser(u.keyId()).isPresent());
+            assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
+        }
 
         for (User v : db.allUsers()) {
             System.err.println(v.keyId() + "\t" + v.secret() + "\t" + v.enabled());
@@ -71,6 +73,15 @@ public class DatabaseTest {
         // Try to detect connection leak
         for (int i = 0; i < 4096; ++i) {
             assertTrue(db.getUser("cafebabe").isPresent());
+        }
+        {
+            User u = db.createUser("foo! R! U!");
+            assertTrue(u.enabled());
+            db.enableUser(u.keyId(), false);
+            Optional<User> u2 = db.getUser(u.keyId());
+            assertTrue(u2.isPresent());
+            assertEquals(u.keyId(), u2.get().keyId());
+            assertFalse(u2.get().enabled());
         }
     }
 
