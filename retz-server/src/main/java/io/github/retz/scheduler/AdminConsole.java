@@ -18,14 +18,18 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.bean.AdminConsoleMXBean;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
+import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.*;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -48,6 +52,7 @@ public class AdminConsole implements AdminConsoleMXBean {
         LOG.info("AdminConsole.createUser({})", info);
         try {
             User user = Database.getInstance().createUser(info);
+            LOG.info(maybeEncodeAsJSON(user));
             return maybeEncodeAsJSON(user);
         } catch (SQLException e) {
             return errorJSON(e.toString());
@@ -110,6 +115,34 @@ public class AdminConsole implements AdminConsoleMXBean {
             LOG.info(t.toString(), t);
             return false;
         }
+    }
+
+    static Optional<JmxServer> startJmxServer(ServerConfiguration config) {
+        int jmxPort = config.getJmxPort();
+
+        try {
+            JmxServer jmxServer = new JmxServer(jmxPort);
+
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+            ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
+            AdminConsole mbean = new AdminConsole(config.getGcLeeway());
+            mbs.registerMBean(mbean, name);
+            jmxServer.start();
+            LOG.info("JMX enabled listening to {}", jmxPort);
+            return Optional.of(jmxServer);
+
+        } catch (MalformedObjectNameException e) {
+            LOG.error(e.toString());
+        } catch (InstanceAlreadyExistsException e) {
+            LOG.error(e.toString());
+        } catch (MBeanRegistrationException e) {
+            LOG.error(e.toString());
+        } catch (NotCompliantMBeanException e) {
+            LOG.error(e.toString());
+        } catch (JMException e) {
+            LOG.error(e.toString());
+        }
+        return Optional.empty();
     }
 
     private String maybeEncodeAsJSON(Object o) {

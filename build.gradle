@@ -169,6 +169,7 @@ project(':retz-server') {
         compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.5.+'
 
         testCompile project(":retz-client")
+        testCompile project(":retz-admin")
     }
 
     task processResources.doLast {

@@ -86,27 +86,12 @@ public final class Launcher {
             return -1;
         }
 
-        int jmxPort = conf.getServerConfig().getJmxPort();
-        JmxServer jmxServer = new JmxServer(jmxPort);
-        try {
-
-            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-            ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
-            AdminConsole mbean = new AdminConsole(conf.getServerConfig().getGcLeeway());
-            mbs.registerMBean(mbean, name);
-            jmxServer.start();
-            LOG.info("JMX enabled listening to {}", jmxPort);
-        } catch (MalformedObjectNameException e) {
-            LOG.error(e.toString());
-        } catch (InstanceAlreadyExistsException e) {
-            LOG.error(e.toString());
-        } catch (MBeanRegistrationException e) {
-            LOG.error(e.toString());
-        } catch (NotCompliantMBeanException e) {
-            LOG.error(e.toString());
-        } catch (JMException e) {
-            LOG.error(e.toString());
+        Optional<JmxServer> maybeJmxServer = AdminConsole.startJmxServer(conf.getServerConfig());
+        if (! maybeJmxServer.isPresent()) {
+            LOG.error("Failed to start JMX Server");
+            return -1;
         }
+        JmxServer jmxServer = maybeJmxServer.get();
 
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 

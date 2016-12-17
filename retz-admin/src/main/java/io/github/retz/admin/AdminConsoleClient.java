@@ -88,8 +88,9 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
     @Override
     public String createUser(String info) {
         try {
-            return (String) client.invokeOperation(objectName, "createUser");
+            return (String) client.invokeOperation(objectName, "createUser", info);
         } catch (Exception o) {
+            LOG.error(o.toString(), o);
             return "{}";
         }
     }

@@ -2,7 +2,9 @@
 
 ## 0.1.4
 
-* Fix a bug where retz-admin fail with NullPointerException when no
+* Fix a bug where retz-admin 'create-user' fails. This bug has been
+  resident since 0.1.2.
+* Fix a bug where retz-admin fails with NullPointerException when no
   configuration file found by setting default file '/opt/retz-server/etc/retz.properties'
   to share JMX port configuration with server
 

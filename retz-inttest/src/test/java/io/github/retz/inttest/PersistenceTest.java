@@ -178,40 +178,44 @@ public class PersistenceTest {
     public void userTest() throws Exception {
         System.err.println("Connecting to " + RETZ_HOST);
         // create-user, list-user, disable-user, enable-user, get-user
+        String jar = "/build/libs/retz-admin-all.jar";
+        String cfg = "/retz-persistent.properties";
         {
-            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "list-user"};
+            String[] command = {"java", "-jar", jar, "-C", cfg, "list-user"};
             verifyCommand(command);
         }
         {
-            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "create-user"};
+            String[] command = {"java", "-jar", jar, "-C", cfg, "create-user", "--info", "farboom"};
             verifyCommand(command);
         }
         {
-            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "get-user", "-id", "deadbeef"};
+            String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
             verifyCommand(command);
         }
         {
-            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "disable-user", "-id", "deadbeef"};
+            String[] command = {"java", "-jar", jar, "-C", cfg, "disable-user", "-id", "deadbeef"};
             verifyCommand(command);
         }
         {
-            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "get-user", "-id", "deadbeef"};
+            String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
             verifyCommand(command);
         }
         {
-            String[] command = {"java", "-jar", "/build/libs/retz-admin-all.jar", "fail!"};
+            String[] command = {"java", "-jar", jar, "-C", cfg, "fail!"};
             verifyCommandFails(command, "ERROR");
         }
     }
 
     private void verifyCommand(String[] command) throws  Exception {
         String result = container.system(command);
+        System.err.println(String.join(" ", command) + " => " + result);
         assertFalse(result, result.contains("ERROR"));
         assertFalse(result, result.contains("Error"));
     }
 
     private void verifyCommandFails(String[] command, String word) throws Exception {
         String result = container.system(command);
+        System.err.println(String.join(" ", command) + " => " + result);
         assertTrue(result, result.contains(word));
     }
 }
