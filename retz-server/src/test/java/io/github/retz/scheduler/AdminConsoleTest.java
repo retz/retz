@@ -51,6 +51,7 @@ public class AdminConsoleTest {
 
     @After
     public void after() throws Exception {
+        Database.getInstance().clear();
         Database.getInstance().stop();
         jmxServer.stop();
     }

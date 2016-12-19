@@ -16,7 +16,6 @@
  */
 package io.github.retz.scheduler;
 
-import io.github.retz.cli.FileConfiguration;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Application;
@@ -26,9 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -56,11 +53,12 @@ public class JobQueueTest {
     }
     @Test
     public void q() throws Exception {
-        Application app = new Application("a", Arrays.asList(), Arrays.asList(), Arrays.asList(),
+        Application app = new Application("appq", Arrays.asList(), Arrays.asList(), Arrays.asList(),
                 Optional.empty(), Optional.empty(), "deadbeef",
                 0, new MesosContainer(), true);
-        Applications.load(app);
-        Job job = new Job("a", "b", null, 1000, 100000000);
+        assertTrue(Applications.load(app));
+
+        Job job = new Job("appq", "b", null, 1000, 100000000);
         job.schedule(0, TimestampHelper.now());
         JobQueue.push(job);
         {
@@ -88,5 +86,6 @@ public class JobQueueTest {
         }
         assertEquals(1, JobQueue.size());
         assertEquals(1, JobQueue.countRunning());
+        Database.getInstance().safeDeleteApplication(app.getAppid());
     }
 }
