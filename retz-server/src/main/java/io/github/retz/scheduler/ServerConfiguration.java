@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.FileConfiguration;
+import io.github.retz.protocol.data.ResourceQuantity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -231,7 +232,8 @@ public class ServerConfiguration extends FileConfiguration {
                 Integer.parseInt(properties.getProperty(MAX_MEM, DEFAULT_MAX_MEM)),
                 Integer.parseInt(properties.getProperty(MAX_GPUS, DEFAULT_MAX_GPUS)),
                 Integer.parseInt(properties.getProperty(MAX_PORTS, DEFAULT_MAX_PORTS)),
-                Integer.parseInt(properties.getProperty(MAX_DISK, DEFAULT_MAX_DISK)));
+                Integer.parseInt(properties.getProperty(MAX_DISK, DEFAULT_MAX_DISK)),
+                0);
     }
 
     public String getPlannerName() {

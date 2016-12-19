@@ -21,9 +21,10 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
-import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.protocol.exception.JobNotFoundException;
+import io.github.retz.web.StatusCache;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
@@ -173,8 +174,9 @@ public class RetzScheduler implements Scheduler {
             for (Protos.Offer offer : available) {
                 LOG.debug("offer: {}", offer);
                 Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-                total.add(resource);
+                total.add(resource.toQuantity());
             }
+            total.setNodes(offers.size());
 
             // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
             List<Job> jobs = JobQueue.findFit(PLANNER.orderBy(), total);
@@ -251,6 +253,8 @@ public class RetzScheduler implements Scheduler {
         LOG.info("{} accepted, {} declined ({} offers back in stock)",
                 bestPlan.getOfferAcceptors().stream().mapToInt(offerAcceptor -> offerAcceptor.getJobs().size()).sum(),
                 declined, bestPlan.getToStock().size());
+
+        updateOfferStats();
     }
 
     @Override
@@ -390,18 +394,14 @@ public class RetzScheduler implements Scheduler {
         }
     }
 
-    public void setOfferStats(StatusResponse statusResponse) {
-        int totalCpu = 0;
-        int totalMem = 0;
-        int totalGpu = 0;
+    private void updateOfferStats() {
+        ResourceQuantity total = new ResourceQuantity();
         for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
             Resource r = ResourceConstructor.decode(e.getValue().getResourcesList());
-            totalCpu += r.cpu();
-            totalMem += r.memMB();
-            totalGpu += r.gpu();
+            total.add(r.toQuantity());
         }
-        // TODO: use ResourceQuantity instead of Resource
-        statusResponse.setOfferStats(OFFER_STOCK.size(), totalCpu, totalMem, totalGpu);
+        total.setNodes(OFFER_STOCK.size());
+        StatusCache.setOfferStats(OFFER_STOCK.size(), total);
     }
 
     // Get all running jobs and sync its latest state in Mesos

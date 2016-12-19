@@ -28,7 +28,6 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.mesos.SchedulerDriver;
@@ -124,6 +123,7 @@ public final class WebConsole {
         get(GetAppRequest.resourcePattern(), AppRequestHandler::getApp);
         delete(UnloadAppRequest.resourcePattern(), AppRequestHandler::unloadAppRequest);
 
+        StatusCache.start(1);
         init();
     }
 
@@ -199,22 +199,8 @@ public final class WebConsole {
         }
     }
 
-    static String status(Request request, Response response) {
-        io.github.retz.protocol.Response res;
-        if (scheduler.isPresent()) {
-            StatusResponse statusResponse = new StatusResponse();
-            JobQueue.setStatus(statusResponse);
-            scheduler.get().setOfferStats(statusResponse);
-            res = statusResponse;
-        } else {
-            res = new ErrorResponse("no scheduler set now");
-        }
-        try {
-            return MAPPER.writeValueAsString(res);
-        } catch (JsonProcessingException e) {
-            // TODO: how can we return 503?
-            return "fail";
-        }
+    static String status(Request request, Response response) throws JsonProcessingException {
+        return StatusCache.getStatusResponse();
     }
 
     static Optional<AuthHeader> getAuthInfo(Request req) {
@@ -234,6 +220,7 @@ public final class WebConsole {
 
     public static void stop() {
         Spark.stop();
+        StatusCache.stop();
     }
 }
 

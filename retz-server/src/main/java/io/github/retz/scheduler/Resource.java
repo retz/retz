@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.protocol.data.Range;
+import io.github.retz.protocol.data.ResourceQuantity;
 import org.apache.mesos.Protos;
 
 import java.util.LinkedList;
@@ -164,6 +165,11 @@ public class Resource {
         }
         return list;
     }
+
+    public ResourceQuantity toQuantity() {
+        return new ResourceQuantity((int)cpu, memMB, gpu, portAmount(), diskMB, 0);
+    }
+
     @Override
     public String toString() {
         String portRanges = String.join(", ", ports.stream().map(port -> port.toString()).collect(Collectors.toList()));

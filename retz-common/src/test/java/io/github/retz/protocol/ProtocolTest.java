@@ -160,12 +160,12 @@ public class ProtocolTest {
             assertThat(getJobResponse.job().get().cmd(), is("Mmmmmmmmmy commmmmand1!!!!!"));
         }
         {
-            String json = "{\"command\":\"status\",\"queueLength\":1,\"runningLength\":0,\"numSlaves\":0,\"watcherLength\":0,\"sessionLength\":1,\"status\":\"ok\"}";
+            String json = "{\"command\":\"status\",\"queueLength\":1,\"runningLength\":0,\"numSlaves\":0,\"status\":\"ok\"}";
             Response res = mapper.readValue(json, Response.class);
             assertThat(res, instanceOf(StatusResponse.class));
             StatusResponse statusResponse = (StatusResponse) res;
-            assertThat(statusResponse.sessionLength(), is(1));
             assertThat(statusResponse.queueLength(), is(1));
+            assertThat(statusResponse.runningLength(), is(0));
         }
     }
 

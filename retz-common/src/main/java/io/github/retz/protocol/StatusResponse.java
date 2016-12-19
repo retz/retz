@@ -19,41 +19,39 @@ package io.github.retz.protocol;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.retz.protocol.data.ResourceQuantity;
 
 public class StatusResponse extends Response {
     private int queueLength;
     private int runningLength;
+    private ResourceQuantity totalUsed;
     private int numSlaves; // TODO: use this value in report
-    private int watcherLength;
-    private int sessionLength;
     private int offers;
-    private int totalCPUoffered;
-    private int totalMEMoffered;
-    private int totalGPUoffered;
+    private ResourceQuantity totalOffered;
+    private final String version;
 
     @JsonCreator
     public StatusResponse(@JsonProperty("queueLength") int queueLength,
                           @JsonProperty("runningLength") int runningLength,
+                          @JsonProperty("totalUsed") ResourceQuantity totalUsed,
                           @JsonProperty("numSlaves") int numSlaves,
-                          @JsonProperty("watcherLength") int watcherLength,
-                          @JsonProperty("sessionLength") int sessionLength,
                           @JsonProperty("offers") int offers,
-                          @JsonProperty("totalCPUoffered") int totalCPUoffered,
-                          @JsonProperty("totalMEMoffered") int totalMEMoffered,
-                          @JsonProperty("totalGPUoffered") int totalGPUoffered) {
-        this.queueLength=queueLength;
-        this.runningLength=runningLength;
-        this.numSlaves=numSlaves;
-        this.watcherLength=watcherLength;
-        this.sessionLength=sessionLength;
+                          @JsonProperty("totalOffered") ResourceQuantity totalOffered,
+                          @JsonProperty("version") String version) {
+        this.queueLength = queueLength;
+        this.runningLength = runningLength;
+        this.totalUsed = totalUsed;
+        this.numSlaves = numSlaves;
         this.offers = offers;
-        this.totalCPUoffered = totalCPUoffered;
-        this.totalMEMoffered = totalMEMoffered;
-        this.totalGPUoffered = totalGPUoffered;
+        this.totalOffered = totalOffered;
+        this.version = version;
     }
 
-    public StatusResponse() {
+    public StatusResponse(String version) {
         this.ok();
+        this.version = version;
+        totalOffered = new ResourceQuantity();
+        totalUsed = new ResourceQuantity();
     }
 
     @JsonGetter("queueLength")
@@ -66,19 +64,14 @@ public class StatusResponse extends Response {
         return runningLength;
     }
 
+    @JsonGetter("totalUsed")
+    public ResourceQuantity totalUsed() {
+        return totalUsed;
+    }
+
     @JsonGetter("numSlaves")
     public int numSlaves() {
         return numSlaves;
-    }
-
-    @JsonGetter("watcherLength")
-    public int watcherLength() {
-        return watcherLength;
-    }
-
-    @JsonGetter("sessionLength")
-    public int sessionLength() {
-        return sessionLength;
     }
 
     @JsonGetter("offers")
@@ -86,35 +79,24 @@ public class StatusResponse extends Response {
         return offers;
     }
 
-    @JsonGetter("totalCPUoffered")
-    public int totalCPUoffered() {
-        return totalCPUoffered;
+    @JsonGetter("totalOffered")
+    public ResourceQuantity totalOffered() {
+        return totalOffered;
     }
 
-    @JsonGetter("totalMEMoffered")
-    public int totalMEMoffered() {
-        return totalMEMoffered;
+    @JsonGetter("version")
+    public String version() {
+        return version;
     }
 
-    @JsonGetter("totalGPUoffered")
-    public int totalGPUoffered() {
-        return totalGPUoffered;
+    public void setOffers(int size, ResourceQuantity offered) {
+        this.offers = size;
+        this.totalOffered = offered;
     }
 
-    public void setStatus(int queueLength, int runningLength) {
+    public void setUsedResources(int queueLength, int runningLength, ResourceQuantity totalUsed) {
         this.queueLength = queueLength;
         this.runningLength = runningLength;
-    }
-
-    public void setStatus2(int watcherLength, int sessionLength) {
-        this.watcherLength = watcherLength;
-        this.sessionLength = sessionLength;
-    }
-
-    public void setOfferStats(int size, int cpu, int mem, int gpu) {
-        this.offers = size;
-        this.totalCPUoffered = cpu;
-        this.totalMEMoffered = mem;
-        this.totalGPUoffered = gpu;
+        this.totalUsed = totalUsed;
     }
 }

@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
+import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -49,12 +50,12 @@ public class ResourceTest {
     public void quantity() {
         {
             Job job = new Job("x", "a", new Properties(), 1, 32, 0, 0);
-            ResourceQuantity resourceQuantity = new ResourceQuantity(10, 1024, 0, 1, 1024);
+            ResourceQuantity resourceQuantity = new ResourceQuantity(10, 1024, 0, 1, 1024,0);
             assertTrue(resourceQuantity.fits(job));
         }
         {
             Job job = new Job("x", "a", new Properties(), 20243, 65536, 0, 319);
-            ResourceQuantity resourceQuantity = new ResourceQuantity(22827, 65536, 65536, 36372, 41658);
+            ResourceQuantity resourceQuantity = new ResourceQuantity(22827, 65536, 65536, 36372, 41658, 0);
             assertTrue(resourceQuantity.fits(job));
         }
     }

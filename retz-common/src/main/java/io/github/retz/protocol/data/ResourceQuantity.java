@@ -14,9 +14,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.protocol.data;
 
-import io.github.retz.protocol.data.Job;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ResourceQuantity {
     private int cpu;
@@ -24,16 +26,30 @@ public class ResourceQuantity {
     private int gpu;
     private int ports;
     private int diskMB;
+    private int nodes;
 
     public ResourceQuantity() {
-        this(0, 0, 0, 0, 0);
+        this(0, 0, 0, 0, 0, 0);
     }
-    public ResourceQuantity(int cpu, int memMB, int gpu, int ports, int diskMB) {
+
+    @JsonCreator
+    public ResourceQuantity(@JsonProperty("cpu") int cpu,
+                            @JsonProperty("memMB") int memMB,
+                            @JsonProperty("gpu") int gpu,
+                            @JsonProperty("ports") int ports,
+                            @JsonProperty("diskMB") int diskMB,
+                            @JsonProperty("nodes") int nodes) {
         this.cpu = cpu;
         this.memMB = memMB;
         this.ports = ports;
         this.diskMB = diskMB;
         this.gpu = gpu;
+        this.nodes = nodes;
+    }
+
+    public void setNodes(int nodes) {
+        assert nodes > 0;
+        this.nodes = nodes;
     }
 
     public boolean fits(Job job) {
@@ -44,33 +60,44 @@ public class ResourceQuantity {
                 job.diskMB() <= diskMB;
     }
 
+    @JsonGetter("cpu")
     public int getCpu(){
         return cpu;
     }
 
+    @JsonGetter("memMB")
     public int getMemMB() {
         return memMB;
     }
 
+    @JsonGetter("ports")
     public int getPorts() {
         return ports;
     }
 
+    @JsonGetter("gpu")
     public int getGpu() {
         return gpu;
     }
 
+    @JsonGetter("diskMB")
     public int getDiskMB() {
         return diskMB;
     }
 
-    public void add(Resource resource) {
-        this.cpu += resource.cpu();
-        this.memMB += resource.memMB();
-        this.gpu += resource.gpu();
-        this.ports += resource.portAmount();
-        this.diskMB += resource.diskMB();
+    @JsonGetter("nodes")
+    public int getNodes() {
+        return nodes;
     }
+
+    public void add(ResourceQuantity resource) {
+        this.cpu += resource.getCpu();
+        this.memMB += resource.getMemMB();
+        this.gpu += resource.getGpu();
+        this.ports += resource.getPorts();
+        this.diskMB += resource.getDiskMB();
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder()
@@ -80,6 +107,9 @@ public class ResourceQuantity {
                 .append(",ports=").append(ports)
                 .append(",disk=").append(diskMB)
                 .append("MB}");
+        if (nodes > 0) {
+            builder.append("@").append(nodes).append("nodes");
+        }
         return builder.toString();
     }
 }

@@ -18,9 +18,9 @@ package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.ResourceQuantity;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -217,11 +217,6 @@ public class JobQueue {
     //TODO: make this happen.... with admin APIs
     public static void compact() {
         throw new AssertionError("Not yet implemented");
-    }
-
-    // Methods for test
-    public static void setStatus(StatusResponse response) {
-        response.setStatus(JobQueue.size(), countRunning());
     }
 
     /*

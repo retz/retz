@@ -21,6 +21,7 @@ import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +63,7 @@ public class JobQueueTest {
         job.schedule(0, TimestampHelper.now());
         JobQueue.push(job);
         {
-            List<Job> job2 = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1001, 100000001, 0, 0, 0));
+            List<Job> job2 = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1001, 100000001, 0, 0, 0, 0));
             for (Job j : job2) {
                 System.err.println(job.appid() + job.name());
             }
@@ -77,7 +78,7 @@ public class JobQueueTest {
 
         {
             JobQueue.started("foobar-taskid", Optional.empty());
-            List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0));
+            List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0, 0));
             for (Job j : fit) {
                 System.err.println(j.name() + " " +j.cmd());
             }

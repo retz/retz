@@ -144,6 +144,9 @@ public class DatabaseTest {
             id = job.id();
 
             assertTrue(db.getJob(job.id()).isPresent());
+
+            assertEquals(1, db.countQueued());
+            assertEquals(0, db.countRunning());
         }
         //System.err.println(job2.toString());
         {
@@ -166,6 +169,11 @@ public class DatabaseTest {
             AppJobPair pair = maybePair.get();
             assertEquals(id, pair.job().id());
             assertEquals(a.getAppid(), pair.application().getAppid());
+        }
+
+        {
+            System.err.println(db.countQueued());
+            System.err.println(db.countRunning());
         }
     }
 

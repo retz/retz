@@ -1,5 +1,11 @@
 # Retz release notes
 
+## 0.1.5
+
+* Clean up response of '/status' and cache all data not to trigger query
+  to database all the time. This is incompatible change limited to the
+  form of `/status` response (`StatusResponse` class).
+
 ## 0.1.4
 
 * Make 'enable-user' and 'disable-user' live, adding implementation to

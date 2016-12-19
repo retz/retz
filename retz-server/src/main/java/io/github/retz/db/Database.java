@@ -147,6 +147,15 @@ public class Database {
         }
     }
 
+    public boolean allTableExists() {
+        try (Connection conn = dataSource.getConnection()) {
+            return allTableExists(conn);
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+            return false;
+        }
+    }
+
     boolean allTableExists(Connection conn) throws SQLException {
         DatabaseMetaData meta = conn.getMetaData();
 
@@ -197,7 +206,7 @@ public class Database {
         if (allTableExists(conn)) {
             LOG.info("All four table exists.");
         } else {
-            LOG.info("No table exists: creating...");
+            LOG.info("No table exists: creating....");
 
             InputStream ddl = Launcher.class.getResourceAsStream("/retz-ddl.sql");
             String createString = org.apache.commons.io.IOUtils.toString(ddl, UTF_8);
@@ -729,17 +738,25 @@ public class Database {
     }
 
     public int countRunning() {
+        return countByState(Job.JobState.STARTED) + countByState(Job.JobState.STARTING) ;
+    }
+    public int countQueued() {
+        return countByState(Job.JobState.QUEUED);
+    }
+
+    private int countByState(Job.JobState state) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);
-            p.setString(1, Job.JobState.STARTED.toString());
+            p.setString(1, state.toString());
             try (ResultSet set = p.executeQuery()) {
                 if (set.next()) {
                     return set.getInt(1);
                 }
+                return 0;
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return -1;
     }
@@ -756,19 +773,40 @@ public class Database {
                 // No such application
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return 0;
     }
 
     public List<Job> getRunning() {
-        try (Connection conn = dataSource.getConnection()) {
-            conn.setAutoCommit(false);
-            return new Jobs(conn, MAPPER).getAllRunning();
+        List<Job> jobs = new LinkedList<>();
+        jobs.addAll(getByState(Job.JobState.STARTING));
+        jobs.addAll(getByState(Job.JobState.STARTED));
+        return jobs;
+    }
+
+    private List<Job> getByState(Job.JobState state) {
+        List<Job> jobs = new LinkedList<>();
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
+             PreparedStatement p = conn.prepareStatement("SELECT id, json FROM jobs WHERE state = ?")) {
+            conn.setAutoCommit(true);
+            p.setString(1, state.toString());
+            try (ResultSet set = p.executeQuery()) {
+                while (set.next()) {
+                    String json = "";
+                    try {
+                        json = set.getString("json");
+                        Job job = MAPPER.readValue(json, Job.class);
+                        jobs.add(job);
+                    } catch (IOException e) {
+                        LOG.warn("Skipping job({}) due to exception", json, e);
+                    }
+                }
+            }
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            return Arrays.asList();
+            LOG.error(e.toString(), e);
         }
+        return jobs;
     }
 
     public boolean setFrameworkId(String value) {

@@ -18,7 +18,7 @@ package io.github.retz.scheduler
 
 import java.util.Properties
 
-import io.github.retz.protocol.data.Job
+import io.github.retz.protocol.data.{Job, ResourceQuantity}
 import org.junit.Test
 import org.scalacheck.{Gen, Prop}
 import org.scalatest.junit.JUnitSuite
@@ -54,7 +54,7 @@ class ResourceProp extends JUnitSuite {
          gpus <- Gen.posNum[Int]
          ports <- Gen.posNum[Int]
          disk <- Gen.posNum[Int]}
-      yield new ResourceQuantity(cpus, mem, gpus, ports, disk)
+      yield new ResourceQuantity(cpus, mem, gpus, ports, disk, 0)
 
   @Test
   def resourceQuantityProp(): Unit = {

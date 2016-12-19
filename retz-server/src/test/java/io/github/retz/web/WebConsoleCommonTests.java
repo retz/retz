@@ -19,12 +19,10 @@ package io.github.retz.web;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.ClientCLIConfig;
+import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.protocol.data.User;
+import io.github.retz.protocol.data.*;
 import io.github.retz.scheduler.*;
 import org.apache.mesos.Protos;
 import org.hamcrest.Matchers;
@@ -74,11 +72,12 @@ public class WebConsoleCommonTests {
 
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
         config = conf.getServerConfig();
+        Database.getInstance().init(config);
+        assertTrue(Database.getInstance().allTableExists());
+
         WebConsole.set(scheduler, null);
         WebConsole.start(config);
         awaitInitialization();
-
-        Database.getInstance().init(config);
 
         cliConfig = makeClientConfig();
         System.err.println(config.authenticationEnabled());
@@ -143,7 +142,7 @@ public class WebConsoleCommonTests {
 
     @Test
     public void schedule() throws Exception {
-        List<Job> maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
+        List<Job> maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0, 0));
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -152,7 +151,7 @@ public class WebConsoleCommonTests {
             Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 256));
             assertThat(res, instanceOf(ErrorResponse.class));
 
-            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(1000, 10000, 0, 0, 0));
+            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(1000, 10000, 0, 0, 0, 0));
             assertTrue(maybeJob.isEmpty());
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(235561234);
@@ -179,7 +178,7 @@ public class WebConsoleCommonTests {
             assertThat(getAppResponse.application().getAppid(), is("foobar"));
             assertThat(getAppResponse.application().getFiles().size(), is(1));
         }
-        maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
+        maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0, 0));
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -198,7 +197,7 @@ public class WebConsoleCommonTests {
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(sres.job.id());
             Assert.assertEquals(sres.job.cmd(), getJobResponse.job().get().cmd());
 
-            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
+            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0, 0));
             assertFalse(maybeJob.isEmpty());
             assertThat(maybeJob.get(0).cmd(), is(cmd));
             assertThat(maybeJob.get(0).appid(), is("foobar"));
@@ -220,7 +219,7 @@ public class WebConsoleCommonTests {
     @Test
     public void runFail() throws Exception {
         JobQueue.clear();
-        List<Job> maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
+        List<Job> maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0, 0));
         assertTrue(maybeJob.isEmpty());
 
         {
@@ -230,7 +229,7 @@ public class WebConsoleCommonTests {
             Job done = webClient.run(job);
             assertNull(done);
 
-            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0));
+            maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(10000, 10000, 0, 0, 0, 0));
             assertTrue(maybeJob.isEmpty());
         }
     }
@@ -257,7 +256,9 @@ public class WebConsoleCommonTests {
                 0, new MesosContainer(), true);
         Database.getInstance().addApplication(app);
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
+        job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
         JobQueue.push(job);
+        StatusCache.updateUsedResources();
 
         try (Client c = Client.newBuilder(config.getUri())
                 .setAuthenticator(config.getAuthenticator())
@@ -269,7 +270,7 @@ public class WebConsoleCommonTests {
 
             System.err.println(statusResponse.queueLength());
             assertThat(statusResponse.queueLength(), is(1));
-            assertThat(statusResponse.sessionLength(), is(0));
+            assertThat(statusResponse.runningLength(), is(0));
         }
     }
 
