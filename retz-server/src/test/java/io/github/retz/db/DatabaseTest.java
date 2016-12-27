@@ -247,4 +247,9 @@ public class DatabaseTest {
         assertTrue(db.setFrameworkId(frameworkId));
         assertThat(db.getFrameworkId().get(), is(frameworkId));
     }
+
+    @Test
+    public void gc() {
+        db.deleteOldJobs(1024);
+    }
 }

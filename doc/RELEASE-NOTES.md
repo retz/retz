@@ -2,6 +2,7 @@
 
 ## 0.1.5
 
+* Fix a bug where 'riak-admin gc' fails on PostgreSQL (#112)
 * Clean up response of '/status' and cache all data not to trigger query
   to database all the time. This is incompatible change limited to the
   form of `/status` response (`StatusResponse` class).
