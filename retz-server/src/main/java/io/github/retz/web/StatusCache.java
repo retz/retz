@@ -85,7 +85,6 @@ public class StatusCache implements Runnable {
 
     public static void updateUsedResources() {
         // Do cache update here
-        LOG.info("try!");
         int queueLength = Database.getInstance().countQueued();
         List<Job> jobs = Database.getInstance().getRunning();
         ResourceQuantity total = new ResourceQuantity();
