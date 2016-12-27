@@ -8,7 +8,7 @@ RUN yum -y install iproute httpd
 RUN yum -y install systemd; yum clean all
 
 # Retz dependencies
-RUN yum install -y java-1.8.0-openjdk
+RUN yum install -y java-1.8.0-openjdk postgresql postgresql-server
 
 RUN yum -y install epel-release
 
@@ -36,6 +36,7 @@ RUN systemctl enable zookeeper.service mesos-master.service
 # SystemD, but current workaround is to launch them after docker run.
 COPY spawn_retz_server.sh /spawn_retz_server.sh
 COPY spawn_mesos_agent.sh /spawn_mesos_agent.sh
+COPY spawn_postgres.sh /spawn_postgres.sh
 
 COPY echo.sh /usr/bin/echo.sh
 
@@ -48,6 +49,7 @@ COPY mesos-master_default /etc/default/mesos-master
 # above spawn script for IP address setting.
 COPY retz.properties /retz.properties
 COPY retz-persistent.properties /retz-persistent.properties
+COPY retz-postgres.properties /retz-postgres.properties
 
 # Want to know Mesos version
 RUN ls -l /usr/lib/libmesos*

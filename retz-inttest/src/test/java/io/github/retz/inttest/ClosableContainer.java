@@ -39,6 +39,7 @@ public class ClosableContainer implements AutoCloseable {
     private final String containerId;
     private Thread mesosAgentHolder;
     private Thread retzServerHolder;
+    private Thread postgresServerHolder;
     private String configfile = "retz.properties";
 
     private ClosableContainer(DockerClient dockerClient, String containerId) {
@@ -65,6 +66,9 @@ public class ClosableContainer implements AutoCloseable {
         }
         if (retzServerHolder != null && retzServerHolder.isAlive()) {
             retzServerHolder.join(1000);
+        }
+        if (postgresServerHolder != null && postgresServerHolder.isAlive()) {
+            postgresServerHolder.join(1000);
         }
     }
 
@@ -95,10 +99,12 @@ public class ClosableContainer implements AutoCloseable {
      * @throws InterruptedException
      * @throws UnsupportedEncodingException
      */
-    public void start() throws Exception {
+    public void start(boolean needsPostgres) throws Exception {
         System.err.println("Waiting for Retz server start");
         StartContainerCmd startContainerCmd = dockerClient.startContainerCmd(containerId);
         startContainerCmd.exec();
+
+        // Waiting for build docker container running and directory mounted
         waitFor(
                 () -> {
                     String res = listFiles("/build/libs/");
@@ -109,6 +115,12 @@ public class ClosableContainer implements AutoCloseable {
         );
 
         startMesosServer();
+
+        if (needsPostgres) {
+            startPostgres();
+            waitForPostgres();
+        }
+
         startRetzServer(configfile);
 
         waitFor(
@@ -159,6 +171,13 @@ public class ClosableContainer implements AutoCloseable {
         retzServerHolder.start();
     }
 
+    void startPostgres() {
+        System.err.println("Starting postgres");
+        String[] command = {"/spawn_postgres.sh"};
+        postgresServerHolder = new Thread(createHolderTask("postgresql-holder", command));
+        postgresServerHolder.start();
+    }
+
     void waitForRetzServer() throws Exception {
         URI uri = new URI("http://" + IntTestBase.RETZ_HOST + ":" + IntTestBase.RETZ_PORT);
         System.err.println(uri.toASCIIString());
@@ -174,6 +193,18 @@ public class ClosableContainer implements AutoCloseable {
                 "HTTP connection could not be established, timed out.",
                 () -> {
                     return "retz-server URI: " + uri;
+                });
+    }
+
+    void waitForPostgres() throws Exception {
+        waitFor(() -> {
+                    String res = select1();
+                    return res.contains("column") &&
+                            res.contains("1");
+                },
+                "Processes failed to spawn, timed out.",
+                () -> {
+                    return select1();
                 });
     }
 
@@ -222,17 +253,20 @@ public class ClosableContainer implements AutoCloseable {
     }
 
     private String listFiles(String dir) throws InterruptedException, UnsupportedEncodingException {
-        ExecCreateCmdResponse checkLs1 = dockerClient.execCreateCmd(containerId).withAttachStdout(true)
-                .withAttachStderr(true).withCmd("ls", "-l", dir).exec();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        dockerClient.execStartCmd(checkLs1.getId()).withDetach(false)
-                .exec(new ExecStartResultCallback(out, System.err)).awaitCompletion();
-        return out.toString(String.valueOf(StandardCharsets.UTF_8));
+        return cmd("ls", "-l", dir);
     }
 
     public String ps() throws InterruptedException, UnsupportedEncodingException {
+        return cmd("ps", "-awxx");
+    }
+
+    public String select1() throws InterruptedException, UnsupportedEncodingException {
+        return cmd("psql", "-c", "select 1", "-U", "retz");
+    }
+
+    private String cmd(String... cmds) throws InterruptedException, UnsupportedEncodingException {
         ExecCreateCmdResponse checkPs1 = dockerClient.execCreateCmd(containerId).withAttachStdout(true)
-                .withAttachStderr(true).withCmd("ps", "-awxx").exec();
+                .withAttachStderr(true).withCmd(cmds).exec();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         dockerClient.execStartCmd(checkPs1.getId()).withDetach(false)
                 .exec(new ExecStartResultCallback(out, System.err)).awaitCompletion();

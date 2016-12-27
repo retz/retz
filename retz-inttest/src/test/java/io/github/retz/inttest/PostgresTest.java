@@ -25,7 +25,6 @@ import io.github.retz.protocol.data.User;
 import io.github.retz.web.Client;
 import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.net.URI;
 import java.util.*;
@@ -37,12 +36,12 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 
-public class PersistenceTest extends RetzIntTest {
+public class PostgresTest extends RetzIntTest {
     private static final int JOB_AMOUNT = 64;
 
     @BeforeClass
     public static void setupContainer() throws Exception {
-        setupContainer("retz-persistent.properties", false);
+        setupContainer("retz-postgres.properties", true);
     }
 
     @Override
@@ -50,7 +49,7 @@ public class PersistenceTest extends RetzIntTest {
         return new ClientCLIConfig("src/test/resources/retz-c.properties");
     }
 
-    @Test
+    //@Test
     public void persistence() throws Exception {
         User user = config.getUser();
         List<String> e = Arrays.asList();

@@ -23,15 +23,16 @@ import io.github.retz.protocol.data.*;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
-import io.github.retz.web.feign.Retz;
 import org.apache.commons.io.FilenameUtils;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,13 +54,14 @@ public class RetzIntTest {
         throw new RuntimeException("This class shouldn't be tested");
     }
 
-    protected static void setupContainer(String configFile) throws Exception {
+    protected static void setupContainer(String configFile, boolean needsPostgres) throws Exception {
         System.out.println(Client.VERSION_STRING);
         container = createContainer(CONTAINER_NAME);
         serverConfigFile = configFile;
         System.out.println("Using server config file "+ configFile);
         container.setConfigfile(configFile);
-        container.start();
+
+        container.start(needsPostgres);
 
         System.out.println();
         System.out.println("====================");

@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 #    Retz
 #    Copyright (C) 2016-2017 Nautilus Technologies, Inc.
@@ -15,13 +16,18 @@
 #    limitations under the License.
 #
 
-retz.mesos = example.com:5050
-retz.mesos.principal = retz
-retz.bind  = http://localhost:9091
-retz.max.stock = 0
-retz.authentication = false
-retz.access.key = deadbeef
-## retz.access.secret = cafebabe
 
-## Prevent table not found exception
-retz.gc = false
+set -e
+set -x
+
+## Init and start postgresql
+## mkdir -p /var/lib/postgres
+## chown postgres:postgres /var/lib/postgres
+## /usr/lib/postgresql/9.5/bin/initdb -D /var/lib/postgres
+## /usr/lib/postgresql/9.5/bin/pg_ctl -D /var/lib/postgres -l /build/log/postgres.log start
+chmod 777 /build/log
+su -m postgres -c "initdb -D /var/lib/pgsql/data"
+su -m postgres -c "pg_ctl -D /var/lib/pgsql/data -l /build/log/postgres.log start"
+sleep 5
+su -m postgres -c "createuser retz"
+su -m postgres -c "createdb -O retz retz"
