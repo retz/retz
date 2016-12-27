@@ -41,9 +41,9 @@ public class IntTestBase {
 
     // To execute tests parallel, names and ports should be dynamic.
     // It's not necessary to name containers, except manual cleanup.
-    public static final String CONTAINER_NAME = "retz-inttest-ertpqgh34jv9air";
-    public static final String RETZ_HOST = "127.0.0.1";
-    public static final int RETZ_PORT = 19090;
+    protected static final String CONTAINER_NAME = "retz-inttest-ertpqgh34jv9air";
+    protected static final String RETZ_HOST = "127.0.0.1";
+    protected static final int RETZ_PORT = 19090;
     // Probably better to make log and downloading directories for testc ases.
     private static String hostBuildDir;
 

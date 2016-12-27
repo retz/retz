@@ -19,18 +19,13 @@ package io.github.retz.inttest;
 import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.DirEntry;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.protocol.data.*;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
+import io.github.retz.web.feign.Retz;
 import org.apache.commons.io.FilenameUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -46,20 +41,24 @@ import static io.github.retz.inttest.IntTestBase.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-/**
- * Simple integration test cases for retz-server / -executor.
- */
+@Ignore
 public class RetzIntTest {
     private static final int RES_OK = 0;
     private static final String configfile = "retz-c.properties";
-    private static ClosableContainer container;
+    static ClosableContainer container;
     protected ClientCLIConfig config;
+    private static String serverConfigFile;
 
-    @BeforeClass
-    public static void setupContainer() throws Exception {
+    ClientCLIConfig makeClientConfig() throws Exception {
+        throw new RuntimeException("This class shouldn't be tested");
+    }
+
+    protected static void setupContainer(String configFile) throws Exception {
         System.out.println(Client.VERSION_STRING);
         container = createContainer(CONTAINER_NAME);
-        container.setConfigfile("retz.properties");
+        serverConfigFile = configFile;
+        System.out.println("Using server config file "+ configFile);
+        container.setConfigfile(configFile);
         container.start();
 
         System.out.println();
@@ -78,9 +77,11 @@ public class RetzIntTest {
 
     @Before
     public void loadConfig() throws Exception {
-        config = new ClientCLIConfig("src/test/resources/" + configfile);
+        config = makeClientConfig();
         assertEquals(RETZ_HOST, config.getUri().getHost());
         assertEquals(RETZ_PORT, config.getUri().getPort());
+        assertNotNull(RetzIntTest.container);
+        assertNotNull(RetzIntTest.serverConfigFile);
     }
 
     @Test
@@ -482,16 +483,121 @@ public class RetzIntTest {
         }
     }
 
+
+    @Test
+    public void userTest() throws Exception {
+        System.err.println("Connecting to " + RETZ_HOST);
+        // create-user, list-user, disable-user, enable-user, get-user
+        String jar = "/build/libs/retz-admin-all.jar";
+        String cfg = "/" + serverConfigFile;
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "list-user"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "create-user", "--info", "farboom"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "disable-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "enable-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
+            verifyCommand(command);
+        }
+        {
+            String[] command = {"java", "-jar", jar, "-C", cfg, "fail!"};
+            verifyCommandFails(command, "ERROR");
+        }
+    }
+
+    // No reason for this test to be in persistentTest, possibly could be in RetzIntTest
+    @Test
+    public void disableUser() throws Exception {
+        User user = config.getUser();
+        List<String> e = Arrays.asList();
+        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
+                user.keyId(), 0, new MesosContainer(), true);
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+
+        String jar = "/build/libs/retz-admin-all.jar";
+        String cfg = "/" + serverConfigFile;
+
+        try (Client client = Client.newBuilder(uri).setAuthenticator(config.getAuthenticator()).build()) {
+            Response res;
+
+            res = client.load(application);
+            assertEquals("ok", res.status());
+
+            res = client.schedule(new Job("t", "ls", new Properties(), 1, 32));
+            ScheduleResponse scheduleResponse = (ScheduleResponse) res;
+            Job job1 = scheduleResponse.job();
+            {
+                System.err.println("Disable user " + user.keyId());
+                String[] command = {"java", "-jar", jar, "-C", cfg, "disable-user", "-id", user.keyId()};
+                verifyCommand(command);
+            }
+
+            res = client.getJob(job1.id());
+            System.err.println(res.status());
+            assertThat(res, instanceOf(ErrorResponse.class));
+
+            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+                    user.keyId(), 0, new MesosContainer(), true));
+            System.err.println(res.status());
+            assertThat(res, instanceOf(ErrorResponse.class));
+
+            res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32));
+            System.err.println(res.status());
+            assertThat(res, instanceOf(ErrorResponse.class));
+
+            {
+                String[] command = {"java", "-jar", jar, "-C", cfg, "enable-user", "-id", "deadbeef"};
+                verifyCommand(command);
+            }
+
+            res = client.getJob(job1.id());
+            System.err.println(res.status());
+            assertEquals("ok", res.status());
+
+            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+                    user.keyId(), 0, new MesosContainer(), true));
+            System.err.println(res.status());
+            assertEquals("ok", res.status());
+
+            res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32));
+            System.err.println(res.status());
+            assertEquals("ok", res.status());
+        }
+    }
+
+    protected void verifyCommand(String[] command) throws Exception {
+        String result = container.system(command);
+        System.err.println(String.join(" ", command) + " => " + result);
+        assertFalse(result, result.contains("ERROR"));
+        assertFalse(result, result.contains("Error"));
+        assertFalse(result, result.contains("Exception"));
+    }
+
+    protected void verifyCommandFails(String[] command, String word) throws Exception {
+        String result = container.system(command);
+        System.err.println(String.join(" ", command) + " => " + result);
+        assertTrue(result, result.contains(word));
+    }
+
     private String catStdout(Client c, Job job) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ClientHelper.getWholeFile(c, job.id(), "stdout", true, out);
         return out.toString(String.valueOf(StandardCharsets.UTF_8));
-    }
-
-    private String baseUrl(Job job) throws Exception {
-        URL resUrl = new URL(job.url());
-        // Rewrite HOST (IP) part to access without bridge interface in Docker for Mac
-        return (new URL(resUrl.getProtocol(), "127.0.0.1", resUrl.getPort(), resUrl.getFile())).toString();
     }
 
     static class EchoJob {

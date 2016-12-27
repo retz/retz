@@ -38,37 +38,17 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
 
-public class PersistenceTest {
+public class PersistenceTest extends RetzIntTest {
     private static final int JOB_AMOUNT = 64;
-    private static ClosableContainer container;
-    protected ClientCLIConfig config;
 
     @BeforeClass
     public static void setupContainer() throws Exception {
-        container = createContainer(IntTestBase.CONTAINER_NAME);
-        container.setConfigfile("retz-persistent.properties");
-        container.start();
-
-        System.out.println();
-        System.out.println("====================");
-        System.out.println("Processes (by ps -awxx)");
-        System.out.println(container.ps());
-        System.out.println();
-        System.out.println("====================");
-        System.out.println(container.getRetzServerPid());
+        setupContainer("retz-persistent.properties");
     }
 
-    @AfterClass
-    public static void cleanupContainer() throws Exception {
-        container.close();
-    }
-
-    @Before
-    public void loadConfig() throws Exception {
-        // Mostly same as RetzIntTest
-        config = new ClientCLIConfig("src/test/resources/retz-c.properties");
-        assertEquals(RETZ_HOST, config.getUri().getHost());
-        assertEquals(RETZ_PORT, config.getUri().getPort());
+    @Override
+    ClientCLIConfig makeClientConfig() throws Exception {
+        return new ClientCLIConfig("src/test/resources/retz-c.properties");
     }
 
     @Test
@@ -103,6 +83,9 @@ public class PersistenceTest {
             {
                 Response response = client.list(JOB_AMOUNT);
                 ListJobResponse listJobResponse = (ListJobResponse) response;
+                System.err.println("Finished: " + listJobResponse.finished().size());
+                System.err.println("Queued: " + listJobResponse.queue().size());
+                System.err.println("Running: " + listJobResponse.running().size());
                 assertThat(listJobResponse.finished().size() + listJobResponse.queue().size() + listJobResponse.running().size(), is(JOB_AMOUNT));
             }
 
@@ -139,6 +122,9 @@ public class PersistenceTest {
             {
                 Response response = client.list(JOB_AMOUNT);
                 ListJobResponse listJobResponse = (ListJobResponse) response;
+                System.err.println("Finished: " + listJobResponse.finished().size());
+                System.err.println("Queued: " + listJobResponse.queue().size());
+                System.err.println("Running: " + listJobResponse.running().size());
                 assertThat(listJobResponse.finished().size() + listJobResponse.queue().size() + listJobResponse.running().size(), is(JOB_AMOUNT));
             }
             for (int i = 0; i < JOB_AMOUNT / 2; i++) {
@@ -174,114 +160,6 @@ public class PersistenceTest {
         }
     }
 
-    @Test
-    public void userTest() throws Exception {
-        System.err.println("Connecting to " + RETZ_HOST);
-        // create-user, list-user, disable-user, enable-user, get-user
-        String jar = "/build/libs/retz-admin-all.jar";
-        String cfg = "/retz-persistent.properties";
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "list-user"};
-            verifyCommand(command);
-        }
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "create-user", "--info", "farboom"};
-            verifyCommand(command);
-        }
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
-            verifyCommand(command);
-        }
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "disable-user", "-id", "deadbeef"};
-            verifyCommand(command);
-        }
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "enable-user", "-id", "deadbeef"};
-            verifyCommand(command);
-        }
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "get-user", "-id", "deadbeef"};
-            verifyCommand(command);
-        }
-        {
-            String[] command = {"java", "-jar", jar, "-C", cfg, "fail!"};
-            verifyCommandFails(command, "ERROR");
-        }
-    }
 
-    // No reason for this test to be in persistentTest, possibly could be in RetzIntTest
-    @Test
-    public void disableUser() throws Exception {
-        User user = config.getUser();
-        List<String> e = Arrays.asList();
-        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
-                user.keyId(), 0, new MesosContainer(), true);
-        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
-
-        String jar = "/build/libs/retz-admin-all.jar";
-        String cfg = "/retz-persistent.properties";
-
-        try (Client client = Client.newBuilder(uri).setAuthenticator(config.getAuthenticator()).build()) {
-            Response res;
-
-            res = client.load(application);
-            assertEquals("ok", res.status());
-
-            res = client.schedule(new Job("t", "ls", new Properties(), 1, 32));
-            ScheduleResponse scheduleResponse = (ScheduleResponse) res;
-            Job job1 = scheduleResponse.job();
-            {
-                System.err.println("Disable user " + user.keyId());
-                String[] command = {"java", "-jar", jar, "-C", cfg, "disable-user", "-id", user.keyId()};
-                verifyCommand(command);
-            }
-
-            res = client.getJob(job1.id());
-            System.err.println(res.status());
-            assertThat(res, instanceOf(ErrorResponse.class));
-
-            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
-                    user.keyId(), 0, new MesosContainer(), true));
-            System.err.println(res.status());
-            assertThat(res, instanceOf(ErrorResponse.class));
-
-            res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32));
-            System.err.println(res.status());
-            assertThat(res, instanceOf(ErrorResponse.class));
-
-            {
-                String[] command = {"java", "-jar", jar, "-C", cfg, "enable-user", "-id", "deadbeef"};
-                verifyCommand(command);
-            }
-
-            res = client.getJob(job1.id());
-            System.err.println(res.status());
-            assertEquals("ok", res.status());
-
-            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
-                    user.keyId(), 0, new MesosContainer(), true));
-            System.err.println(res.status());
-            assertEquals("ok", res.status());
-
-            res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32));
-            System.err.println(res.status());
-            assertEquals("ok", res.status());
-        }
-    }
-
-    private void verifyCommand(String[] command) throws Exception {
-        String result = container.system(command);
-        System.err.println(String.join(" ", command) + " => " + result);
-        assertFalse(result, result.contains("ERROR"));
-        assertFalse(result, result.contains("Error"));
-        assertFalse(result, result.contains("Exception"));
-    }
-
-    private void verifyCommandFails(String[] command, String word) throws Exception {
-        String result = container.system(command);
-        System.err.println(String.join(" ", command) + " => " + result);
-        assertTrue(result, result.contains(word));
-    }
 }
 
