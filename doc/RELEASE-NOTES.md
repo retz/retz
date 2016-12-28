@@ -1,6 +1,6 @@
 # Retz release notes
 
-## 0.1.5
+## 0.2.0
 
 * Fix a bug where 'riak-admin gc' fails on PostgreSQL (#112)
 * Clean up response of '/status' and cache all data not to trigger query
