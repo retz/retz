@@ -17,10 +17,7 @@
 package io.github.retz.db;
 
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.protocol.data.User;
+import io.github.retz.protocol.data.*;
 import io.github.retz.scheduler.AppJobPair;
 import io.github.retz.scheduler.JobQueue;
 import org.hamcrest.Matchers;
@@ -209,11 +206,7 @@ public class DatabaseTest {
                     0,
                     app.getAppid(),
                     u.keyId(),
-                    1,
-                    32,
-                    0,
-                    0,
-                    0,
+                    new ResourceQuantity(1, 32, 0, 0, 0, 0),
                     null,
                     Job.JobState.QUEUED);
             db.safeAddJob(job);

@@ -51,14 +51,14 @@ public class ProtocolTest {
     @Test
     public void decodeObjects() throws IOException {
         {
-            String jobString = "{ \"appid\":\"myid\", \"cmd\":\"yaess/bin/yaess-batch.sh ....\", \"scheduled\":\"2016-05-15:20:20:20Z\", \"started\":\"2016-05-15:20:20:20Z\", \"finished\":\"2016-05-15:20:20:20Z\", \"result\":0, \"cpu\":22,\"memMB\":234,\"id\":1, \"url\":\"https://....\", \"state\":\"STARTED\"}";
+            String jobString = "{ \"appid\":\"myid\", \"cmd\":\"yaess/bin/yaess-batch.sh ....\", \"scheduled\":\"2016-05-15:20:20:20Z\", \"started\":\"2016-05-15:20:20:20Z\", \"finished\":\"2016-05-15:20:20:20Z\", \"result\":0, \"resources\":{\"cpu\":22,\"memMB\":234},\"id\":1, \"url\":\"https://....\", \"state\":\"STARTED\"}";
             Job job = mapper.readValue(jobString, Job.class);
             assertThat(job.cmd(), is("yaess/bin/yaess-batch.sh ...."));
             assertThat(job.result(), is(0));
             assertThat(job.id(), is(1));
         }
         {
-            String jobString = "{ \"appid\" : \"myid\", \"cmd\":\"yaess/bin/yaess-batch.sh ....\", \"scheduled\":\"2016-05-15:20:20:20Z\", \"id\":2, \"state\":\"STARTED\", \"cpu\":1,\"memMB\":128}";
+            String jobString = "{ \"appid\" : \"myid\", \"cmd\":\"yaess/bin/yaess-batch.sh ....\", \"scheduled\":\"2016-05-15:20:20:20Z\", \"id\":2, \"state\":\"STARTED\", \"resources\":{\"cpu\":1,\"memMB\":128}}";
             Job job = mapper.readValue(jobString, Job.class);
             assertThat(job.cmd(), is("yaess/bin/yaess-batch.sh ...."));
             assertNull(job.started());
@@ -80,7 +80,7 @@ public class ProtocolTest {
             assertFalse(app.getDiskMB().isPresent());
         }
         {
-            String metajobString = "{\"job\":{\"cmd\":\"touch /tmp/junit3807420247585460493.tmp\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":-1,\"id\":0,\"url\":null,\"appid\":\"appname\",\"name\":null,\"props\":null, \"state\":\"STARTED\", \"cpu\":1,\"memMB\":128},\"app\":{\"appid\":\"appname\",\"persistentFiles\":[],\"files\":[],\"diskMB\":null, \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\"}}";
+            String metajobString = "{\"job\":{\"cmd\":\"touch /tmp/junit3807420247585460493.tmp\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":-1,\"id\":0,\"url\":null,\"appid\":\"appname\",\"name\":null,\"props\":null, \"state\":\"STARTED\", \"resources\":{\"cpu\":1,\"memMB\":128}},\"app\":{\"appid\":\"appname\",\"persistentFiles\":[],\"files\":[],\"diskMB\":null, \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\"}}";
             MetaJob metaJob = mapper.readValue(metajobString, MetaJob.class);
             assertNotNull(metaJob.getApp());
         }
@@ -95,7 +95,7 @@ public class ProtocolTest {
             assertThat(req, instanceOf(ListJobRequest.class));
         }
         {
-            String json = "{\"command\":\"schedule\",\"job\":{\"cmd\":\"ls -l\", \"id\":0,\"url\":null,\"cpu\":23,\"memMB\":324,\"appid\":\"appname\", \"state\":\"QUEUED\"}}";
+            String json = "{\"command\":\"schedule\",\"job\":{\"cmd\":\"ls -l\", \"id\":0,\"url\":null,\"resources\":{\"cpu\":23,\"memMB\":324},\"appid\":\"appname\", \"state\":\"QUEUED\"}}";
             Request req = mapper.readValue(json, Request.class);
             assertThat(req, instanceOf(ScheduleRequest.class));
             ScheduleRequest sreq = (ScheduleRequest) req;
@@ -103,7 +103,7 @@ public class ProtocolTest {
             assertThat(sreq.job().cmd(), is("ls -l"));
         }
         {
-            String json = "{\"command\":\"schedule\",\"job\":{\"cmd\":\"Mmmmmmmmmy commmmmand1!!!!!\",\"scheduled\":null,\"appid\":\"aaa\",\"finished\":null,\"result\":0,\"id\":0,\"url\":null, \"cpu\":12,\"memMB\":23445, \"state\":\"QUEUED\"}}";
+            String json = "{\"command\":\"schedule\",\"job\":{\"cmd\":\"Mmmmmmmmmy commmmmand1!!!!!\",\"scheduled\":null,\"appid\":\"aaa\",\"finished\":null,\"result\":0,\"id\":0,\"url\":null, \"resources\":{\"cpu\":12,\"memMB\":23445}, \"state\":\"QUEUED\"}}";
             Request req = mapper.readValue(json, Request.class);
             assertThat(req, instanceOf(ScheduleRequest.class));
             ScheduleRequest sreq = (ScheduleRequest) req;
@@ -142,7 +142,7 @@ public class ProtocolTest {
             assertThat(res, instanceOf(KillResponse.class));
         }
         {
-            String jobJson = "{\"appid\" : \"moo\", \"cmd\":\"ls -l\", \"cpu\":123,\"memMB\":234,\"id\":23, \"state\":\"STARTED\"}";
+            String jobJson = "{\"appid\" : \"moo\", \"cmd\":\"ls -l\", \"resources\":{\"cpu\":123,\"memMB\":234},\"id\":23, \"state\":\"STARTED\"}";
             String json = "{\"command\":\"schedule\", \"status\":\"ok\", \"job\":" + jobJson + "}";
             Response res = mapper.readValue(json, Response.class);
             assertThat(res, instanceOf(ScheduleResponse.class));
@@ -151,7 +151,7 @@ public class ProtocolTest {
             assertThat(sres.job.id(), is(23));
         }
         {
-            String json = "{\"command\":\"get-job\",\"job\":{\"appid\":\"foobar\", \"cmd\":\"Mmmmmmmmmy commmmmand1!!!!!\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":0,\"id\":0,\"url\":null, \"cpu\":1,\"memMB\":128, \"state\":\"STARTED\"}}";
+            String json = "{\"command\":\"get-job\",\"job\":{\"appid\":\"foobar\", \"cmd\":\"Mmmmmmmmmy commmmmand1!!!!!\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":0,\"id\":0,\"url\":null, \"resources\":{\"cpu\":1,\"memMB\":128}, \"state\":\"STARTED\"}}";
 
             Response res = mapper.readValue(json, Response.class);
             assertThat(res, instanceOf(GetJobResponse.class));

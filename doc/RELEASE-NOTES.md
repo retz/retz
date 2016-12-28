@@ -2,6 +2,8 @@
 
 ## 0.2.0
 
+* Change `protocol.data.Job` class, having `ResourceQuantity` as member `resources`.
+  This introduces incompatible change between 0.1 and 0.2, too.
 * Add server version and protocol version to every requests and response.
   This makes all communication between 0.1 and 0.2 incompatible.
 * Fix a bug where 'riak-admin gc' fails on PostgreSQL (#112)

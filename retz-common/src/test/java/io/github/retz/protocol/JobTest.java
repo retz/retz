@@ -18,6 +18,7 @@ package io.github.retz.protocol;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,11 +52,7 @@ public class JobTest {
                 0,
                 "sample-app",
                 null,
-                32,
-                65536,
-                8,
-                0,
-                0,
+                new ResourceQuantity(32, 65536, 8, 0, 0, 0),
                 "my-sample-taskid",
                 Job.JobState.CREATED);
         job.setName("job=name");
@@ -79,21 +76,24 @@ public class JobTest {
         assertEquals(Job.JobState.STARTING, job.state());
     }
 
-    @Test public void ppStarted() {
+    @Test
+    public void ppStarted() {
         job.started("retz-new-task-id-2354", Optional.empty(), TimestampHelper.now());
         System.err.println(job.toString());
         System.err.println(job.pp());
         assertEquals(Job.JobState.STARTED, job.state());
     }
 
-    @Test public void ppFinished() {
+    @Test
+    public void ppFinished() {
         job.finished(TimestampHelper.now(), Optional.empty(), 0);
         System.err.println(job.toString());
         System.err.println(job.pp());
         assertEquals(Job.JobState.FINISHED, job.state());
     }
 
-    @Test public void ppKilled() {
+    @Test
+    public void ppKilled() {
         job.killed(TimestampHelper.now(), Optional.empty(), "deadly important stupid some reason");
         System.err.println(job.toString());
         System.err.println(job.pp());

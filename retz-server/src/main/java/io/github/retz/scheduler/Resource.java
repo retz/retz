@@ -95,6 +95,10 @@ public class Resource {
         return gpu;
     }
 
+    public Resource cut(ResourceQuantity q, int lastPort) {
+        return cut(q.getCpu(), q.getMemMB(), q.getGpu(), q.getPorts(), lastPort);
+    }
+
     public Resource cut(int cpu, int memMB, int gpus, int ports, int lastPort) {
         List<Range> ranges = new LinkedList<>();
         int sum = 0;

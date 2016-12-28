@@ -53,11 +53,11 @@ public class ResourceQuantity {
     }
 
     public boolean fits(Job job) {
-        return job.cpu() <= cpu &&
-                job.memMB() <= memMB &&
-                job.gpu() <= gpu &&
-                job.ports() <= ports &&
-                job.diskMB() <= diskMB;
+        return job.resources().getCpu() <= cpu &&
+                job.resources().getMemMB() <= memMB &&
+                job.resources().getGpu() <= gpu &&
+                job.resources().getPorts() <= ports &&
+                job.resources().getDiskMB() <= diskMB;
     }
 
     @JsonGetter("cpu")
@@ -96,6 +96,14 @@ public class ResourceQuantity {
         this.gpu += resource.getGpu();
         this.ports += resource.getPorts();
         this.diskMB += resource.getDiskMB();
+    }
+
+    public void add(int cpu, int memMB, int gpu, int ports, int diskMB) {
+        this.cpu += cpu;
+        this.memMB += memMB;
+        this.gpu += gpu;
+        this.ports += ports;
+        this.diskMB += diskMB;
     }
 
     @Override

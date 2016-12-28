@@ -89,7 +89,7 @@ public class StatusCache implements Runnable {
         List<Job> jobs = Database.getInstance().getRunning();
         ResourceQuantity total = new ResourceQuantity();
         for (Job  job : jobs ){
-            total.add(new ResourceQuantity(job.cpu(), job.memMB(), job.gpu(), job.ports(), job.diskMB(),  0));
+            total.add(job.resources());
         }
         int running = jobs.size();
         StatusCache.setUsedResources(queueLength, running, total);

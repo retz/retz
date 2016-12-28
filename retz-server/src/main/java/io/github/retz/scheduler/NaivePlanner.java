@@ -63,15 +63,15 @@ public class NaivePlanner implements Planner {
                 AppJobPair appJob = appJobs.get(0);
                 Job job = appJob.job();
 
-                if (assigned.cpu() + job.cpu() <= resource.cpu() &&
-                        assigned.memMB() + job.memMB() <= resource.memMB() &&
-                        assigned.gpu() + job.gpu() <= resource.gpu() &&
-                        assigned.portAmount() + job.ports() <= resource.portAmount()) {
+                if (assigned.cpu() + job.resources().getCpu() <= resource.cpu() &&
+                        assigned.memMB() + job.resources().getMemMB() <= resource.memMB() &&
+                        assigned.gpu() + job.resources().getGpu() <= resource.gpu() &&
+                        assigned.portAmount() + job.resources().getPorts() <= resource.portAmount()) {
 
                     String id = Integer.toString(job.id());
                     // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                     // (esp ASAKUSA_HOME env)
-                    Resource assign = resource.cut(job.cpu(), job.memMB(), job.gpu(), job.ports(), lastPort);
+                    Resource assign = resource.cut(job.resources(), lastPort);
                     lastPort = assign.lastPort();
                     TaskBuilder tb = new TaskBuilder()
                             .setResource(assign, e.getValue().getSlaveID())
@@ -109,11 +109,12 @@ public class NaivePlanner implements Planner {
             totalPorts += resource.portAmount();
         }
 
-        Optional<Resource> needs = jobs.stream().map(appjob -> new Resource(appjob.job().cpu(), appjob.job().memMB(), 0, appjob.job().gpu(), Arrays.asList())).reduce((lhs, rhs) -> {
+        Optional<Resource> needs = jobs.stream().map(appjob -> new Resource(appjob.job().resources().getCpu(), appjob.job().resources().getMemMB(),
+                appjob.job().resources().getDiskMB(), appjob.job().resources().getGpu(), Arrays.asList())).reduce((lhs, rhs) -> {
             lhs.merge(rhs);
             return lhs;
         });
-        int portNeeds = jobs.stream().mapToInt(appJobPair -> appJobPair.job().ports()).sum();
+        int portNeeds = jobs.stream().mapToInt(appJobPair -> appJobPair.job().resources().getPorts()).sum();
         return needs.isPresent() &&
                 needs.get().cpu() <= totalCpu &&
                 needs.get().memMB() <= totalMem &&
@@ -125,12 +126,12 @@ public class NaivePlanner implements Planner {
     public List<AppJobPair> filter(List<Job> jobs, List<Job> keep, boolean useGPU) {
         // TODO: better splitter
         // Not using GPU or (using GPU and GPU enabled)
-        List<Job> run = jobs.stream().filter(job -> job.gpu() == 0 || useGPU).collect(Collectors.toList());
+        List<Job> run = jobs.stream().filter(job -> job.resources().getGpu() == 0 || useGPU).collect(Collectors.toList());
         keep.addAll(jobs.stream()
-                .filter(job -> job.gpu() > 0 && !useGPU) // Using GPU && GPU not enabled
+                .filter(job -> job.resources().getGpu() > 0 && !useGPU) // Using GPU && GPU not enabled
                 .map(job -> {
                     String reason = String.format("Job (%d@%s) requires %d GPUs while this Retz Scheduler is not capable of using GPU resources. Try setting retz.gpu=true at retz.properties.",
-                            job.id(), job.appid(), job.gpu());
+                            job.id(), job.appid(), job.resources().getGpu());
                     job.killed(TimestampHelper.now(), Optional.empty(), reason); // Database to be updated later, after plan accepted
                     return job;
                 }).collect(Collectors.toList()));

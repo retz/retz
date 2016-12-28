@@ -523,10 +523,10 @@ public class Database {
 
                     if (job == null) {
                         throw new AssertionError("Cannot be null!!");
-                    } else if (totalCpu + job.cpu() <= cpu && totalMem + job.memMB() <= memMB) {
+                    } else if (totalCpu + job.resources().getCpu() <= cpu && totalMem + job.resources().getMemMB() <= memMB) {
                         ret.add(job);
-                        totalCpu += job.cpu();
-                        totalMem += job.memMB();
+                        totalCpu += job.resources().getCpu();
+                        totalMem += job.resources().getMemMB();
                     } else {
                         break;
                     }

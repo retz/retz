@@ -42,11 +42,8 @@ public class Job {
 
     private final String appid;
     private String name; // TODO: make this configurable;
-    private final int cpu;
-    private final int memMB;
-    private int gpu;
-    private final int diskMB; // Number of disk quota the job requires
-    private int ports; // Number of ports the job requires
+
+    private final ResourceQuantity resources;
 
     private String taskId; // TaskId assigned by Mesos (or other scheduler)
 
@@ -73,11 +70,7 @@ public class Job {
         this.name = Integer.toString(cmd.hashCode());
         this.props = props;
         assert cpu > 0 && memMB >= 32;
-        this.cpu = cpu;
-        this.memMB = memMB;
-        this.gpu = 0;
-        this.diskMB = 0;
-        this.ports = 0;
+        this.resources = new ResourceQuantity(cpu, memMB, 0, 0, 0, 1);
         this.state = CREATED;
         this.retry = 0;
         this.priority = 0;
@@ -85,8 +78,8 @@ public class Job {
 
     public Job(String appName, String cmd, Properties props, int cpu, int memMB, int gpu, int ports) {
         this(appName, cmd, props, cpu, memMB);
-        this.gpu = Objects.requireNonNull(gpu);
-        this.ports = ports;
+        Objects.requireNonNull(gpu);
+        resources.add(0, 0, gpu, ports, 0);
     }
 
     @JsonCreator
@@ -103,11 +96,7 @@ public class Job {
                @JsonProperty("priority") int priority,
                @JsonProperty(value = "appid", required = true) String appid,
                @JsonProperty(value = "name") String name,
-               @JsonProperty(value = "cpu", required = true) int cpu,
-               @JsonProperty(value = "memMB", required = true) int memMB,
-               @JsonProperty("gpu") int gpu,
-               @JsonProperty("diskMB") int diskMB,
-               @JsonProperty("ports") int ports,
+               @JsonProperty(value = "resources", required = true) ResourceQuantity resources,
                @JsonProperty("taskId") String taskId,
                @JsonProperty("state") JobState state) {
         this.cmd = Objects.requireNonNull(cmd);
@@ -123,13 +112,9 @@ public class Job {
         this.priority = priority;
         this.appid = appid;
         this.name = name;
-        assert cpu > 0;
-        this.cpu = cpu;
-        assert memMB >= 32;
-        this.memMB = memMB;
-        this.diskMB = diskMB;
-        this.ports = ports;
-        this.gpu = gpu;
+        assert resources.getCpu() > 0;
+        assert resources.getMemMB() >= 32;
+        this.resources = resources;
         this.taskId = taskId;
         this.state = Objects.requireNonNull(state);
     }
@@ -199,29 +184,9 @@ public class Job {
         return name;
     }
 
-    @JsonGetter("cpu")
-    public int cpu() {
-        return cpu;
-    }
-
-    @JsonGetter("memMB")
-    public int memMB() {
-        return memMB;
-    }
-
-    @JsonGetter("gpu")
-    public int gpu() {
-        return gpu;
-    }
-
-    @JsonGetter("diskMB")
-    public int diskMB() {
-        return diskMB;
-    }
-
-    @JsonGetter("ports")
-    public int ports() {
-        return ports;
+    @JsonGetter("resources")
+    public ResourceQuantity resources() {
+        return resources;
     }
 
     @JsonGetter("taskId")
@@ -298,18 +263,8 @@ public class Job {
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
                 .append(", env=").append(props)
-                .append(", cpus=").append(cpu)
-                .append(", mem=").append(memMB);
+                .append(", resources=").append(resources.toString());
 
-        if (gpu > 0) {
-            sb.append(", gpu=").append(gpu);
-        }
-        if (diskMB > 0) {
-            sb.append(", disk=").append(diskMB);
-        }
-        if (ports > 0) {
-            sb.append(", ports=").append(ports);
-        }
         sb.append(", priority=").append(priority);
         if (scheduled != null) {
             sb.append(", scheduled=").append(scheduled);
@@ -339,18 +294,8 @@ public class Job {
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
                 .append(", env=").append(props)
-                .append(", cpus=").append(cpu)
-                .append(", mem=").append(memMB);
+                .append(", resources=").append(resources.toString());
 
-        if (gpu > 0) {
-            sb.append(", gpu=").append(gpu);
-        }
-        if (diskMB > 0) {
-            sb.append(", disk=").append(diskMB);
-        }
-        if (ports > 0) {
-            sb.append(", ports=").append(ports);
-        }
         sb.append(", priority=").append(priority);
         if (scheduled != null) {
             sb.append(", scheduled=").append(scheduled);
