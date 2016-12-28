@@ -28,7 +28,7 @@ public class StatusResponse extends Response {
     private int numSlaves; // TODO: use this value in report
     private int offers;
     private ResourceQuantity totalOffered;
-    private final String version;
+    private final String serverVersion;
 
     @JsonCreator
     public StatusResponse(@JsonProperty("queueLength") int queueLength,
@@ -37,19 +37,19 @@ public class StatusResponse extends Response {
                           @JsonProperty("numSlaves") int numSlaves,
                           @JsonProperty("offers") int offers,
                           @JsonProperty("totalOffered") ResourceQuantity totalOffered,
-                          @JsonProperty("version") String version) {
+                          @JsonProperty("serverVersion") String serverVersion) {
         this.queueLength = queueLength;
         this.runningLength = runningLength;
         this.totalUsed = totalUsed;
         this.numSlaves = numSlaves;
         this.offers = offers;
         this.totalOffered = totalOffered;
-        this.version = version;
+        this.serverVersion = serverVersion;
     }
 
-    public StatusResponse(String version) {
+    public StatusResponse(String serverVersion) {
         this.ok();
-        this.version = version;
+        this.serverVersion = serverVersion;
         totalOffered = new ResourceQuantity();
         totalUsed = new ResourceQuantity();
     }
@@ -84,9 +84,9 @@ public class StatusResponse extends Response {
         return totalOffered;
     }
 
-    @JsonGetter("version")
-    public String version() {
-        return version;
+    @JsonGetter("serverVersion")
+    public String serverVersion() {
+        return serverVersion;
     }
 
     public void setOffers(int size, ResourceQuantity offered) {

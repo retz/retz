@@ -16,9 +16,8 @@
  */
 package io.github.retz.protocol;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 @JsonTypeInfo(property = "command",
@@ -44,4 +43,20 @@ public abstract class Request {
     public abstract String resource();
     public abstract String method();
     public abstract boolean hasPayload();
+
+    private String version;
+
+    public Request() {
+        this.version = Protocol.PROTOCOL_VERSION;
+    }
+
+    @JsonCreator
+    public Request(@JsonProperty(value = "version", required = true) String version) {
+        this.version = version;
+    }
+
+    @JsonGetter
+    public String version() {
+        return this.version;
+    }
 }

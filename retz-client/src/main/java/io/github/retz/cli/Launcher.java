@@ -19,6 +19,7 @@ package io.github.retz.cli;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.ParameterException;
+import io.github.retz.protocol.Protocol;
 import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,10 +67,11 @@ public class Launcher {
                 help(SUB_COMMANDS);
             } else {
                 if (conf.commands.verbose) {
-                    LOG.info("Command={}, Config={}, Client version={}",
+                    LOG.info("Command={}, Config={}, Client version={} Protocol version={}",
                             commander.getParsedCommand(),
                             conf.commands.getConfigFile(),
-                            Client.VERSION_STRING);
+                            Client.VERSION_STRING,
+                            Protocol.PROTOCOL_VERSION);
                     LOG.info("Configuration: {}", conf.configuration.toString());
                 }
                 return conf.getParsedSubCommand().handle(conf.configuration, conf.commands.verbose);

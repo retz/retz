@@ -2,6 +2,8 @@
 
 ## 0.2.0
 
+* Add server version and protocol version to every requests and response.
+  This makes all communication between 0.1 and 0.2 incompatible.
 * Fix a bug where 'riak-admin gc' fails on PostgreSQL (#112)
 * Clean up response of '/status' and cache all data not to trigger query
   to database all the time. This is incompatible change limited to the

@@ -23,17 +23,29 @@ function updateProfile(){
 
     console.log("updating profile");
     fetch("/ping").then(function(response){
-        var version = response.headers.get("Server");
+        var server = response.headers.get("Server");
         var date = response.headers.get("Date");
         var text = response.text();
-        console.log("/ping => " + version + "/" + text + "@" + date);
+        console.log("/ping => " + server + "/" + text + "@" + date);
 
-        id("version").innerText = "System version: " + version;
+        id("server").innerText = "Server: " + server;
         id("date").innerText = "Status at " + date + ":";
         return text;
 
     }).then(function(text) {
         id("up").innerText = "System status: " + text;
+    });
+}
+
+function updateStatus() {
+    console.log("fetching /status");
+
+    fetch("/status").then(function(response){
+        response.json().then(function(json){
+            console.log("/status => " + json);
+            id("version").innerText = "Server Version: " + json.serverVersion;
+            id("protocol").innerText = "Protocol Version: " + json.version;
+        })
     });
 }
 
@@ -43,3 +55,4 @@ function id(id) {
 }
 
 updateProfile();
+updateStatus();

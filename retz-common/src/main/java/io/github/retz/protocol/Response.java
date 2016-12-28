@@ -37,20 +37,33 @@ import com.fasterxml.jackson.annotation.*;
 })
 public abstract class Response {
     private String status; // Probably ENUM?
+    private String version;
 
     @JsonCreator
-    public Response (@JsonProperty("status") String status) {
+    public Response(@JsonProperty("status") String status,
+                    @JsonProperty("version") String version) {
         this.status = status;
+        this.version = version;
     }
-    public Response () {
+
+    public Response() {
+        this.version = Protocol.PROTOCOL_VERSION;
     }
+
     @JsonGetter
     public String status() {
         return status;
     }
+
+    @JsonGetter
+    public String version() {
+        return version;
+    }
+
     public void status(String status) {
         this.status = status;
     }
+
     public void ok() {
         status = "ok";
     }

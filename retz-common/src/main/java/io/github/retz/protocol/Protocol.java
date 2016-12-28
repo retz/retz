@@ -16,13 +16,6 @@
  */
 package io.github.retz.protocol;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
-public class ErrorResponse extends Response {
-    @JsonCreator
-    public ErrorResponse() {
-    }
-    public ErrorResponse(String msg) {
-        super(msg, Protocol.PROTOCOL_VERSION);
-    }
+public class Protocol {
+    public static final String PROTOCOL_VERSION = "0.2.0";
 }
