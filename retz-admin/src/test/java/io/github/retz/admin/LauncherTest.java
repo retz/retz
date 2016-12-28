@@ -37,6 +37,14 @@ public class LauncherTest {
         }
 
         {
+            String[] argv = {"-C", CONFIGFILE, "create-users", "--file", "deadbeef-file", "--output", "cafebab3e-output"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("create-users", conf.getParsedSubCommand().getName());
+            assertEquals("deadbeef-file", ((CommandCreateUsers)conf.getParsedSubCommand()).file);
+            assertEquals("cafebab3e-output", ((CommandCreateUsers)conf.getParsedSubCommand()).dir);
+        }
+
+        {
             String[] argv = {"-C", CONFIGFILE, "disable-user", "-id", "kao"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("disable-user", conf.getParsedSubCommand().getName());

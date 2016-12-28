@@ -23,6 +23,7 @@ import io.github.retz.cli.FileConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.JMException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -48,6 +49,7 @@ public class Launcher {
     static {
         SubCommand[] subCommands = {
                 new CommandCreateUser(),
+                new CommandCreateUsers(),
                 new CommandDisableUser(),
                 new CommandEnableUser(),
                 new CommandGC(),
@@ -65,8 +67,10 @@ public class Launcher {
     }
 
     public static int execute(String... argv) throws Throwable {
+        int port = -1;
         try {
             Configuration conf = parseConfiguration(argv);
+            port = conf.fileConfiguration.getJmxPort();
             JCommander commander = conf.commander;
 
             if (commander.getParsedCommand() == null) {
@@ -80,7 +84,8 @@ public class Launcher {
                 }
                 return conf.getParsedSubCommand().handle(conf.fileConfiguration, conf.commands.verbose);
             }
-
+        } catch (JMException e) {
+            LOG.error("JMX server is not up at localhost:{}", port);
         } catch (IOException e) {
             LOG.error("Invalid configuration file", e);
             e.printStackTrace();
