@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -50,6 +51,8 @@ public class CommandSchedule implements SubCommand {
     int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
+    @Parameter(names="--tags", description = "Tags separated by commas")
+    List<String> tags = Arrays.asList();
 
     @Override
     public String getName() {
@@ -68,6 +71,7 @@ public class CommandSchedule implements SubCommand {
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
         job.setPriority(priority);
         job.setName(name);
+        job.addTags(tags);
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())

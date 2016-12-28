@@ -2,6 +2,7 @@
 
 ## 0.2.0
 
+* Add a set of String 'tags' to `Job` class, to selectively list jobs by a tag.
 * Change `protocol.data.Job` class, having `ResourceQuantity` as member `resources`.
   This introduces incompatible change between 0.1 and 0.2, too.
 * Add server version and protocol version to every requests and response.

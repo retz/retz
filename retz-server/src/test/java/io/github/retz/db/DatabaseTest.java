@@ -206,10 +206,13 @@ public class DatabaseTest {
                     0,
                     app.getAppid(),
                     u.keyId(),
+                    new HashSet<>(),
                     new ResourceQuantity(1, 32, 0, 0, 0, 0),
                     null,
                     Job.JobState.QUEUED);
+            job.addTags(Arrays.asList("tag1", "tag2"));
             db.safeAddJob(job);
+
         }
         assertEquals(10, apps.size());
 

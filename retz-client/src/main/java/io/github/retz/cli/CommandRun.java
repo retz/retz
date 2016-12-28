@@ -25,6 +25,7 @@ import io.github.retz.web.ClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -52,6 +53,8 @@ public class CommandRun implements SubCommand {
     int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
+    @Parameter(names="--tags", description = "Tags separated by commas")
+    List<String> tags = Arrays.asList();
 
     @Override
     public String description() {
@@ -74,6 +77,11 @@ public class CommandRun implements SubCommand {
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
         job.setPriority(priority);
         job.setName(name);
+        job.addTags(tags);
+
+        if (verbose) {
+            LOG.info("Job: {}", job);
+        }
 
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())

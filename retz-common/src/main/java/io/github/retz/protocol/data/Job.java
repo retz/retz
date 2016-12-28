@@ -20,54 +20,34 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 import static io.github.retz.protocol.data.Job.JobState.*;
 
 public class Job {
     private final String cmd;
+    private final String appid;
+    private final Set<String> tags;
+    private final ResourceQuantity resources;
     private String scheduled;
     private String started;
     private String finished;
     private Properties props;
     private int result = -1;
-
     private int id;
     private String url;
     private String reason;
     private int retry; // How many retry now we have
     private int priority;
-
-    private final String appid;
     private String name; // TODO: make this configurable;
-
-    private final ResourceQuantity resources;
-
     private String taskId; // TaskId assigned by Mesos (or other scheduler)
-
-    /**
-     * State diagram:
-     *  [CREATED] ---&gt; [QUEUED] ---&gt; [STARTED] ---&gt; [FINISHED]
-     *                    |              +--------&gt; [KILLED]
-     *                    +----------------------------^
-     */
-    public enum JobState { // TODO: define correspondce against Mesos Task status
-        CREATED,
-        QUEUED,
-        STARTING,
-        STARTED,
-        FINISHED,
-        KILLED,
-    }
-
     private JobState state;
 
     public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
         this.appid = appName;
         this.cmd = cmd;
         this.name = Integer.toString(cmd.hashCode());
+        this.tags = new HashSet<>();
         this.props = props;
         assert cpu > 0 && memMB >= 32;
         this.resources = new ResourceQuantity(cpu, memMB, 0, 0, 0, 1);
@@ -96,6 +76,7 @@ public class Job {
                @JsonProperty("priority") int priority,
                @JsonProperty(value = "appid", required = true) String appid,
                @JsonProperty(value = "name") String name,
+               @JsonProperty("tags") Set<String> tags,
                @JsonProperty(value = "resources", required = true) ResourceQuantity resources,
                @JsonProperty("taskId") String taskId,
                @JsonProperty("state") JobState state) {
@@ -112,6 +93,7 @@ public class Job {
         this.priority = priority;
         this.appid = appid;
         this.name = name;
+        this.tags = (tags == null) ? new HashSet<>() : tags;
         assert resources.getCpu() > 0;
         assert resources.getMemMB() >= 32;
         this.resources = resources;
@@ -184,6 +166,11 @@ public class Job {
         return name;
     }
 
+    @JsonGetter
+    public Set<String> tags() {
+        return tags;
+    }
+
     @JsonGetter("resources")
     public ResourceQuantity resources() {
         return resources;
@@ -249,9 +236,16 @@ public class Job {
     public void setPriority(int p) {
         this.priority = p;
     }
+
     public void setName(String name) {
         if (name != null) {
             this.name = name;
+        }
+    }
+
+    public void addTags(Collection<String> tags) {
+        for (String tag : tags) {
+            this.tags.add(tag);
         }
     }
 
@@ -260,6 +254,7 @@ public class Job {
         StringBuilder sb = new StringBuilder("{")
                 .append("id=").append(id)
                 .append(", name=").append(name)
+                .append(", tags=[").append(String.join(",", tags)).append("]")
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
                 .append(", env=").append(props)
@@ -291,6 +286,7 @@ public class Job {
         StringBuilder sb = new StringBuilder("{")
                 .append("id=").append(id)
                 .append(", name=").append(name)
+                .append(", tags=[").append(String.join(",", tags)).append("]")
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
                 .append(", env=").append(props)
@@ -317,6 +313,21 @@ public class Job {
             sb.append(", taskid=").append(taskId);
         }
         return sb.append("}").toString();
+    }
+
+    /**
+     * State diagram:
+     * [CREATED] ---&gt; [QUEUED] ---&gt; [STARTED] ---&gt; [FINISHED]
+     * |              +--------&gt; [KILLED]
+     * +----------------------------^
+     */
+    public enum JobState { // TODO: define correspondce against Mesos Task status
+        CREATED,
+        QUEUED,
+        STARTING,
+        STARTED,
+        FINISHED,
+        KILLED,
     }
 
 }

@@ -16,6 +16,7 @@
  */
 package io.github.retz.cli;
 
+import com.beust.jcommander.Parameter;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.ListJobResponse;
 import io.github.retz.protocol.Response;
@@ -30,6 +31,9 @@ import java.util.List;
 
 public class CommandList implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandList.class);
+
+    @Parameter(names = "--tag", description = "Tag name to show")
+    private String tag;
 
     public final String NAME = "list";
     public final String DESCRIPTION = "list all jobs";
@@ -84,8 +88,12 @@ public class CommandList implements SubCommand {
                 if (job.state() == Job.JobState.FINISHED ||  job.state() == Job.JobState.KILLED) {
                     result = Integer.toString(job.result());
                 }
-                formatter.feed(Integer.toString(job.id()), job.state().toString(), job.appid(), job.cmd(), result, duration,
-                        job.scheduled(), job.started(), job.finished(), reason);
+
+                if (tag == null || job.tags().contains(tag)) {
+                    formatter.feed(Integer.toString(job.id()), job.state().toString(),
+                            job.appid(), job.cmd(), result, duration,
+                            job.scheduled(), job.started(), job.finished(), reason);
+                }
             }
             LOG.info(formatter.titles());
             for (String line : formatter) {

@@ -22,6 +22,8 @@ import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -51,12 +53,14 @@ public class JobTest {
                 0,
                 0,
                 "sample-app",
-                null,
+                "job-name-foobar",
+                new HashSet<String>(),
                 new ResourceQuantity(32, 65536, 8, 0, 0, 0),
                 "my-sample-taskid",
                 Job.JobState.CREATED);
         job.setName("job=name");
         job.setPriority(-10);
+        job.addTags(Arrays.asList("tag1", "tag2"));
     }
 
 
