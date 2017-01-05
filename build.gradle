@@ -36,7 +36,7 @@ allprojects {
     license {
         header rootProject.file('LICENSE-HEADER.template')
         strictCheck true
-        ext.year = '2016'
+        ext.year = '2016-2017'
         ext.name = 'Nautilus Technologies, Inc.'
 
         excludes(["**/*.json", "**/*.jks"])
