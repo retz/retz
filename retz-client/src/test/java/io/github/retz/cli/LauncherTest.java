@@ -141,6 +141,18 @@ public class LauncherTest {
             assertEquals("fooname", commandSchedule.name);
             assertEquals(-2, commandSchedule.priority);
         }
+
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "--tags", "a,b,c,234"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("schedule", conf.getParsedSubCommand().getName());
+            CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
+            assertEquals(4, commandSchedule.tags.size());
+            assertEquals("a", commandSchedule.tags.get(0));
+            assertEquals("b", commandSchedule.tags.get(1));
+            assertEquals("c", commandSchedule.tags.get(2));
+            assertEquals("234", commandSchedule.tags.get(3));
+        }
         // TODO: add more pattern tests
     }
 

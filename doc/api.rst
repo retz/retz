@@ -117,6 +117,7 @@ in Java API
 * ``--gpu <int>``        :   Defines number of GPUs required for the job (default: 0)
 * ``--prio|--priority <int>``       :   Defines job priority (default: 0). Priority handling depends on server planner setting.
 * ``-N|--name <name>``  :   Defines human readable job name.
+* ``--tags <tag>[,<tag>] : mark the job with tags
 
 ``retz-client run OPTIONS``
 
@@ -188,6 +189,12 @@ This uses ``DELETE /job/<id>`` API endpoint with empty body. `Request
 and `Response
 <https://retz.github.io/java/doc/io/github/retz/protocol/KillResponse.html>`_
 
+``retz-client killall --tag <tag>``
+
+Kills a group of jobs, even if it is already running in Mesos agent. When the
+job is still in the queue, Retz changes the state from ``QUEUED`` to
+``KILLED``. If the job is already running at remote. Currently this is a wrapper
+of 'list' and 'kill'.
 
 ``retz-client get-app -A <appname>``
 

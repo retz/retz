@@ -45,6 +45,7 @@ public class Launcher {
         SUB_COMMANDS.add(new CommandGetFile());
         SUB_COMMANDS.add(new CommandListFiles());
         SUB_COMMANDS.add(new CommandKill());
+        SUB_COMMANDS.add(new CommandKillall());
         SUB_COMMANDS.add(new CommandRun());
         SUB_COMMANDS.add(new CommandGetApp());
         SUB_COMMANDS.add(new CommandListApp());

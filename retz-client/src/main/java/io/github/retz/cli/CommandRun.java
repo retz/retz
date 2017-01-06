@@ -53,7 +53,7 @@ public class CommandRun implements SubCommand {
     int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
-    @Parameter(names="--tags", description = "Tags separated by commas")
+    @Parameter(names="--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
     List<String> tags = Arrays.asList();
 
     @Override
