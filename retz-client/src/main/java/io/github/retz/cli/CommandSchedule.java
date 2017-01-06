@@ -32,9 +32,9 @@ import java.util.Properties;
 public class CommandSchedule implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandSchedule.class);
 
-    @Parameter(names = {"-E", "--env"}, arity = 2,
+    @Parameter(names = {"-E", "--env"},
             description = "Pairs of environment variable names and values, like '-E ASAKUSA_M3BP_OPTS='-Xmx32g' -E SPARK_CMD=path/to/spark-cmd'")
-    private List<String> envs;
+    List<String> envs;
     @Parameter(names = {"--cpu", "-cpu"}, description = "Number of CPU cores assigned to the job")
     int cpu = 1;
     @Parameter(names = {"--mem", "-mem"}, description = "Number of size of RAM(MB) assigned to the job")

@@ -153,6 +153,18 @@ public class LauncherTest {
             assertEquals("c", commandSchedule.tags.get(2));
             assertEquals("234", commandSchedule.tags.get(3));
         }
+
+        {
+            String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "-E", "a=b", "-E", "c=d",
+                    "-E", "CUDA_PATH=/usr/local/cuda"};
+            Launcher.Configuration conf = Launcher.parseConfiguration(argv);
+            assertEquals("schedule", conf.getParsedSubCommand().getName());
+            CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
+            Properties p = SubCommand.parseKeyValuePairs(commandSchedule.envs);
+            assertEquals("b", p.getProperty("a"));
+            assertEquals("d", p.getProperty("c"));
+            assertEquals("/usr/local/cuda", p.getProperty("CUDA_PATH"));
+        }
         // TODO: add more pattern tests
     }
 

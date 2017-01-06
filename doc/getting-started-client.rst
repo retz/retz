@@ -190,7 +190,7 @@ Both ``run`` and ``schedule`` have same options:
 
 Example run::
 
-  $ retz-client run -A your-app -E YOUR_APP_ENV '-Xmx65536m' \
+  $ retz-client run -A your-app -E 'YOUR_APP_ENV=-Xmx65536m' \
     -cmd 'your-app-cmd -thread 16' -cpu 16 -mem 65536
 
 This command blocks until Retz accepts the job, wait for resource
@@ -204,7 +204,7 @@ available, which sends SIGTERM to your command (or Docker container).
 
 Or example schedule::
 
-  $ retz-client schedule -A your-app -E YOUR_APP_ENV '-Xmx65536m' \
+  $ retz-client schedule -A your-app -E 'YOUR_APP_ENV=-Xmx65536m' \
     -cmd 'your-app-cmd -thread 16' -cpu 16 -mem 65536
 
 Watching your job status

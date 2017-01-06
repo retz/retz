@@ -2,6 +2,7 @@
 
 ## 0.2.0
 
+* Fix '-E' '--env' option of 'schedule' subcommand (#110)
 * Remove 'persistentFiles' and 'diskMB' from `protocol.data.Application`
   This is incompatible change to the client-server protocol and
   client library interface.
