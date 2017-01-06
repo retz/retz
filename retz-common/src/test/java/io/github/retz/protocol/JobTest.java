@@ -56,6 +56,7 @@ public class JobTest {
                 "job-name-foobar",
                 new HashSet<String>(),
                 new ResourceQuantity(32, 65536, 8, 0, 0, 0),
+                Optional.empty(),
                 "my-sample-taskid",
                 Job.JobState.CREATED);
         job.setName("job=name");

@@ -29,6 +29,7 @@ public class Job {
     private final String appid;
     private final Set<String> tags;
     private final ResourceQuantity resources;
+    private final Optional<String> attributes;
     private String scheduled;
     private String started;
     private String finished;
@@ -51,6 +52,7 @@ public class Job {
         this.props = props;
         assert cpu > 0 && memMB >= 32;
         this.resources = new ResourceQuantity(cpu, memMB, 0, 0, 0, 1);
+        this.attributes = Optional.empty();
         this.state = CREATED;
         this.retry = 0;
         this.priority = 0;
@@ -78,6 +80,7 @@ public class Job {
                @JsonProperty(value = "name") String name,
                @JsonProperty("tags") Set<String> tags,
                @JsonProperty(value = "resources", required = true) ResourceQuantity resources,
+               @JsonProperty("attributes") Optional<String> attributes,
                @JsonProperty("taskId") String taskId,
                @JsonProperty("state") JobState state) {
         this.cmd = Objects.requireNonNull(cmd);
@@ -97,6 +100,7 @@ public class Job {
         assert resources.getCpu() > 0;
         assert resources.getMemMB() >= 32;
         this.resources = resources;
+        this.attributes = attributes;
         this.taskId = taskId;
         this.state = Objects.requireNonNull(state);
     }
@@ -176,6 +180,10 @@ public class Job {
         return resources;
     }
 
+    @JsonGetter("attributes")
+    public Optional<String> attributes() {
+        return attributes;
+    }
     @JsonGetter("taskId")
     public String taskId() {
         return taskId;

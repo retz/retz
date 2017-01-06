@@ -45,7 +45,6 @@ public class TaskBuilder {
     }
 
     public TaskBuilder setResource(Resource r, Protos.SlaveID slaveID) {
-        //builder.addAllResources(ResourceConstructor.construct((int)r.cpu(), r.memMB(), r.diskMB(), r.gpu()));
         assigned = r;
         builder.addAllResources(r.construct());
         builder.setSlaveId(slaveID);
