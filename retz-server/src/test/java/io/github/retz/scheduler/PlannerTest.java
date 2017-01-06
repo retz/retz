@@ -48,8 +48,8 @@ public class PlannerTest {
         Database.getInstance().init(conf.getServerConfig());
 
          Application anon =
-                new Application(ANON_APPID, Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                        Optional.empty(), Optional.empty(), conf.getServerConfig().getUser().keyId(),
+                new Application(ANON_APPID, Arrays.asList(), Arrays.asList(),
+                        Optional.empty(), conf.getServerConfig().getUser().keyId(),
                         0, new MesosContainer(), true);
         Applications.load(anon);
     }

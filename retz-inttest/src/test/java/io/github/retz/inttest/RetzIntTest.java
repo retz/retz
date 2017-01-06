@@ -110,8 +110,8 @@ public class RetzIntTest {
         Client client = Client.newBuilder(uri)
                 .setAuthenticator(config.getAuthenticator())
                 .build();
-        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList("file:///spawn_retz_server.sh"),
-                Optional.empty(), Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
+        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList("file:///spawn_retz_server.sh"),
+                Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load(echoApp);
         assertThat(loadRes.status(), is("ok"));
@@ -177,8 +177,8 @@ public class RetzIntTest {
                 .setAuthenticator(config.getAuthenticator())
                 .build();
 
-        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
+        Application echoApp = new Application("echo-app",  Arrays.asList(), Arrays.asList(),
+                 Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         Response response = client.load(echoApp);
         System.err.println(response.status());
         LoadAppResponse loadRes = (LoadAppResponse) response;
@@ -281,7 +281,7 @@ public class RetzIntTest {
 
     private void loadSimpleApp(Client client, String appName) throws IOException {
         Application app = new Application(appName, Arrays.asList(),
-                Arrays.asList(), Arrays.asList(), Optional.empty(), Optional.empty(),
+                Arrays.asList(), Optional.empty(),
                 "deadbeef", 0, new MesosContainer(), true);
         Response res = client.load(app);
 
@@ -527,7 +527,7 @@ public class RetzIntTest {
     public void disableUser() throws Exception {
         User user = config.getUser();
         List<String> e = Arrays.asList();
-        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
+        Application application = new Application("t", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true);
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 
@@ -553,7 +553,7 @@ public class RetzIntTest {
             System.err.println(res.status());
             assertThat(res, instanceOf(ErrorResponse.class));
 
-            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+            res = client.load(new Application("t2", e, e, Optional.empty(),
                     user.keyId(), 0, new MesosContainer(), true));
             System.err.println(res.status());
             assertThat(res, instanceOf(ErrorResponse.class));
@@ -571,7 +571,7 @@ public class RetzIntTest {
             System.err.println(res.status());
             assertEquals("ok", res.status());
 
-            res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+            res = client.load(new Application("t2", e, e, Optional.empty(),
                     user.keyId(), 0, new MesosContainer(), true));
             System.err.println(res.status());
             assertEquals("ok", res.status());

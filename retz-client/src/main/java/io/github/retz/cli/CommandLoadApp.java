@@ -43,9 +43,6 @@ public class CommandLoadApp implements SubCommand {
     @Parameter(names = {"-U", "--user"}, description = "Unix user name to run task at remote Mesos agent")
     private String user;
 
-    //@Parameter(names = "-disk", description = "Disk size for sandbox in MB")
-    private int disk = 0;
-
     @Parameter(names = {"--grace-period"}, description = "Grace period to kill task (default is 0: use Mesos default")
     private int gracePeriod;
 
@@ -92,13 +89,6 @@ public class CommandLoadApp implements SubCommand {
             c = new MesosContainer();
         }
 
-        Optional<Integer> maybeDisk;
-        if (disk == 0 || disk < 0) {
-            maybeDisk = Optional.empty();
-        } else {
-            maybeDisk = Optional.of(disk);
-        }
-
         boolean enabled = true;
         if ("false".equals(enabledStr)) {
             enabled = false;
@@ -107,7 +97,7 @@ public class CommandLoadApp implements SubCommand {
             return -1;
         }
         Application application = new Application(appName,
-                Arrays.asList(), largeFiles, files, maybeDisk,
+                largeFiles, files,
                 Optional.ofNullable(user), fileConfig.getAccessKey(),
                 gracePeriod, c, enabled);
 

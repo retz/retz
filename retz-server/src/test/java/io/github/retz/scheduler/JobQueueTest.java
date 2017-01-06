@@ -54,9 +54,8 @@ public class JobQueueTest {
     }
     @Test
     public void q() throws Exception {
-        Application app = new Application("appq", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), "deadbeef",
-                0, new MesosContainer(), true);
+        Application app = new Application("appq", Arrays.asList(), Arrays.asList(),
+                Optional.empty(), "deadbeef",0, new MesosContainer(), true);
         assertTrue(Applications.load(app));
 
         Job job = new Job("appq", "b", null, 1000, 100000000);

@@ -79,10 +79,10 @@ public class DockerVolume {
         StringBuilder builder = new StringBuilder()
                 .append(this.getClass().getSimpleName()).append(":{")
                 .append("driver=").append(driver)
-                .append(", containerPath=").append(containerPath)
-                .append(", mode=").append(mode)
-                .append(", name=").append(name)
-                .append(", options=").append(options)
+                .append(",containerPath=").append(containerPath)
+                .append(",mode=").append(mode)
+                .append(",name=").append(name)
+                .append(",options=").append(options)
                 .append("}");
         return builder.toString();
     }

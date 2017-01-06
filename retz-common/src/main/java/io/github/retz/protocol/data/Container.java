@@ -27,4 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(name = "docker", value = DockerContainer.class)
 })
 public class Container {
+    public String pp() {
+        return toString();
+    }
 }

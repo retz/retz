@@ -52,7 +52,7 @@ public class PersistenceTest extends RetzIntTest {
     public void persistence() throws Exception {
         User user = config.getUser();
         List<String> e = Arrays.asList();
-        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
+        Application application = new Application("t", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true);
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
 

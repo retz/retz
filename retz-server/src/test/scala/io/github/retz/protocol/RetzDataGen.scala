@@ -43,16 +43,13 @@ object RetzDataGen {
 
   def application(owner: String): Gen[Application] = for {
     appid <- RetzGen.nonEmpty(32)
-    persistentFiles <- Gen.containerOf[List, String](RetzGen.url)
     largeFiles <- Gen.containerOf[List, String](RetzGen.url)
     files <- Gen.containerOf[List, String](RetzGen.url)
     diskMB <- Gen.chooseNum(0, 10)
     gracePeriod <- Gen.chooseNum[Int](0, 1024)
     unixUser <- RetzGen.nonEmpty
-  } yield new Application(appid,
-    persistentFiles.asJava, largeFiles.asJava, files.asJava,
-    java.util.Optional.of(diskMB), Optional.of(unixUser), owner,
-    gracePeriod, new MesosContainer(), true)
+  } yield new Application(appid, largeFiles.asJava, files.asJava,
+    Optional.of(unixUser), owner, gracePeriod, new MesosContainer(), true)
 
   def job(appid: String) : Gen[Job] = for {
     name <- RetzGen.nonEmpty

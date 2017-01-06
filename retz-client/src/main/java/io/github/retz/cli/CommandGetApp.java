@@ -17,6 +17,8 @@
 package io.github.retz.cli;
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.protocol.ErrorResponse;
 import io.github.retz.protocol.GetAppResponse;
 import io.github.retz.protocol.Response;
@@ -57,7 +59,11 @@ public class CommandGetApp implements SubCommand {
             } else if (res instanceof GetAppResponse) {
                 GetAppResponse getAppResponse = (GetAppResponse) res;
                 Application app = getAppResponse.application();
-                LOG.info(app.toString());
+
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new Jdk8Module());
+                mapper.writeValue(System.out, app);
+                System.out.println();
                 return 0;
             }
         }

@@ -27,10 +27,8 @@ import java.util.Optional;
 
 public class Application {
     private String appid;
-    private List<String> persistentFiles;
     private List<String> largeFiles;
     private List<String> files;
-    private Optional<Integer> diskMB;
     // User is just a String that specifies Unix user
     private Optional<String> user;
     // Owner is Retz access key
@@ -42,20 +40,16 @@ public class Application {
 
     @JsonCreator
     public Application(@JsonProperty(value = "appid", required = true) String appid,
-                       @JsonProperty("persistentFiles") List<String> persistentFiles,
                        @JsonProperty("largeFiles") List<String> largeFiles,
                        @JsonProperty("files") List<String> files,
-                       @JsonProperty("diskMB") Optional<Integer> diskMB,
                        @JsonProperty("user") Optional<String> user,
                        @JsonProperty(value = "owner", required = true) String owner,
                        @JsonProperty("gracePeriod") int gracePeriod,
                        @JsonProperty("container") Container container,
                        @JsonProperty("enabled") boolean enabled) {
         this.appid = Objects.requireNonNull(appid);
-        this.persistentFiles = persistentFiles;
         this.largeFiles = (largeFiles == null) ? Arrays.asList() : largeFiles;
         this.files = (files == null) ? Arrays.asList() : files;
-        this.diskMB = (diskMB == null) ? Optional.empty() : diskMB;
         this.owner = Objects.requireNonNull(owner);
         this.user = (user == null) ? Optional.empty() : user;
         if (gracePeriod > 0) {
@@ -73,11 +67,6 @@ public class Application {
         return appid;
     }
 
-    @JsonGetter("persistentFiles")
-    public List<String> getPersistentFiles() {
-        return persistentFiles;
-    }
-
     @JsonGetter("largeFiles")
     public List<String> getLargeFiles() {
         return largeFiles;
@@ -86,11 +75,6 @@ public class Application {
     @JsonGetter("files")
     public List<String> getFiles() {
         return files;
-    }
-
-    @JsonGetter("diskMB")
-    public Optional<Integer> getDiskMB() {
-        return diskMB;
     }
 
     @JsonGetter("user")
@@ -145,6 +129,21 @@ public class Application {
                 container().getClass().getSimpleName(),
                 String.join(",", getFiles()),
                 String.join(",", getLargeFiles()));
+    }
+
+    public String pp() {
+        StringBuffer b = new StringBuffer("{");
+
+        b.append("appid=").append(appid)
+                .append(",largeFiles=[").append(String.join(",", largeFiles)).append("]")
+                .append(",files=[").append(String.join(",", files)).append("]")
+                .append(",user=").append(user)
+                .append(",owner=").append(owner)
+                .append(",gracePeriod=").append(gracePeriod)
+                .append(",container=").append(container)
+                .append(",enabled=").append(enabled);
+
+        return b.append("}").toString();
     }
 }
 

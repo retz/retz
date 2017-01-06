@@ -93,8 +93,8 @@ public class RetzSchedulerTest {
     //TODO: @Test
     public void launch() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
-                Arrays.asList(files), Optional.empty(), Optional.empty(), "deadbeef",
+        Applications.load(new Application("fooapp", new LinkedList<String>(),
+                Arrays.asList(files), Optional.empty(), "deadbeef",
                 0, new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
@@ -138,8 +138,8 @@ public class RetzSchedulerTest {
     public void notEnough() throws Exception {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true, "notEnough test user"));
-        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
-                Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef",
+        Applications.load(new Application("fooapp", new LinkedList<String>(),
+                Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);
@@ -169,8 +169,8 @@ public class RetzSchedulerTest {
     // TODO: @Test
     public void slaveFail() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(), new LinkedList<String>(),
-                Arrays.asList(files), Optional.empty(), Optional.empty(), "Deadbeef",
+        Applications.load(new Application("fooapp", new LinkedList<String>(),
+                Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256);
         JobQueue.push(job);

@@ -119,8 +119,8 @@ public class WebConsoleCommonTests {
     public void loadApp() throws Exception {
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
-                    Optional.empty(), Optional.empty(), config.getUser().keyId(),
+            Application app = new Application("foobar", new LinkedList<String>(), Arrays.asList(files),
+                    Optional.empty(), config.getUser().keyId(),
                     0, new MesosContainer(), true);
             Response res = webClient.load(app);
             assertThat(res, instanceOf(LoadAppResponse.class));
@@ -160,8 +160,8 @@ public class WebConsoleCommonTests {
 
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Application app = new Application("foobar", new LinkedList<>(), new LinkedList<String>(), Arrays.asList(files),
-                    Optional.empty(), Optional.empty(), config.getUser().keyId(),
+            Application app = new Application("foobar", new LinkedList<>(), Arrays.asList(files),
+                    Optional.empty(), config.getUser().keyId(),
                     0, new MesosContainer(), true);
             Response res = webClient.load(app);
             System.err.println(">>>" + res.status());
@@ -251,8 +251,7 @@ public class WebConsoleCommonTests {
 
     @Test
     public void status() throws Exception {
-        Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), config.getUser().keyId(),
+        Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Optional.empty(), config.getUser().keyId(),
                 0, new MesosContainer(), true);
         Database.getInstance().addApplication(app);
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
@@ -280,8 +279,8 @@ public class WebConsoleCommonTests {
     @Test
     public void isolation() throws Exception {
         // Prepare data
-        Application app1 = new Application("app1", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), cliConfig.getUser().keyId(),
+        Application app1 = new Application("app1", Arrays.asList(), Arrays.asList(),
+                Optional.empty(), cliConfig.getUser().keyId(),
                 0, new MesosContainer(), true);
         Job job1 = new Job("app1", "ls", new Properties(), 1, 32);
 
@@ -361,8 +360,8 @@ public class WebConsoleCommonTests {
                 System.err.println(res.status());
             }
             { // Charlie tries to steal Alice's application name
-                Application app2 = new Application("app1", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                        Optional.empty(), Optional.empty(), c2.getUser().keyId(),
+                Application app2 = new Application("app1", Arrays.asList(), Arrays.asList(),
+                        Optional.empty(), c2.getUser().keyId(),
                         0, new MesosContainer(), true);
                 Response res = client2.load(app2);
                 assertThat(res, instanceOf(ErrorResponse.class));
@@ -370,8 +369,8 @@ public class WebConsoleCommonTests {
             }
             { // Charlie tries to be Alice
                 System.err.println(cliConfig.getUser().keyId());
-                Application app2 = new Application("app2", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                        Optional.empty(), Optional.empty(), cliConfig.getUser().keyId(),
+                Application app2 = new Application("app2", Arrays.asList(), Arrays.asList(),
+                        Optional.empty(), cliConfig.getUser().keyId(),
                         0, new MesosContainer(), true);
                 Response res = client2.load(app2);
                 assertThat(res, instanceOf(ErrorResponse.class));
@@ -395,7 +394,7 @@ public class WebConsoleCommonTests {
     public void disableUser() throws Exception {
         User user = config.getUser();
         List<String> e = Arrays.asList();
-        Application application = new Application("t", e, e, e, Optional.empty(), Optional.empty(),
+        Application application = new Application("t", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true);
 
         String jar = "/build/libs/retz-admin-all.jar";
@@ -422,7 +421,7 @@ public class WebConsoleCommonTests {
         System.err.println(res.status());
         Assert.assertThat(res, instanceOf(ErrorResponse.class));
 
-        res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+        res = client.load(new Application("t2", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true));
         System.err.println(res.status());
         Assert.assertThat(res, instanceOf(ErrorResponse.class));
@@ -438,7 +437,7 @@ public class WebConsoleCommonTests {
         System.err.println(res.status());
         assertEquals("ok", res.status());
 
-        res = client.load(new Application("t2", e, e, e, Optional.empty(), Optional.empty(),
+        res = client.load(new Application("t2", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true));
         System.err.println(res.status());
         assertEquals("ok", res.status());

@@ -90,7 +90,7 @@ public class DatabaseTest {
         System.err.println("User " + u.keyId() + " created.");
 
         List<String> emptyList = new LinkedList<>();
-        Application app = new Application("testapp", emptyList, emptyList, emptyList, Optional.empty(),
+        Application app = new Application("testapp", emptyList, emptyList,
                 Optional.of("unix-user"), u.keyId(),
                 128, new MesosContainer(), true);
         boolean res = db.addApplication(app);
@@ -104,7 +104,7 @@ public class DatabaseTest {
 
         System.err.println(app2.toString());
 
-        Application app3 = new Application("testapppo", emptyList, emptyList, emptyList, Optional.empty(),
+        Application app3 = new Application("testapppo", emptyList, emptyList,
                 Optional.of("unix-user"), "charlie",
                 128, new MesosContainer(), true);
         assertFalse(db.addApplication(app3));
@@ -121,8 +121,8 @@ public class DatabaseTest {
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
 
-        Application a = new Application("someapp", Arrays.asList(), Arrays.asList(), Arrays.asList(),
-                Optional.empty(), Optional.empty(), u.keyId(),
+        Application a = new Application("someapp", Arrays.asList(), Arrays.asList(),
+                Optional.empty(), u.keyId(),
                 0, new MesosContainer(), true);
         db.addApplication(a);
 
@@ -185,7 +185,7 @@ public class DatabaseTest {
         List<Application> apps = new LinkedList<>();
         List<String> emptyList = new LinkedList<>();
         for (User u : users) {
-            Application app = new Application(u.keyId(), emptyList, emptyList, emptyList, Optional.empty(),
+            Application app = new Application(u.keyId(), emptyList, emptyList,
                     Optional.of("unix-user"), u.keyId(),
                     0, new MesosContainer(), true);
             db.addApplication(app);

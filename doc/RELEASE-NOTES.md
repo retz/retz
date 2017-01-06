@@ -2,6 +2,9 @@
 
 ## 0.2.0
 
+* Remove 'persistentFiles' and 'diskMB' from `protocol.data.Application`
+  This is incompatible change to the client-server protocol and
+  client library interface.
 * Add '--tag' option to 'list' and add'killall' subcommand .
 * Add a set of String 'tags' to `Job` class, to selectively list jobs by a tag.
 * Change `protocol.data.Job` class, having `ResourceQuantity` as member `resources`.

@@ -71,16 +71,14 @@ public class ProtocolTest {
             assertThat(app.getAppid(), is("my-one-of-42-apps"));
             assertNotNull(app.getFiles());
             assertThat(app.getFiles().size(), is(1));
-            assertFalse(app.getDiskMB().isPresent());
             assertThat(app.getOwner(), is("deadbeef"));
         }
         {
-            String appString = "{\"appid\":\"foobar\",\"files\":[\"http://example.com:234/foobar/test.tar.gz\"], \"diskMB\":null, \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\" }";
+            String appString = "{\"appid\":\"foobar\",\"files\":[\"http://example.com:234/foobar/test.tar.gz\"], \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\" }";
             Application app = mapper.readValue(appString, Application.class);
-            assertFalse(app.getDiskMB().isPresent());
         }
         {
-            String metajobString = "{\"job\":{\"cmd\":\"touch /tmp/junit3807420247585460493.tmp\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":-1,\"id\":0,\"url\":null,\"appid\":\"appname\",\"name\":null,\"props\":null, \"state\":\"STARTED\", \"resources\":{\"cpu\":1,\"memMB\":128}},\"app\":{\"appid\":\"appname\",\"persistentFiles\":[],\"files\":[],\"diskMB\":null, \"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\"}}";
+            String metajobString = "{\"job\":{\"cmd\":\"touch /tmp/junit3807420247585460493.tmp\",\"scheduled\":null,\"started\":null,\"finished\":null,\"result\":-1,\"id\":0,\"url\":null,\"appid\":\"appname\",\"name\":null,\"props\":null, \"state\":\"STARTED\", \"resources\":{\"cpu\":1,\"memMB\":128}},\"app\":{\"appid\":\"appname\",\"files\":[],\"container\":{\"type\":\"mesos\"}, \"owner\":\"deadbeef\"}}";
             MetaJob metaJob = mapper.readValue(metajobString, MetaJob.class);
             assertNotNull(metaJob.getApp());
         }
