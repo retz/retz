@@ -18,13 +18,13 @@ package io.github.retz.web.feign;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-
 import feign.Client;
 import feign.Feign;
 import feign.Param;
 import feign.RequestLine;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
+import feign.slf4j.Slf4jLogger;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.protocol.LoadAppRequest;
 import io.github.retz.protocol.Response;
@@ -32,13 +32,12 @@ import io.github.retz.protocol.ScheduleRequest;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 import java.util.function.Supplier;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
 
 public interface Retz {
 
@@ -108,6 +107,7 @@ public interface Retz {
         mapper.registerModule(new Jdk8Module());
         return Feign.builder()
                 .client(new Client.Default(socketFactory, hostnameVerifier))
+                .logger(new Slf4jLogger())
                 .encoder(new JacksonEncoder(mapper))
                 .decoder(new JacksonDecoder(mapper))
                 .errorDecoder(new ErrorResponseDecoder(mapper))

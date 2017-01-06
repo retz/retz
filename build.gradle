@@ -227,6 +227,7 @@ project(':retz-client') {
         compile "com.beust:jcommander:1.58"
         compile 'commons-io:commons-io:2.5'
         compile 'io.github.openfeign:feign-jackson:9.4.0'
+        compile 'com.netflix.feign:feign-slf4j:8.18.0'
     }
 
 
