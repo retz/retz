@@ -17,35 +17,17 @@
 package io.github.retz.inttest;
 
 import io.github.retz.cli.ClientCLIConfig;
-import io.github.retz.protocol.*;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.MesosContainer;
-import io.github.retz.protocol.data.User;
-import io.github.retz.web.Client;
-import org.hamcrest.Matchers;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
-import java.net.URI;
-import java.util.*;
+/**
+ * Simple integration test cases for retz-server / -executor.
+ */
+public class H2OnMemTest extends RetzIntTest {
 
-import static io.github.retz.inttest.IntTestBase.RETZ_HOST;
-import static io.github.retz.inttest.IntTestBase.RETZ_PORT;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
-
-public class PostgresTest extends PersistenceTest {
-
-    @Before
-    public void before() {
-        serverConfigFile = "retz-postgres.properties";
-    }
     @BeforeClass
     public static void setupContainer() throws Exception {
-        setupContainer("retz-postgres.properties", true);
+        // Starting containers right here as configurations are static
+        setupContainer("retz.properties", false);
     }
 
     @Override
@@ -53,4 +35,3 @@ public class PostgresTest extends PersistenceTest {
         return new ClientCLIConfig("src/test/resources/retz-c.properties");
     }
 }
-

@@ -24,7 +24,9 @@ import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.User;
 import io.github.retz.web.Client;
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
@@ -36,18 +38,14 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-
+@Ignore
 public class PersistenceTest extends RetzIntTest {
     private static final int JOB_AMOUNT = 64;
+    String serverConfigFile;
 
-    @BeforeClass
-    public static void setupContainer() throws Exception {
-        setupContainer("retz-persistent.properties", false);
-    }
-
-    @Override
-    ClientCLIConfig makeClientConfig() throws Exception {
-        return new ClientCLIConfig("src/test/resources/retz-c.properties");
+    @Before
+    public void before() {
+        Objects.requireNonNull(serverConfigFile);
     }
 
     @Test
@@ -91,7 +89,7 @@ public class PersistenceTest extends RetzIntTest {
             boolean killed = container.killRetzServerProcess();
             assertTrue(killed);
 
-            container.startRetzServer("retz-persistent.properties");
+            container.startRetzServer(serverConfigFile);
             container.waitForRetzServer();
 
             checkApp(uri, application, jobs);
