@@ -1,8 +1,28 @@
+/**
+ *    Retz
+ *    Copyright (C) 2016-2017 Nautilus Technologies, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package io.github.retz.inttest;
 
 import io.github.retz.cli.ClientCLIConfig;
+import io.github.retz.protocol.ListFilesRequest;
+import io.github.retz.protocol.ListFilesResponse;
 import io.github.retz.protocol.LoadAppResponse;
+import io.github.retz.protocol.Response;
 import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.web.Client;
@@ -14,14 +34,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Scanner;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 public class RegressionTest extends IntTestBase {
 
@@ -38,7 +57,7 @@ public class RegressionTest extends IntTestBase {
         return new ClientCLIConfig("src/test/resources/retz-c.properties");
     }
 
-    @Test
+    @Test // For GH118
     public void binaryDownloadTest() throws Exception {
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
         try (Client client = Client.newBuilder(uri)
@@ -57,11 +76,21 @@ public class RegressionTest extends IntTestBase {
             assertThat(runRes.result(), is(RES_OK));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
-            String toDir = "/tmp/";
-            ClientHelper.getWholeFile(client, runRes.id(), "binary.tgz", toDir);
-            ClientHelper.getWholeFile(client, runRes.id(), "binary.tgz.md5", toDir);
+            {
+                ListFilesResponse res = (ListFilesResponse) client.listFiles(runRes.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
+                List<String> files = res.entries().stream().map(e -> e.path()).collect(Collectors.toList());
+                assertTrue(files.get(0).endsWith("binary"));
+                assertTrue(files.get(1).endsWith("binary.tgz"));
+                assertTrue(files.get(2).endsWith("binary.tgz.md5"));
+                assertTrue(files.get(3).endsWith("stderr"));
+            }
 
-            String remote = readMD5file(toDir + "binary.tgz.md5");
+            String toDir = "/tmp";
+            ClientHelper.getWholeFile(client, runRes.id(), "binary.tgz.md5", toDir);
+            String remote = readMD5file(toDir + "/binary.tgz.md5");
+            assertFalse(remote.isEmpty());
+
+            ClientHelper.getWholeBinaryFile(client, runRes.id(), "binary.tgz", toDir);
 
             ProcessBuilder pb = new ProcessBuilder()
                     .command(Arrays.asList("md5sum", "/tmp/binary.tgz"))
@@ -71,6 +100,7 @@ public class RegressionTest extends IntTestBase {
             assertEquals(0, pb.start().waitFor());
 
             String local = readMD5file("/tmp/binary.tgz.md5.2");
+            assertFalse(local.isEmpty());
 
             assertEquals("Match remote and local MD5 checksum?", remote, local);
         }
@@ -78,7 +108,7 @@ public class RegressionTest extends IntTestBase {
 
     private String readMD5file(String filename) throws IOException {
         try (FileInputStream in = new FileInputStream(filename);
-             Scanner scanner = new Scanner(in)) {
+             Scanner scanner = new Scanner(in, "UTF-8")) {
             if (scanner.hasNext()) {
                 return scanner.next();
             }

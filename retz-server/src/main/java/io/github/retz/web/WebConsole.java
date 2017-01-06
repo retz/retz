@@ -112,6 +112,7 @@ public final class WebConsole {
         delete(KillRequest.resourcePattern(), JobRequestHandler::kill);
         // Get a file
         get(GetFileRequest.resourcePattern(), JobRequestHandler::getFile);
+        get(DownloadFileRequest.resourcePattern(), JobRequestHandler::downloadFile);
         // Get file list
         get(ListFilesRequest.resourcePattern(), JobRequestHandler::getDir);
 
@@ -190,11 +191,11 @@ public final class WebConsole {
         if (!authenticator.authenticate(verb, md5, date, resource,
                 authHeaderValue.get().key(), authHeaderValue.get().signature())) {
             String string2sign = authenticator.string2sign(verb, md5, date, resource);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Auth failed. Calculated signature={}, Given signature={}",
+                LOG.debug("Auth failed. Calculated signature={}, Given signature={}, S2S={}",
                         authenticator.signature(verb, md5, date, resource),
-                        authHeaderValue.get().signature());
-            }
+                        authHeaderValue.get().signature(),
+                        string2sign);
+
             halt(401, "Authentication failed. String to sign: " + string2sign);
         }
     }

@@ -31,14 +31,17 @@ import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.scheduler.*;
+import org.apache.commons.io.IOUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -136,6 +139,35 @@ public class JobRequestHandler {
         res.status(200);
 
         return MAPPER.writeValueAsString(getFileResponse);
+    }
+
+    // A new HTTP endpoint to support binaries
+    static String downloadFile(spark.Request req, spark.Response res) throws IOException {
+        Optional<Job> job = getJobAndVerify(req);
+        String file = req.queryParams("path");
+        LOG.debug("download: path={}", file);
+
+        if (job.isPresent() && job.get().url() != null){ // If url() is null, the job hasn't yet been started at Mesos
+
+            // TODO: This is soo inefficient; it stores all data into RAM without streaming
+            // THIS MUST BE FIXED SOON
+            Pair<Integer, byte[]> payload = MesosHTTPFetcher.downloadHTTPFile(job.get().url(), file);
+            res.status(payload.left());
+
+            if (payload.left() == 200) {
+                res.type("application/octet-stream");
+                res.raw().setContentLength(payload.right().length);
+                ByteArrayInputStream in = new ByteArrayInputStream(payload.right());
+
+                IOUtils.copy(in, res.raw().getOutputStream());
+                in.close();
+            }
+            return "";
+
+        } else {
+            res.status(404);
+            return "";
+        }
     }
 
     static String getDir(spark.Request req, spark.Response res) throws JsonProcessingException {

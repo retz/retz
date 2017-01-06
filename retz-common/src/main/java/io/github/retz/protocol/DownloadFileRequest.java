@@ -22,26 +22,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.Objects;
-import java.util.Optional;
 
 // Request to get text file; maps to files/read API of Mesos
-public class GetFileRequest extends Request {
+public class DownloadFileRequest extends Request {
+    public static long MAX_FILE_SIZE = 65536 * 1024; // in bytes
+
     private int id;
     private String file;
-    private long offset;
-    private long length;
+    //private long offset;
+    //private long length;
 
     @JsonCreator
-    public GetFileRequest(@JsonProperty(value = "id", required = true) int id,
-                          @JsonProperty(value = "file", required = true) String file,
-                          @JsonProperty(value = "offset") long offset,
-                          @JsonProperty(value = "length") long length) {
+    public DownloadFileRequest(@JsonProperty(value = "id", required = true) int id,
+                               @JsonProperty(value = "file", required = true) String file) {
         this.id = id;
         this.file = Objects.requireNonNull(file);
-        this.offset = offset;
-        this.length = length;
     }
 
     @JsonGetter("id")
@@ -54,16 +50,6 @@ public class GetFileRequest extends Request {
         return file;
     }
 
-    @JsonGetter("offset")
-    public long offset() {
-        return offset;
-    }
-
-    @JsonGetter("length")
-    public long length() {
-        return length;
-    }
-
     @Override
     public String resource() {
         String encodedFile = file;
@@ -74,10 +60,8 @@ public class GetFileRequest extends Request {
 
         StringBuilder builder = new StringBuilder("/job/")
                 .append(id)
-                .append("/file")
-                .append("?path=").append(encodedFile)
-                .append("&offset=").append(offset)
-                .append("&length=").append(length);
+                .append("/download")
+                .append("?path=").append(encodedFile);
 
         return builder.toString();
     }
@@ -93,6 +77,6 @@ public class GetFileRequest extends Request {
     }
 
     public static String resourcePattern() {
-        return "/job/:id/file";
+        return "/job/:id/download";
     }
 }

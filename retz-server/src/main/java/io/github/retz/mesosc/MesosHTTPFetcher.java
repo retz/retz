@@ -19,6 +19,7 @@ package io.github.retz.mesosc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.retz.misc.Either;
 import io.github.retz.misc.Pair;
+import io.github.retz.protocol.DownloadFileRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -208,6 +209,51 @@ public class MesosHTTPFetcher {
         return ret;
     }
 
+    public static Pair<Integer, byte[]> downloadHTTPFile(String url, String name) throws IOException {
+        String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
+        LOG.debug("Downloading {}", addr);
+
+        HttpURLConnection conn = null;
+        try {
+            conn = (HttpURLConnection) new URL(addr).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setDoOutput(true);
+
+            LOG.debug("res={}, md5={}, length={}", conn.getResponseMessage(),
+                    conn.getHeaderField("Content-md5"), conn.getHeaderField("Content-Length"));
+
+            if (conn.getResponseCode() != 200) {
+                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage().getBytes(UTF_8));
+            }
+
+            long size = conn.getHeaderFieldLong("Content-Length", -1);
+            if (size < 0 || DownloadFileRequest.MAX_FILE_SIZE < size || Integer.MAX_VALUE < size) {
+                throw new IOException("Illegal Content size found at Mesos: " + size);
+            }
+
+            try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream())) {
+                int len = (int)size;
+                byte[] buffer = new byte[len];
+                int offset = 0;
+                while (offset < len) {
+                    int read = in.read(buffer, offset, len - offset);
+                    if (read < 0) {
+                        break;
+                    }
+                    offset += read;
+                }
+                return new Pair<>(200, buffer);
+            }
+
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
+    }
+
+
+    // Actually Mesos 1.1.0 returns whole body even if it gets HEAD request.
     public static boolean statHTTPFile(String url, String name) {
         String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
 
@@ -233,6 +279,7 @@ public class MesosHTTPFetcher {
         return fetchHTTP(addr, 3);
     }
 
+    // Only for String contents
     private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws IOException {
         LOG.debug("Fetching {}", addr);
         HttpURLConnection conn = null;

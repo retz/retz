@@ -18,10 +18,7 @@ package io.github.retz.web.feign;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import feign.Client;
-import feign.Feign;
-import feign.Param;
-import feign.RequestLine;
+import feign.*;
 import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
 import feign.slf4j.Slf4jLogger;
@@ -42,12 +39,15 @@ import java.util.function.Supplier;
 public interface Retz {
 
     @RequestLine("GET /ping")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     String ping();
 
     @RequestLine("GET /status")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response status();
 
     @RequestLine("GET /jobs")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response list();
 
     default Response schedule(Job job) {
@@ -55,12 +55,15 @@ public interface Retz {
     }
 
     @RequestLine("POST /job")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response schedule(ScheduleRequest request);
 
     @RequestLine("GET /job/{id}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response getJob(@Param("id") int id);
 
     @RequestLine("GET /job/{id}/file?path={path}&offset={offset}&length={length}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response getFile(
             @Param("id") int id,
             @Param("path") String path,
@@ -68,6 +71,7 @@ public interface Retz {
             @Param("length") long length);
 
     @RequestLine("GET /job/{id}/dir?path={path}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response listFiles(@Param("id") int id, @Param("path") String path);
 
     default Response run(Job job) {
@@ -75,12 +79,15 @@ public interface Retz {
     }
 
     @RequestLine("POST /job")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response run(ScheduleRequest request);
 
     @RequestLine("DELETE /job/{id}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response kill(@Param("id") int id);
 
     @RequestLine("GET /app/{appid}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response getApp(@Param("appid") String appid);
 
     default Response load(Application application) {
@@ -88,13 +95,16 @@ public interface Retz {
     }
 
     @RequestLine("PUT /app/{appid}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response load(@Param("appid") String appid, LoadAppRequest request);
 
     @RequestLine("GET /apps")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response listApp();
 
     @Deprecated
     @RequestLine("DELETE /app/{appid}")
+    @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response unload(@Param("appid") String appid);
 
     static Retz connect(

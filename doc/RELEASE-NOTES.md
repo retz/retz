@@ -2,6 +2,12 @@
 
 ## 0.2.0
 
+* Fix a severe bug that a binary file downloaded from sandbox via
+  `/job/<id>/file` is broken. This is because Retz had been
+  fetching files from `/files/read` endpoint of Mesos where a file
+  content is provided via JSON. A new Retz HTTP endpoint `/job/<id>/download`
+  has been added to the client, with '--binary' option to 'get-file'
+  CLI subcommand.
 * Fix '-E' '--env' option of 'schedule' subcommand (#110)
 * Remove 'persistentFiles' and 'diskMB' from `protocol.data.Application`
   This is incompatible change to the client-server protocol and

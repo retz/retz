@@ -54,11 +54,11 @@ public class IntTestBase {
     // Probably better to make log and downloading directories for testc ases.
     private static String hostBuildDir;
 
-    protected static int RES_OK = 0;
+    static int RES_OK = 0;
     private static final String configfile = "retz-c.properties";
     static ClosableContainer container;
     protected ClientCLIConfig config;
-    protected static String serverConfigFile;
+    static String serverConfigFile;
 
     ClientCLIConfig makeClientConfig() throws Exception {
         throw new RuntimeException("This class shouldn't be tested");

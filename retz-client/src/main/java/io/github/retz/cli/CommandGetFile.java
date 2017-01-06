@@ -54,6 +54,9 @@ public class CommandGetFile implements SubCommand {
     @Parameter(names = "--length", description = "Length")
     private long length = -1; // -1 means get all file
 
+    @Parameter(names = "--binary", description = "Whether the file is binary or not. This option must be combined with '-R'.")
+    private boolean isBinary = false;
+
     @Override
     public String description() {
         return "Get file from sandbox of a job";
@@ -73,12 +76,27 @@ public class CommandGetFile implements SubCommand {
                 .checkCert(!fileConfig.insecure())
                 .setVerboseLog(verbose)
                 .build()) {
-            OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename);
 
             if (verbose) {
                 LOG.info("Getting file {} (offset={}, length={}) of a job(id={})", filename, offset, length, id);
             }
 
+            if (isBinary) {
+                if ("-".equals(resultDir)) {
+                    LOG.error("--binary must be with -R option, to download the file.");
+                    return -1;
+                } else if (poll) {
+                    LOG.error("--binary cannot work with --poll");
+                    return -1;
+                }
+
+
+                LOG.info("Binary mode: ignoring offset and length but downloading while file to '{}/{}'.", resultDir, filename);
+                ClientHelper.getWholeBinaryFile(webClient, id, filename, resultDir);
+                return 0;
+            }
+
+            OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename);
             if (length < 0) {
                 ClientHelper.getWholeFile(webClient, id, filename, poll, out);
                 return 0;

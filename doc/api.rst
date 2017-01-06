@@ -145,7 +145,7 @@ and `Response
 Fetches a file from job sandbox and outputs to a path specified with
 ``-R``.
 
-This uses ``GET /file/<id>?path=<path>&offset=<offset>&length=<length>`` endpoint
+This uses ``GET /job/<id>/file?path=<path>&offset=<offset>&length=<length>`` endpoint
 with empty body.
 `Request <https://retz.github.io/javadoc/io/github/retz/protocol/GetFileRequest.html>`_
 and
@@ -156,6 +156,11 @@ and
 * ``[-R|--resultdir] [<path>|-]`` : Define a directory to output in local (default: standard output)
 * ``--offset <offset>``: Define offset to start fetch with (default: 0)
 * ``--length <length>`` : Define length to fetch (default: -1; get the whole file)
+* ``--binary`` : Specify the file as binary file. This should be with ``--resultdir`` option
+  and without ``--poll`` option. ``--offset`` and ``--length`` will be ignored.
+
+.. note:: With ``--binary`` option specified, Retz client uses ``GET /job/<id>/download?path=<path>``
+          endpoint with empty body, resulting raw binary data in HTTP response body.
 
 ``retz-client list-files -i <id>``
 
