@@ -26,12 +26,19 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.netty.DockerCmdExecFactoryImpl;
+import io.github.retz.cli.ClientCLIConfig;
+import io.github.retz.web.Client;
+import org.junit.AfterClass;
+import org.junit.Before;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Base class for Retz integration testing.
@@ -46,6 +53,16 @@ public class IntTestBase {
     protected static final int RETZ_PORT = 19090;
     // Probably better to make log and downloading directories for testc ases.
     private static String hostBuildDir;
+
+    protected static int RES_OK = 0;
+    private static final String configfile = "retz-c.properties";
+    static ClosableContainer container;
+    protected ClientCLIConfig config;
+    protected static String serverConfigFile;
+
+    ClientCLIConfig makeClientConfig() throws Exception {
+        throw new RuntimeException("This class shouldn't be tested");
+    }
 
     public static ClosableContainer createContainer(String containerName) throws Exception {
         hostBuildDir = new File("./build/").getCanonicalPath();
@@ -77,5 +94,37 @@ public class IntTestBase {
                 .withBinds(new Bind(hostBuildDir, containerBuildDir));
 
         return ClosableContainer.createContainer(dockerClient, createCmd);
+    }
+
+    protected static void setupContainer(String configFile, boolean needsPostgres) throws Exception {
+        System.out.println(Client.VERSION_STRING);
+        container = createContainer(CONTAINER_NAME);
+        serverConfigFile = configFile;
+        System.out.println("Using server config file "+ configFile);
+        container.setConfigfile(configFile);
+
+        container.start(needsPostgres);
+
+        System.out.println();
+        System.out.println("====================");
+        System.out.println("Processes (by ps -awxx)");
+        System.out.println(container.ps());
+        System.out.println();
+        System.out.println("====================");
+        System.out.println(container.getRetzServerPid());
+    }
+
+    @AfterClass
+    public static void cleanupContainer() throws Exception {
+        container.close();
+    }
+
+    @Before
+    public void loadConfig() throws Exception {
+        config = makeClientConfig();
+        assertEquals(RETZ_HOST, config.getUri().getHost());
+        assertEquals(RETZ_PORT, config.getUri().getPort());
+        assertNotNull(container);
+        assertNotNull(serverConfigFile);
     }
 }

@@ -43,48 +43,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 @Ignore
-public class RetzIntTest {
-    private static final int RES_OK = 0;
-    private static final String configfile = "retz-c.properties";
-    static ClosableContainer container;
-    protected ClientCLIConfig config;
-    private static String serverConfigFile;
-
-    ClientCLIConfig makeClientConfig() throws Exception {
-        throw new RuntimeException("This class shouldn't be tested");
-    }
-
-    protected static void setupContainer(String configFile, boolean needsPostgres) throws Exception {
-        System.out.println(Client.VERSION_STRING);
-        container = createContainer(CONTAINER_NAME);
-        serverConfigFile = configFile;
-        System.out.println("Using server config file "+ configFile);
-        container.setConfigfile(configFile);
-
-        container.start(needsPostgres);
-
-        System.out.println();
-        System.out.println("====================");
-        System.out.println("Processes (by ps -awxx)");
-        System.out.println(container.ps());
-        System.out.println();
-        System.out.println("====================");
-        System.out.println(container.getRetzServerPid());
-    }
-
-    @AfterClass
-    public static void cleanupContainer() throws Exception {
-        container.close();
-    }
-
-    @Before
-    public void loadConfig() throws Exception {
-        config = makeClientConfig();
-        assertEquals(RETZ_HOST, config.getUri().getHost());
-        assertEquals(RETZ_PORT, config.getUri().getPort());
-        assertNotNull(RetzIntTest.container);
-        assertNotNull(RetzIntTest.serverConfigFile);
-    }
+public class RetzIntTest extends IntTestBase {
 
     @Test
     public void listAppTest() throws Exception {
