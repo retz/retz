@@ -290,56 +290,57 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus status) {
-        LOG.info("Status update of task {}: {} / {}", status.getTaskId().getValue(), status.getState().name(), status.getMessage());
+        LOG.debug("Status update of task {}: {} / {}", status.getTaskId().getValue(), status.getState().name(), status.getMessage());
 
-        /**
-         *
-         *  Events   \ in Retz    | QUEUED   | STARTING | STARTED  | FINISHED | KILLED
-         * -----------------------+----------+----------+----------+----------+----------
-         *   TASK_FINISHED_VALUE: | finished | finished | finished | finished | finished
-         *   TASK_ERROR_VALUE:    | failed   | failed   | failed   | failed   | failed
-         *   TASK_FAILED_VALUE:   | ^^       | ^^       | ^^       | ^^       | ^^
-         *   TASK_KILLED_VALUE:   | ^^       | ^^       | ^^       | ^^       | ^^
-         *   TASK_LOST_VALUE:     | retry    | retry    | retry    | retry    | retry
-         *   TASK_KILLING_VALUE:  | noop     | noop     | noop     | noop     | noop
-         *   TASK_RUNNING_VALUE:  | started  | started  | started  | started  | started
-         *   TASK_STAGING_VALUE:  | noop     | noop     | noop     | noop     | noop
-         *   TASK_STARTING_VALUE: | starting | starting | starting | starting | starting
-         *   (kill from user      | killed   | killed   | killed   | noop     | noop)
-         *
-         **/
+
         Stanchion.schedule(() -> {
-            switch (status.getState().getNumber()) {
-                case Protos.TaskState.TASK_FINISHED_VALUE: {
+            Optional<Job> job = JobQueue.getFromTaskId(status.getTaskId().getValue());
+            if (!job.isPresent()) {
+                LOG.warn("Event {} ({}) for unknown job (taskid={})",
+                        status.getState().getDescriptorForType().getName(),
+                        status.getMessage(), status.getTaskId().getValue());
+                return;
+            }
+
+            JobStatem.Action action = JobStatem.handleCall(job.get(), status.getState());
+            switch (action) {
+                case FINISHED:
                     finished(status);
                     break;
-                }
-                case Protos.TaskState.TASK_ERROR_VALUE:
-                case Protos.TaskState.TASK_FAILED_VALUE:
-                case Protos.TaskState.TASK_KILLED_VALUE: {
+
+                case FAILED:
                     failed(status);
                     break;
-                }
-                case Protos.TaskState.TASK_LOST_VALUE: {
+
+                case RETRY:
                     retry(status);
                     break;
-                }
-                case Protos.TaskState.TASK_KILLING_VALUE:
+
+                case NOOP:
                     break;
-                case Protos.TaskState.TASK_RUNNING_VALUE:
+
+                case NEVER:
+                    LOG.error("This cannot happen: {} {} => {}",
+                            job.get().state(), status.getState().getNumber(), action);
+                    throw new AssertionError("May be a state diagram (JobStatem) bug");
+
+                case LOG:
+                    LOG.warn("This cannot happen: {} {} => {}",
+                            job.get().state(), status.getState().getNumber(), action);
+                    break;
+
+                case STARTED:
                     started(status);
                     break;
-                case Protos.TaskState.TASK_STAGING_VALUE:
-                    break;
-                case Protos.TaskState.TASK_STARTING_VALUE:
+
+                case STARTING:
                     LOG.debug("Task {} starting", status.getTaskId().getValue());
-                    Optional<Job> job = JobQueue.getFromTaskId(status.getTaskId().getValue());
-                    if (job.isPresent()) {
-                        JobQueue.starting(job.get(), MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                                status.getExecutorId().getValue()), status.getTaskId().getValue());
-                    }
+                    JobQueue.starting(job.get(), MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
+                            status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                            status.getExecutorId().getValue()), status.getTaskId().getValue());
                     break;
+
+                case KILLED: // kill by user...
                 default:
                     break;
             }
