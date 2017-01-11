@@ -14,7 +14,7 @@ entries in `jobs` and `applications` table followed by restore of
   fetching files from `/files/read` endpoint of Mesos where a file
   content is provided via JSON. A new Retz HTTP endpoint `/job/<id>/download`
   has been added to the client, with '--binary' option to 'get-file'
-  CLI subcommand.
+  CLI subcommand. (#118)
 * Fix '-E' '--env' option of 'schedule' subcommand (#110)
 * Remove 'persistentFiles' and 'diskMB' from `protocol.data.Application`
   This is incompatible change to the client-server protocol and
@@ -27,7 +27,7 @@ entries in `jobs` and `applications` table followed by restore of
   This introduces incompatible change between 0.1 and 0.2, too.
 * Add server version and protocol version to every requests and response.
   This makes all communication between 0.1 and 0.2 incompatible.
-* Fix a bug where 'riak-admin gc' fails on PostgreSQL (#112)
+* Fix a bug where 'retz-admin gc' fails on PostgreSQL (#112)
 * Clean up response of '/status' and cache all data not to trigger query
   to database all the time. This is incompatible change limited to the
   form of `/status` response (`StatusResponse` class).
