@@ -16,24 +16,21 @@
  */
 package io.github.retz.inttest;
 
-import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.protocol.data.User;
 import io.github.retz.web.Client;
+import io.github.retz.web.ClientHelper;
 import org.hamcrest.Matchers;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
 import java.util.*;
 
-import static io.github.retz.inttest.IntTestBase.RETZ_HOST;
-import static io.github.retz.inttest.IntTestBase.RETZ_PORT;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -78,12 +75,14 @@ public class PersistenceTest extends RetzIntTest {
                 jobs.add(scheduleResponse.job());
             }
             {
-                Response response = client.list(JOB_AMOUNT);
-                ListJobResponse listJobResponse = (ListJobResponse) response;
-                System.err.println("Finished: " + listJobResponse.finished().size());
-                System.err.println("Queued: " + listJobResponse.queue().size());
-                System.err.println("Running: " + listJobResponse.running().size());
-                assertThat(listJobResponse.finished().size() + listJobResponse.queue().size() + listJobResponse.running().size(), is(JOB_AMOUNT));
+                List<Job> finished, queue, running;
+                finished = ClientHelper.finished(client);
+                queue = ClientHelper.queue(client);
+                running = ClientHelper.running(client);
+                System.err.println("Finished: " + finished.size());
+                System.err.println("Queued: " + queue.size());
+                System.err.println("Running: " + running.size());
+                assertThat(finished.size() + queue.size() + running.size(), is(JOB_AMOUNT));
             }
 
             boolean killed = container.killRetzServerProcess();
@@ -116,30 +115,37 @@ public class PersistenceTest extends RetzIntTest {
                 assertThat(getAppResponse.application().getOwner(), is(application.getOwner()));
             }
             System.err.println(">< >< ><");
+
             {
-                Response response = client.list(JOB_AMOUNT);
-                ListJobResponse listJobResponse = (ListJobResponse) response;
-                System.err.println("Finished: " + listJobResponse.finished().size());
-                System.err.println("Queued: " + listJobResponse.queue().size());
-                System.err.println("Running: " + listJobResponse.running().size());
-                assertThat(listJobResponse.finished().size() + listJobResponse.queue().size() + listJobResponse.running().size(), is(JOB_AMOUNT));
+                List<Job> finished, queue, running;
+                finished = ClientHelper.finished(client);
+                queue = ClientHelper.queue(client);
+                running = ClientHelper.running(client);
+                System.err.println("Finished: " + finished.size());
+                System.err.println("Queued: " + queue.size());
+                System.err.println("Running: " + running.size());
+                assertThat(finished.size() + queue.size() + running.size(), is(JOB_AMOUNT));
             }
+
             for (int i = 0; i < JOB_AMOUNT / 2; i++) {
                 Thread.sleep(4 * 1024);
-                Response response = client.list(20);
-                ListJobResponse listJobResponse = (ListJobResponse) response;
-                if (listJobResponse.finished().size() == JOB_AMOUNT) {
+                List<Job> finished = ClientHelper.finished(client);
+                if (finished.size() == JOB_AMOUNT) {
                     break;
                 }
-                System.err.println(listJobResponse.running().size() + " jobs still running / "
-                        + listJobResponse.queue().size() + " in the queue");
+                List<Job> running = ClientHelper.running(client);
+                List<Job> queue = ClientHelper.queue(client);
+                System.err.println(running.size() + " jobs still running / "
+                        + queue.size() + " in the queue");
             }
             {
-                Response response = client.list(JOB_AMOUNT);
-                ListJobResponse listJobResponse = (ListJobResponse) response;
-                assertThat(listJobResponse.queue().size(), is(0));
-                assertThat(listJobResponse.running().size(), is(0));
-                assertThat(listJobResponse.finished().size(), is(JOB_AMOUNT));
+                List<Job> finished, queue, running;
+                finished = ClientHelper.finished(client);
+                queue = ClientHelper.queue(client);
+                running = ClientHelper.running(client);
+                assertThat(queue.size(), is(0));
+                assertThat(running.size(), is(0));
+                assertThat(finished.size(), is(JOB_AMOUNT));
             }
 
             System.err.println("ε=ε=ε=ε=ε=ε= ◟( ⚫͈ω⚫̤)◞ ");

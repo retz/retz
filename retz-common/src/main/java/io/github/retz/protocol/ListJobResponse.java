@@ -24,30 +24,25 @@ import io.github.retz.protocol.data.Job;
 import java.util.List;
 
 public class ListJobResponse extends Response {
-    private List<Job> queue;
-    private List<Job> running;
-    private List<Job> finished;
+    public static final int MAX_JOB_NUMBER = 1024;
+
+    private List<Job> jobs;
+    private boolean more = false; // there are more than MAX_JOB_NUMBER jobs
 
     @JsonCreator
-    public ListJobResponse(@JsonProperty("queue") List<Job> queue,
-                           @JsonProperty("running") List<Job> running,
-                           @JsonProperty("finished") List<Job> finished) {
-        this.queue = queue;
-        this.running = running;
-        this.finished = finished;
-    }
-    @JsonGetter("queue")
-    public List<Job> queue() {
-        return queue;
+    public ListJobResponse(@JsonProperty("jobs") List<Job> jobs,
+                           @JsonProperty("more") boolean more) {
+        this.jobs = jobs;
+        this.more = more;
     }
 
-    @JsonGetter("running")
-    public List<Job> running() {
-        return running;
+    @JsonGetter("jobs")
+    public List<Job> jobs() {
+        return jobs;
     }
 
-    @JsonGetter("finished")
-    public List<Job> finished() {
-        return finished;
+    @JsonGetter("more")
+    public boolean more() {
+        return more;
     }
 }

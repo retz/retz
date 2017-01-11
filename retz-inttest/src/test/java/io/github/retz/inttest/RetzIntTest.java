@@ -16,7 +16,6 @@
  */
 package io.github.retz.inttest;
 
-import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.*;
@@ -24,8 +23,6 @@ import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
 import org.apache.commons.io.FilenameUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -38,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.github.retz.inttest.IntTestBase.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
@@ -100,10 +96,9 @@ public class RetzIntTest extends IntTestBase {
             assertThat(lines, hasItem("Received LAUNCH event"));
         }
 
-        ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
-        assertThat(listJobResponse.finished().size(), greaterThan(0));
-        assertThat(listJobResponse.running().size(), is(0));
-        assertThat(listJobResponse.queue().size(), is(0));
+        assertThat(ClientHelper.finished(client).size(), greaterThan(0));
+        assertThat(ClientHelper.running(client).size(), is(0));
+        assertThat(ClientHelper.queue(client).size(), is(0));
 
         {
             String echoText = "PPAP";
@@ -211,27 +206,20 @@ public class RetzIntTest extends IntTestBase {
                 }
                 Thread.sleep(1000);
 
-                Response res = client.list(64);
-                if (!(res instanceof ListJobResponse)) {
-                    ErrorResponse errorResponse = (ErrorResponse) res;
-                    System.err.println("Error: " + errorResponse.status());
-                    continue;
-                }
-                ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
+
                 System.err.println(TimestampHelper.now()
-                        + ": Finished=" + listJobResponse.finished().size()
-                        + ", Running=" + listJobResponse.running().size()
-                        + ", Scheduled=" + listJobResponse.queue().size());
-                for (Job finished : listJobResponse.finished()) {
+                        + ": Finished=" + ClientHelper.finished(client).size()
+                        + ", Running=" + ClientHelper.running(client).size()
+                        + ", Scheduled=" + ClientHelper.queue(client).size());
+                for (Job finished : ClientHelper.finished(client)) {
                     assertThat(finished.retry(), is(0));
                 }
             }
             assertThat(finishedJobs.size(), is(jobNum));
 
-            ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
-            assertThat(listJobResponse.finished().size(), greaterThanOrEqualTo(finishedJobs.size()));
-            assertThat(listJobResponse.running().size(), is(0));
-            assertThat(listJobResponse.queue().size(), is(0));
+            assertThat(ClientHelper.finished(client).size(), greaterThanOrEqualTo(jobNum));
+            assertThat(ClientHelper.running(client).size(), is(0));
+            assertThat(ClientHelper.queue(client).size(), is(0));
 
             UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo2");
             assertThat(unloadRes.status(), is("ok"));
@@ -315,7 +303,7 @@ public class RetzIntTest extends IntTestBase {
             List<EchoJob> echoJobs = scheduleEchoJobs(client, "echo3", "echo ", argvList);
             assertThat(echoJobs.size(), is(jobNum));
 
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 32; i++) {
                 List<EchoJob> toRemove = toRemove(client, echoJobs, false);
                 if (!toRemove.isEmpty()) {
                     i = 0;
@@ -327,18 +315,11 @@ public class RetzIntTest extends IntTestBase {
                 }
                 Thread.sleep(1000);
 
-                Response res = client.list(64);
-                if (!(res instanceof ListJobResponse)) {
-                    ErrorResponse errorResponse = (ErrorResponse) res;
-                    System.err.println("Error: " + errorResponse.status());
-                    continue;
-                }
-                ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
                 System.err.println(TimestampHelper.now()
-                        + ": Finished=" + listJobResponse.finished().size()
-                        + ", Running=" + listJobResponse.running().size()
-                        + ", Scheduled=" + listJobResponse.queue().size());
-                for (Job finished : listJobResponse.finished()) {
+                        + ": Finished=" + ClientHelper.finished(client).size()
+                        + ", Running=" + ClientHelper.running(client).size()
+                        + ", Scheduled=" + ClientHelper.queue(client).size());
+                for (Job finished : ClientHelper.finished(client)) {
                     assertThat(finished.retry(), is(0));
                     assertThat(finished.state(), is(Job.JobState.FINISHED));
                     assertThat(finished.result(), is(RES_OK));
@@ -346,10 +327,9 @@ public class RetzIntTest extends IntTestBase {
             }
             assertThat(finishedJobs.size(), is(jobNum));
 
-            ListJobResponse listJobResponse = (ListJobResponse) client.list(64);
-            assertThat(listJobResponse.finished().size(), greaterThanOrEqualTo(finishedJobs.size()));
-            assertThat(listJobResponse.running().size(), is(0));
-            assertThat(listJobResponse.queue().size(), is(0));
+            assertThat(ClientHelper.finished(client).size(), greaterThanOrEqualTo(jobNum));
+            assertThat(ClientHelper.running(client).size(), is(0));
+            assertThat(ClientHelper.queue(client).size(), is(0));
 
             UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo3");
             assertThat(unloadRes.status(), is("ok"));
@@ -365,6 +345,7 @@ public class RetzIntTest extends IntTestBase {
             loadSimpleApp(client, "touch-many");
             {
                 Job job = new Job("touch-many", "mkdir d++; touch d++/e++; touch d++/f", new Properties(), 1, 32);
+                job.addTags("tag1-listFilesTest");
                 Job ran = client.run(job);
                 Response response = client.listFiles(ran.id(), "d++");
                 assertEquals("ok", response.status());
@@ -376,6 +357,7 @@ public class RetzIntTest extends IntTestBase {
 
             { //Test unicode paths
                 Job job = new Job("touch-many", "mkdir d++; touch ε=ε=ε=ε=ε=ε= ◟⚫͈ω⚫̤◞", new Properties(), 1, 32);
+                job.addTags("tag1-listFilesTest", "multibytes");
                 Job ran = client.run(job);
 
                 Response response = client.listFiles(ran.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
@@ -391,6 +373,26 @@ public class RetzIntTest extends IntTestBase {
                 assertTrue(listFilesResponse.entries().get(2).path().endsWith("stdout"));
                 assertTrue(listFilesResponse.entries().get(3).path().endsWith("ε=ε=ε=ε=ε=ε="));
                 assertTrue(listFilesResponse.entries().get(4).path().endsWith("◟⚫͈ω⚫̤◞"));
+            }
+
+            {
+                Response response = client.list(Job.JobState.FINISHED, Optional.of("tag1-listFilesTest"));
+                ListJobResponse listJobResponse = (ListJobResponse)response;
+                assertEquals(2, listJobResponse.jobs().size());
+                assertFalse(listJobResponse.more());
+            }
+
+            {
+                Response response = client.list(Job.JobState.FINISHED, Optional.of("multibytes"));
+                ListJobResponse listJobResponse = (ListJobResponse)response;
+                assertEquals(1, listJobResponse.jobs().size());
+                assertFalse(listJobResponse.more());
+            }
+
+            {
+                Response response = client.list(Job.JobState.FINISHED, Optional.empty());
+                ListJobResponse listJobResponse = (ListJobResponse)response;
+                assertThat(listJobResponse.jobs().size(), greaterThanOrEqualTo(2));
             }
         }
     }

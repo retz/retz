@@ -36,7 +36,7 @@ public class DatabaseTest {
 
     @Before
     public void before() throws Exception {
-        db = new Database();
+        db = Database.getInstance();
         db.initOnMem("hogefoobar");
 
         // DEFAULT_DATABASE_URL afaik
@@ -116,20 +116,22 @@ public class DatabaseTest {
 
     @Test
     public void job() throws Exception {
+        db.validate();
+
         User u = db.createUser("test user");
         assertTrue(db.getUser(u.keyId()).isPresent());
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
 
         Application a = new Application("someapp", Arrays.asList(), Arrays.asList(),
-                Optional.empty(), u.keyId(),
-                0, new MesosContainer(), true);
+                Optional.empty(), u.keyId(), 0, new MesosContainer(), true);
         db.addApplication(a);
 
         int id = -1;
         {
             Job job = new Job(a.getAppid(), "uname -a", new Properties(), 1, 32);
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
+
             db.safeAddJob(job);
 
             assertThat(db.getLatestJobId(), Matchers.greaterThanOrEqualTo(1));
@@ -156,7 +158,7 @@ public class DatabaseTest {
             db.setJobStarting(id, Optional.empty(), taskId);
 
             for (Job j : db.getAllJobs(u.keyId())) {
-                System.err.println(j.id() + j.taskId() + j.state());
+                System.out.println(j.pp());
             }
             assertTrue(db.getJobFromTaskId(taskId).isPresent());
         }
@@ -168,9 +170,24 @@ public class DatabaseTest {
             assertEquals(a.getAppid(), pair.application().getAppid());
         }
 
+        assertEquals(0, db.countQueued());
+        assertEquals(1, db.countRunning());
+
         {
-            System.err.println(db.countQueued());
-            System.err.println(db.countRunning());
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.QUEUED, Optional.empty());
+            assertEquals(0, jobs.size());
+        }
+        {
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.STARTING, Optional.empty());
+            assertEquals(1, jobs.size());
+        }
+        {
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.STARTED, Optional.empty());
+            assertEquals(0, jobs.size());
+        }
+        {
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.FINISHED, Optional.empty());
+            assertEquals(0, jobs.size());
         }
     }
 

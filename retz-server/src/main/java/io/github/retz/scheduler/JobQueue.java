@@ -49,13 +49,8 @@ public class JobQueue {
     private JobQueue() {
     }
 
-    public static List<Job> getAll(String id) {
-        try {
-            return Database.getInstance().getAllJobs(id);
-        } catch (IOException e) {
-            LOG.error(e.toString());
-            throw new RuntimeException("Database is not available currently");
-        }
+    public static List<Job> list(String user, Job.JobState state, Optional<String> tag) throws IOException, SQLException {
+        return Database.getInstance().listJobs(user, state, tag);
     }
 
     // As this is issued by server without any transaction, this id may have

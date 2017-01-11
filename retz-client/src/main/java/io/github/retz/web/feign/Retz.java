@@ -23,6 +23,7 @@ import feign.jackson.JacksonDecoder;
 import feign.jackson.JacksonEncoder;
 import feign.slf4j.Slf4jLogger;
 import io.github.retz.auth.Authenticator;
+import io.github.retz.protocol.ListJobRequest;
 import io.github.retz.protocol.LoadAppRequest;
 import io.github.retz.protocol.Response;
 import io.github.retz.protocol.ScheduleRequest;
@@ -34,6 +35,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public interface Retz {
@@ -46,9 +48,13 @@ public interface Retz {
     @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response status();
 
-    @RequestLine("GET /jobs")
+    default Response list(Job.JobState state, Optional<String> tag) {
+        return list(new ListJobRequest(state, tag));
+    }
+
+    @RequestLine("POST /jobs")
     @Headers({"Content-Type: application/json", "Accept: application/json"})
-    Response list();
+    Response list(ListJobRequest request);
 
     default Response schedule(Job job) {
         return schedule(new ScheduleRequest(job));

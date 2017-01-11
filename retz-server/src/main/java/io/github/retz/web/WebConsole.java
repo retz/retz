@@ -104,8 +104,8 @@ public final class WebConsole {
         get("/status", WebConsole::status);
 
         // TODO: XXX: validate application owner at ALL job-related APIs
-        // /jobs GET -> list
-        get(ListJobRequest.resourcePattern(), JobRequestHandler::listJob);
+        // /jobs POST -> list
+        post(ListJobRequest.resourcePattern(), JobRequestHandler::listJob);
         // /job  PUT -> schedule, GET -> get-job, DELETE -> kill
         get(GetJobRequest.resourcePattern(), JobRequestHandler::getJob);
         post(ScheduleRequest.resourcePattern(), JobRequestHandler::schedule);

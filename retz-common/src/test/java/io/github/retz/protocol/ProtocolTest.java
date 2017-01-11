@@ -29,9 +29,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 // TODO: introduce ScalaCheck for further tests here
 public class ProtocolTest {
@@ -88,7 +86,7 @@ public class ProtocolTest {
     public void decodeRequests() throws IOException {
 
         {
-            String json = "{\"command\":\"list\"}";
+            String json = "{\"command\":\"list\", \"state\":\"QUEUED\"}";
             Request req = mapper.readValue(json, Request.class);
             assertThat(req, instanceOf(ListJobRequest.class));
         }
@@ -128,11 +126,12 @@ public class ProtocolTest {
     @Test
     public void decodeResponses() throws IOException {
         {
-            String json = "{\"command\":\"list\", \"status\":\"ok\", \"queue\":[]}";
+            String json = "{\"command\":\"list\", \"status\":\"ok\", \"jobs\":[], \"more\": true}";
             Response res = mapper.readValue(json, Response.class);
             assertThat(res, instanceOf(ListJobResponse.class));
             ListJobResponse lres = (ListJobResponse) res;
-            assertThat(lres.queue().size(), is(0));
+            assertThat(lres.jobs().size(), is(0));
+            assertTrue(lres.more());
         }
         {
             String json = "{\"command\":\"kill\", \"status\":\"ok\"}";
@@ -170,7 +169,7 @@ public class ProtocolTest {
     @Test
     public void encode() throws JsonProcessingException, IOException {
         {
-            ListJobRequest req = new ListJobRequest(0);
+            ListJobRequest req = new ListJobRequest(Job.JobState.QUEUED, Optional.of("tag"));
             String json = mapper.writeValueAsString(req);
             Request req2 = mapper.readValue(json, Request.class);
             assertThat(req2, instanceOf(ListJobRequest.class));

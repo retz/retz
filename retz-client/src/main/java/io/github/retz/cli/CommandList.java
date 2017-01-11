@@ -26,11 +26,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 public class CommandList implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandList.class);
+
+    @Parameter(names = "--state", description = "State of jobs")
+    private Job.JobState state = Job.JobState.QUEUED;
 
     @Parameter(names = "--tag", description = "Tag name to show")
     private String tag;
@@ -55,20 +58,19 @@ public class CommandList implements SubCommand {
                 .setVerboseLog(verbose)
                 .build()) {
 
-            Response res = webClient.list(64); // TODO: make this CLI argument
+            Optional<String> maybeTag = Optional.ofNullable(tag);
+
+            Response res = webClient.list(state, maybeTag); // TODO: make this CLI argument
             if (res instanceof ErrorResponse) {
                 LOG.error(res.status());
                 return -1;
             }
             ListJobResponse r = (ListJobResponse) res;
-            List<Job> jobs = new LinkedList<>();
-            jobs.addAll(r.queue());
-            jobs.addAll(r.running());
-            jobs.addAll(r.finished());
+            List<Job> jobs = r.jobs();
 
             TableFormatter formatter = new TableFormatter(
                     "TaskId", "State", "AppName", "Command", "Result", "Duration",
-                    "Scheduled", "Started", "Finished", "Reason");
+                    "Scheduled", "Started", "Finished", "Tags");
 
             jobs.sort(Comparator.comparingInt(job -> job.id()));
 
@@ -92,7 +94,8 @@ public class CommandList implements SubCommand {
                 if (tag == null || job.tags().contains(tag)) {
                     formatter.feed(Integer.toString(job.id()), job.state().toString(),
                             job.appid(), job.cmd(), result, duration,
-                            job.scheduled(), job.started(), job.finished(), reason);
+                            job.scheduled(), job.started(), job.finished(),
+                            String.join(",", job.tags()));
                 }
             }
             LOG.info(formatter.titles());

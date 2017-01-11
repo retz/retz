@@ -41,10 +41,10 @@ import spark.Request;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.github.retz.web.WebConsole.validateOwner;
@@ -69,14 +69,31 @@ public class JobRequestHandler {
         driver = Optional.ofNullable(d);
     }
 
-    static String listJob(spark.Request req, spark.Response res) throws JsonProcessingException {
+    static String listJob(spark.Request req, spark.Response res) throws IOException {
         Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
         LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
-        ListJobResponse listJobResponse = list(authHeaderValue.get().key(), -1);
-        listJobResponse.ok();
-        res.status(200);
-        res.type("application/json");
-        return MAPPER.writeValueAsString(listJobResponse);
+        ListJobRequest listJobRequest = MAPPER.readValue(req.body(), ListJobRequest.class);
+        LOG.info("q: state={}, tag={}",
+                listJobRequest.state(), listJobRequest.tag());
+        String user = Objects.requireNonNull(authHeaderValue.get().key());
+        try {
+            List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag());
+
+            boolean more = false;
+            if (jobs.size() > ListJobResponse.MAX_JOB_NUMBER) {
+                more = true;
+                jobs = jobs.subList(0, ListJobResponse.MAX_JOB_NUMBER);
+            }
+            ListJobResponse listJobResponse = new ListJobResponse(jobs, more);
+            listJobResponse.ok();
+            res.status(200);
+            res.type("application/json");
+            return MAPPER.writeValueAsString(listJobResponse);
+        } catch (SQLException e) {
+            LOG.error(e.toString(), e);
+            res.status(500);
+            return "\"Internal Error\"";
+        }
     }
 
     private static Optional<Job> getJobAndVerify(Request req) throws IOException {
@@ -211,31 +228,6 @@ public class JobRequestHandler {
         ListFilesResponse listFilesResponse = new ListFilesResponse(job, ret);
         listFilesResponse.status("ok");
         return MAPPER.writeValueAsString(listFilesResponse);
-    }
-
-    private static ListJobResponse list(String id, int limit) {
-        List<Job> queue = new LinkedList<>(); //JobQueue.getAll();
-        List<Job> running = new LinkedList<>();
-        List<Job> finished = new LinkedList<>();
-
-        for (Job job : JobQueue.getAll(id)) {
-            switch (job.state()) {
-                case QUEUED:
-                    queue.add(job);
-                    break;
-                case STARTING:
-                case STARTED:
-                    running.add(job);
-                    break;
-                case FINISHED:
-                case KILLED:
-                    finished.add(job);
-                    break;
-                default:
-                    LOG.error("Cannot be here: id={}, state={}", job.id(), job.state());
-            }
-        }
-        return new ListJobResponse(queue, running, finished);
     }
 
     static String kill(Request req, spark.Response res) throws JsonProcessingException {

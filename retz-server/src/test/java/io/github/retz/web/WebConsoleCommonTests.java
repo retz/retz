@@ -109,10 +109,21 @@ public class WebConsoleCommonTests {
 
     @Test
     public void list() throws Exception {
-        ListJobResponse res = (ListJobResponse) webClient.list(64);
-        assertTrue(res.queue().isEmpty());
-        assertTrue(res.running().isEmpty());
-        assertTrue(res.finished().isEmpty());
+        {
+            ListJobResponse res = (ListJobResponse) webClient.list(Job.JobState.QUEUED, Optional.empty());
+            assertTrue(res.jobs().isEmpty());
+            assertFalse(res.more());
+        }
+        {
+            ListJobResponse res = (ListJobResponse) webClient.list(Job.JobState.STARTING, Optional.empty());
+            assertTrue(res.jobs().isEmpty());
+            assertFalse(res.more());
+        }
+        {
+            ListJobResponse res = (ListJobResponse) webClient.list(Job.JobState.FINISHED, Optional.empty());
+            assertTrue(res.jobs().isEmpty());
+            assertFalse(res.more());
+        }
     }
 
     @Test
@@ -191,8 +202,7 @@ public class WebConsoleCommonTests {
             assertThat(sres.job.id(), is(greaterThanOrEqualTo(0)));
             System.err.println(sres.job.scheduled());
 
-            ListJobResponse listJobResponse = (ListJobResponse) webClient.list(64);
-            assertThat(listJobResponse.queue().size(), is(1));
+            assertThat(ClientHelper.queue(webClient).size(), is(1));
 
             GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(sres.job.id());
             Assert.assertEquals(sres.job.cmd(), getJobResponse.job().get().cmd());
@@ -323,12 +333,10 @@ public class WebConsoleCommonTests {
                 assertThat(res, instanceOf(ErrorResponse.class));
             }
             {
-                Response res = client2.list(10);
-                assertEquals("ok", res.status());
-                ListJobResponse listJobResponse = (ListJobResponse) res;
-                assertTrue(listJobResponse.finished().isEmpty());
-                assertTrue(listJobResponse.queue().isEmpty());
-                assertTrue(listJobResponse.running().isEmpty());
+                assertTrue(ClientHelper.finished(client2).isEmpty());
+                assertTrue(ClientHelper.queue(client2).isEmpty());
+                assertTrue(ClientHelper.running(client2).isEmpty());
+
             }
             { // Charlie tries to snoop Job info of Alice
                 Response res = client2.getJob(job1.id());

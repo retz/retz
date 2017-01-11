@@ -26,8 +26,10 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class CommandKillall implements SubCommand {
@@ -56,40 +58,46 @@ public class CommandKillall implements SubCommand {
                 .setVerboseLog(verbose)
                 .build()) {
 
-            Response res = webClient.list(64); // TODO: make this CLI argument
+            Optional<String> maybeTag = Optional.of(tag);
+            Job.JobState[] states = {Job.JobState.QUEUED, Job.JobState.STARTED, Job.JobState.STARTING};
+
+            for (Job.JobState state : states) {
+                int r = killGroup(webClient, state, maybeTag, verbose);
+                if (r < 0) {
+                    return r;
+                }
+            }
+            return 0;
+        }
+    }
+
+    // Maybe move this to ClientHelper?
+    int killGroup(Client c, Job.JobState state, Optional<String> maybeTag, boolean verbose) throws IOException {
+        ListJobResponse r;
+        int total = 0;
+        do {
+            Response res = c.list(state, maybeTag);
             if (res instanceof ErrorResponse) {
                 LOG.error(res.status());
                 return -1;
             }
-            ListJobResponse r = (ListJobResponse) res;
+            r = (ListJobResponse) res;
 
             List<Job> failed = new LinkedList<>();
             List<Job> killed = new LinkedList<>();
-            for (Job job : r.queue()) {
-                if (job.tags().contains(tag)) {
-                    Response response = webClient.kill(job.id());
-                    if (response instanceof ErrorResponse) {
-                        failed.add(job);
-                    } else if (response instanceof KillResponse){
-                        killed.add(job);
-                    } else {
-                        throw new AssertionError(response.getClass().getCanonicalName());
-                    }
+            for (Job job : r.jobs()) {
+                Response response = c.kill(job.id());
+                if (response instanceof ErrorResponse) {
+                    failed.add(job);
+                } else if (response instanceof KillResponse) {
+                    killed.add(job);
+                } else {
+                    throw new AssertionError(response.getClass().getCanonicalName());
                 }
             }
 
-            for (Job job : r.running()) {
-                if (job.tags().contains(tag)) {
-                    Response response = webClient.kill(job.id());
-                    if (response instanceof ErrorResponse) {
-                        failed.add(job);
-                    } else if (response instanceof KillResponse){
-                        killed.add(job);
-                    } else {
-                        throw new AssertionError(response.getClass().getCanonicalName());
-                    }
-                }
-            }
+            total += r.jobs().size();
+            LOG.info("{}: {} jobs killed, {} jobs failed", state, killed.size(), failed.size());
 
             if (verbose) {
                 List<String> k = killed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
@@ -98,9 +106,8 @@ public class CommandKillall implements SubCommand {
             List<String> f = failed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
             LOG.error("Failed to kill jobs: [{}]", String.join(",", f));
 
-            LOG.info("{} jobs killed, {} jobs failed", killed.size(), failed.size());
-            return failed.size();
-        }
+        } while (r.more());
+        return total;
     }
 }
 

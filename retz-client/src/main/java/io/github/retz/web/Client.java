@@ -44,6 +44,7 @@ import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -119,8 +120,8 @@ public class Client implements AutoCloseable {
         return Retz.tryOrErrorResponse(() -> retz.status());
     }
 
-    public Response list(int limit) throws IOException {
-        return Retz.tryOrErrorResponse(() -> retz.list());
+    public Response list(Job.JobState state, Optional<String> tag) throws IOException {
+        return Retz.tryOrErrorResponse(() -> retz.list(state, tag));
     }
 
     public Response schedule(Job job) throws IOException {

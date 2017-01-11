@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -34,6 +36,31 @@ public class ClientHelper {
     static final Logger LOG = LoggerFactory.getLogger(ClientHelper.class);
     static final int MAX_INTERVAL_MSEC = 32768;
     static final int INITAL_INTERVAL_MSEC = 512;
+
+    public static List<Job> queue(Client c)  throws IOException {
+        Response res = c.list(Job.JobState.QUEUED, Optional.empty());
+        return ((ListJobResponse)res).jobs();
+    }
+
+    public static List<Job> running(Client c)  throws IOException {
+        List<Job> jobs = new LinkedList<>();
+        Response res = c.list(Job.JobState.STARTING, Optional.empty());
+        jobs.addAll(((ListJobResponse)res).jobs());
+        res = c.list(Job.JobState.STARTED, Optional.empty());
+        jobs.addAll(((ListJobResponse) res).jobs());
+        return jobs;
+    }
+
+    public static List<Job> finished(Client c)  throws IOException {
+        List<Job> jobs = new LinkedList<>();
+        Response res = c.list(Job.JobState.FINISHED, Optional.empty());
+        jobs.addAll(((ListJobResponse)res).jobs());
+        res = c.list(Job.JobState.KILLED, Optional.empty());
+        jobs.addAll(((ListJobResponse) res).jobs());
+        return jobs;
+    }
+
+
 
     public static boolean fileExists(Client c, int id, String filename) throws IOException {
         String directory = new File(filename).getParent();

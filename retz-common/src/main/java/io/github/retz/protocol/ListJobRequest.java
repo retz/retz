@@ -19,17 +19,30 @@ package io.github.retz.protocol;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.retz.protocol.data.Job;
+
+import java.util.Objects;
+import java.util.Optional;
 
 public class ListJobRequest extends Request {
-    private int limit;
+    private Job.JobState state;
+    private Optional<String> tag;
 
     @JsonCreator
-    public ListJobRequest(@JsonProperty("limit") int limit) {
-        this.limit = limit;
+    public ListJobRequest(@JsonProperty(value = "state", required = true) Job.JobState state,
+                          @JsonProperty("tag") Optional<String> tag) {
+        this.state = Objects.requireNonNull(state);
+        this.tag = tag;
     }
-    @JsonGetter("limit")
-    public int limit() {
-        return limit;
+
+    @JsonGetter("state")
+    public Job.JobState state() {
+        return state;
+    }
+
+    @JsonGetter("tag")
+    public Optional<String> tag() {
+        return tag;
     }
 
     @Override
@@ -39,12 +52,12 @@ public class ListJobRequest extends Request {
 
     @Override
     public String method() {
-        return GET;
+        return POST;
     }
 
     @Override
     public boolean hasPayload() {
-        return false;
+        return true;
     }
 
     public static String resourcePattern() {

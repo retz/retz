@@ -251,6 +251,10 @@ public class Job {
         }
     }
 
+    public void addTags(String... tags) {
+        addTags(Arrays.asList(tags));
+    }
+
     public void addTags(Collection<String> tags) {
         for (String tag : tags) {
             this.tags.add(tag);

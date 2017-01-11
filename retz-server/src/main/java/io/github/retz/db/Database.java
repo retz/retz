@@ -63,6 +63,15 @@ public class Database {
         return db;
     }
 
+    public void validate() throws Exception {
+        Objects.requireNonNull(databaseURL);
+        Objects.requireNonNull(dataSource);
+        try (Connection conn = dataSource.getConnection();
+             Statement s = conn.createStatement();
+             ResultSet r = s.executeQuery("select 1")) {
+        }
+    }
+
     public void init(ServerConfiguration config) throws IOException, SQLException {
         databaseURL = Objects.requireNonNull(config.getDatabaseURL());
         LOG.info("Initializing database {}", databaseURL);
@@ -77,12 +86,7 @@ public class Database {
                 props.setPassword(config.getDatabasePass().get());
             }
         }
-        /*
-        props.setDriverClassName("org.postgresql.Driver");
-        props.setUrl("jdbc:postgresql://127.0.0.1:5432/retz");
-        props.setUsername("retz");
-        props.setPassword("retz");
-        */
+
         init(props, true);
 
         if (getUser(config.getAccessKey()).isPresent()) {
@@ -98,6 +102,7 @@ public class Database {
         databaseURL = "jdbc:h2:mem:" + name + ";DB_CLOSE_DELAY=-1";
         props.setUrl(databaseURL);
         props.setDriverClassName("org.h2.Driver");
+        LOG.info("URL={}, Driver={}", props.getUrl(), props.getDriverClassName());
         init(props, false);
     }
 
@@ -446,7 +451,41 @@ public class Database {
         }
     }
 
-    public List<Job> getAllJobs(String id) throws IOException {
+    public List<Job> listJobs(String id, Job.JobState state, Optional<String> tag) throws SQLException {
+        List<Job> ret = new LinkedList<>();
+        String prefix = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
+        String sql = prefix + " AND j.state=?";
+
+        try (Connection conn = dataSource.getConnection(); // pool.getConnection();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            p.setString(1, id);
+            p.setString(2, state.toString());
+
+            LOG.info("{} {}", state.toString(), p);
+
+            conn.setAutoCommit(true);
+
+            try (ResultSet res = p.executeQuery()) {
+                while (res.next()) {
+                    String json = res.getString(1);
+                    try {
+                        Job job = MAPPER.readValue(json, Job.class);
+                        assert job.state() == state;
+                        if (tag.isPresent() && !job.tags().contains(tag.get())) {
+                            continue;
+                        }
+                        ret.add(job);
+                    } catch (IOException e) {
+                        LOG.warn("Failed to decode json", e);
+                    }
+                }
+            }
+        }
+        return ret;
+    }
+
+    // This is for debug purpose
+    List<Job> getAllJobs(String id) throws IOException {
         List<Job> ret = new LinkedList<>();
         String sql = "SELECT j.json FROM jobs j";
         if (id != null) {
@@ -738,8 +777,9 @@ public class Database {
     }
 
     public int countRunning() {
-        return countByState(Job.JobState.STARTED) + countByState(Job.JobState.STARTING) ;
+        return countByState(Job.JobState.STARTED) + countByState(Job.JobState.STARTING);
     }
+
     public int countQueued() {
         return countByState(Job.JobState.QUEUED);
     }
