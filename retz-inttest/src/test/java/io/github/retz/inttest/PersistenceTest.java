@@ -124,7 +124,6 @@ public class PersistenceTest extends RetzIntTest {
                 System.err.println("Finished: " + finished.size());
                 System.err.println("Queued: " + queue.size());
                 System.err.println("Running: " + running.size());
-                assertThat(finished.size() + queue.size() + running.size(), is(JOB_AMOUNT));
             }
 
             for (int i = 0; i < JOB_AMOUNT / 2; i++) {
