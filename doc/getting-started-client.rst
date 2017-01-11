@@ -44,13 +44,13 @@ provided by server administrator, to find correct version just hit
 curl like ``curl -i http://retz.example.com:9090/ping`` and see
 ``Server:`` header.
 
-For 0.1.0 as a package installation example,
+For 0.2.0 as a package installation example,
 
 * For Ubuntu or Debian, download `Debian package
-  <https://github.com/retz/retz/releases/download/0.1.0/retz-client_0.1.0_amd64.deb>`_
+  <https://github.com/retz/retz/releases/download/0.2.0/retz-client_0.2.0_amd64.deb>`_
   and install via ``dpkg -i``.
 * For CentOS, download `RPM package
-  <https://github.com/retz/retz/releases/download/0.1.0/retz-client-0.1.0-1.el7.x86_64.rpm>`_
+  <https://github.com/retz/retz/releases/download/0.2.0/retz-client-0.2.0-1.el7.x86_64.rpm>`_
   and install via ``rpm -i``.
 
 Both ways install a command ``/opt/retz-client/bin/retz-client`` and a
@@ -60,14 +60,14 @@ configuration file ``/opt/retz-client/etc/retz.properties`` . Include
 they will be called respectively ``retz-client`` and ``retz.properties`` .
 
 To install with just a jar file, download `the fat jar file
-<https://github.com/retz/retz/releases/download/0.1.0/retz-client-0.1.0-all.jar>`_
+<https://github.com/retz/retz/releases/download/0.2.0/retz-client-0.2.0-all.jar>`_
 . And place it wherever you like, and create a shell script like
 
 ::
 
    #!/bin/sh
    set -e
-   java -jar /path/to/lib/retz-client-0.1.0-all.jar -C /path/to/etc/retz.properties "$@"
+   java -jar /path/to/lib/retz-client-0.2.0-all.jar -C /path/to/etc/retz.properties "$@"
 
 And then install it to a path that is included in ``$PATH`` . Also,
 install ``retz.properties`` to ``/path/to/etc`` . These shell script and

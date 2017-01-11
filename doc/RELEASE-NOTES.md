@@ -2,6 +2,13 @@
 
 ## 0.2.0
 
+This is an incompatible release with 0.1.4. While 0.1.4 and 0.2.0
+have same database DDL, they are different in JSON. Users may or
+may not access to old jobs and applications. A recommended way of
+upgrade, on Postgres is to dump only `users` table, and remove all
+entries in `jobs` and `applications` table followed by restore of
+`users` table.
+
 * Fix a severe bug that a binary file downloaded from sandbox via
   `/job/<id>/file` is broken. This is because Retz had been
   fetching files from `/files/read` endpoint of Mesos where a file

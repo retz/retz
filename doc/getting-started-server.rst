@@ -387,4 +387,4 @@ A.  Add ``-Dlogback.configurationFile=/path/to/logback-debug.xml`` to
    RETZ_SERVER_OPTS=-Dlogback.configurationFile=/opt/retz-server/etc/logback.xml``
    For fat jar file users, ``java
    -Dlogback.configurationFile=/path/to/logback-debug.xml -jar
-   path/to/retz-server-0.1.0-all.jar -C retz.properties``
+   path/to/retz-server-0.2.0-all.jar -C retz.properties``
