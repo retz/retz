@@ -292,6 +292,22 @@ public class RetzScheduler implements Scheduler {
     public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus status) {
         LOG.info("Status update of task {}: {} / {}", status.getTaskId().getValue(), status.getState().name(), status.getMessage());
 
+        /**
+         *
+         *  Events   \ in Retz    | QUEUED   | STARTING | STARTED  | FINISHED | KILLED
+         * -----------------------+----------+----------+----------+----------+----------
+         *   TASK_FINISHED_VALUE: | finished | finished | finished | finished | finished
+         *   TASK_ERROR_VALUE:    | failed   | failed   | failed   | failed   | failed
+         *   TASK_FAILED_VALUE:   | ^^       | ^^       | ^^       | ^^       | ^^
+         *   TASK_KILLED_VALUE:   | ^^       | ^^       | ^^       | ^^       | ^^
+         *   TASK_LOST_VALUE:     | retry    | retry    | retry    | retry    | retry
+         *   TASK_KILLING_VALUE:  | noop     | noop     | noop     | noop     | noop
+         *   TASK_RUNNING_VALUE:  | started  | started  | started  | started  | started
+         *   TASK_STAGING_VALUE:  | noop     | noop     | noop     | noop     | noop
+         *   TASK_STARTING_VALUE: | starting | starting | starting | starting | starting
+         *   (kill from user      | killed   | killed   | killed   | noop     | noop)
+         *
+         **/
         Stanchion.schedule(() -> {
             switch (status.getState().getNumber()) {
                 case Protos.TaskState.TASK_FINISHED_VALUE: {
