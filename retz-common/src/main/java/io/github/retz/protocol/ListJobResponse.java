@@ -24,7 +24,7 @@ import io.github.retz.protocol.data.Job;
 import java.util.List;
 
 public class ListJobResponse extends Response {
-    public static final int MAX_JOB_NUMBER = 1024;
+    public static final int MAX_JOB_NUMBER = 65536;
 
     private List<Job> jobs;
     private boolean more = false; // there are more than MAX_JOB_NUMBER jobs
