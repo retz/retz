@@ -16,7 +16,6 @@
  */
 package io.github.retz.auth;
 
-import io.github.retz.protocol.ProtocolTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
