@@ -140,10 +140,13 @@ public class Database {
         LOG.info("Stopped database");
     }
 
+    // This is for test purpose
     public void clear() {
         try (Connection conn = dataSource.getConnection();
              Statement statement = conn.createStatement()) {
             statement.execute("DROP TABLE users, jobs, applications, properties");
+            //statement.execute("DELETE FROM jobs");
+            //statement.execute("DELETE FROM applications");
             conn.commit();
             LOG.info("All tables dropped successfully");
         } catch (SQLException e) {

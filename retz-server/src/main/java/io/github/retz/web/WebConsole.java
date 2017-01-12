@@ -222,6 +222,10 @@ public final class WebConsole {
     public static void stop() {
         Spark.stop();
         StatusCache.stop();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
     }
 }
 
