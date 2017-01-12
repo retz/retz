@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.misc.ApplicationBuilder;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.*;
 import io.github.retz.scheduler.*;
@@ -246,8 +247,23 @@ public class WebConsoleCommonTests {
 
     @Test
     public void kill() throws Exception {
-        Response res = webClient.kill(0);
-        System.err.println(res.status());
+        {
+            Response res = webClient.kill(0);
+            assertThat(res, instanceOf(ErrorResponse.class));
+            assertEquals("No such job: 0", res.status());
+        }
+        Application app = new ApplicationBuilder("app", config.getUser().keyId()).build();
+        LoadAppResponse loadAppResponse = (LoadAppResponse)webClient.load(app);
+        assertEquals("ok", loadAppResponse.status());
+        {
+            Job job = new Job("app", "sleep 1000", new Properties(), 1, 64);
+            ScheduleResponse scheduleResponse = (ScheduleResponse)webClient.schedule(job);
+            KillResponse killResponse = (KillResponse)webClient.kill(scheduleResponse.job().id());
+            assertEquals("ok", killResponse.status());
+            GetJobResponse getJobResponse = (GetJobResponse)webClient.getJob(scheduleResponse.job().id());
+            System.err.println(getJobResponse.job().get().pp());
+            assertEquals(Job.JobState.KILLED, getJobResponse.job().get().state());
+        }
     }
 
     @Test

@@ -74,18 +74,17 @@ public class JobQueue {
         Database.getInstance().updateJobs(jobs);
     }
 
-    public static Optional<String> cancel(int id, String reason) throws SQLException, IOException, JobNotFoundException {
-        Database.getInstance().updateJob(id, (job -> {
-            job.killed(TimestampHelper.now(), Optional.empty(), reason);
-            LOG.info("Job id={} has been canceled.", id);
-            return Optional.of(job);
-        }));
+    public static Optional<Job> cancel(int id, String reason) throws SQLException, IOException, JobNotFoundException {
         Optional<Job> maybeJob = getJob(id);
         if (maybeJob.isPresent()) {
-            return Optional.ofNullable(maybeJob.get().taskId());
-        } else {
-            return Optional.empty();
+            Database.getInstance().updateJob(id, (job -> {
+                job.killed(TimestampHelper.now(), Optional.empty(), reason);
+                LOG.info("Job id={} has been canceled.", id);
+                return Optional.of(job);
+            }));
+            return getJob(id);
         }
+        return maybeJob;
     }
 
     // @doc take as much jobs as in the max cpu/memMB

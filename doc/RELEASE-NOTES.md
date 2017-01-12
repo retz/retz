@@ -2,6 +2,7 @@
 
 ## 0.2.1
 
+* 'kill' now returns 404 when killing non-existing job is requested. (#104)
 * Fix a bug in binary file download where downloading file under
   directory deeper than just in a sandbox fails, when same relative
   path directory does not exist. Instead Retz just directory create

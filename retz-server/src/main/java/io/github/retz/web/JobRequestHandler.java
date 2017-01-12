@@ -233,39 +233,47 @@ public class JobRequestHandler {
     static String kill(Request req, spark.Response res) throws JsonProcessingException {
         LOG.debug("kill", req.params(":id"));
         int id = Integer.parseInt(req.params(":id")); // or 400 when failed?
-        kill(id);
-        res.status(200);
-        KillResponse response = new KillResponse();
-        response.ok();
+        int status = kill(id);
+        res.status(status);
+        Response response;
+        if (status == 200) {
+            response = new KillResponse();
+            response.ok();
+        } else if (status == 404){
+            response = new ErrorResponse();
+            response.status("No such job: " + id);
+        } else {
+            response = new ErrorResponse();
+            response.status("Can't kill job - due to unknown reason");
+        }
         return MAPPER.writeValueAsString(response);
     }
 
-    private static boolean kill(int id) {
-        if (!driver.isPresent()) {
-            LOG.error("Driver is not present; this setup should be wrong");
-            return false;
-        }
-
-        Optional<Boolean> result = Stanchion.call(() -> {
+    private static int kill(int id) {
+        Optional<Integer> result = Stanchion.call(() -> {
             // TODO: non-application owner is even possible to kill job
-            Optional<String> maybeTaskId = JobQueue.cancel(id, "Canceled by user");
+            Optional<Job> maybeJob = JobQueue.cancel(id, "Canceled by user");
+            if (!maybeJob.isPresent()) {
+                return 404;
+            }
 
+            Job job = maybeJob.get();
             // There's a slight pitfall between cancel above and kill below where
             // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
             // Then this protocol returns false for sure.
-            if (maybeTaskId.isPresent()) {
-                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(maybeTaskId.get()).build();
+            if (job.taskId() != null && !job.taskId().isEmpty() && driver.isPresent()) {
+                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(job.taskId()).build();
                 Protos.Status status = driver.get().killTask(taskId);
-                LOG.info("Job id={} was running and killed.");
-                return status == Protos.Status.DRIVER_RUNNING;
+                LOG.info("Job id={} was running and killed. status={}", status);
             }
-            return false;
+            return 200;
         });
 
         if (result.isPresent()) {
             return result.get();
         } else {
-            return false;
+            LOG.error("Something wrong in Stanchion@killing id={}", id);
+            return 500;
         }
     }
 
