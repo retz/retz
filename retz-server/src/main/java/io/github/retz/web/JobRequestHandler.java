@@ -232,32 +232,27 @@ public class JobRequestHandler {
 
     static String kill(Request req, spark.Response res) throws JsonProcessingException {
         LOG.debug("kill", req.params(":id"));
-        int id = Integer.parseInt(req.params(":id")); // or 400 when failed?
-        int status = kill(id);
-        res.status(status);
-        Response response;
-        if (status == 200) {
-            response = new KillResponse();
-            response.ok();
-        } else if (status == 404){
-            response = new ErrorResponse();
-            response.status("No such job: " + id);
-        } else {
-            response = new ErrorResponse();
-            response.status("Can't kill job - due to unknown reason");
+        int id = Integer.parseInt(req.params(":id"));
+
+        Optional<Job> maybeJob;
+        try {
+            maybeJob= getJobAndVerify(req);
+        } catch (IOException e) {
+            return MAPPER.writeValueAsString(new ErrorResponse(e.toString()));
         }
-        return MAPPER.writeValueAsString(response);
-    }
 
-    private static int kill(int id) {
-        Optional<Integer> result = Stanchion.call(() -> {
+        if (!maybeJob.isPresent()) {
+            res.status(404);
+            Response response = new ErrorResponse("No such job: " + id);
+            response.status("No such job: " + id);
+            return MAPPER.writeValueAsString(response);
+        }
+
+        Optional<Boolean> result = Stanchion.call(() -> {
             // TODO: non-application owner is even possible to kill job
-            Optional<Job> maybeJob = JobQueue.cancel(id, "Canceled by user");
-            if (!maybeJob.isPresent()) {
-                return 404;
-            }
+            Optional<Job> maybeJob2 = JobQueue.cancel(id, "Canceled by user");
+            Job job = maybeJob2.get();
 
-            Job job = maybeJob.get();
             // There's a slight pitfall between cancel above and kill below where
             // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
             // Then this protocol returns false for sure.
@@ -266,15 +261,21 @@ public class JobRequestHandler {
                 Protos.Status status = driver.get().killTask(taskId);
                 LOG.info("Job id={} was running and killed. status={}", status);
             }
-            return 200;
+            return job.state() == Job.JobState.KILLED;
         });
 
-        if (result.isPresent()) {
-            return result.get();
+        Response response;
+        if (result.isPresent() && result.get()) {
+            response = new KillResponse();
+            res.status(200);
+            response.ok();
         } else {
-            LOG.error("Something wrong in Stanchion@killing id={}", id);
-            return 500;
+            res.status(500);
+            response = new ErrorResponse();
+            response.status("Can't kill job - due to unknown reason");
         }
+
+        return MAPPER.writeValueAsString(response);
     }
 
     static String schedule(spark.Request req, spark.Response res) throws IOException, InterruptedException {

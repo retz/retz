@@ -361,6 +361,14 @@ public class WebConsoleCommonTests {
                 assertFalse(getJobResponse.job().isPresent());
                 System.err.println(res.status());
             }
+            { // Charlie tries to kill Alice's job
+                Response res = client2.kill(job1.id());
+                assertThat(res.status(), not(is("ok")));
+                assertThat(res, instanceOf(ErrorResponse.class));
+
+                GetJobResponse getJobResponse = (GetJobResponse)webClient.getJob(job1.id());
+                assertThat(getJobResponse.job().get().state(), is(Job.JobState.QUEUED));
+            }
             { // Charlie tries to snoop files in Alice's job sandbox
                 Response res = client2.getFile(job1.id(), "stdout", 0, -1);
                 assertThat(res, instanceOf(GetFileResponse.class));
