@@ -73,7 +73,7 @@ public class JobRequestHandler {
         Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
         LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
         ListJobRequest listJobRequest = MAPPER.readValue(req.body(), ListJobRequest.class);
-        LOG.info("q: state={}, tag={}",
+        LOG.debug("q: state={}, tag={}",
                 listJobRequest.state(), listJobRequest.tag());
         String user = Objects.requireNonNull(authHeaderValue.get().key());
         try {

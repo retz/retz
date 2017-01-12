@@ -464,8 +464,6 @@ public class Database {
             p.setString(1, id);
             p.setString(2, state.toString());
 
-            LOG.info("{} {}", state.toString(), p);
-
             conn.setAutoCommit(true);
 
             try (ResultSet res = p.executeQuery()) {
