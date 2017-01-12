@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.2.1
+
+* Fix a bug in binary file download where downloading file under
+  directory deeper than just in a sandbox fails, when same relative
+  path directory does not exist. Instead Retz just directory create
+  a file under the destination directory.
+
 ## 0.2.0
 
 This is an incompatible release with 0.1.4. While 0.1.4 and 0.2.0

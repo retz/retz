@@ -70,7 +70,7 @@ public class RegressionTest extends IntTestBase {
             LoadAppResponse loadRes = (LoadAppResponse) client.load(genbin);
             assertThat(loadRes.status(), is("ok"));
 
-            String cmd = "dd if=/dev/urandom of=binary count=1024 bs=16 && tar czf binary.tgz binary && md5sum binary.tgz > binary.tgz.md5";
+            String cmd = "mkdir d && dd if=/dev/urandom of=d/binary count=1024 bs=16 && tar czf d/binary.tgz d/binary && md5sum d/binary.tgz > binary.tgz.md5";
             Job job = new Job(appName, cmd, new Properties(), 2, 256, 0, 0);
             Job runRes = client.run(job);
             assertThat(runRes.result(), is(RES_OK));
@@ -79,10 +79,11 @@ public class RegressionTest extends IntTestBase {
             {
                 ListFilesResponse res = (ListFilesResponse) client.listFiles(runRes.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
                 List<String> files = res.entries().stream().map(e -> e.path()).collect(Collectors.toList());
-                assertTrue(files.get(0).endsWith("binary"));
-                assertTrue(files.get(1).endsWith("binary.tgz"));
-                assertTrue(files.get(2).endsWith("binary.tgz.md5"));
-                assertTrue(files.get(3).endsWith("stderr"));
+                System.err.println(String.join("\n", files));
+                assertTrue(files.get(0).endsWith("binary.tgz.md5"));
+                assertTrue(files.get(1).endsWith("d"));
+                assertTrue(files.get(2).endsWith("stderr"));
+                assertTrue(files.get(3).endsWith("stdout"));
             }
 
             String toDir = "/tmp";
@@ -90,7 +91,7 @@ public class RegressionTest extends IntTestBase {
             String remote = readMD5file(toDir + "/binary.tgz.md5");
             assertFalse(remote.isEmpty());
 
-            ClientHelper.getWholeBinaryFile(client, runRes.id(), "binary.tgz", toDir);
+            ClientHelper.getWholeBinaryFile(client, runRes.id(), "d/binary.tgz", toDir);
 
             ProcessBuilder pb = new ProcessBuilder()
                     .command(Arrays.asList("md5sum", "/tmp/binary.tgz"))

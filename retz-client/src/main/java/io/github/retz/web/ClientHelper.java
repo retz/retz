@@ -171,7 +171,7 @@ public class ClientHelper {
 
     // This interface is still in experiment, which may be changed even in patch release.
     public static void getWholeBinaryFile(Client c, int id, String path, String output) throws IOException {
-        String fullpath = FilenameUtils.concat(output, path);
+        String fullpath = FilenameUtils.concat(output, FilenameUtils.getName(path));
         LOG.info("Saving {} as {}", path, fullpath);
         Pair<Integer, byte[]> result = c.getBinaryFile(id, path);
 
