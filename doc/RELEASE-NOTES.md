@@ -2,6 +2,9 @@
 
 ## 0.2.1
 
+* Add '--timeout' option to 'run' and 'get-file'. After the timeout
+  the job will be killed by the client. This is a end-to-end timeout
+  that includes job waiting period in the queue.
 * Fix a bug where a user may kill other users' jobs once their IDs
   known.
 * 'kill' now returns 404 when killing non-existing job is requested. (#104)

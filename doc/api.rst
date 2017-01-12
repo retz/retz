@@ -130,6 +130,8 @@ This command is implemented with combination of ``ScheduleRequest``
 and ``GetFileRequest``.
 
 * ``--stderr`` : Prints stderr after the job finished to standard error when this option is specified.
+* ``--timeout`` : Timeout in minutes. After timeout, the client tries to kill the job.
+
 
 ``retz-client get-job -i <id>``
 
@@ -158,6 +160,8 @@ and
 * ``--length <length>`` : Define length to fetch (default: -1; get the whole file)
 * ``--binary`` : Specify the file as binary file. This should be with ``--resultdir`` option
   and without ``--poll`` option. ``--offset`` and ``--length`` will be ignored.
+* ``--timeout`` : Timeout in minutes. After timeout, the client tries to kill the job.
+  This is available with ``--poll`` option on.
 
 .. note:: With ``--binary`` option specified, Retz client uses ``GET /job/<id>/download?path=<path>``
           endpoint with empty body, resulting raw binary data in HTTP response body.

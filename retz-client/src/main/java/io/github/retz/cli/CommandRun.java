@@ -25,10 +25,10 @@ import io.github.retz.web.ClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 public class CommandRun implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandRun.class);
@@ -45,16 +45,18 @@ public class CommandRun implements SubCommand {
     int ports = 0;
     @Parameter(names = {"--stderr", "-stderr"}, description = "Print stderr after the task finished to standard error")
     boolean stderr = false;
-    @Parameter(names = {"-c", "--command", "-cmd"}, required = true, description = "Remote command")
-    private String remoteCmd;
-    @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
-    private String appName;
     @Parameter(names = {"--prio", "--priority"}, description = "Job priority")
     int priority = 0;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
-    @Parameter(names="--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
+    @Parameter(names = "--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
     List<String> tags = Arrays.asList();
+    @Parameter(names = "--timeout", description = "Timeout in minutes until kill from client (-1 or 0 for no timeout, default is 24 hours)")
+    int timeout = 24 * 60;
+    @Parameter(names = {"-c", "--command", "-cmd"}, required = true, description = "Remote command")
+    private String remoteCmd;
+    @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
+    private String appName;
 
     @Override
     public String description() {
@@ -98,34 +100,53 @@ public class CommandRun implements SubCommand {
                 LOG.error(res.status());
                 return -1;
             }
+
+            Date start = Calendar.getInstance().getTime();
+            Callable<Boolean> timedout;
+            if (timeout > 0) {
+                LOG.info("Timeout = {} minutes", timeout);
+                timedout = () -> {
+                    Date now = Calendar.getInstance().getTime();
+                    long diff = now.getTime() - start.getTime();
+                    return diff / 1000 > timeout * 60;
+                };
+            } else {
+                timedout = () -> false;
+            }
+
             Job scheduled = ((ScheduleResponse) res).job();
             if (verbose) {
                 LOG.info("job {} scheduled", scheduled.id(), scheduled.state());
             }
 
-            Job running = ClientHelper.waitForStart(scheduled, webClient);
-            if (verbose) {
-                LOG.info("job {} started: {}", running.id(), running.state());
-            }
+            try {
+                Job running = ClientHelper.waitForStart(scheduled, webClient, timedout);
+                if (verbose) {
+                    LOG.info("job {} started: {}", running.id(), running.state());
+                }
 
-            LOG.info("============ stdout of job {} sandbox start ===========", running.id());
-            Optional<Job> finished = ClientHelper.getWholeFile(webClient, running.id(), "stdout", true, System.out);
-            LOG.info("============ stdout of job {} sandbox end ===========", running.id());
+                LOG.info("============ stdout of job {} sandbox start ===========", running.id());
+                Optional<Job> finished = ClientHelper.getWholeFileWithTerminator(webClient, running.id(), "stdout", true, System.out, timedout);
+                LOG.info("============ stdout of job {} sandbox end ===========", running.id());
 
-            if (stderr) {
-                LOG.info("============ stderr of job {} sandbox start ===========", running.id());
-                Optional<Job> j = ClientHelper.getWholeFile(webClient, running.id(), "stderr", false, System.err);
-                LOG.info("============ stderr of job {} sandbox end ===========", running.id());
-            }
+                if (stderr) {
+                    LOG.info("============ stderr of job {} sandbox start ===========", running.id());
+                    Optional<Job> j = ClientHelper.getWholeFileWithTerminator(webClient, running.id(), "stderr", false, System.err, null);
+                    LOG.info("============ stderr of job {} sandbox end ===========", running.id());
+                }
 
-            if (finished.isPresent()) {
-                LOG.debug(finished.get().toString());
-                LOG.info("Job(id={}, cmd='{}') finished in {} seconds. status: {}",
-                        running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
-                        finished.get().state());
-                return finished.get().result();
-            } else {
-                LOG.error("Failed to fetch last state of job id={}", running.id());
+                if (finished.isPresent()) {
+                    LOG.debug(finished.get().toString());
+                    LOG.info("Job(id={}, cmd='{}') finished in {} seconds. status: {}",
+                            running.id(), job.cmd(), TimestampHelper.diffMillisec(finished.get().finished(), finished.get().started()) / 1000.0,
+                            finished.get().state());
+                    return finished.get().result();
+                } else {
+                    LOG.error("Failed to fetch last state of job id={}", running.id());
+                }
+            } catch (TimeoutException e) {
+                webClient.kill(scheduled.id());
+                LOG.error("Job(id={}) has been killed due to timeout after {} minute(s)", scheduled.id(), timeout);
             }
         }
         return -1;

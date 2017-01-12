@@ -30,6 +30,10 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -56,6 +60,9 @@ public class CommandGetFile implements SubCommand {
 
     @Parameter(names = "--binary", description = "Whether the file is binary or not. This option must be combined with '-R'.")
     private boolean isBinary = false;
+
+    @Parameter(names = "--timeout", description = "Timeout in minutes until kill from client (-1 or 0 for no timeout, default is 24 hours)")
+    int timeout = 24 * 60;
 
     @Override
     public String description() {
@@ -96,9 +103,28 @@ public class CommandGetFile implements SubCommand {
                 return 0;
             }
 
+
+            Date start = Calendar.getInstance().getTime();
+            Callable<Boolean> timedout;
+            if (timeout > 0) {
+                timedout = () -> {
+                    Date now = Calendar.getInstance().getTime();
+                    long diff = now.getTime() - start.getTime();
+                    return diff / 60 > timeout * 60;
+                };
+            } else {
+                timedout = () -> false;
+            }
+
             OutputStream out = this.tentativeOutputStream(webClient, resultDir, filename);
             if (length < 0) {
-                ClientHelper.getWholeFile(webClient, id, filename, poll, out);
+                try {
+                    ClientHelper.getWholeFileWithTerminator(webClient, id, filename, poll, out, timedout);
+                } catch (TimeoutException e) {
+                    webClient.kill(id);
+                    LOG.error("Job(id={}) has been killed due to timeout after {} minute(s)", id, timeout);
+                    return -1;
+                }
                 return 0;
             }
 

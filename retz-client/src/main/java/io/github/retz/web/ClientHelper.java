@@ -29,6 +29,8 @@ import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -37,29 +39,28 @@ public class ClientHelper {
     static final int MAX_INTERVAL_MSEC = 32768;
     static final int INITAL_INTERVAL_MSEC = 512;
 
-    public static List<Job> queue(Client c)  throws IOException {
+    public static List<Job> queue(Client c) throws IOException {
         Response res = c.list(Job.JobState.QUEUED, Optional.empty());
-        return ((ListJobResponse)res).jobs();
+        return ((ListJobResponse) res).jobs();
     }
 
-    public static List<Job> running(Client c)  throws IOException {
+    public static List<Job> running(Client c) throws IOException {
         List<Job> jobs = new LinkedList<>();
         Response res = c.list(Job.JobState.STARTING, Optional.empty());
-        jobs.addAll(((ListJobResponse)res).jobs());
+        jobs.addAll(((ListJobResponse) res).jobs());
         res = c.list(Job.JobState.STARTED, Optional.empty());
         jobs.addAll(((ListJobResponse) res).jobs());
         return jobs;
     }
 
-    public static List<Job> finished(Client c)  throws IOException {
+    public static List<Job> finished(Client c) throws IOException {
         List<Job> jobs = new LinkedList<>();
         Response res = c.list(Job.JobState.FINISHED, Optional.empty());
-        jobs.addAll(((ListJobResponse)res).jobs());
+        jobs.addAll(((ListJobResponse) res).jobs());
         res = c.list(Job.JobState.KILLED, Optional.empty());
         jobs.addAll(((ListJobResponse) res).jobs());
         return jobs;
     }
-
 
 
     public static boolean fileExists(Client c, int id, String filename) throws IOException {
@@ -81,15 +82,24 @@ public class ClientHelper {
         return false;
     }
 
-    public static void getWholeFile(Client c, int id, String filename, String resultDir) {
+    public static void getWholeFile(Client c, int id, String filename, String resultDir)
+            throws IOException {
+        try {
+            getWholeFileWithTerminator(c, id, filename, resultDir, null);
+        } catch (TimeoutException e) {
+            LOG.error(e.toString());
+        }
+    }
+
+    public static void getWholeFileWithTerminator(Client c, int id, String filename, String resultDir, Callable<Boolean> terminator)
+            throws IOException, TimeoutException {
         String path = resultDir + "/" + filename;
         try (FileOutputStream out = new FileOutputStream(path)) {
-            getWholeFile(c, id, filename, false, out);
+            getWholeFileWithTerminator(c, id, filename, false, out, terminator);
+
         } catch (FileNotFoundException e) {
             LOG.error(e.toString());
         } catch (JobNotFoundException e) {
-            LOG.error(e.toString());
-        } catch (IOException e) {
             LOG.error(e.toString());
         }
     }
@@ -97,12 +107,22 @@ public class ClientHelper {
     // Gets whole file until the job finishes and streams out to 'out'!!!
     // Throws FileNotFoundException when no file found, unlike getFile
     public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out)
-            throws IOException, JobNotFoundException {
-        return getWholeFile(c, id, filename, poll, out, 0);
+            throws JobNotFoundException, IOException {
+        try {
+            return getWholeFileWithTerminator(c, id, filename, poll, out, null);
+        } catch (TimeoutException e) {
+            LOG.error(e.toString());
+            return Optional.empty();
+        }
     }
 
-    public static Optional<Job> getWholeFile(Client c, int id, String filename, boolean poll, OutputStream out, long offset)
-            throws IOException, JobNotFoundException {
+    public static Optional<Job> getWholeFileWithTerminator(Client c, int id, String filename, boolean poll, OutputStream out, Callable<Boolean> terminate)
+            throws IOException, JobNotFoundException, TimeoutException {
+        return getWholeFileWithTerminator(c, id, filename, poll, out, 0, terminate);
+    }
+
+    public static Optional<Job> getWholeFileWithTerminator(Client c, int id, String filename, boolean poll, OutputStream out, long offset, Callable<Boolean> terminator)
+            throws IOException, JobNotFoundException, TimeoutException {
         Optional<Job> current;
 
         {
@@ -111,8 +131,8 @@ public class ClientHelper {
                 LOG.error(res.status());
                 throw new IOException(res.status());
             }
-            GetJobResponse getJobResponse = (GetJobResponse)res;
-            if (! getJobResponse.job().isPresent()) {
+            GetJobResponse getJobResponse = (GetJobResponse) res;
+            if (!getJobResponse.job().isPresent()) {
                 throw new JobNotFoundException(id);
             }
         }
@@ -154,6 +174,17 @@ public class ClientHelper {
                     }
                 } else {
                     interval = INITAL_INTERVAL_MSEC;
+                }
+
+                try {
+                    if (terminator != null && terminator.call()) {
+                        throw new TimeoutException("Timeout at getWholeFile");
+                    }
+                } catch (TimeoutException e) {
+                    throw e;
+                } catch (Exception e) {
+                    LOG.error(e.toString(), e);
+                    return current; // I don't know how to handle it
                 }
             } else {
                 break;
@@ -212,7 +243,7 @@ public class ClientHelper {
         }
     }
 
-    public static Job waitForStart(Job job, Client c) throws IOException {
+    public static Job waitForStart(Job job, Client c, Callable<Boolean> terminate) throws IOException, TimeoutException {
         Job current = job;
         int interval = INITAL_INTERVAL_MSEC;
         while (current.state() == Job.JobState.QUEUED) {
@@ -221,6 +252,17 @@ public class ClientHelper {
                 interval = interval * 2;
             } else {
                 interval = MAX_INTERVAL_MSEC;
+            }
+
+            try {
+                if (terminate != null && terminate.call()) {
+                    throw new TimeoutException("Timeout at waitForStart");
+                }
+            } catch (TimeoutException e) {
+                throw e;
+            } catch (Exception e) {
+                LOG.error(e.toString(), e);
+                return null; // I don't know how to handle it
             }
 
             Response res = c.getJob(job.id());
