@@ -2,6 +2,9 @@
 
 ## 0.2.1
 
+* Fix '--binary' mode failing downlaod of 'get-files' in case of
+ 'retz.tls.insecure=true'. This was because Retz clients on binary
+  download strictly checking certificates provided by a server.
 * Add '--timeout' option to 'run' and 'get-file'. After the timeout
   the job will be killed by the client. This is end-to-end timeout
   that includes job waiting period in the queue.

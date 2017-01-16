@@ -31,10 +31,7 @@ import io.github.retz.web.feign.Retz;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
+import javax.net.ssl.*;
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,6 +62,9 @@ public class Client implements AutoCloseable {
     private boolean verboseLog = false;
     private URI uri;
     private Authenticator authenticator;
+    private SSLSocketFactory socketFactory;
+    private HostnameVerifier hostnameVerifier;
+    private boolean checkCert = true;
 
     protected Client(URI uri, Authenticator authenticator) {
         this(uri, authenticator, true);
@@ -73,8 +73,7 @@ public class Client implements AutoCloseable {
     protected Client(URI uri, Authenticator authenticator, boolean checkCert) {
         this.uri = Objects.requireNonNull(uri);
         this.authenticator = Objects.requireNonNull(authenticator);
-        SSLSocketFactory socketFactory;
-        HostnameVerifier hostnameVerifier;
+        this.checkCert = checkCert;
         if (uri.getScheme().equals("https") && !checkCert) {
             LOG.warn("DANGER ZONE: TLS certificate check is disabled. Set 'retz.tls.insecure = false' at config file to supress this message.");
             try {
@@ -149,6 +148,19 @@ public class Client implements AutoCloseable {
         HttpURLConnection conn;
 
         conn = (HttpURLConnection) url.openConnection();
+        //LOG.info("classname> {}", conn.getClass().getName());
+        if (uri.getScheme().equals("https") && !checkCert && conn instanceof HttpsURLConnection) {
+            if (verboseLog) {
+                LOG.warn("DANGER ZONE: TLS certificate check is disabled. Set 'retz.tls.insecure = false' at config file to supress this message.");
+            }
+            HttpsURLConnection sslCon = (HttpsURLConnection) conn;
+            if (socketFactory != null) {
+                sslCon.setSSLSocketFactory(socketFactory);
+            }
+            if (hostnameVerifier != null) {
+                sslCon.setHostnameVerifier(hostnameVerifier);
+            }
+        }
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Accept", "application/octet-stream");
         conn.setRequestProperty("Authorization", header.buildHeader());
