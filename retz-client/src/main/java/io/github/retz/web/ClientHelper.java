@@ -211,6 +211,12 @@ public class ClientHelper {
         }
     }
 
+    public static void getWholeBinaryFile(Client c, int id, String path, OutputStream out) throws IOException {
+        LOG.info("Saving {} to stream", path);
+        Pair<Integer, byte[]> result = c.getBinaryFile(id, path);
+        out.write(result.right());
+    }
+
     static long readFileUntilEmpty(Client c, int id, String filename, long offset, OutputStream out) throws IOException {
         int length = 65536;
         long current = offset;
