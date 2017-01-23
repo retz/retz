@@ -23,12 +23,13 @@ import io.github.retz.bean.AdminConsoleMXBean;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.*;
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -89,10 +90,50 @@ public class AdminConsole implements AdminConsoleMXBean {
     }
 
     @Override
-    public List<String> getUsage(String start, String end) {
-        LOG.info("Querying usage at [{}, {})", start, end); //TODO
+    public Optional<String> getUsage(String start, String end, String format, String path) {
+        LOG.info("Querying usage at [{}, {}) > {} in {}", start, end, path, format);
+        String suffix = ".txt";
+        String separator = "\t";
+        if ("csv".equals(format) || "CSV".equals(format)) {
+            suffix = ".csv";
+            separator = ",";
+        }
+        String filename = "retz-job-usage-" + start + "-" + end + suffix;
+        String dest = FilenameUtils.concat(path, filename);
         List<Job> jobs = Database.getInstance().finishedJobs(start, end);
-        return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
+
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dest)))){
+
+            String[] titles = {"start","finish","appid","id","priority","cpu","mem","disk","gpu","ports"};
+            writer.write(String.join(separator, titles));
+            writer.newLine();
+
+            for (Job job : jobs) {
+                String[] line = {
+                        job.started(),
+                        job.finished(),
+                        job.appid(),
+                        Integer.toString(job.id()),
+                        Integer.toString(job.priority()),
+                        Integer.toString(job.resources().getCpu()),
+                        Integer.toString(job.resources().getMemMB()),
+                        Integer.toString(job.resources().getDiskMB()),
+                        Integer.toString(job.resources().getGpu()),
+                        Integer.toString(job.resources().getPorts()),
+                };
+                writer.write(String.join(separator, line));
+                writer.newLine();
+            }
+
+        } catch (FileNotFoundException e) {
+            LOG.error(e.toString(), e);
+            return Optional.empty();
+        } catch (IOException e) {
+            LOG.error(e.toString(), e);
+            return Optional.empty();
+        }
+
+        return Optional.of(dest);
     }
 
     @Override

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
     static final Logger LOG = LoggerFactory.getLogger(AdminConsoleClient.class);
@@ -61,12 +62,11 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
 
 
     @Override
-    public List<String> getUsage(String start, String end) {
+    public Optional<String> getUsage(String start, String end, String format, String path) {
         try {
-            String[] jsons = (String[]) client.invokeOperation(objectName, "getUsage", start, end);
-            return Arrays.asList(jsons);
+            return (Optional<String>) client.invokeOperation(objectName, "getUsage", start, end, format, path);
         } catch (Exception o) {
-            return Arrays.asList();
+            return Optional.empty();
         }
     }
 

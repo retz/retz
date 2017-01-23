@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 public class CommandUsage implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandUsage.class);
@@ -32,6 +33,12 @@ public class CommandUsage implements SubCommand {
 
     @Parameter(names = {"--end", "-end"}, description = "End time of a period to fetch")
     private String end = "9999-12-32";
+
+    @Parameter(names = "--format", description = "Output format [table|CSV]")
+    private String format = "table";
+
+    @Parameter(names = "output", description = "Output directory <path>")
+    private String output = "/tmp";
 
     @Override
     public String description() {
@@ -47,9 +54,9 @@ public class CommandUsage implements SubCommand {
     public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port =fileConfig.getJmxPort();
         try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
-            List<String> lines = client.getUsage(start, end);
-            for(String line: lines) {
-                LOG.info(line);
+            Optional<String> file = client.getUsage(start, end, format, output);
+            if (file.isPresent()) {
+                LOG.info("Usage info successfully written to {}.", file);
             }
             return 0;
         }

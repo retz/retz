@@ -17,6 +17,7 @@
 package io.github.retz.bean;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AdminConsoleMXBean {
     List<String> listUser();
@@ -24,7 +25,7 @@ public interface AdminConsoleMXBean {
     String getUser(String keyId);
     boolean enableUser(String id, boolean enabled);
 
-    List<String> getUsage(String start, String end);
+    Optional<String> getUsage(String start, String end, String format, String path);
     boolean gc();
     boolean gc(int leeway);
 }
