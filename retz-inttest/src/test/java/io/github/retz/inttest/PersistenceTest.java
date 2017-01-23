@@ -68,7 +68,7 @@ public class PersistenceTest extends RetzIntTest {
 
             List<Job> jobs = new LinkedList<>();
             for (int i = 0; i < JOB_AMOUNT; i++) {
-                Job job = new Job("t", "echo " + i, new Properties(), 1, 64);
+                Job job = new Job("t", "echo " + i, new Properties(), 1, 64, 32);
                 Response response = client.schedule(job);
                 assertThat(response.status(), is("ok"));
                 ScheduleResponse scheduleResponse = (ScheduleResponse) response;

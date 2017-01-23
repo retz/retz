@@ -96,7 +96,7 @@ public class RetzSchedulerTest {
         Applications.load(new Application("fooapp", new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), "deadbeef",
                 0, new MesosContainer(), true));
-        Job job = new Job("fooapp", "foocmd", null, 2, 256);
+        Job job = new Job("fooapp", "foocmd", null, 2, 32, 256);
         JobQueue.push(job);
 
         driver.start();
@@ -141,7 +141,7 @@ public class RetzSchedulerTest {
         Applications.load(new Application("fooapp", new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
-        Job job = new Job("fooapp", "foocmd", null, 2, 256);
+        Job job = new Job("fooapp", "foocmd", null, 2, 32, 256);
         JobQueue.push(job);
 
         driver.start();
@@ -172,7 +172,7 @@ public class RetzSchedulerTest {
         Applications.load(new Application("fooapp", new LinkedList<String>(),
                 Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
-        Job job = new Job("fooapp", "foocmd", null, 2, 256);
+        Job job = new Job("fooapp", "foocmd", null, 2, 256, 256);
         JobQueue.push(job);
 
         driver.start();

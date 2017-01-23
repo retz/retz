@@ -160,7 +160,7 @@ public class WebConsoleCommonTests {
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 256));
+            Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 256, 32));
             assertThat(res, instanceOf(ErrorResponse.class));
 
             maybeJob = JobQueue.findFit(BASE_ORDER_BY, new ResourceQuantity(1000, 10000, 0, 0, 0, 0));
@@ -196,7 +196,7 @@ public class WebConsoleCommonTests {
         {
             // You know, these spaces are to be normalized
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 200));
+            Response res = webClient.schedule(new Job("foobar", cmd, null, 1, 200, 32));
             assertThat(res, instanceOf(ScheduleResponse.class));
             ScheduleResponse sres = (ScheduleResponse) res;
             assertNotNull(sres.job.scheduled());
@@ -236,7 +236,7 @@ public class WebConsoleCommonTests {
         {
             // Job request without app must fail
             String cmd = "Mmmmmmmmmy commmmmand1!!!!!";
-            Job job = new Job("foobar-nosuchapp", cmd, null, 1, 256);
+            Job job = new Job("foobar-nosuchapp", cmd, null, 1, 32, 256);
             Job done = webClient.run(job);
             assertNull(done);
 
@@ -256,7 +256,7 @@ public class WebConsoleCommonTests {
         LoadAppResponse loadAppResponse = (LoadAppResponse)webClient.load(app);
         assertEquals("ok", loadAppResponse.status());
         {
-            Job job = new Job("app", "sleep 1000", new Properties(), 1, 64);
+            Job job = new Job("app", "sleep 1000", new Properties(), 1, 64, 0);
             ScheduleResponse scheduleResponse = (ScheduleResponse)webClient.schedule(job);
             KillResponse killResponse = (KillResponse)webClient.kill(scheduleResponse.job().id());
             assertEquals("ok", killResponse.status());
@@ -280,7 +280,7 @@ public class WebConsoleCommonTests {
         Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Optional.empty(), config.getUser().keyId(),
                 0, new MesosContainer(), true);
         Database.getInstance().addApplication(app);
-        Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000);
+        Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000, 12000);
         job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
         JobQueue.push(job);
         StatusCache.updateUsedResources();
@@ -308,7 +308,7 @@ public class WebConsoleCommonTests {
         Application app1 = new Application("app1", Arrays.asList(), Arrays.asList(),
                 Optional.empty(), cliConfig.getUser().keyId(),
                 0, new MesosContainer(), true);
-        Job job1 = new Job("app1", "ls", new Properties(), 1, 32);
+        Job job1 = new Job("app1", "ls", new Properties(), 1, 32, 32);
 
         {
             Response res = webClient.load(app1);
@@ -409,7 +409,7 @@ public class WebConsoleCommonTests {
                 System.err.println(res.status());
             }
 
-            Job job2 = new Job("app1", "ls", new Properties(), 1, 32);
+            Job job2 = new Job("app1", "ls", new Properties(), 1, 32, 32);
             { // Charlie tries to steal Alice's applications
                 Response res = client2.schedule(job2);
                 assertThat(res, instanceOf(ErrorResponse.class));
@@ -438,7 +438,7 @@ public class WebConsoleCommonTests {
         res = client.load(application);
         assertEquals("ok", res.status());
 
-        res = client.schedule(new Job("t", "ls", new Properties(), 1, 32));
+        res = client.schedule(new Job("t", "ls", new Properties(), 1, 32, 32));
         ScheduleResponse scheduleResponse = (ScheduleResponse) res;
         Job job1 = scheduleResponse.job();
 
@@ -458,7 +458,7 @@ public class WebConsoleCommonTests {
         System.err.println(res.status());
         Assert.assertThat(res, instanceOf(ErrorResponse.class));
 
-        res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32));
+        res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32, 32));
         System.err.println(res.status());
         Assert.assertThat(res, instanceOf(ErrorResponse.class));
 
@@ -474,7 +474,7 @@ public class WebConsoleCommonTests {
         System.err.println(res.status());
         assertEquals("ok", res.status());
 
-        res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32));
+        res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32, 32));
         System.err.println(res.status());
         assertEquals("ok", res.status());
     }

@@ -41,6 +41,8 @@ public class CommandRun implements SubCommand {
     int mem = 32;
     @Parameter(names = {"--gpu", "-gpu"}, description = "Number of GPU cards assigned to the job")
     int gpu = 0;
+    @Parameter(names = "--disk", description = "Amount of temporary disk space in MB which the job is going to use")
+    int disk = 32;
     @Parameter(names = {"--ports", "-ports"}, description = "Number of ports (up to 1000) required to the job; Ports will be given as $PORT0, $PORT1, ...")
     int ports = 0;
     @Parameter(names = {"--stderr", "-stderr"}, description = "Print stderr after the task finished to standard error")
@@ -76,7 +78,7 @@ public class CommandRun implements SubCommand {
             LOG.error("--ports must be within 0 to 1000: {} given.", ports);
             return -1;
         }
-        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, ports);
+        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, disk, ports);
         job.setPriority(priority);
         job.setName(name);
         job.addTags(tags);

@@ -44,13 +44,13 @@ public class Job {
     private String taskId; // TaskId assigned by Mesos (or other scheduler)
     private JobState state;
 
-    public Job(String appName, String cmd, Properties props, int cpu, int memMB) {
+    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int disk) {
         this.appid = appName;
         this.cmd = cmd;
         this.name = Integer.toString(cmd.hashCode());
         this.tags = new HashSet<>();
         this.props = props;
-        assert cpu > 0 && memMB >= 32;
+        assert cpu > 0 && memMB >= 32 && disk >= 0;
         this.resources = new ResourceQuantity(cpu, memMB, 0, 0, 0, 1);
         this.attributes = Optional.empty();
         this.state = CREATED;
@@ -58,10 +58,10 @@ public class Job {
         this.priority = 0;
     }
 
-    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int gpu, int ports) {
-        this(appName, cmd, props, cpu, memMB);
+    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int disk, int gpu, int ports) {
+        this(appName, cmd, props, cpu, memMB, disk);
         Objects.requireNonNull(gpu);
-        resources.add(0, 0, gpu, ports, 0);
+        resources.add(0, 0, gpu, ports, disk);
     }
 
     @JsonCreator

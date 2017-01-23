@@ -176,7 +176,7 @@ public class ProtocolTest {
         }
 
         {
-            Job job = new Job("foobar-app", "ls -l", null, 1, 128);
+            Job job = new Job("foobar-app", "ls -l", null, 1, 32, 128);
             ScheduleRequest scheduleRequest = new ScheduleRequest(job);
             String json = mapper.writeValueAsString(scheduleRequest);
             Request req = mapper.readValue(json, Request.class);

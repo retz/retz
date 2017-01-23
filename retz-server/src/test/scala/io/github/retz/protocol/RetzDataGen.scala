@@ -56,7 +56,7 @@ object RetzDataGen {
     cmd <- RetzGen.nonEmpty
     id <- Gen.posNum[Int]
   } yield {
-    var job = new Job(appid, cmd, new Properties(), 1, 32, 1, 0)
+    var job = new Job(appid, cmd, new Properties(), 1, 32, 32, 1, 0)
     job.schedule(id, TimestampHelper.now())
     job
   }

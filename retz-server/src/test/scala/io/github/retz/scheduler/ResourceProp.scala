@@ -58,9 +58,9 @@ class ResourceProp extends JUnitSuite {
 
   @Test
   def resourceQuantityProp(): Unit = {
-    Checkers.check(Prop.forAll(Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], resourceQuantity) {
-      (cpus: Int, mem: Int, gpus: Int, ports: Int, q: ResourceQuantity) => {
-        val job = new Job("x", "a", new Properties(), cpus+1, mem + 32, gpus, ports)
+    Checkers.check(Prop.forAll(Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], resourceQuantity) {
+      (cpus: Int, mem: Int, disk: Int, gpus: Int, ports: Int, q: ResourceQuantity) => {
+        val job = new Job("x", "a", new Properties(), cpus+1, mem + 32, disk + 32, gpus, ports)
         val fit = q.fits(job)
         val nofit = cpus+1> q.getCpu || mem + 32 > q.getMemMB || gpus > q.getGpu || ports > q.getPorts || 0 > q.getDiskMB
         println(cpus+1, mem+32, gpus, ports, q, fit, nofit, fit != nofit)

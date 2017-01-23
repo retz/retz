@@ -78,7 +78,7 @@ public class RetzIntTest extends IntTestBase {
 
         {
             String echoText = "hoge from echo-app via Retz";
-            Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256, 0, 1);
+            Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256, 0, 32, 1);
             Job runRes = client.run(job);
             assertThat(runRes.result(), is(RES_OK));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
@@ -102,7 +102,7 @@ public class RetzIntTest extends IntTestBase {
 
         {
             String echoText = "PPAP";
-            Job job = new Job("echo-app", "mkdir -p a/b/c/d; echo " + echoText + " > a/b/c/e", new Properties(), 1, 32);
+            Job job = new Job("echo-app", "mkdir -p a/b/c/d; echo " + echoText + " > a/b/c/e", new Properties(), 1, 32, 32);
             Job runRes = client.run(job);
             assertThat(runRes.result(), is(RES_OK));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
@@ -142,7 +142,7 @@ public class RetzIntTest extends IntTestBase {
         assertThat(listRes.status(), is("ok"));
         List<String> appNameList = listRes.applicationList().stream().map(app -> app.getAppid()).collect(Collectors.toList());
         assertIncludes(appNameList, "echo-app");
-        Job job = new Job("echo-app", "sleep 60", new Properties(), 1, 32, 0, 2);
+        Job job = new Job("echo-app", "sleep 60", new Properties(), 1, 32, 0, 32, 2);
         response = client.schedule(job);
         assertThat(response, instanceOf(ScheduleResponse.class));
         ScheduleResponse scheduleResponse = (ScheduleResponse) response;
@@ -245,7 +245,7 @@ public class RetzIntTest extends IntTestBase {
     private List<EchoJob> scheduleEchoJobs(Client client, String appName, String cmdPrefix, List<Integer> argvList) throws IOException {
         List<EchoJob> echoJobs = new LinkedList<>();
         for (Integer i : argvList) {
-            Job job = new Job(appName, cmdPrefix + i.toString(), new Properties(), 1, 32, 0, 3);
+            Job job = new Job(appName, cmdPrefix + i.toString(), new Properties(), 1, 32, 0, 32, 3);
 
             ScheduleResponse scheduleResponse = (ScheduleResponse) client.schedule(job);
             assertThat(scheduleResponse.status(), is("ok"));
@@ -344,7 +344,7 @@ public class RetzIntTest extends IntTestBase {
                 .build()) {
             loadSimpleApp(client, "touch-many");
             {
-                Job job = new Job("touch-many", "mkdir d++; touch d++/e++; touch d++/f", new Properties(), 1, 32);
+                Job job = new Job("touch-many", "mkdir d++; touch d++/e++; touch d++/f", new Properties(), 1, 32, 32);
                 job.addTags("tag1-listFilesTest");
                 Job ran = client.run(job);
                 Response response = client.listFiles(ran.id(), "d++");
@@ -356,7 +356,7 @@ public class RetzIntTest extends IntTestBase {
             }
 
             { //Test unicode paths
-                Job job = new Job("touch-many", "mkdir d++; touch ε=ε=ε=ε=ε=ε= ◟⚫͈ω⚫̤◞", new Properties(), 1, 32);
+                Job job = new Job("touch-many", "mkdir d++; touch ε=ε=ε=ε=ε=ε= ◟⚫͈ω⚫̤◞", new Properties(), 1, 32, 32);
                 job.addTags("tag1-listFilesTest", "multibytes");
                 Job ran = client.run(job);
 
@@ -419,7 +419,7 @@ public class RetzIntTest extends IntTestBase {
                 .build()) {
             {
                 loadSimpleApp(client, "echo");
-                Job job = new Job("echo", "echo 42", new Properties(), 1, 32);
+                Job job = new Job("echo", "echo 42", new Properties(), 1, 32, 32);
                 Job ran = client.run(job);
                 Response response = client.getFile(ran.id(), "non-existent-file", 0, -1);
                 GetFileResponse getFileResponse = (GetFileResponse) response;
@@ -438,7 +438,7 @@ public class RetzIntTest extends IntTestBase {
                 .build()) {
             {
                 loadSimpleApp(client, "echo");
-                Job job = new Job("echo", "echo 42", new Properties(), 1024, 32);
+                Job job = new Job("echo", "echo 42", new Properties(), 1024, 32, 32);
                 Response response = client.schedule(job);
                 // TODO: how do we indicate this is from WebConsole::schedule, ResourceQuantitiy#fits(job)?
                 assertTrue(response instanceof ErrorResponse);
@@ -501,7 +501,7 @@ public class RetzIntTest extends IntTestBase {
             res = client.load(application);
             assertEquals("ok", res.status());
 
-            res = client.schedule(new Job("t", "ls", new Properties(), 1, 32));
+            res = client.schedule(new Job("t", "ls", new Properties(), 1, 32, 32));
             ScheduleResponse scheduleResponse = (ScheduleResponse) res;
             Job job1 = scheduleResponse.job();
             {
@@ -519,7 +519,7 @@ public class RetzIntTest extends IntTestBase {
             System.err.println(res.status());
             assertThat(res, instanceOf(ErrorResponse.class));
 
-            res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32));
+            res = client.schedule(new Job("t", "echo prohibited job", new Properties(), 1, 32, 32));
             System.err.println(res.status());
             assertThat(res, instanceOf(ErrorResponse.class));
 
@@ -537,7 +537,7 @@ public class RetzIntTest extends IntTestBase {
             System.err.println(res.status());
             assertEquals("ok", res.status());
 
-            res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32));
+            res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32, 32));
             System.err.println(res.status());
             assertEquals("ok", res.status());
         }

@@ -129,7 +129,7 @@ public class DatabaseTest {
 
         int id = -1;
         {
-            Job job = new Job(a.getAppid(), "uname -a", new Properties(), 1, 32);
+            Job job = new Job(a.getAppid(), "uname -a", new Properties(), 1, 32, 32);
             job.schedule(JobQueue.issueJobId(), TimestampHelper.now());
 
             db.safeAddJob(job);

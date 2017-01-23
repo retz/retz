@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.2.2
+
+* Make Retz scheduling disk space aware. '--disk' is now added to
+  'schedule' and 'run' to CLI as well as `disk` is added to some
+  constructors of class Job. Note that although this change involves
+  client library interface, no protocol is changed.
+
 ## 0.2.1
 
 * Fix '--binary' mode failing downlaod of 'get-files' in case of

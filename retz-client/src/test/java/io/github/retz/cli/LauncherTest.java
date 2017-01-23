@@ -172,7 +172,7 @@ public class LauncherTest {
     public void parseRunTest() throws IOException, URISyntaxException {
         {
             String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t",
-                    "-cmd", "uname -a", "-E", "a=b", "-cpu", "2"};
+                    "-cmd", "uname -a", "-E", "a=b", "-cpu", "2", "--disk", "512"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("run", conf.commander.getParsedCommand());
             CommandRun command = (CommandRun) conf.getParsedSubCommand();
@@ -180,6 +180,7 @@ public class LauncherTest {
             assertEquals(2, command.cpu);
             assertEquals(32, command.mem);
             assertEquals(0, command.gpu);
+            assertEquals(512, command.disk);
             assertFalse(command.stderr);
         }
 

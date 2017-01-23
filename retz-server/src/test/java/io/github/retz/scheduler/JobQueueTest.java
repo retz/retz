@@ -58,7 +58,7 @@ public class JobQueueTest {
                 Optional.empty(), "deadbeef",0, new MesosContainer(), true);
         assertTrue(Applications.load(app));
 
-        Job job = new Job("appq", "b", null, 1000, 100000000);
+        Job job = new Job("appq", "b", null, 1000, 100000000, 0);
         job.schedule(0, TimestampHelper.now());
         JobQueue.push(job);
         {
