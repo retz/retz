@@ -78,7 +78,7 @@ public class CommandRun implements SubCommand {
             LOG.error("--ports must be within 0 to 1000: {} given.", ports);
             return -1;
         }
-        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, disk, ports);
+        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, disk, gpu, ports);
         job.setPriority(priority);
         job.setName(name);
         job.addTags(tags);

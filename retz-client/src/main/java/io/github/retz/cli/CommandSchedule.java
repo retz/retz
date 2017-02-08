@@ -70,7 +70,7 @@ public class CommandSchedule implements SubCommand {
     public int handle(ClientCLIConfig fileConfig, boolean verbose) throws IOException {
         Properties envProps = SubCommand.parseKeyValuePairs(envs);
 
-        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, gpu, disk, ports);
+        Job job = new Job(appName, remoteCmd, envProps, cpu, mem, disk, gpu, ports);
         job.setPriority(priority);
         job.setName(name);
         job.addTags(tags);
