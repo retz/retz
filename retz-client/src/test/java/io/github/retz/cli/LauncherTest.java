@@ -206,33 +206,4 @@ public class LauncherTest {
             assertEquals(-2, commandRun.priority);
         }
     }
-
-    @Test
-    public void pairParserTest() {
-        String[] envs = {"k=v", "a=b", "FOOBAR='LOOK_AT ME DONT'", "wat", "empty=", "=not"};
-        Properties props = SubCommand.parseKeyValuePairs(Arrays.asList(envs));
-        for (Map.Entry<Object, Object> e : props.entrySet()) {
-            System.err.println(e.getKey() + " = " + e.getValue());
-        }
-        assertEquals(4, props.size());
-        assertEquals("v", props.getProperty("k"));
-        assertEquals("b", props.getProperty("a"));
-        assertEquals("'LOOK_AT ME DONT'", props.getProperty("FOOBAR"));
-        assertEquals(null, props.getProperty("wat"));
-        assertEquals("", props.getProperty("empty"));
-        assertEquals(null, props.getProperty(""));
-        assertEquals(null, props.getProperty("not"));
-        assertEquals(null, props.getProperty("other foobar"));
-    }
-
-    @Test
-    public void pairParserTest2() {
-        String[] envs = {"ASAKUSA_M3BP_ARGS=\"--engine-conf com.asakusafw.m3bp.output.buffer.size=209 --engine-conf com.asakusafw.m3bp.output.buffer.flush=0.6 --engine-conf com.asakusafw.m3bp.thread.max=\\$RETZ_CPU\""};
-        Properties props = SubCommand.parseKeyValuePairs(Arrays.asList(envs));
-        assertEquals(1, props.size());
-        assertEquals(
-                "\"--engine-conf com.asakusafw.m3bp.output.buffer.size=209 --engine-conf com.asakusafw.m3bp.output.buffer.flush=0.6 --engine-conf com.asakusafw.m3bp.thread.max=\\$RETZ_CPU\"",
-                props.getProperty("ASAKUSA_M3BP_ARGS"));
-
-    }
 }

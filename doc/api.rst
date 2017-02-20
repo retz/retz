@@ -78,14 +78,21 @@ Client CLI and API
 
    Test and prints configuration items written in the configuration file locally.
 
-``retz-client list``
+``retz-client list OPTIONS``
 
    Lists all jobs that belongs to the user. This uses ``GET /jobs``
-   HTTP endpoint with empty body. `Request
+   HTTP endpoint with empty body. Note that max number of jobs returned by server
+   in a single HTTP request is limited by ``retz.max.list-jobs`` at server.
+   `Request
    <https://retz.github.io/javadoc/io/github/retz/protocol/ListJobRequest.html>`_
    and `Response
    <https://retz.github.io/javadoc/io/github/retz/protocol/ListJobResponse.html>`_
-   in Java API
+   in Java API. ``OPTIONS`` include one of following:
+
+* ``--state STATE`` Fetch all jobs in the state
+* ``--states [STATE]`` Fetch all jobs in any of the states. Default is ``QUEUED,STARTING,STARTED``
+* ``--tag TAG`` Fetch only jobs that has the tag, from those that has the
+  state specified by ``--state`` or ``--states`` .
 
 ``retz-client schedule OPTIONS``
 

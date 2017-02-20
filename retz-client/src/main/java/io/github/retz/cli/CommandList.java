@@ -25,17 +25,20 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CommandList implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandList.class);
 
     @Parameter(names = "--state", description = "State of jobs")
-    private Job.JobState state = Job.JobState.QUEUED;
+    private Job.JobState state;
 
-    @Parameter(names = "--tag", description = "Tag name to show")
+    @Parameter(names = "--states", description = "States of jobs separated by comma")
+    private String states = "QUEUED,STARTING,STARTED";
+
+
+    @Parameter(names = "--tag", description = "Tag name to show ('AND' condition with states)")
     private String tag;
 
     public final String NAME = "list";
@@ -59,26 +62,38 @@ public class CommandList implements SubCommand {
                 .build()) {
 
             Optional<String> maybeTag = Optional.ofNullable(tag);
+            Set<Job.JobState> jobStates = parseStates(states);
 
-            Response res = webClient.list(state, maybeTag); // TODO: make this CLI argument
-            if (res instanceof ErrorResponse) {
-                LOG.error(res.status());
-                return -1;
+            if (state != null) {
+                jobStates.add(state);
             }
-            ListJobResponse r = (ListJobResponse) res;
-            List<Job> jobs = r.jobs();
+
+
+
+            Map<Integer, Job> jobMap = new LinkedHashMap<>();
+            for (Job.JobState s : jobStates) {
+                if (verbose) {
+                    LOG.info("Fetching jobs@{}", s);
+                }
+                Response res = webClient.list(s, maybeTag); // TODO: make this CLI argument
+                if (res instanceof ErrorResponse) {
+                    LOG.error(res.status());
+                    return -1;
+                }
+                ListJobResponse r = (ListJobResponse) res;
+                for (Job job : r.jobs()) {
+                    jobMap.put(job.id(), job);
+                }
+            }
 
             TableFormatter formatter = new TableFormatter(
                     "TaskId", "State", "AppName", "Command", "Result", "Duration",
                     "Scheduled", "Started", "Finished", "Tags");
 
-            jobs.sort(Comparator.comparingInt(job -> job.id()));
+            List<Job> jobs = jobMap.values().stream().sorted(Comparator.comparingInt(job -> job.id())).collect(Collectors.toList());
 
             for (Job job : jobs) {
-                String reason = "-";
-                if (job.reason() != null) {
-                    reason = "'" + job.reason() + "'";
-                }
+
                 String duration = "-";
                 if (job.started() != null && job.finished() != null) {
                     try {
@@ -109,5 +124,15 @@ public class CommandList implements SubCommand {
     @Override
     public String getName() {
         return NAME;
+    }
+
+    Set<Job.JobState> parseStates(String states) {
+        Set<Job.JobState> set = new HashSet<>();
+        if (states != null) {
+            for (String s : states.split(",")) {
+                set.add(Job.JobState.valueOf(s));
+            }
+        }
+        return set;
     }
 }

@@ -2,6 +2,11 @@
 
 ## 0.2.2
 
+* Add an option to give multiple states of job to fetch from server
+  to list command of CLI. State names separated commas for '--states'
+  option makes client to fetch jobs of each state. Note that those
+  jobs are not consistent, which may lack or include jobs stale state
+  as CLI client just repeats fetching for each state.
 * Introduce server side limit on listing jobs, by default up to
   65536 jobs, configurable with `retz.max.list-jobs` item in server
   configuration.
