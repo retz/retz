@@ -2,6 +2,7 @@
 
 ## 0.2.2
 
+* Fix a bug that it was possible to kill a finished job.
 * Make Retz scheduling disk space aware. '--disk' is now added to
   'schedule' and 'run' to CLI as well as `disk` is added to some
   constructors of class Job. Note that although this change involves

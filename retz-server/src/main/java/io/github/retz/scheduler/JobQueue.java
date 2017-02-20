@@ -78,6 +78,9 @@ public class JobQueue {
         Optional<Job> maybeJob = getJob(id);
         if (maybeJob.isPresent()) {
             Database.getInstance().updateJob(id, (job -> {
+                if (job.state() == Job.JobState.KILLED || job.state() == Job.JobState.FINISHED) {
+                    return Optional.empty();
+                }
                 job.killed(TimestampHelper.now(), Optional.empty(), reason);
                 LOG.info("Job id={} has been canceled.", id);
                 return Optional.of(job);

@@ -58,8 +58,9 @@ public class JobQueueTest {
                 Optional.empty(), "deadbeef",0, new MesosContainer(), true);
         assertTrue(Applications.load(app));
 
+        int id = 0;
         Job job = new Job("appq", "b", null, 1000, 100000000, 0);
-        job.schedule(0, TimestampHelper.now());
+        job.schedule(id, TimestampHelper.now());
         JobQueue.push(job);
         {
             List<Job> job2 = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1001, 100000001, 0, 0, 0, 0));
@@ -75,8 +76,9 @@ public class JobQueueTest {
             assertTrue(j.isPresent());
         }
 
+        String taskId = "foobar-taskid";
         {
-            JobQueue.started("foobar-taskid", Optional.empty());
+            JobQueue.started(taskId, Optional.empty());
             List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0, 0));
             for (Job j : fit) {
                 System.err.println(j.name() + " " +j.cmd());
@@ -86,6 +88,21 @@ public class JobQueueTest {
         }
         assertEquals(1, JobQueue.size());
         assertEquals(1, JobQueue.countRunning());
+
+
+        {
+            JobQueue.finished(taskId, Optional.empty(), 0, TimestampHelper.now() );
+            Optional<Job> maybeJob = JobQueue.getJob(id);
+            assertTrue(maybeJob.isPresent());
+            assertEquals(Job.JobState.FINISHED, maybeJob.get().state());
+        }
+
+        {
+            Optional<Job> maybeJob = JobQueue.cancel(id, "Cancel by test code which must fail");
+            assertTrue(maybeJob.isPresent());
+            assertEquals(Job.JobState.FINISHED, maybeJob.get().state());
+        }
+
         Database.getInstance().safeDeleteApplication(app.getAppid());
     }
 }

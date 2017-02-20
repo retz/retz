@@ -236,7 +236,7 @@ public class JobRequestHandler {
 
         Optional<Job> maybeJob;
         try {
-            maybeJob= getJobAndVerify(req);
+            maybeJob = getJobAndVerify(req);
         } catch (IOException e) {
             return MAPPER.writeValueAsString(new ErrorResponse(e.toString()));
         }
@@ -249,10 +249,14 @@ public class JobRequestHandler {
         }
 
         Optional<Boolean> result = Stanchion.call(() -> {
-            // TODO: non-application owner is even possible to kill job
             Optional<Job> maybeJob2 = JobQueue.cancel(id, "Canceled by user");
+
             Job job = maybeJob2.get();
 
+            if (job.state() == Job.JobState.FINISHED || job.state() == Job.JobState.KILLED) {
+                // Job is already finished or killed, no more running nor runnable
+                return true;
+            }
             // There's a slight pitfall between cancel above and kill below where
             // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
             // Then this protocol returns false for sure.
