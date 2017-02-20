@@ -103,8 +103,10 @@ public class CommandKillall implements SubCommand {
                 List<String> k = killed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
                 LOG.info("Jobs killed: {}", String.join(", ", k));
             }
-            List<String> f = failed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
-            LOG.error("Failed to kill jobs: [{}]", String.join(",", f));
+            if (!failed.isEmpty()) {
+                List<String> f = failed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
+                LOG.error("Failed to kill jobs: [{}]", String.join(",", f));
+            }
 
         } while (r.more());
         return total;
