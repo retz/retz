@@ -342,6 +342,7 @@ Server configuration file
 * ``retz.max.gpus = 0``: Sets GPU_RESOURCES aas GPU-enabled framework when max.gpus > 0
 * ``retz.max.ports = 10``
 * ``retz.max.disk = 1024``
+* ``retz.max.list-jobs = 65536`` Max number of jobs that is allowed to retrieve from client
 
 * ``retz.database.url = jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1`` : JDBC access URL
 * ``retz.database.driver = org.h2.Driver`` : JDBC Driver name

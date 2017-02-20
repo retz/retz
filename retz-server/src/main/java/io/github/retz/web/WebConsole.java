@@ -79,6 +79,8 @@ public final class WebConsole {
         staticFileLocation("/public");
 
         WebConsole.config = config;
+        JobRequestHandler.setMaxListJobSize(config.getMaxListJobSize());
+
         before(WebConsole::authenticate);
 
         after((req, res) -> {

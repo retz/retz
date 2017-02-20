@@ -56,6 +56,7 @@ public class JobRequestHandler {
 
     private static Optional<RetzScheduler> scheduler = Optional.empty();
     private static Optional<SchedulerDriver> driver = Optional.empty();
+    private static int MAX_LIST_JOB_SIZE = Integer.MAX_VALUE;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
@@ -69,6 +70,11 @@ public class JobRequestHandler {
         driver = Optional.ofNullable(d);
     }
 
+    static void setMaxListJobSize(int v) {
+        LOG.info("Setting max list-job size as {}", v);
+        MAX_LIST_JOB_SIZE = v;
+    }
+
     static String listJob(spark.Request req, spark.Response res) throws IOException {
         Optional<AuthHeader> authHeaderValue = WebConsole.getAuthInfo(req);
         LOG.debug("list jobs owned by {}", authHeaderValue.get().key());
@@ -77,7 +83,7 @@ public class JobRequestHandler {
                 listJobRequest.state(), listJobRequest.tag());
         String user = Objects.requireNonNull(authHeaderValue.get().key());
         try {
-            List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag());
+            List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag(), MAX_LIST_JOB_SIZE);
 
             boolean more = false;
             if (jobs.size() > ListJobResponse.MAX_JOB_NUMBER) {

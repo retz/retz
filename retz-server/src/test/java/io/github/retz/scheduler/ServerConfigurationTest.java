@@ -40,6 +40,8 @@ public class ServerConfigurationTest {
         assertEquals(42, config.getGcLeeway());
         assertEquals(3, config.getGcInterval());
         assertNotEquals("root", config.getUserName());
+
+        assertEquals(42, config.getMaxListJobSize());
     }
 
     @Test(expected=IllegalArgumentException.class)

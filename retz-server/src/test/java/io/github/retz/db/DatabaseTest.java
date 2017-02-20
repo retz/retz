@@ -174,19 +174,19 @@ public class DatabaseTest {
         assertEquals(1, db.countRunning());
 
         {
-            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.QUEUED, Optional.empty());
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.QUEUED, Optional.empty(), 1024);
             assertEquals(0, jobs.size());
         }
         {
-            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.STARTING, Optional.empty());
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.STARTING, Optional.empty(), 1024);
             assertEquals(1, jobs.size());
         }
         {
-            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.STARTED, Optional.empty());
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.STARTED, Optional.empty(), 1024);
             assertEquals(0, jobs.size());
         }
         {
-            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.FINISHED, Optional.empty());
+            List<Job> jobs = db.listJobs(u.keyId(), Job.JobState.FINISHED, Optional.empty(), 1024);
             assertEquals(0, jobs.size());
         }
     }

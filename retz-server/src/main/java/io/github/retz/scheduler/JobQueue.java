@@ -49,8 +49,8 @@ public class JobQueue {
     private JobQueue() {
     }
 
-    public static List<Job> list(String user, Job.JobState state, Optional<String> tag) throws IOException, SQLException {
-        return Database.getInstance().listJobs(user, state, tag);
+    public static List<Job> list(String user, Job.JobState state, Optional<String> tag, int limit) throws IOException, SQLException {
+        return Database.getInstance().listJobs(user, state, tag, limit);
     }
 
     // As this is issued by server without any transaction, this id may have

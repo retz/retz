@@ -2,6 +2,9 @@
 
 ## 0.2.2
 
+* Introduce server side limit on listing jobs, by default up to
+  65536 jobs, configurable with `retz.max.list-jobs` item in server
+  configuration.
 * Fix a bug that it was possible to kill a finished job.
 * Make Retz scheduling disk space aware. '--disk' is now added to
   'schedule' and 'run' to CLI as well as `disk` is added to some

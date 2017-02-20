@@ -48,6 +48,8 @@ public class ServerConfiguration extends FileConfiguration {
     public static final String DEFAULT_MAX_PORTS = "10";
     public static final String MAX_DISK = "retz.max.disk";
     public static final String DEFAULT_MAX_DISK = "1024"; // in MB
+    public static final String MAX_LIST_JOB_SIZE = "retz.max.list-jobs";
+    public static final String DEFAULT_MAX_LIST_JOB_SIZE = "65536";
 
     // Mesos connections and so on
     static final String MESOS_LOC_KEY = "retz.mesos";
@@ -146,14 +148,15 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize(),
                 USER_NAME, getUserName(),
                 MESOS_REFUSE_SECONDS, getRefuseSeconds(),
                 GC_LEEWAY, getGcLeeway(),
-                GC_INTERVAL, getGcInterval());
+                GC_INTERVAL, getGcInterval(),
+                MAX_LIST_JOB_SIZE, getMaxJobSize());
     }
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
@@ -254,6 +257,10 @@ public class ServerConfiguration extends FileConfiguration {
 
     public int getGcInterval() {
         return getLowerboundedIntProperty(GC_INTERVAL, DEFAULT_GC_INTERVAL, 1);
+    }
+
+    public int getMaxListJobSize() {
+        return Integer.parseInt(properties.getProperty(MAX_LIST_JOB_SIZE, DEFAULT_MAX_LIST_JOB_SIZE));
     }
 
     @Override
