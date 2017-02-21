@@ -28,16 +28,16 @@ import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.feign.Retz;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
-import java.io.BufferedInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
@@ -139,7 +139,7 @@ public class Client implements AutoCloseable {
                 () -> retz.getFile(id, Objects.requireNonNull(file), offset, length));
     }
 
-    public Pair<Integer, byte[]> getBinaryFile(int id, String file) throws IOException {
+    public int getBinaryFile(int id, String file, OutputStream out) throws IOException {
         String date = TimestampHelper.now();
         String resource = "/job/" + id + "/download?path=" + file;
         AuthHeader header = authenticator.header("GET", "", date, resource);
@@ -171,16 +171,19 @@ public class Client implements AutoCloseable {
         LOG.debug("Authorization: {} / S2S={}", header.buildHeader(), s2s);
 
         if (conn.getResponseCode() != 200) {
+            if (verboseLog) {
+                LOG.warn("HTTP Response:", conn.getResponseMessage());
+            }
             if (conn.getResponseCode() < 200) {
                 throw new AssertionError(conn.getResponseMessage());
             } else if (conn.getResponseCode() < 300) {
-                return new Pair<>(conn.getResponseCode(), "".getBytes(UTF_8)); // Mostly 204; success
+                return 0;
             } else if (conn.getResponseCode() < 400) {
-                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage().getBytes(UTF_8));
+                return 0;
             } else if (conn.getResponseCode() == 404) {
                 throw new FileNotFoundException(url.toString());
             } else {
-                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage().getBytes(UTF_8));
+                return 0;
             }
         }
 
@@ -189,22 +192,12 @@ public class Client implements AutoCloseable {
             throw new IOException("Illegal content length:" + size);
         } else if (size == 0) {
             // not bytes to save;
-            return new Pair<>(conn.getResponseCode(), new byte[0]);
+            return 0;
         } else if (size > MAX_BIN_SIZE) {
             throw new IOException("Download file too large: " + size);
         }
-        byte[] buffer = new byte[size];
-        try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream())) {
-
-            int offset = 0;
-            while (offset < size) {
-                int read = in.read(buffer, offset, size - offset);
-                if (read < 0) {
-                    break;
-                }
-                offset += read;
-            }
-            return new Pair<>(conn.getResponseCode(), buffer);
+        try {
+            return IOUtils.copy(conn.getInputStream(), out);
         } finally {
             conn.disconnect();
         }

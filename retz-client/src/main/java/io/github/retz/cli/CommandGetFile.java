@@ -97,10 +97,12 @@ public class CommandGetFile implements SubCommand {
                     return -1;
                 }
 
-
+                String fullpath = FilenameUtils.concat(resultDir, FilenameUtils.getName(filename));
                 LOG.info("Binary mode: ignoring offset and length but downloading while file to '{}/{}'.", resultDir, filename);
-                ClientHelper.getWholeBinaryFile(webClient, id, filename, resultDir);
-                return 0;
+                try (FileOutputStream out = new FileOutputStream(fullpath)) {
+                    ClientHelper.getWholeBinaryFile(webClient, id, filename, out);
+                    return 0;
+                }
             }
 
 

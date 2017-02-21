@@ -204,17 +204,13 @@ public class ClientHelper {
     public static void getWholeBinaryFile(Client c, int id, String path, String output) throws IOException {
         String fullpath = FilenameUtils.concat(output, FilenameUtils.getName(path));
         LOG.info("Saving {} as {}", path, fullpath);
-        Pair<Integer, byte[]> result = c.getBinaryFile(id, path);
-
         try (FileOutputStream out = new FileOutputStream(fullpath)) {
-            out.write(result.right());
+            c.getBinaryFile(id, path, out);
         }
     }
 
     public static void getWholeBinaryFile(Client c, int id, String path, OutputStream out) throws IOException {
-        LOG.info("Saving {} to stream", path);
-        Pair<Integer, byte[]> result = c.getBinaryFile(id, path);
-        out.write(result.right());
+        c.getBinaryFile(id, path, out);
     }
 
     static long readFileUntilEmpty(Client c, int id, String filename, long offset, OutputStream out) throws IOException {

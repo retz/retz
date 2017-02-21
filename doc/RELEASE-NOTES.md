@@ -2,6 +2,8 @@
 
 ## 0.2.2
 
+* Change `Client#getBinaryFile()` input argument from output path to
+  output stream to hide unnecessary binary copy.
 * Add an option to give multiple states of job to fetch from server
   to list command of CLI. State names separated commas for '--states'
   option makes client to fetch jobs of each state. Note that those
