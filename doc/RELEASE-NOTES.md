@@ -1,5 +1,9 @@
 # Retz release notes
 
+## 0.2.3
+
+* Any value in '--states' option is ignored when '--state' is specified
+
 ## 0.2.2
 
 * Add `ALL` syntax sugar representing all states of job, to 'list'.

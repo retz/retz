@@ -35,7 +35,7 @@ public class CommandList implements SubCommand {
     @Parameter(names = "--state", description = "State of jobs")
     private Job.JobState state;
 
-    @Parameter(names = "--states", description = "States of jobs to list separated by comma, or 'ALL' for all states")
+    @Parameter(names = "--states", description = "States of jobs to list separated by comma, or 'ALL' for all states. Will be ignored when '--state' is used")
     private String states = "QUEUED,STARTING,STARTED";
 
 
@@ -63,13 +63,14 @@ public class CommandList implements SubCommand {
                 .build()) {
 
             Optional<String> maybeTag = Optional.ofNullable(tag);
-            Set<Job.JobState> jobStates = parseStates(states);
+            Set<Job.JobState> jobStates;
 
             if (state != null) {
+                jobStates = new HashSet<>();
                 jobStates.add(state);
+            } else {
+                jobStates = parseStates(states);
             }
-
-
 
             Map<Integer, Job> jobMap = new LinkedHashMap<>();
             for (Job.JobState s : jobStates) {

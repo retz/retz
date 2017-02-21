@@ -91,7 +91,7 @@ Client CLI and API
 
 * ``--state STATE`` Fetch all jobs in the state
 * ``--states [STATE]`` Fetch all jobs in any of the states. Default is ``QUEUED,STARTING,STARTED``.
-  ``ALL`` stands for all states.
+  ``ALL`` stands for all states. Will be ignored when '--state' is used.
 * ``--tag TAG`` Fetch only jobs that has the tag, from those that has the
   state specified by ``--state`` or ``--states`` .
 
