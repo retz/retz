@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.2.4
+
+* Select query on listing jobs were using 'ASC' in job id order but
+  should be descending order to list latest ones.
+
 ## 0.2.3
 
 * Any value in '--states' option is ignored when '--state' is specified

@@ -457,7 +457,7 @@ public class Database {
     public List<Job> listJobs(String id, Job.JobState state, Optional<String> tag, int limit) throws SQLException {
         List<Job> ret = new LinkedList<>();
         String prefix = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
-        String sql = prefix + " AND j.state=? ORDER BY j.id ASC LIMIT ?";
+        String sql = prefix + " AND j.state=? ORDER BY j.id DESC LIMIT ?";
 
         try (Connection conn = dataSource.getConnection(); // pool.getConnection();
              PreparedStatement p = conn.prepareStatement(sql)) {
