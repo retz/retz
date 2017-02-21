@@ -90,7 +90,8 @@ Client CLI and API
    in Java API. ``OPTIONS`` include one of following:
 
 * ``--state STATE`` Fetch all jobs in the state
-* ``--states [STATE]`` Fetch all jobs in any of the states. Default is ``QUEUED,STARTING,STARTED``
+* ``--states [STATE]`` Fetch all jobs in any of the states. Default is ``QUEUED,STARTING,STARTED``.
+  ``ALL`` stands for all states.
 * ``--tag TAG`` Fetch only jobs that has the tag, from those that has the
   state specified by ``--state`` or ``--states`` .
 

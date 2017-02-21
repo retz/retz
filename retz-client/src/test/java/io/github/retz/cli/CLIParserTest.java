@@ -20,6 +20,7 @@ import io.github.retz.protocol.data.Job;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -60,11 +61,21 @@ public class CLIParserTest {
     @Test
     public void statesParserTest() {
         CommandList cmd = new CommandList();
-        Set<Job.JobState> states = cmd.parseStates("QUEUED,STARTING,STARTED");
-        assertTrue(states.contains(Job.JobState.QUEUED));
-        assertTrue(states.contains(Job.JobState.STARTING));
-        assertTrue(states.contains(Job.JobState.STARTED));
-        assertFalse(states.contains(Job.JobState.FINISHED));
-        assertFalse(states.contains(Job.JobState.KILLED));
+        {
+            Set<Job.JobState> states = cmd.parseStates("QUEUED,STARTING,STARTED");
+            assertTrue(states.contains(Job.JobState.QUEUED));
+            assertTrue(states.contains(Job.JobState.STARTING));
+            assertTrue(states.contains(Job.JobState.STARTED));
+            assertFalse(states.contains(Job.JobState.FINISHED));
+            assertFalse(states.contains(Job.JobState.KILLED));
+        }
+        {
+            Set<Job.JobState> states = cmd.parseStates("ALL");
+            for(Job.JobState s : Job.JobState.class.getEnumConstants()){
+                System.out.println("State: " + s);
+                assertTrue(states.contains(s));
+            }
+        }
+
     }
 }

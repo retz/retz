@@ -25,6 +25,7 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,7 @@ public class CommandList implements SubCommand {
     @Parameter(names = "--state", description = "State of jobs")
     private Job.JobState state;
 
-    @Parameter(names = "--states", description = "States of jobs separated by comma")
+    @Parameter(names = "--states", description = "States of jobs to list separated by comma, or 'ALL' for all states")
     private String states = "QUEUED,STARTING,STARTED";
 
 
@@ -127,6 +128,11 @@ public class CommandList implements SubCommand {
     }
 
     Set<Job.JobState> parseStates(String states) {
+
+        if ("ALL".equals(states)) {
+            return Arrays.stream(Job.JobState.values()).collect(Collectors.toSet());
+        }
+
         Set<Job.JobState> set = new HashSet<>();
         if (states != null) {
             for (String s : states.split(",")) {

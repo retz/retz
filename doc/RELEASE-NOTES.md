@@ -2,6 +2,7 @@
 
 ## 0.2.2
 
+* Add `ALL` syntax sugar representing all states of job, to 'list'.
 * Change `Client#getBinaryFile()` input argument from output path to
   output stream to hide unnecessary binary copy.
 * Add an option to give multiple states of job to fetch from server
