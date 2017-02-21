@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.github.retz.protocol.data.Job.JobState.*;
 
@@ -266,7 +267,7 @@ public class Job {
         StringBuilder sb = new StringBuilder("{")
                 .append("id=").append(id)
                 .append(", name=").append(name)
-                .append(", tags=[").append(String.join(",", tags)).append("]")
+                .append(", tags=[").append(String.join(",", tags.stream().sorted().collect(Collectors.toList()))).append("]")
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
                 .append(", env=").append(props)
@@ -298,7 +299,7 @@ public class Job {
         StringBuilder sb = new StringBuilder("{")
                 .append("id=").append(id)
                 .append(", name=").append(name)
-                .append(", tags=[").append(String.join(",", tags)).append("]")
+                .append(", tags=[").append(String.join(",", tags.stream().sorted().collect(Collectors.toList()))).append("]")
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
                 .append(", env=").append(props)

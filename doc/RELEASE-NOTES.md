@@ -7,6 +7,7 @@
 
 ## 0.2.3
 
+* Sort tags in 'list' result
 * Any value in '--states' option is ignored when '--state' is specified
 
 ## 0.2.2

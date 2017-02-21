@@ -112,7 +112,7 @@ public class CommandList implements SubCommand {
                     formatter.feed(Integer.toString(job.id()), job.state().toString(),
                             job.appid(), job.cmd(), result, duration,
                             job.scheduled(), job.started(), job.finished(),
-                            String.join(",", job.tags()));
+                            String.join(",", job.tags().stream().sorted().collect(Collectors.toList())));
                 }
             }
             LOG.info(formatter.titles());
