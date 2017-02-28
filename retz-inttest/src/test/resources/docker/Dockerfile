@@ -2,6 +2,10 @@ FROM centos:7.2.1511
 
 ENV container docker
 
+## https://docs.docker.com/engine/userguide/storagedriver/overlayfs-driver/
+## Handling the OverlayFS’s aspect which is incompatible with other filesystems:
+RUN yum -y install yum-plugin-ovl
+
 RUN yum -y install iproute httpd
 
 # SystemD, or cgroups, is necessary for mesos-slave, mesos-master does not need it.
