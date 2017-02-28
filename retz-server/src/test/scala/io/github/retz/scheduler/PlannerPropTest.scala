@@ -68,7 +68,7 @@ class PlannerPropTest extends JUnitSuite {
   @Test
   def plannerInvariantProp(): Unit = {
     Checkers.check(Prop.forAll(
-      Gen.oneOf("naive", "priority"),
+      Gen.oneOf("naive", "priority", "naive2", "priority2"),
       RetzDataGen.application(owner),
       jobs,
       offers(fid),
@@ -78,8 +78,9 @@ class PlannerPropTest extends JUnitSuite {
        jobs: List[Job],
        offers: List[Offer],
        maxStock) => {
+        var config = new ServerConfiguration("src/test/resources/retz.properties")
         var appJobs = jobs.map(job => new AppJobPair(Optional.of(application), job))
-        var planner: Planner = PlannerFactory.create(plannerName);
+        var planner: Planner = PlannerFactory.create(plannerName, config);
         var plan: Plan = planner.plan(offers.asJava, appJobs.asJava, maxStock, "nobody");
         var totalJobsToLaunch = plan.getOfferAcceptors.asScala.foldLeft(0)( (sum, acceptor) => sum + acceptor.getJobs.size() )
         println(jobs.size, offers.size, maxStock, "=>", plan.getOfferAcceptors.size(), plan.getToStock.size())

@@ -16,18 +16,40 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.planner.ExtensiblePlannerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 
 public class PlannerFactory {
     private static final Logger LOG = LoggerFactory.getLogger(PlannerFactory.class);
 
-    public static Planner create(String name) {
-        if ("priority".equals(name)) {
-            LOG.info("Using PriorityPlanner({})", name);
-            return new PriorityPlanner();
+    public static Planner create(String name, ServerConfiguration serverConfig) throws Throwable {
+        Properties properties = serverConfig.copyAsProperties();
+
+        if (serverConfig.isBuiltInPlanner()) {
+
+            if ("priority".equals(name)) {
+                LOG.info("Using PriorityPlanner({})", name);
+                return new PriorityPlanner();
+
+            } else if ("naive2".equals(name)) {
+                LOG.info("Using NaivePlanner 2", name);
+                String classname = "io.github.retz.planner.builtin.NaivePlanner";
+                return new ExtensiblePlanner(ExtensiblePlannerFactory.create(classname, serverConfig.classpath()), properties);
+
+            } else if ("priority2".equals(name)) {
+                LOG.info("Using PriorityPlanner 2", name);
+                String classname = "io.github.retz.planner.builtin.PriorityPlanner";
+                return new ExtensiblePlanner(ExtensiblePlannerFactory.create(classname, serverConfig.classpath()), properties);
+            }
+            LOG.info("Using NaivePlanner");
+            return new NaivePlanner();
         }
-        LOG.info("Using NaivePlanner");
-        return new NaivePlanner();
+
+        return new ExtensiblePlanner(ExtensiblePlannerFactory.create(name, serverConfig.classpath()), properties);
     }
 }

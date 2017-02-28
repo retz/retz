@@ -104,7 +104,13 @@ public final class Launcher {
         // BTW after connecting to Mesos it looks like re-sending unacked messages.
         maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getInstance().getRunning());
 
-        RetzScheduler scheduler = new RetzScheduler(conf, fw);
+        RetzScheduler scheduler;
+        try {
+            scheduler = new RetzScheduler(conf, fw);
+        }catch (Throwable t) {
+            LOG.error("Cannot initialize scheduler", t);
+            return -1;
+        }
         SchedulerDriver driver = SchedulerDriverFactory.create(scheduler, conf, fw);
 
         Protos.Status status = driver.start();

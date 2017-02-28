@@ -16,14 +16,18 @@
  */
 package io.github.retz.scheduler;
 
-import java.util.Arrays;
-import java.util.List;
+import org.junit.Test;
 
-public class PriorityPlanner extends NaivePlanner implements Planner {
-    private final List<String> ORDER_BY = Arrays.asList("priority", "id");
+import static org.junit.Assert.assertEquals;
 
-    @Override
-    public List<String> orderBy() {
-        return ORDER_BY;
+public class NaivePlannerTest extends PlannerTest {
+
+    String makePlannerName() {
+        return "naive";
+    }
+
+    @Test
+    public void orderByTest() {
+        assertEquals("id", planner.orderBy().get(0));
     }
 }

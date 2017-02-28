@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class ServerConfiguration extends FileConfiguration {
 
@@ -84,7 +81,10 @@ public class ServerConfiguration extends FileConfiguration {
 
     private final String PLANNER_NAME = "retz.planner.name";
     private final String DEFAULT_PLANNER_NAME = "naive";
-    private final String[] PLANNER_NAMES = {"naive", "priority"};
+    private final String[] PLANNER_NAMES = {"naive", "priority", "naive2", "priority2"};
+
+    private final String ADDITIONAL_CLASSPATH = "retz.classpath";
+    private final String DEFAULT_ADDITIONAL_CLASSPATH = "/opt/retz-server/lib";
 
     // Leeway seconds before old job entries get deleted by Retz.
     // As we may think of many race conditions on task finish at Mesos
@@ -261,6 +261,19 @@ public class ServerConfiguration extends FileConfiguration {
 
     public int getMaxListJobSize() {
         return Integer.parseInt(properties.getProperty(MAX_LIST_JOB_SIZE, DEFAULT_MAX_LIST_JOB_SIZE));
+    }
+
+    public Properties copyAsProperties() {
+        return (Properties)properties.clone();
+    }
+
+    public String classpath() {
+        return properties.getProperty(ADDITIONAL_CLASSPATH, DEFAULT_ADDITIONAL_CLASSPATH);
+    }
+
+    public boolean isBuiltInPlanner() {
+        List builtInPlanners = Arrays.asList(PLANNER_NAMES);
+        return builtInPlanners.contains(getPlannerName());
     }
 
     @Override

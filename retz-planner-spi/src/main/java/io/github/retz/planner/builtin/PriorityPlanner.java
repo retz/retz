@@ -14,12 +14,12 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner.builtin;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class PriorityPlanner extends NaivePlanner implements Planner {
+public class PriorityPlanner extends NaivePlanner {
     private final List<String> ORDER_BY = Arrays.asList("priority", "id");
 
     @Override

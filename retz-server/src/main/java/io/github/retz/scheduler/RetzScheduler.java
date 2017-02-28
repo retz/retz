@@ -62,9 +62,9 @@ public class RetzScheduler implements Scheduler {
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
 
-    public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) {
+    public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) throws Throwable {
         MAPPER.registerModule(new Jdk8Module());
-        PLANNER = PlannerFactory.create(conf.getServerConfig().getPlannerName());
+        PLANNER = PlannerFactory.create(conf.getServerConfig().getPlannerName(), conf.getServerConfig());
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();

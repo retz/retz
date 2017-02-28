@@ -24,6 +24,7 @@ import io.github.retz.protocol.data.MesosContainer;
 import org.apache.mesos.Protos;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -32,21 +33,26 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class PlannerTest {
-    private Planner planner;
+    protected Planner planner;
     private Protos.FrameworkID fid;
 
     private static final String ANON_APPID = "anon";
 
+    String makePlannerName() throws Exception {
+        throw new RuntimeException("This class shouldn't be tested");
+    }
 
     @Before
-    public void before() throws Exception {
-        planner = (Planner)new NaivePlanner();
+    public void before() throws Throwable {
+        //planner = (Planner)new NaivePlanner();
         fid = Protos.FrameworkID.newBuilder().setValue("dummy-frameworkid-qwerty").build();
         InputStream in = Launcher.class.getResourceAsStream("/retz.properties");
         Launcher.Configuration conf = new Launcher.Configuration(new ServerConfiguration(in));
         Database.getInstance().init(conf.getServerConfig());
 
+        planner = PlannerFactory.create(makePlannerName(), conf.getServerConfig());
          Application anon =
                 new Application(ANON_APPID, Arrays.asList(), Arrays.asList(),
                         Optional.empty(), conf.getServerConfig().getUser().keyId(),
@@ -107,6 +113,7 @@ public class PlannerTest {
         assertEquals(0, p.getToKeep().size());
         assertEquals(0, p.getToStock().size());
         for(int i = 0; i < 2; ++i) {
+            System.err.println(i);
             assertTrue(!p.getOfferAcceptors().get(i).getJobs().isEmpty());
             Job job = p.getOfferAcceptors().get(i).getJobs().get(0);
             assertEquals(i, job.id());
@@ -118,6 +125,7 @@ public class PlannerTest {
     @Test
     public void eightJobs() {
         Optional<Application> app = Applications.get(ANON_APPID);
+        assertTrue(app.isPresent());
 
         {
             List<Protos.Offer> offers = new LinkedList<>();
@@ -127,7 +135,7 @@ public class PlannerTest {
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             for (int i = 0; i < 8; ++i) {
-                Job job = new Job("boom", "cmd", new Properties(), 4, 128, 1024);
+                Job job = new Job(ANON_APPID, "cmd", new Properties(), 4, 128, 1024);
                 job.schedule(i, TimestampHelper.now());
                 jobs.add(new AppJobPair(app, job));
 
@@ -153,7 +161,7 @@ public class PlannerTest {
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             for (int i = 0; i < 8; ++i) {
-                Job job = new Job("boom", "cmd", new Properties(), 4, 128, 24);
+                Job job = new Job(ANON_APPID, "cmd", new Properties(), 4, 128, 24);
                 job.schedule(i, TimestampHelper.now());
                 jobs.add(new AppJobPair(app, job));
 

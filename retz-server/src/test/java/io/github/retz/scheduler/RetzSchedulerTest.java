@@ -44,7 +44,7 @@ public class RetzSchedulerTest {
     ObjectMapper mapper;
 
     @Before
-    public void before() throws Exception {
+    public void before() throws Throwable {
         mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
 

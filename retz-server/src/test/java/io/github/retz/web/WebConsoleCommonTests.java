@@ -55,7 +55,7 @@ public class WebConsoleCommonTests {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws Throwable {
 
         Protos.FrameworkInfo frameworkInfo = Protos.FrameworkInfo.newBuilder()
                 .setUser("")

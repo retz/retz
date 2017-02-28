@@ -145,6 +145,13 @@ def makeClientPropertyFile(basedir, testType, name, version) {
 }
 
 
+project(':retz-planner-spi') {
+
+    dependencies {
+        compile project(":retz-common")
+        compile 'org.slf4j:slf4j-api:1.7.21'
+    }
+}
 project(':retz-server') {
     apply plugin: 'application'
     apply plugin: "com.github.johnrengelman.shadow"
@@ -153,6 +160,7 @@ project(':retz-server') {
 
     dependencies {
         compile project(":retz-common")
+        compile project(":retz-planner-spi")
 
         compile 'org.slf4j:slf4j-api:1.7.21'
         compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
