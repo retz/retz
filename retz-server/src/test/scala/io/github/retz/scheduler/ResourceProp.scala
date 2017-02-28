@@ -62,7 +62,7 @@ class ResourceProp extends JUnitSuite {
       (cpus: Int, mem: Int, disk: Int, gpus: Int, ports: Int, q: ResourceQuantity) => {
         val job = new Job("x", "a", new Properties(), cpus+1, mem + 32, disk + 32, gpus, ports)
         val fit = q.fits(job)
-        val nofit = cpus+1> q.getCpu || mem + 32 > q.getMemMB || gpus > q.getGpu || ports > q.getPorts || 0 > q.getDiskMB
+        val nofit = cpus+1> q.getCpu || mem + 32 > q.getMemMB || gpus > q.getGpu || ports > q.getPorts || disk > q.getDiskMB
         println(cpus+1, mem+32, gpus, ports, q, fit, nofit, fit != nofit)
         fit != nofit
       }
