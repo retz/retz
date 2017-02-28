@@ -16,4 +16,5 @@ include 'retz-inttest'
 
 rootProject.name = 'retz'
 include 'retz-admin'
+include 'retz-planner-spi'
 

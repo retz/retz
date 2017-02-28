@@ -14,16 +14,25 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner.spi;
+
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.ResourceQuantity;
+import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Properties;
 
-public class PriorityPlanner extends NaivePlanner implements Planner {
-    private final List<String> ORDER_BY = Arrays.asList("priority", "id");
-
-    @Override
-    public List<String> orderBy() {
-        return ORDER_BY;
+/**
+ * Created by kuenishi on 17/02/28.
+ */
+public class PlannerMockTest {
+    @Test
+    public void t() {
+        Planner p = new PlannerMock();
+        p.orderBy();
+        p.filter(new Job("1", "a", new Properties(), 1, 32, 32));
+        p.plan(new HashMap<>(), Arrays.asList());
     }
 }

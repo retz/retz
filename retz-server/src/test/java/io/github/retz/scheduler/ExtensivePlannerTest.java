@@ -16,14 +16,8 @@
  */
 package io.github.retz.scheduler;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class PriorityPlanner extends NaivePlanner implements Planner {
-    private final List<String> ORDER_BY = Arrays.asList("priority", "id");
-
-    @Override
-    public List<String> orderBy() {
-        return ORDER_BY;
+public class ExtensivePlannerTest extends PlannerTest {
+    String makePlannerName() {
+        return "naive2";
     }
 }

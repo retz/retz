@@ -53,11 +53,15 @@ public class ResourceQuantity {
     }
 
     public boolean fits(Job job) {
-        return job.resources().getCpu() <= cpu &&
-                job.resources().getMemMB() <= memMB &&
-                job.resources().getGpu() <= gpu &&
-                job.resources().getPorts() <= ports &&
-                job.resources().getDiskMB() <= diskMB;
+        return fits(job.resources());
+    }
+
+    public boolean fits (ResourceQuantity resourceQuantity) {
+        return resourceQuantity.getCpu() <= cpu &&
+                resourceQuantity.getMemMB() <= memMB &&
+                resourceQuantity.getGpu() <= gpu &&
+                resourceQuantity.getPorts() <= ports &&
+                resourceQuantity.getDiskMB() <= diskMB;
     }
 
     @JsonGetter("cpu")
@@ -106,6 +110,10 @@ public class ResourceQuantity {
         this.diskMB += diskMB;
     }
 
+    public ResourceQuantity copy(ResourceQuantity q) {
+        return new ResourceQuantity(q.getCpu(), q.getMemMB(), q.getGpu(),
+                q.getPorts(), q.getDiskMB(), q.getNodes());
+    }
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder()

@@ -40,7 +40,7 @@ public class TaskBuilder {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    TaskBuilder() {
+    public TaskBuilder() {
         builder = Protos.TaskInfo.newBuilder();
     }
 

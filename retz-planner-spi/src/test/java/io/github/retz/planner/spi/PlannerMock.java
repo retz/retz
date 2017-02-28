@@ -14,36 +14,41 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner.spi;
 
 import io.github.retz.protocol.data.Job;
-import org.apache.mesos.Protos;
+import io.github.retz.protocol.data.ResourceQuantity;
 
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.Properties;
 
-public class Plan {
-    private List<OfferAcceptor> offerAcceptors;
-    private List<Job> toKeep;
-    private List<Protos.Offer> toStock;
+public class PlannerMock implements Planner {
 
-    public Plan(List<OfferAcceptor> offerAcceptors,
-         List<Job> toKeep,
-         List<Protos.Offer> toStock) {
-        this.offerAcceptors = Objects.requireNonNull(offerAcceptors);
-        this.toKeep = Objects.requireNonNull(toKeep);
-        this.toStock = Objects.requireNonNull(toStock);
+    @Override
+    public void initialize(Properties p) {
     }
 
-    public List<OfferAcceptor> getOfferAcceptors() {
-        return offerAcceptors;
+    @Override
+    public boolean filter(Job job) {
+        return false;
     }
 
-    public List<Job> getToKeep() {
-        return toKeep;
+    @Override
+    public List<String> orderBy() {
+        return null;
     }
 
-    public List<Protos.Offer> getToStock() {
-        return toStock;
+    @Override
+    public Plan plan(Map<String, ResourceQuantity> offers, List<Job> jobs) {
+        return null;
+    }
+
+    @Override
+    public void setMaxStock(int maxStock) {
+    }
+
+    @Override
+    public void setUseGpu(boolean useGpu) {
     }
 }
