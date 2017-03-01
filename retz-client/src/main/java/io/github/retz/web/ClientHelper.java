@@ -167,11 +167,7 @@ public class ClientHelper {
                 maybeSleep(interval);
 
                 if (bytesRead == 0) {
-                    if (interval < MAX_INTERVAL_MSEC) {
-                        interval = interval * 2;
-                    } else {
-                        interval = MAX_INTERVAL_MSEC;
-                    }
+                    interval = Math.min(interval * 2, MAX_INTERVAL_MSEC);
                 } else {
                     interval = INITAL_INTERVAL_MSEC;
                 }
@@ -250,11 +246,7 @@ public class ClientHelper {
         int interval = INITAL_INTERVAL_MSEC;
         while (current.state() == Job.JobState.QUEUED) {
             maybeSleep(interval);
-            if (interval < MAX_INTERVAL_MSEC) {
-                interval = interval * 2;
-            } else {
-                interval = MAX_INTERVAL_MSEC;
-            }
+            interval = Math.min(interval * 2, MAX_INTERVAL_MSEC);
 
             try {
                 if (terminate != null && terminate.call()) {
