@@ -2,6 +2,8 @@
 
 ## 0.2.4
 
+* Fix client-side polling interval increase logic on 'run', where 5th
+  increase exceeds the limit.
 * Select query on listing jobs were using 'ASC' in job id order but
   should be descending order to list latest ones.
 
