@@ -27,7 +27,9 @@ there. But Linux is strongly recommended as Apache Mesos depends
 heavily on Linux kernel related technology such as cgroups, App and
 docker. Please refer to `official document
 <http://mesos.apache.org/documentation/latest/>`_ for further details
-and coverage.
+and coverage. Alternatively, `Mesosphere's repository and instruction
+ <http://open.mesosphere.com/downloads/mesos/#installation>`_ is also
+good for simple installation.
 
 For high availability in the sense of automatic fail-over of masters,
 Mesos requires `Apache ZooKeeper <https://zookeeper.apache.org/>`_
