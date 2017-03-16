@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.2.5
+
+* [Experimental] Add 'planner.classpath' to load third-party planner
+  dynamically on startup. Retz server tries to load all jar files
+  recursively placed under that directory. See `io.github.retz.planner.spi.Planner`
+  for more on creating custom planner.
+
 ## 0.2.4
 
 * Fix client-side polling interval increase logic on 'run', where 5th

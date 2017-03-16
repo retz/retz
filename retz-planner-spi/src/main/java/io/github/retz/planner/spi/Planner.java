@@ -26,7 +26,14 @@ import java.util.Properties;
 /**
  * Retz server will have only one Planner instance within
  * RetzScheduler - so that an actual Planner implemenatation
- * instance may have states inside
+ * instance may have states inside.
+ *
+ * Important Note: in 'orderBy', 'filter', 'plan', all of these
+ * MUST NOT perform any external I/O like network access, disk access,
+ * DB queries as they're in hot path of core scheduling logics
+ * of Retz. If any of these methods block, the whole scheduling
+ * system may block or freak out. See `Stanchion.java` for how
+ * these processes may potentially block.
  */
 public interface Planner {
 
@@ -35,11 +42,18 @@ public interface Planner {
     // thrown if there is any wrong configuration to cancel startup.
     void initialize(Properties p) throws Throwable;
 
+    // Returns list of column names according to sort priority.
+    // Strings must exist in 'jobs' table as columns, as these
+    // Strings are used for 'ORDER BY' part of SQL query inside
+    // Retz.
+    // TODO: think of more smarter way of finding these
     List<String> orderBy();
     // Selected jobs => true
     // Filtered-out jobs => false
     boolean filter(Job job);
 
+    // Core callback method that determines matching of jobs and offers,
+    // which job assined to which offer (agent) etc etc...
     // TODO: offers and jobs should be immutable as they may be reused after plan
     Plan plan(Map<String, ResourceQuantity> offers, List<Job> jobs);
 

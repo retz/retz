@@ -81,7 +81,7 @@ public class ServerConfiguration extends FileConfiguration {
 
     private final String PLANNER_NAME = "retz.planner.name";
     private final String DEFAULT_PLANNER_NAME = "naive";
-    private final String[] PLANNER_NAMES = {"naive", "priority", "naive2", "priority2"};
+    private final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
 
     private final String ADDITIONAL_CLASSPATH = "retz.classpath";
     private final String DEFAULT_ADDITIONAL_CLASSPATH = "/opt/retz-server/lib";
@@ -132,12 +132,6 @@ public class ServerConfiguration extends FileConfiguration {
 
         databaseURL = properties.getProperty(DATABASE_URL, DEFAULT_DATABASE_URL);
         databaseDriver = properties.getProperty(DATABASE_DRIVER_CLASS, DEFAULT_DATABASE_DRIVER_CLASS);
-
-        String planner = properties.getProperty(PLANNER_NAME, DEFAULT_PLANNER_NAME);
-        if (!Arrays.asList(PLANNER_NAMES).contains(planner)) {
-            LOG.error("Planner must be one of ({}): found {}", String.join(", ", PLANNER_NAMES), planner);
-            throw new IllegalArgumentException("Unknown planner " + planner);
-        }
 
         if ("root".equals(getUserName()) || getUserName().isEmpty()) {
             LOG.error("{} must not be 'root' nor empty", USER_NAME);

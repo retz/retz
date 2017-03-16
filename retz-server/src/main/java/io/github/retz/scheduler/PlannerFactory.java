@@ -36,7 +36,7 @@ public class PlannerFactory {
                 LOG.info("Using PriorityPlanner({})", name);
                 return new PriorityPlanner();
 
-            } else if ("naive2".equals(name)) {
+            } else if ("fifo".equals(name)) {
                 LOG.info("Using NaivePlanner 2", name);
                 String classname = "io.github.retz.planner.builtin.NaivePlanner";
                 return new ExtensiblePlanner(ExtensiblePlannerFactory.create(classname, serverConfig.classpath()), properties);
