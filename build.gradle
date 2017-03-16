@@ -11,6 +11,7 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:3.+'
         classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1"
         classpath 'com.netflix.nebula:gradle-aggregate-javadocs-plugin:2.2.+'
+        deployerJars 'org.springframework.build:aws-maven:5.0.0.RELEASE'
     }
 }
 
@@ -40,6 +41,16 @@ allprojects {
         ext.name = 'Nautilus Technologies, Inc.'
 
         excludes(["**/*.json", "**/*.jks"])
+    }
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                configuration = project.configurations.deployerJars
+                repository id: 'io.github.retz.releases', url: 's3://retz-maven/releases'
+                snapshotRepository id: 'io.github.retz.snapshots', url: 's3://retz-maven/snapshots'
+            }
+        }
     }
 }
 
