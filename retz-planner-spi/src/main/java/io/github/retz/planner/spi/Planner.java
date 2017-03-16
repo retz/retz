@@ -34,6 +34,10 @@ import java.util.Properties;
  * of Retz. If any of these methods block, the whole scheduling
  * system may block or freak out. See `Stanchion.java` for how
  * these processes may potentially block.
+ *
+ * Important Note 2: This Service Provider Interface is still
+ * very young boiler plate, which will frequently changed along
+ * with future addition of many other built in planners.
  */
 public interface Planner {
 
