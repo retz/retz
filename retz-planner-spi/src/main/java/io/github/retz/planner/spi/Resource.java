@@ -14,11 +14,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner.spi;
 
 import io.github.retz.protocol.data.Range;
 import io.github.retz.protocol.data.ResourceQuantity;
-import org.apache.mesos.Protos;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -128,47 +127,6 @@ public class Resource {
         return new Resource(cpu, memMB, 0, gpus, ranges);
     }
 
-    public List<Protos.Resource> construct() {
-        List<Protos.Resource> list = new LinkedList<Protos.Resource>();
-        list.add(Protos.Resource.newBuilder()
-                .setName("cpus")
-                .setScalar(Protos.Value.Scalar.newBuilder().setValue(cpu).build())
-                .setType(Protos.Value.Type.SCALAR)
-                .build());
-        list.add(Protos.Resource.newBuilder()
-                .setName("mem")
-                .setScalar(Protos.Value.Scalar.newBuilder().setValue(memMB))
-                .setType(Protos.Value.Type.SCALAR)
-                .build());
-        if (diskMB > 0) {
-            list.add(Protos.Resource.newBuilder()
-                    .setName("disk")
-                    .setScalar(Protos.Value.Scalar.newBuilder().setValue(diskMB))
-                    .setType(Protos.Value.Type.SCALAR)
-                    .build());
-        }
-        if (gpu > 0) {
-            list.add(Protos.Resource.newBuilder()
-                    .setName("gpus")
-                    .setScalar(Protos.Value.Scalar.newBuilder().setValue(gpu))
-                    .setType(Protos.Value.Type.SCALAR)
-                    .build());
-        }
-        if (! ports.isEmpty()) {
-            list.add(Protos.Resource.newBuilder()
-                    .setName("ports")
-                    .setRanges(Protos.Value.Ranges.newBuilder().addAllRange(
-                            ports.stream().map(range ->
-                                    Protos.Value.Range.newBuilder()
-                                            .setBegin(range.getMin())
-                                            .setEnd(range.getMax())
-                                            .build()
-                            ).collect(Collectors.toList())).build())
-                    .setType(Protos.Value.Type.RANGES)
-                    .build());
-        }
-        return list;
-    }
 
     public ResourceQuantity toQuantity() {
         return new ResourceQuantity((int)cpu, memMB, gpu, portAmount(), diskMB, 0);

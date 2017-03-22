@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.Job;
@@ -46,7 +47,7 @@ public class TaskBuilder {
 
     public TaskBuilder setResource(Resource r, Protos.SlaveID slaveID) {
         assigned = r;
-        builder.addAllResources(r.construct());
+        builder.addAllResources(ResourceConstructor.construct(r));
         builder.setSlaveId(slaveID);
         return this;
     }

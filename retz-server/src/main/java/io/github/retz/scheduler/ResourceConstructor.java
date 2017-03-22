@@ -16,13 +16,57 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ResourceConstructor {
+    public static List<Protos.Resource> construct(Resource r) {
+        List<Protos.Resource> list = new LinkedList<Protos.Resource>();
+        list.add(Protos.Resource.newBuilder()
+                .setName("cpus")
+                .setScalar(Protos.Value.Scalar.newBuilder().setValue(r.cpu()).build())
+                .setType(Protos.Value.Type.SCALAR)
+                .build());
+        list.add(Protos.Resource.newBuilder()
+                .setName("mem")
+                .setScalar(Protos.Value.Scalar.newBuilder().setValue(r.memMB()))
+                .setType(Protos.Value.Type.SCALAR)
+                .build());
+        if (r.diskMB() > 0) {
+            list.add(Protos.Resource.newBuilder()
+                    .setName("disk")
+                    .setScalar(Protos.Value.Scalar.newBuilder().setValue(r.diskMB()))
+                    .setType(Protos.Value.Type.SCALAR)
+                    .build());
+        }
+        if (r.gpu() > 0) {
+            list.add(Protos.Resource.newBuilder()
+                    .setName("gpus")
+                    .setScalar(Protos.Value.Scalar.newBuilder().setValue(r.gpu()))
+                    .setType(Protos.Value.Type.SCALAR)
+                    .build());
+        }
+        if (! r.ports().isEmpty()) {
+            list.add(Protos.Resource.newBuilder()
+                    .setName("ports")
+                    .setRanges(Protos.Value.Ranges.newBuilder().addAllRange(
+                            r.ports().stream().map(range ->
+                                    Protos.Value.Range.newBuilder()
+                                            .setBegin(range.getMin())
+                                            .setEnd(range.getMax())
+                                            .build()
+                            ).collect(Collectors.toList())).build())
+                    .setType(Protos.Value.Type.RANGES)
+                    .build());
+        }
+        return list;
+    }
+
     public static List<Protos.Resource> construct(int cpus, int memMB) {
         List<Protos.Resource> list = new LinkedList<Protos.Resource>();
         list.add(Protos.Resource.newBuilder()

@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;

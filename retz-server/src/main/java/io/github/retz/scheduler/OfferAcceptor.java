@@ -16,6 +16,7 @@
  */
 package io.github.retz.scheduler;
 
+import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;

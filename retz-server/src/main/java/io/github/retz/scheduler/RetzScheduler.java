@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
+import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.protocol.exception.JobNotFoundException;
