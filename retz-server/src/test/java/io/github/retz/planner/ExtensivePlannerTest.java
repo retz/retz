@@ -14,31 +14,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner;
 
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
-
-import java.util.Optional;
-
-public class AppJobPair {
-    private final Optional<Application> app;
-    private final Job job;
-
-    public AppJobPair(Optional<Application> a, Job j) {
-        app = a;
-        job = j;
-    }
-
-    boolean hasApplication() {
-        return app.isPresent();
-    }
-
-    public Application application() {
-        return app.get();
-    }
-
-    public Job job() {
-        return job;
+public class ExtensivePlannerTest extends PlannerTest {
+    String makePlannerName() {
+        return "naive2";
     }
 }

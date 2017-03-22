@@ -14,8 +14,9 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner;
 
+import io.github.retz.planner.ResourceConstructor;
 import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;

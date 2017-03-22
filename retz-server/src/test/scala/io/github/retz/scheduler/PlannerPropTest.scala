@@ -17,6 +17,7 @@
 package io.github.retz.scheduler
 
 import java.util.Optional
+
 import org.junit.Test
 import org.scalacheck.{Gen, Prop}
 import org.scalatest.junit.JUnitSuite
@@ -24,6 +25,7 @@ import org.scalatest.prop.Checkers
 import io.github.retz.protocol.data.{Application, Job}
 import io.github.retz.protocol.RetzDataGen
 import io.github.retz.RetzGen
+import io.github.retz.planner.{AppJobPair, Plan, Planner, PlannerFactory}
 import org.apache.mesos.Protos.{FrameworkID, Offer}
 
 import scala.collection.JavaConverters._

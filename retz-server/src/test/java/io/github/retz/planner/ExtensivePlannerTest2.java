@@ -14,20 +14,20 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class NaivePlannerTest extends PlannerTest {
-
+public class ExtensivePlannerTest2 extends PlannerTest {
     String makePlannerName() {
-        return "naive";
+        return "priority2";
     }
 
     @Test
     public void orderByTest() {
-        assertEquals("id", planner.orderBy().get(0));
+        assertEquals("priority", planner.orderBy().get(0));
+        assertEquals("id", planner.orderBy().get(1));
     }
 }

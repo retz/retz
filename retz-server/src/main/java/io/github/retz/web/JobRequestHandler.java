@@ -25,6 +25,7 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.misc.Pair;
+import io.github.retz.planner.AppJobPair;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;

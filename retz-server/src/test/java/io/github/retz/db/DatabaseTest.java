@@ -18,7 +18,7 @@ package io.github.retz.db;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.data.*;
-import io.github.retz.scheduler.AppJobPair;
+import io.github.retz.planner.AppJobPair;
 import io.github.retz.scheduler.JobQueue;
 import org.hamcrest.Matchers;
 import org.junit.After;

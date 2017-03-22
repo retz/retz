@@ -24,7 +24,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.scheduler.AppJobPair;
+import io.github.retz.planner.AppJobPair;
 import io.github.retz.scheduler.Launcher;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.tomcat.jdbc.pool.DataSource;

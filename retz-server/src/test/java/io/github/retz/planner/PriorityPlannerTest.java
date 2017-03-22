@@ -14,15 +14,15 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class ExtensivePlannerTest2 extends PlannerTest {
+public class PriorityPlannerTest extends PlannerTest {
     String makePlannerName() {
-        return "priority2";
+        return "priority";
     }
 
     @Test

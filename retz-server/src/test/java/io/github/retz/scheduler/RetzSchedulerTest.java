@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.db.Database;
+import io.github.retz.planner.ResourceConstructor;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.junit.After;
@@ -218,7 +219,7 @@ public class RetzSchedulerTest {
     private Protos.Offer buildOffer(String offerId, int cpus, int mem) {
         return RetzSchedulerTest.buildOffer(driver.frameworkInfo.getId(), 0, offerId, cpus, mem);
     }
-    static Protos.Offer buildOffer(Protos.FrameworkID fid, int slaveNo, String offerId, int cpus, int mem) {
+    public static Protos.Offer buildOffer(Protos.FrameworkID fid, int slaveNo, String offerId, int cpus, int mem) {
 
         String hostname = "127.0.0."+ slaveNo + ":5051";
         String slaveId = "slave("+ slaveNo + ")@" + hostname;

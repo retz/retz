@@ -18,6 +18,7 @@ package io.github.retz.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import io.github.retz.planner.ResourceConstructor;
 import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DockerContainer;

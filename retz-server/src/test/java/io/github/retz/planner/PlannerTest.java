@@ -14,13 +14,21 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.planner.AppJobPair;
+import io.github.retz.planner.Plan;
+import io.github.retz.planner.Planner;
+import io.github.retz.planner.PlannerFactory;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.Launcher;
+import io.github.retz.scheduler.RetzSchedulerTest;
+import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.mesos.Protos;
 import org.junit.After;
 import org.junit.Before;

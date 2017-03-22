@@ -18,6 +18,7 @@ package io.github.retz.scheduler
 
 import java.util.Properties
 
+import io.github.retz.planner.ResourceConstructor
 import io.github.retz.planner.spi.Resource
 import io.github.retz.protocol.data.{Job, ResourceQuantity}
 import org.junit.Test

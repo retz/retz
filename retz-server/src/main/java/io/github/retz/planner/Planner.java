@@ -14,10 +14,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.planner;
 
-public class ExtensivePlannerTest extends PlannerTest {
-    String makePlannerName() {
-        return "naive2";
-    }
+import io.github.retz.protocol.data.Job;
+import org.apache.mesos.Protos;
+
+import java.util.List;
+
+public interface Planner {
+
+    List<String> orderBy();
+
+    // TODO: make useGPU and maxStock configuration of each instance
+    List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU);
+
+    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock, String unixUser);
 }
