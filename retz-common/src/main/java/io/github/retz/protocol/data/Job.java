@@ -30,7 +30,7 @@ public class Job {
     private final String appid;
     private final Set<String> tags;
     private final ResourceQuantity resources;
-    private final Optional<String> attributes;
+    private Optional<String> attributes;
     private String scheduled;
     private String started;
     private String finished;
@@ -63,6 +63,12 @@ public class Job {
         this(appName, cmd, props, cpu, memMB, disk);
         Objects.requireNonNull(gpu);
         resources.add(0, 0, gpu, ports, disk);
+    }
+
+    public Job(String appName, String cmd, Properties props, int cpu, int memMB, int disk, int gpu, int ports,
+               String attributes) {
+        this(appName, cmd, props, cpu, memMB, disk, gpu, ports);
+        this.attributes = Optional.of(attributes);
     }
 
     @JsonCreator
