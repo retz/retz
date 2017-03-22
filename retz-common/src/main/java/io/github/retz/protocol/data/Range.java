@@ -22,15 +22,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Range {
     // TODO: these should be long integer
-    public int min;
-    public int max;
+    public long min;
+    public long max;
 
     @JsonCreator
-    public Range(@JsonProperty(value = "min", required = true) int min,
-                 @JsonProperty("max") int max) {
+    public Range(@JsonProperty(value = "min", required = true) long min,
+                 @JsonProperty("max") long max) {
         this.min = min;
         if (max == 0) {
-            this.max = Integer.MAX_VALUE;
+            this.max = Long.MAX_VALUE;
         } else if (max < min){
             throw new IllegalArgumentException();
         } else {
@@ -39,12 +39,12 @@ public class Range {
     }
 
     @JsonGetter
-    public int getMin() {
+    public long getMin() {
         return min;
     }
 
     @JsonGetter
-    public int getMax() {
+    public long getMax() {
         return max;
     }
 
@@ -61,17 +61,18 @@ public class Range {
     public static Range parseRange(String s) {
         String[] pair = s.split("-", 2);
         if (pair.length == 1) {
-            int i = Integer.parseInt(pair[0]);
-            return new Range(i, i);
+            //int i = Integer.parseInt(pair[0]);
+            long l = Long.parseLong(pair[0]);
+            return new Range(l, l);
         }
-        int max = 0;
+        long max = 0;
         try {
-            max = Integer.parseInt(pair[1]);
+            max = Long.parseLong(pair[1]);
         } catch (NumberFormatException e) {
         }
-        int min = 0;
+        long min = 0;
         try {
-            min = Integer.parseInt(pair[0]);
+            min = Long.parseLong(pair[0]);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Minimal value of a range must not be absent" + s);
         }
@@ -82,7 +83,7 @@ public class Range {
     public String toString() {
         StringBuilder b = new StringBuilder();
         b.append(min).append("-");
-        if (max < Integer.MAX_VALUE) {
+        if (max < Long.MAX_VALUE) {
             b.append(max);
         }
         return b.toString();

@@ -16,8 +16,10 @@
  */
 package io.github.retz.planner.builtin;
 
+import io.github.retz.planner.spi.Offer;
 import io.github.retz.planner.spi.Plan;
 import io.github.retz.planner.spi.Planner;
+import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import org.slf4j.Logger;
@@ -65,17 +67,17 @@ public class FIFOPlanner implements Planner {
     }
 
     @Override
-    public Plan plan(Map<String, ResourceQuantity> offers, List<Job> jobs) {
+    public Plan plan(Map<String, Offer> offers, List<Job> jobs) {
 
         Plan plan = new Plan();
         List<Job> queue = new LinkedList<>(jobs);
-        for (Map.Entry<String, ResourceQuantity> entry : offers.entrySet()) {
+        for (Map.Entry<String, Offer> entry : offers.entrySet()) {
             ResourceQuantity total = new ResourceQuantity();
-            while (!queue.isEmpty() && entry.getValue().getCpu() - total.getCpu() > 0) {
+            while (!queue.isEmpty() && entry.getValue().resource().cpu() - total.getCpu() > 0) {
                 Job job = queue.get(0);
                 ResourceQuantity temp = total.copy(total);
                 temp.add(job.resources());
-                if (entry.getValue().fits(temp)) {
+                if (entry.getValue().resource().toQuantity().fits(temp)) {
                     plan.setJob(entry.getKey(), job);
                     queue.remove(0);
                     total.add(job.resources());

@@ -59,7 +59,7 @@ public class Resource {
             }
         }
         this.ports.addAll(rhs.ports());
-        this.ports.sort( (l, r) -> r.getMin() - l.getMin());
+        this.ports.sort((l, r) -> (int) (r.getMin() - l.getMin()));
         this.gpu += rhs.gpu();
     }
 
@@ -83,11 +83,11 @@ public class Resource {
         if (ports.isEmpty()) {
             return 0;
         }
-        return ports.get(ports.size() - 1).getMax();
+        return (int) ports.get(ports.size() - 1).getMax();
     }
 
     public int portAmount() {
-        return ports.stream().mapToInt(range -> range.getMax() - range.getMin() + 1).sum();
+        return (int) ports.stream().mapToLong(range -> range.getMax() - range.getMin() + 1).sum();
     }
 
     public int gpu() {
@@ -101,7 +101,7 @@ public class Resource {
     public Resource cut(int cpu, int memMB, int gpus, int ports, int lastPort) {
         List<Range> ranges = new LinkedList<>();
         int sum = 0;
-        for(Range range : this.ports) {
+        for (Range range : this.ports) {
             if (range.getMax() <= lastPort) {
                 continue;
             } else if (sum >= ports) {
@@ -109,7 +109,7 @@ public class Resource {
             }
             int start = 0;
             if (lastPort < range.getMin()) {
-                start = range.getMin();
+                start = (int) range.getMin();
             } else {
                 start = lastPort + 1;
             }
@@ -117,7 +117,7 @@ public class Resource {
             if (range.getMax() - start > ports - sum) {
                 end = start + ports - sum - 1;
             } else {
-                end = range.getMax();
+                end = (int) range.getMax();
             }
             sum += (end - start) + 1;
             if (start <= end) {
@@ -129,7 +129,7 @@ public class Resource {
 
 
     public ResourceQuantity toQuantity() {
-        return new ResourceQuantity((int)cpu, memMB, gpu, portAmount(), diskMB, 0);
+        return new ResourceQuantity((int) cpu, memMB, gpu, portAmount(), diskMB, 0);
     }
 
     @Override

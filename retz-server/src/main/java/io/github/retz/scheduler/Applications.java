@@ -146,10 +146,10 @@ public class Applications {
         }
         int portCount = 0;
         for (Range range : ports) {
-            for (int p = range.getMin(); p <= range.getMax(); ++p) {
+            for (long p = range.getMin(); p <= range.getMax(); ++p) {
                 String name = "PORT" + portCount;
                 envBuilder.addVariables(Protos.Environment.Variable.newBuilder()
-                        .setName(name).setValue(Integer.toString(p)).build());
+                        .setName(name).setValue(Long.toString(p)).build()); // Though int is enough for port number...
                 portCount += 1;
             }
         }

@@ -16,39 +16,35 @@
  */
 package io.github.retz.planner.spi;
 
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.ResourceQuantity;
-
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.Objects;
 
-public class PlannerMock implements Planner {
+public class Offer {
+    private String id;
+    private Resource resource;
+    private List<Attribute> attributes;
+    // TODO: add several more in mesos.proto 'message Offer'
 
-    @Override
-    public void initialize(Properties p) {
+    public Offer(String id, Resource resource) {
+        this(id, resource, Arrays.asList());
     }
 
-    @Override
-    public boolean filter(Job job) {
-        return false;
+    public Offer(String id, Resource resource, List<Attribute> attributes) {
+        this.id = Objects.requireNonNull(id);
+        this.resource = Objects.requireNonNull(resource);
+        this.attributes = Objects.requireNonNull(attributes);
     }
 
-    @Override
-    public List<String> orderBy() {
-        return null;
+    public String id() {
+        return id;
     }
 
-    @Override
-    public Plan plan(Map<String, Offer> offers, List<Job> jobs) {
-        return null;
+    public Resource resource() {
+        return resource;
     }
 
-    @Override
-    public void setMaxStock(int maxStock) {
-    }
-
-    @Override
-    public void setUseGpu(boolean useGpu) {
+    public List<Attribute> attributes() {
+        return attributes;
     }
 }

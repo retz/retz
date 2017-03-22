@@ -17,7 +17,6 @@
 package io.github.retz.planner.spi;
 
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.ResourceQuantity;
 
 import java.util.List;
 import java.util.Map;
@@ -50,7 +49,10 @@ public interface Planner {
     // Strings must exist in 'jobs' table as columns, as these
     // Strings are used for 'ORDER BY' part of SQL query inside
     // Retz.
-    // TODO: think of more smarter way of finding these
+    //
+    // Note: only column names defined in retz.ddl are available,
+    // NOT members of Job class.
+    // TODO: think of more smarter way of finding these orders
     List<String> orderBy();
     // Selected jobs => true
     // Filtered-out jobs => false
@@ -58,8 +60,12 @@ public interface Planner {
 
     // Core callback method that determines matching of jobs and offers,
     // which job assined to which offer (agent) etc etc...
+    // Note: attributes in jobs are just a String each but attributes in
+    // offers are structured because original attributes in Protos.Offer
+    // are already structured (but they're not simple POJO).
+    //
     // TODO: offers and jobs should be immutable as they may be reused after plan
-    Plan plan(Map<String, ResourceQuantity> offers, List<Job> jobs);
+    Plan plan(Map<String, Offer> offers, List<Job> jobs);
 
     // Official configuration. Frameworks for embedding
     // implementation-specific configurations will be

@@ -17,6 +17,9 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.planner.AttributeBuilder;
+import io.github.retz.planner.spi.Attribute;
+import io.github.retz.planner.spi.Offer;
 import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
@@ -81,10 +84,13 @@ public class ExtensiblePlanner implements Planner {
     public Plan plan(List<Protos.Offer> offers, List<AppJobPair> appJobPairs, int maxStock, String unixUser) {
         extension.setMaxStock(maxStock);
 
-        Map<String, ResourceQuantity> mapOffers = new LinkedHashMap<>();
+        Map<String, Offer> mapOffers = new LinkedHashMap<>();
         for (Protos.Offer offer : offers) {
+            // maybe TODO: salvage more properties from Protos.Offer to include in spi.Offer
+            List<Attribute> attrs = new AttributeBuilder(offer.getAttributesList()).build();
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-            mapOffers.put(offer.getId().getValue(), resource.toQuantity());
+            Offer newOffer = new Offer(offer.getId().getValue(), resource, attrs);
+            mapOffers.put(offer.getId().getValue(), newOffer);
         }
 
         List<Job> jobs = appJobPairs.stream().map(appJobPair -> appJobPair.job()).collect(Collectors.toList());
