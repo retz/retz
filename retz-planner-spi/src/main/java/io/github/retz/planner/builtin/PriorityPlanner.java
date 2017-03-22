@@ -19,7 +19,7 @@ package io.github.retz.planner.builtin;
 import java.util.Arrays;
 import java.util.List;
 
-public class PriorityPlanner extends NaivePlanner {
+public class PriorityPlanner extends FIFOPlanner {
     private final List<String> ORDER_BY = Arrays.asList("priority", "id");
 
     @Override

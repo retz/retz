@@ -25,15 +25,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class NaivePlanner implements Planner {
+public class FIFOPlanner implements Planner {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NaivePlanner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(FIFOPlanner.class);
     private final List<String> ORDER_BY = Arrays.asList("id");
 
     private boolean useGpu;
     private int maxStock;
 
-    public NaivePlanner() {
+    public FIFOPlanner() {
     }
 
     @Override

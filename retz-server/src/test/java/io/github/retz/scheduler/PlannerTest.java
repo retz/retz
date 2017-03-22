@@ -46,7 +46,7 @@ public class PlannerTest {
 
     @Before
     public void before() throws Throwable {
-        //planner = (Planner)new NaivePlanner();
+        //planner = (Planner)new FIFOPlanner();
         fid = Protos.FrameworkID.newBuilder().setValue("dummy-frameworkid-qwerty").build();
         InputStream in = Launcher.class.getResourceAsStream("/retz.properties");
         Launcher.Configuration conf = new Launcher.Configuration(new ServerConfiguration(in));
