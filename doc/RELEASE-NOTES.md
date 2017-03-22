@@ -2,10 +2,14 @@
 
 ## 0.2.5
 
-* [Experimental] Add 'planner.classpath' to load third-party planner
+* [Experimental] Add several new builtin planners under new planner
+  SPI, "fifo" and "priority2". These are mostly copy of "naive" and
+  "priority" respectively.
+* [Experimental] Add 'retz.classpath' to load third-party planner
   dynamically on startup. Retz server tries to load all jar files
   recursively placed under that directory. See `io.github.retz.planner.spi.Planner`
-  for more on creating custom planner.
+  for more on creating custom planner. To use custom planner, set
+  full class name with package name to 'retz.planner.name'.
 
 ## 0.2.4
 

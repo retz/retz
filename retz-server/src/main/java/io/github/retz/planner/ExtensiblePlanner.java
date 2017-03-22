@@ -88,6 +88,11 @@ public class ExtensiblePlanner implements Planner {
         for (Protos.Offer offer : offers) {
             // maybe TODO: salvage more properties from Protos.Offer to include in spi.Offer
             List<Attribute> attrs = new AttributeBuilder(offer.getAttributesList()).build();
+            if (LOG.isDebugEnabled()) {
+                for (Attribute attr : attrs) {
+                    LOG.debug("Attribute: {} @{}", attr, offer.getId().getValue());
+                }
+            }
             Resource resource = ResourceConstructor.decode(offer.getResourcesList());
             Offer newOffer = new Offer(offer.getId().getValue(), resource, attrs);
             mapOffers.put(offer.getId().getValue(), newOffer);

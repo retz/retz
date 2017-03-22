@@ -48,6 +48,7 @@ COPY echo.sh /usr/bin/echo.sh
 # COPY mesos-slave_isolation /etc/mesos-slave/isolation
 # COPY cgroups_enable_cfs /etc/mesos-slave/cgroups_enable_cfs
 COPY mesos-master_default /etc/default/mesos-master
+COPY attributes /etc/mesos-slave/attributes
 
 # Copy retz.properties file here, because it will be rewritten by the
 # above spawn script for IP address setting.

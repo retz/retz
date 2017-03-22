@@ -58,13 +58,21 @@ public interface Planner {
     // Filtered-out jobs => false
     boolean filter(Job job);
 
-    // Core callback method that determines matching of jobs and offers,
-    // which job assined to which offer (agent) etc etc...
-    // Note: attributes in jobs are just a String each but attributes in
-    // offers are structured because original attributes in Protos.Offer
-    // are already structured (but they're not simple POJO).
-    //
-    // TODO: offers and jobs should be immutable as they may be reused after plan
+    /**
+     * Core callback method that determines matching of jobs and offers,
+     * which job assined to which offer (agent) etc etc...
+     * Note: attributes in jobs are just a String each but attributes in
+     * offers are structured because original attributes in Protos.Offer
+     * are already structured (but they're not simple POJO).
+     *
+     * TODO: offers and jobs should be immutable as they may be reused after plan
+     *
+     * @param offers A map whose key is offer ID in String with offers
+     *               including Resource and Attributes
+     * @param jobs   A list of candidate jobs retrieved from DB
+     *
+     * @return plan for next series of Job dispatch to Mesos
+     */
     Plan plan(Map<String, Offer> offers, List<Job> jobs);
 
     // Official configuration. Frameworks for embedding

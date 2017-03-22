@@ -78,4 +78,15 @@ public class Attribute {
     public String asTest() {
         return (String) holder;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder()
+                .append("attr{name=")
+                .append(name)
+                .append(", type=").append(t)
+                .append(", value=").append(holder)
+                .append("}");
+        return builder.toString();
+    }
 }
