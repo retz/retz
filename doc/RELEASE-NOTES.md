@@ -2,6 +2,7 @@
 
 ## 0.2.5
 
+* Client and Planner SPI is now available via Maven repository.
 * [Experimental] Add several new builtin planners under new planner
   SPI, "fifo" and "priority2". These are mostly copy of "naive" and
   "priority" respectively.

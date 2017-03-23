@@ -1,5 +1,5 @@
-Commands and API interface
-==========================
+Commands, Client API and Admin tool
+===================================
 
 This document describes Retz client CLI, Java API and HTTP API as well
 as server command options and administration tool. All packages are
@@ -8,6 +8,30 @@ available at `GitHub release page
 server and admin tool packages for CentOS 7, Redhat 7, Debian and
 Ubuntu 16.04 (Linux distributions that has Systemd and RPM or Deb
 based package manager).
+
+Retz adminitration tool is also described.
+
+Libraries
+---------
+
+Client library is available via Maven repository. For example,
+dependency description in Gradle will be as follows:
+
+::
+  apply plugin: 'java'
+
+  repositories {
+      maven { url 'http://retz-maven.s3.amazonaws.com/releases' }
+      maven { url 'http://retz-maven.s3.amazonaws.com/snapshots' }
+  }
+
+  dependencies {
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile group: 'io.github.retz', name: 'retz-client', version: '0.2.5'
+  }
+
+
+
 
 Retz Client
 -----------
