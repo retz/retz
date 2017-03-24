@@ -20,8 +20,10 @@ import io.github.retz.planner.spi.Attribute;
 import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class AttributeBuilder {
     private List<Attribute> list = new LinkedList<>();
@@ -32,9 +34,11 @@ public class AttributeBuilder {
             Attribute.Type t;
             Object o;
             if (attr.hasScalar()) {
+                // converts to Double
                 t = Attribute.Type.SCALAR;
                 o = Double.valueOf(attr.getScalar().getValue());
             } else if (attr.hasRanges()) {
+                // converts to List<Range>
                 t = Attribute.Type.RANGES;
                 List<Range> ranges = new LinkedList<>();
                 for (Protos.Value.Range range : attr.getRanges().getRangeList()) {
@@ -43,11 +47,18 @@ public class AttributeBuilder {
                 }
                 o = ranges;
             } else if (attr.hasSet()) {
+                // converts to Set<String>
                 t = Attribute.Type.SET;
-                o = attr.getSet();
+                int count = attr.getSet().getItemCount();
+                Set<String> items = new HashSet<>();
+                for (int i = 0; i < count; i++) {
+                    items.add(attr.getSet().getItem(i));
+                }
+                o = items;
             } else if (attr.hasText()) {
+                // converts to String
                 t = Attribute.Type.TEXT;
-                o = attr.getText();
+                o = attr.getText().getValue();
             } else {
                 throw new AssertionError("attribute has unknown type: " + attr.getType());
             }
