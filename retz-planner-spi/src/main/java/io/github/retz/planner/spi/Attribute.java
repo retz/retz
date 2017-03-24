@@ -75,7 +75,7 @@ public class Attribute {
         return (Set<String>) holder;
     }
 
-    public String asTest() {
+    public String asText() {
         return (String) holder;
     }
 
