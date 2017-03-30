@@ -23,7 +23,7 @@ import org.apache.mesos.Protos;
 public class JobStatem {
 
     /**
-     * State diagram of Events and Job => callback action method name
+     * State diagram of Events and Job to callback action method name
      * <p>
      * Events   \ in Retz    | QUEUED   | STARTING | STARTED  | FINISHED | KILLED
      * -----------------------+----------+----------+----------+----------+----------
@@ -50,15 +50,19 @@ public class JobStatem {
      * TODO: Update Events periodically from mesos.proto (last updated on Jan 13 2017)
      *
      * State transitions:
-     * finished => FINISHED
-     * failed => KILLED
-     * retry => QUEUED
-     * noop => keep
-     * never => assert! could be a bug or race; write an error log
-     * log => unexpected; just write a warn log?
-     * started => STARTED
-     * starting => STARTING
-     * killed => KILLED
+     * finished =&gt; FINISHED
+     * failed =&gt; KILLED
+     * retry =&gt; QUEUED
+     * noop =&gt; keep
+     * never =&gt; assert! could be a bug or race; write an error log
+     * log =&gt; unexpected; just write a warn log?
+     * started =&gt; STARTED
+     * starting =&gt; STARTING
+     * killed =&gt; KILLED
+     *
+     * @param job The job that requires some action (state)
+     * @param taskState Task state change (event)
+     * @return an Action that should be taken (action, indicates next state)
      **/
     public static Action handleCall(Job job, Protos.TaskState taskState) {
         switch (job.state()) {

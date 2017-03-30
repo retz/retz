@@ -3,7 +3,7 @@
 GRADLE=./gradlew
 
 javadoc:
-	LANG=C $(GRADLE) aggregateJavadoc
+	JAVA_TOOL_OPTIONS='-Dfile.encoding=UTF8' LANG=C $(GRADLE) aggregateJavadoc
 
 test:
 	$(GRADLE) test
