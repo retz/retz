@@ -41,8 +41,8 @@ public interface MesosFlakyClientInterface {
     @RequestLine("GET /tasks?limit={limit}&offset={offset}&order={order}")
     @Headers({"Content-Type: application/json", "Accept: application/json"})
     Map<String, Object> tasks(@Param("limit") int limit,
-            @Param("offset") long offset,
-            @Param("order") String order);
+                              @Param("offset") long offset,
+                              @Param("order") String order);
 
     static MesosFlakyClientInterface connect(
             URI uri) {

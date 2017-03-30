@@ -3,7 +3,8 @@
 ## 0.2.6
 
 * Fix a bug where kill is never sent to Mesos while state in Retz
-  is updated to 'KILLED'.
+  is updated to 'KILLED'. This was introduced at `0f8dcf5f` and
+  resident since 0.2.2.
 
 ## 0.2.5
 

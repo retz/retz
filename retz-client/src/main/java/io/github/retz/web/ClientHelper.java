@@ -16,7 +16,6 @@
  */
 package io.github.retz.web;
 
-import io.github.retz.misc.Pair;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;

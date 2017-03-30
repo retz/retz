@@ -39,15 +39,15 @@ public class MesosFlakyClient {
         MesosFlakyClientInterface mesosClient = MesosFlakyClientInterface.connect(uri);
         Map<String, Object> tasks = mesosClient.tasks(1024, 0, "desc");
         //System.err.println("Tasks: " + tasks + " real task id=" + taskId);
-        List list = (List)tasks.get("tasks");
+        List list = (List) tasks.get("tasks");
         //System.err.println("Task list length: " + list.size() + " " + tasks.size());
-        for (Object o: list) {
+        for (Object o : list) {
             System.err.println("task: " + o);
-            Map<String, Object> task = (Map<String, Object>)o;
+            Map<String, Object> task = (Map<String, Object>) o;
             //for (Map.Entry<String, Object> entry : task.entrySet()) {
             //System.err.println(entry.getKey() + "=>" + entry.getValue());
             //}
-            String tid = (String)task.get("id");
+            String tid = (String) task.get("id");
             if (tid != null && taskId.equals(tid)) {
                 return task;
                 //String state = (String)task.get("state");

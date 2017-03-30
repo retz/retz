@@ -171,7 +171,7 @@ public class JobRequestHandler {
         String file = req.queryParams("path");
         LOG.debug("download: path={}", file);
 
-        if (job.isPresent() && job.get().url() != null){ // If url() is null, the job hasn't yet been started at Mesos
+        if (job.isPresent() && job.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
 
             // TODO: This is soo inefficient; it stores all data into RAM without streaming
             // THIS MUST BE FIXED SOON
@@ -214,7 +214,7 @@ public class JobRequestHandler {
         List ret;
         if (job.isPresent() && job.get().url() != null) {
             try {
-                Pair<Integer,String> maybeJson = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
+                Pair<Integer, String> maybeJson = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
                 if (maybeJson.left() == 200) {
                     ret = MAPPER.readValue(maybeJson.right(), new TypeReference<List<DirEntry>>() {
                     });

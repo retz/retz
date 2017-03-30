@@ -131,8 +131,8 @@ public class RetzIntTest extends IntTestBase {
                 .setAuthenticator(config.getAuthenticator())
                 .build();
 
-        Application echoApp = new Application("echo-app",  Arrays.asList(), Arrays.asList(),
-                 Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
+        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(),
+                Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         Response response = client.load(echoApp);
         System.err.println(response.status());
         LoadAppResponse loadRes = (LoadAppResponse) response;
@@ -385,21 +385,21 @@ public class RetzIntTest extends IntTestBase {
 
             {
                 Response response = client.list(Job.JobState.FINISHED, Optional.of("tag1-listFilesTest"));
-                ListJobResponse listJobResponse = (ListJobResponse)response;
+                ListJobResponse listJobResponse = (ListJobResponse) response;
                 assertEquals(2, listJobResponse.jobs().size());
                 assertFalse(listJobResponse.more());
             }
 
             {
                 Response response = client.list(Job.JobState.FINISHED, Optional.of("multibytes"));
-                ListJobResponse listJobResponse = (ListJobResponse)response;
+                ListJobResponse listJobResponse = (ListJobResponse) response;
                 assertEquals(1, listJobResponse.jobs().size());
                 assertFalse(listJobResponse.more());
             }
 
             {
                 Response response = client.list(Job.JobState.FINISHED, Optional.empty());
-                ListJobResponse listJobResponse = (ListJobResponse)response;
+                ListJobResponse listJobResponse = (ListJobResponse) response;
                 assertThat(listJobResponse.jobs().size(), greaterThanOrEqualTo(2));
             }
         }
