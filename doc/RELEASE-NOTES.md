@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.2.6
+
+* Fix a bug where kill is never sent to Mesos while state in Retz
+  is updated to 'KILLED'.
+
 ## 0.2.5
 
 * Client and Planner SPI is now available via Maven repository.

@@ -258,21 +258,20 @@ public class JobRequestHandler {
         Optional<Boolean> result = Stanchion.call(() -> {
             Optional<Job> maybeJob2 = JobQueue.cancel(id, "Canceled by user");
 
-            Job job = maybeJob2.get();
-
-            if (job.state() == Job.JobState.FINISHED || job.state() == Job.JobState.KILLED) {
-                // Job is already finished or killed, no more running nor runnable
-                return true;
+            if (maybeJob2.isPresent()) {
+                Job job = maybeJob2.get();
+                // There's a slight pitfall between cancel above and kill below where
+                // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
+                // Then this protocol returns false for sure.
+                if (job.taskId() != null && !job.taskId().isEmpty() && driver.isPresent()) {
+                    Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(job.taskId()).build();
+                    Protos.Status status = driver.get().killTask(taskId);
+                    LOG.info("Job id={} was running and killed. status={}, taskId={}", job.id(), status, job.taskId());
+                }
+                return job.state() == Job.JobState.KILLED;
             }
-            // There's a slight pitfall between cancel above and kill below where
-            // no kill may be sent, RetzScheduler is exactly in resourceOffers and being scheduled.
-            // Then this protocol returns false for sure.
-            if (job.taskId() != null && !job.taskId().isEmpty() && driver.isPresent()) {
-                Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(job.taskId()).build();
-                Protos.Status status = driver.get().killTask(taskId);
-                LOG.info("Job id={} was running and killed. status={}", status);
-            }
-            return job.state() == Job.JobState.KILLED;
+            // Job is already finished or killed, no more running nor runnable, or something is wrong
+            return false;
         });
 
         Response response;

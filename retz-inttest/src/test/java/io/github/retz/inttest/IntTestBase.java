@@ -51,6 +51,7 @@ public class IntTestBase {
     protected static final String CONTAINER_NAME = "retz-inttest-ertpqgh34jv9air";
     protected static final String RETZ_HOST = "127.0.0.1";
     protected static final int RETZ_PORT = 19090;
+    protected static final int MESOS_PORT = 15050;
     // Probably better to make log and downloading directories for testc ases.
     private static String hostBuildDir;
 

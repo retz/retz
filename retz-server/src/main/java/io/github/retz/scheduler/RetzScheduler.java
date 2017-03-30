@@ -292,9 +292,9 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void statusUpdate(SchedulerDriver driver, Protos.TaskStatus status) {
-        LOG.debug("Status update of task {}: {} / {}", status.getTaskId().getValue(), status.getState().name(), status.getMessage());
-
-
+        LOG.info("Status update of task {}: {} / {} ({})",
+                status.getTaskId().getValue(), status.getState().name(), status.getMessage(),
+                status.getReason());
         Stanchion.schedule(() -> {
             Optional<Job> job = JobQueue.getFromTaskId(status.getTaskId().getValue());
             if (!job.isPresent()) {

@@ -330,6 +330,8 @@ project('retz-inttest') {
     dependencies {
         testCompile project(":retz-client")
         testCompile 'com.github.docker-java:docker-java:3.0.6'
+        testCompile 'io.github.openfeign:feign-jackson:9.4.0'
+        testCompile 'io.github.openfeign:feign-slf4j:9.4.0'
     }
 
     task copyServerJar(type: Copy, dependsOn: ':retz-server:shadowJar') {

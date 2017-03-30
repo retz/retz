@@ -158,16 +158,24 @@ public class RetzIntTest extends IntTestBase {
             assertThat(getJobResponse.job().get().state(), isOneOf(Job.JobState.QUEUED, Job.JobState.STARTING));
         }
         {
+            Thread.sleep(5000); // Make sure a job is sent to Mesos
             response = client.kill(id);
             System.err.println(response.status());
             assertThat(response, instanceOf(KillResponse.class));
         }
         {
+            Thread.sleep(5000); // Make sure kill sent to Mesos
             response = client.getJob(id);
             assertThat(response, instanceOf(GetJobResponse.class));
             GetJobResponse getJobResponse = (GetJobResponse) response;
-            Thread.sleep(10000);
             assertThat(getJobResponse.job().get().state(), is(Job.JobState.KILLED));
+
+            String taskId = getJobResponse.job().get().taskId();
+            assertNotNull(taskId);
+            URI mesos = new URI("http://" + RETZ_HOST + ":" + MESOS_PORT);
+            String state = MesosFlakyClient.getTaskState(mesos, taskId);
+            System.err.println(state);
+            assertEquals("Chacking whether a job kill reached Mesos", state, "TASK_KILLED");
         }
 
         UnloadAppResponse unloadRes = (UnloadAppResponse) client.unload("echo-app");
