@@ -347,7 +347,7 @@ Server configuration file
 * ``retz.mesos.role = retz`` : Set `a Mesos role <http://mesos.apache.org/documentation/latest/roles/>`_ name to
    register as a framework. If this is not specified, principal value
    is used for role name, too.
-* ``retz.mesos.principal = retz``: Set `a Mesos princopal <http://mesos.apache.org/documentation/latest/authorization/>`_
+* ``retz.mesos.principal = retz``: Set `a Mesos principal <http://mesos.apache.org/documentation/latest/authorization/>`_
    name. Default value is ``retz``.
 * ``retz.mesos.secret.file = path/to/secret-file``: If `authentication in Mesos
    <http://mesos.apache.org/documentation/latest/authentication/>`_ is
