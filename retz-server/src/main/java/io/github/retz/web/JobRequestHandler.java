@@ -239,6 +239,7 @@ public class JobRequestHandler {
 
     static String kill(Request req, spark.Response res) throws JsonProcessingException {
         LOG.debug("kill", req.params(":id"));
+        res.type("application/json");
         int id = Integer.parseInt(req.params(":id"));
 
         Optional<Job> maybeJob;
