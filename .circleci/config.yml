@@ -1,0 +1,17 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/workspace
+    docker:
+      - image: circleci/openjdk:8
+    steps:
+      - checkout
+      - restore_cache:
+          key: retz-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - run: ./gradlew -i clean build
+      - save_cache:
+           key: retz-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+           paths:
+             - "~/.gradle"
+      - store_test_results:
+          path: "build/all-test-report/test/"
