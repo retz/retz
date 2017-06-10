@@ -1,18 +1,18 @@
 /**
- *    Retz
- *    Copyright (C) 2016-2017 Nautilus Technologies, Inc.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Retz
+ * Copyright (C) 2016-2017 Nautilus Technologies, Inc.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.github.retz.protocol;
 
@@ -22,10 +22,9 @@ import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
@@ -111,5 +110,36 @@ public class JobTest {
         System.err.println(job.toString());
         System.err.println(job.pp());
         assertEquals(Job.JobState.QUEUED, job.state());
+    }
+
+    @Test
+    public void maskPropertiesTest() {
+        Properties props = job.props();
+        List<String> secretProperties = Arrays.asList("some_secret_string", "SOME_SECRET_STRING",
+                "some_password_string", "SOME_PASSWORD_STRING",
+                "some_token_string", "SOME_TOKEN_STRING");
+        secretProperties.forEach(k -> {
+            props.setProperty(k, "%STRING_TO_REPLACE%");
+        });
+        List<String> otherProperties = Arrays.asList("some_other_string", "SOME_OTHER_STRING");
+        otherProperties.forEach(k -> {
+            props.setProperty(k, "%STRING_NOT_TO_REPLACE%");
+        });
+
+        Arrays.asList(job.toString(), job.pp()).forEach(s -> {
+            System.err.println(s);
+            secretProperties.forEach(k -> {
+                Pattern p = Pattern.compile(String.format("^.*%s=([^,}]*).*$", k));
+                Matcher m = p.matcher(s);
+                assert(m.matches());
+                assertEquals(m.group(1), "<masked>");
+            });
+            otherProperties.forEach(k -> {
+                Pattern p = Pattern.compile(String.format("^.*%s=([^,}]*).*$", k));
+                Matcher m = p.matcher(s);
+                assert(m.matches());
+                assertEquals(m.group(1), "%STRING_NOT_TO_REPLACE%");
+            });
+        });
     }
 }
