@@ -375,6 +375,7 @@ Server configuration file
 * ``retz.max.ports = 10``
 * ``retz.max.disk = 1024``
 * ``retz.max.list-jobs = 65536`` Max number of jobs that is allowed to retrieve from client
+* ``retz.max.file-size = 65536 * 1024`` Max file size of a download file, negative value indicates no limit
 
 * ``retz.database.url = jdbc:h2:mem:retz-server;DB_CLOSE_DELAY=-1`` : JDBC access URL
 * ``retz.database.driver = org.h2.Driver`` : JDBC Driver name
