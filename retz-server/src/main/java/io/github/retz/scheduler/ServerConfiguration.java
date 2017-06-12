@@ -47,6 +47,8 @@ public class ServerConfiguration extends FileConfiguration {
     public static final String DEFAULT_MAX_DISK = "1024"; // in MB
     public static final String MAX_LIST_JOB_SIZE = "retz.max.list-jobs";
     public static final String DEFAULT_MAX_LIST_JOB_SIZE = "65536";
+    public static final String MAX_FILE_SIZE = "retz.max.file-size";
+    public static final String DEFAULT_MAX_FILE_SIZE = Long.toString(65536 * 1024); // in bytes
 
     // Mesos connections and so on
     static final String MESOS_LOC_KEY = "retz.mesos";
@@ -142,7 +144,7 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize(),
@@ -150,7 +152,8 @@ public class ServerConfiguration extends FileConfiguration {
                 MESOS_REFUSE_SECONDS, getRefuseSeconds(),
                 GC_LEEWAY, getGcLeeway(),
                 GC_INTERVAL, getGcInterval(),
-                MAX_LIST_JOB_SIZE, getMaxJobSize());
+                MAX_LIST_JOB_SIZE, getMaxJobSize(),
+                MAX_FILE_SIZE, getMaxFileSize());
     }
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
@@ -255,6 +258,10 @@ public class ServerConfiguration extends FileConfiguration {
 
     public int getMaxListJobSize() {
         return Integer.parseInt(properties.getProperty(MAX_LIST_JOB_SIZE, DEFAULT_MAX_LIST_JOB_SIZE));
+    }
+
+    public long getMaxFileSize() {
+        return Long.parseLong(properties.getProperty(MAX_FILE_SIZE, DEFAULT_MAX_FILE_SIZE));
     }
 
     public Properties copyAsProperties() {

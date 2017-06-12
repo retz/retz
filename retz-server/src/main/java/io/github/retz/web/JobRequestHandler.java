@@ -179,8 +179,12 @@ public class JobRequestHandler {
                 if (statusCode == 200) {
                     Long length = triad.right().left();
                     InputStream io = triad.right().right();
+                    Long maxFileSize = scheduler.get().maxFileSize();
+                    if (0 < maxFileSize && maxFileSize < length) {
+                        throw new IOException("Stream file too large: " + length + " < " + maxFileSize);
+                    }
                     res.raw().setHeader("Content-Length", length.toString());
-                    LOG.debug("start streaming of {} bytes", length);
+                    LOG.info("start streaming of {} bytes", length);
                     IOUtils.copyLarge(io, res.raw().getOutputStream());
                 } else {
                     res.body(triad.center());
