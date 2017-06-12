@@ -180,8 +180,10 @@ public class JobRequestHandler {
                     Long length = triad.right().left();
                     InputStream io = triad.right().right();
                     Long maxFileSize = scheduler.get().maxFileSize();
-                    if (0 < maxFileSize && maxFileSize < length) {
-                        throw new IOException("Stream file too large: " + length + " < " + maxFileSize);
+                    if (length < 0) {
+                        throw new IOException("content length is negative: " + length);
+                    } else if (0 <= maxFileSize && maxFileSize < length) { // negative maxFileSize indicates no limit
+                        throw new IOException("stream file too large: " + length + " < " + maxFileSize);
                     }
                     res.raw().setHeader("Content-Length", length.toString());
                     LOG.debug("start streaming of {} bytes for {}", length, file);
