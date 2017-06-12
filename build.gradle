@@ -118,6 +118,12 @@ subprojects {
             }
         }
     }
+
+    task copyReport(type: Copy) {
+        from "build/test-results"
+          into "$rootDir/build/all-test-report"
+    }
+    test.finalizedBy(copyReport)
 }
 
 project(':retz-common') {
