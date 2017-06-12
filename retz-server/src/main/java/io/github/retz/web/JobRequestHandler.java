@@ -187,7 +187,7 @@ public class JobRequestHandler {
                     }
                     res.raw().setHeader("Content-Length", length.toString());
                     LOG.debug("start streaming of {} bytes for {}", length, file);
-                    IOUtils.copyLarge(io, res.raw().getOutputStream());
+                    IOUtils.copyLarge(io, res.raw().getOutputStream(), 0, length);
                     LOG.debug("end streaming for {}", file);
                 } else {
                     res.body(triad.center());
