@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.retz.misc.Either;
 import io.github.retz.misc.Pair;
 import io.github.retz.protocol.DownloadFileRequest;
+import io.github.retz.protocol.exception.RetzServerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,7 +210,7 @@ public class MesosHTTPFetcher {
         return ret;
     }
 
-    public static Pair<Integer, byte[]> downloadHTTPFile(String url, String name) throws IOException {
+    public static Pair<Integer, byte[]> downloadHTTPFile(String url, String name) throws IOException, RetzServerException {
         String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
         LOG.debug("Downloading {}", addr);
 
@@ -228,7 +229,7 @@ public class MesosHTTPFetcher {
 
             long size = conn.getHeaderFieldLong("Content-Length", -1);
             if (size < 0 || DownloadFileRequest.MAX_FILE_SIZE < size || Integer.MAX_VALUE < size) {
-                throw new IOException("Illegal Content size found at Mesos: " + size);
+                throw new RetzServerException("Illegal Content size found at Mesos: " + size);
             }
 
             try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream())) {

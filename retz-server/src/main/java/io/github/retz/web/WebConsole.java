@@ -28,6 +28,7 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
+import io.github.retz.protocol.exception.RetzServerException;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.mesos.SchedulerDriver;
@@ -91,12 +92,16 @@ public final class WebConsole {
 
         exception(Exception.class, (exception, request, response) -> {
             LOG.debug("{}: {}", exception.getClass().getName(), exception.toString(), exception);
-            if (exception.getClass().isInstance(JobNotFoundException.class)) {
-                response.status(404);
+            String message;
+            if (exception.getClass().isInstance(RetzServerException.class)) {
+                RetzServerException retzException = (RetzServerException)exception;
+                response.status(retzException.getStatusCode());
+                message = retzException.getMessage();
             } else {
                 response.status(500);
+                message = "Internal Server Error";
             }
-            ErrorResponse errorResponse = new ErrorResponse(exception.toString());
+            ErrorResponse errorResponse = new ErrorResponse(message);
             try {
                 response.body(MAPPER.writeValueAsString(errorResponse));
             } catch (JsonProcessingException e) {
