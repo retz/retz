@@ -17,21 +17,19 @@ Libraries
 Client library is available via Maven repository. For example,
 dependency description in Gradle will be as follows:
 
-::
-  apply plugin: 'java'
+..  code-block:: groovy
 
-  repositories {
-      maven { url 'http://retz-maven.s3.amazonaws.com/releases' }
-      maven { url 'http://retz-maven.s3.amazonaws.com/snapshots' }
-  }
+    apply plugin: 'java'
 
-  dependencies {
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile group: 'io.github.retz', name: 'retz-client', version: '0.2.5'
-  }
+    repositories {
+        maven { url 'http://retz-maven.s3.amazonaws.com/releases' }
+        maven { url 'http://retz-maven.s3.amazonaws.com/snapshots' }
+    }
 
-
-
+    dependencies {
+        compile 'org.slf4j:slf4j-api:1.7.21'
+        compile group: 'io.github.retz', name: 'retz-client', version: '0.2.5'
+    }
 
 Retz Client
 -----------
@@ -50,15 +48,15 @@ and parsed with ``java.util.Properties`` .
 
 ``retz.server.uri = http://10.0.0.1:5050``
 
-   Defines Retz server location to send all requests.
+Defines Retz server location to send all requests.
 
 ``retz.access.key = cafebabe``
 
-   Defines user identity to send requests to servers with.
+Defines user identity to send requests to servers with.
 
 ``retz.access.secret = deadbeef``
 
-   Defines access secret to identify and authenticate a user.
+Defines access secret to identify and authenticate a user.
 
 
 Authorization and authentication
@@ -72,14 +70,14 @@ All HTTP requests that requires authentication must have
 ``<AccessKey>`` must be given to users by system administrator.
 ``<Signature>`` must be generated as follows::
 
-    Signature = Base64( HMAC-SHA1( YourAccessSecret, UTF-8-Encoding-Of( StringToSign ) ) );
+  Signature = Base64( HMAC-SHA1( YourAccessSecret, UTF-8-Encoding-Of( StringToSign ) ) );
 
-    StringToSign = HTTP-Verb + "\n" +
-                   Content-MD5 + "\n" +
-                   Date + "\n" +
-                   Resource;
+  StringToSign = HTTP-Verb + "\n" +
+                 Content-MD5 + "\n" +
+                 Date + "\n" +
+                 Resource;
 
-    Resource = [ /job/<job-id> | /app/<appname> | /jobs | /apps | /u/<accesskey> | ... ]
+  Resource = [ /job/<job-id> | /app/<appname> | /jobs | /apps | /u/<accesskey> | ... ]
 
 Note that ``Resource`` does not include parameters like ``?a=b``, or
 ``#foobar``.
@@ -89,29 +87,29 @@ Client CLI and API
 
 ``retz-client [-C|--config <path/to/retz.properties>] [-v|--verbose] <subcommand> OPTIONS``
 
-   Starts Retz client with a configuration file described above.
-   With installer, ``retz-client`` will be installed to ``/opt/retz-client/bin``.
+Starts Retz client with a configuration file described above.
+With installer, ``retz-client`` will be installed to ``/opt/retz-client/bin``.
 
 ``retz-client help``
 
-   Prints help and lists all subcommands.
+Prints help and lists all subcommands.
 
 * ``-s <subcommand>`` :   Prints help of each subcommand with its options.
 
 ``retz-client config``
 
-   Test and prints configuration items written in the configuration file locally.
+Test and prints configuration items written in the configuration file locally.
 
 ``retz-client list OPTIONS``
 
-   Lists all jobs that belongs to the user. This uses ``GET /jobs``
-   HTTP endpoint with empty body. Note that max number of jobs returned by server
-   in a single HTTP request is limited by ``retz.max.list-jobs`` at server.
-   `Request
-   <https://retz.github.io/javadoc/io/github/retz/protocol/ListJobRequest.html>`_
-   and `Response
-   <https://retz.github.io/javadoc/io/github/retz/protocol/ListJobResponse.html>`_
-   in Java API. ``OPTIONS`` include one of following:
+Lists all jobs that belongs to the user. This uses ``GET /jobs``
+HTTP endpoint with empty body. Note that max number of jobs returned by server
+in a single HTTP request is limited by ``retz.max.list-jobs`` at server.
+`Request
+<https://retz.github.io/javadoc/io/github/retz/protocol/ListJobRequest.html>`_
+and `Response
+<https://retz.github.io/javadoc/io/github/retz/protocol/ListJobResponse.html>`_
+in Java API. ``OPTIONS`` include one of following:
 
 * ``--state STATE`` Fetch all jobs in the state
 * ``--states [STATE]`` Fetch all jobs in any of the states. Default is ``QUEUED,STARTING,STARTED``.
@@ -235,7 +233,7 @@ and `Response
 Kills a group of jobs, even if it is already running in Mesos agent. When the
 job is still in the queue, Retz changes the state from ``QUEUED`` to
 ``KILLED``. If the job is already running at remote. Currently this is a wrapper
-of 'list' and 'kill'.
+of ``list`` and ``kill`` .
 
 ``retz-client get-app -A <appname>``
 
@@ -277,7 +275,7 @@ Options follows:
   docker image). Private registry is also available, with same `naming
   rule <https://docs.docker.com/registry/introduction/>`_ defined by
   Docker ( see also `Deploying a registry server
-  <https://docs.docker.com/registry/deploying/>`_ .
+  <https://docs.docker.com/registry/deploying/>`_ ).
 * ``--docker-volumes`` : Specify a volume name `to mount in docker
   container
   <https://docs.docker.com/engine/tutorials/dockervolumes/>`_
@@ -326,18 +324,16 @@ With installer, ``retz-server`` will be installed to ``/opt/retz-server/bin``.
 * ``--config </opt/retz-server/etc/retz.properties>``: Syntax sugar of
   ``-C`` .
 * ``-M [local|mesos]`` : Scheduler mode. It is to connect to Mesos
-   master.  ``local`` is to test Retz HTTP/JSON API without connecting
-   to Mesos (default value: ``mesos``)
+  master.  ``local`` is to test Retz HTTP/JSON API without connecting
+  to Mesos (default value: ``mesos``)
 * ``--mode [local|mesos]``: Syntax sugar of ``-M`` .
 
 Optionally Retz can be started with just Java command fat jar file (
 e.g. ``retz-server-0.0.33-all.jar`` ), as follows:
 
-.. code-block:: sh
+..  code-block:: sh
 
-   java -jar path/to/retz-server-0.0.33-all.jar -C path/to/retz.properties
-
-
+    java -jar path/to/retz-server-0.0.33-all.jar -C path/to/retz.properties
 
 Server configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,26 +341,26 @@ Server configuration file
 
 * ``retz.mesos = localhost:5050``:   Mesos host name and port. (required)
 * ``retz.mesos.role = retz`` : Set `a Mesos role <http://mesos.apache.org/documentation/latest/roles/>`_ name to
-   register as a framework. If this is not specified, principal value
-   is used for role name, too.
+  register as a framework. If this is not specified, principal value
+  is used for role name, too.
 * ``retz.mesos.principal = retz``: Set `a Mesos principal <http://mesos.apache.org/documentation/latest/authorization/>`_
-   name. Default value is ``retz``.
+  name. Default value is ``retz``.
 * ``retz.mesos.secret.file = path/to/secret-file``: If `authentication in Mesos
-   <http://mesos.apache.org/documentation/latest/authentication/>`_ is
-   enabled, set a file name that has secret to access Mesos.
+  <http://mesos.apache.org/documentation/latest/authentication/>`_ is
+  enabled, set a file name that has secret to access Mesos.
 * ``retz.mesos.refuse = 3`` : (sort of) interval of resource offer from Mesos
 * ``retz.bind = http://localhost:9090``: A URL and port number to
-   listen. If the scheme is ``https`` Retz tries to serve as an HTTPS
-   server with keys defined with ``retz.tls.*`` properties. This value
-   **must** match with ``retz.server.uri`` in clients' configuration.
+  listen. If the scheme is ``https`` Retz tries to serve as an HTTPS
+  server with keys defined with ``retz.tls.*`` properties. This value
+  **must** match with ``retz.server.uri`` in clients' configuration.
 
-   Although the default address is ``localhost``, it is recommended to
-   use IP address that is accessible from external nodes.
+  Although the default address is ``localhost``, it is recommended to
+  use IP address that is accessible from external nodes.
 
 * ``retz.authentication = true``:   Enable authentication between client and server. If this is false,
-   Retz server does no verification and authentication on server side.
-   (``retz.access.key`` is still required in client configuration to
-   identify job and application owner)
+  Retz server does no verification and authentication on server side.
+  (``retz.access.key`` is still required in client configuration to
+  identify job and application owner)
 * ``retz.access.key = deadbeef``:    Define first user's key
 * ``retz.access.secret = cafebabe``:    Define first user's secret
 * ``retz.max.running = 128``:    Limit of simultaneous job execution
