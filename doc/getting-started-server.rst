@@ -28,7 +28,7 @@ heavily on Linux kernel related technology such as cgroups, App and
 docker. Please refer to `official document
 <http://mesos.apache.org/documentation/latest/>`_ for further details
 and coverage. Alternatively, `Mesosphere's repository and instruction
- <http://open.mesosphere.com/downloads/mesos/#installation>`_ is also
+<http://open.mesosphere.com/downloads/mesos/#installation>`_ is also
 good for simple installation.
 
 For high availability in the sense of automatic fail-over of masters,
@@ -289,8 +289,8 @@ Also, Retz has many knobs to control its setup
 * ``retz.max.cpus = 8`` - Maximum number of CPUs per single job
 * ``retz.max.mem = 31744``  - Maximum size of RAM per single job in MBs
 * ``retz.max.gpus = 0`` Set maximum number of GPUs per single job - If
-   your Mesos agent clusters has GPUs and you want to assign GPUs to
-   your task, set this to 1 or more.
+  your Mesos agent clusters has GPUs and you want to assign GPUs to
+  your task, set this to 1 or more.
 * ``retz.max.disk = 1024``  - Maximum size of disk usage per single job in MBs
 
 Database configurations - by default Retz stores all information on
@@ -359,34 +359,53 @@ FAQ
 ===
 
 Q.
-   Dockerized application fails with ``Message from Mesos executor: Abnormal executor termination``
+--
+Dockerized application fails with ``Message from Mesos executor: Abnormal executor termination``
+
 A.
-   Mesos Agent's configuration ``--containerizers`` does not have ``docker`` .
-   Write ``mesos,docker`` to ``/etc/mesos-slave/containerizers``
+~~
+Mesos Agent's configuration ``--containerizers`` does not have ``docker`` .
+Write ``mesos,docker`` to ``/etc/mesos-slave/containerizers``
 
 Q.
-   Asakusa on M3BP Batch fails with ``execute.sh`` not found  (FileNotFoundException)
-A.  YAESS has one path that moves to ``$HOME``, with invalid home
-   directory set. Workaround is adding ``-E
-   YAESS_OPTS='-Duser.home=.'`` to ``schedule/run`` option.
+--
+Asakusa on M3BP Batch fails with ``execute.sh`` not found  (FileNotFoundException)
 
+A.
+~~
+YAESS has one path that moves to ``$HOME``, with invalid home
+directory set. Workaround is adding
+``-E YAESS_OPTS='-Duser.home=.'`` to ``schedule/run`` option.
 
-**Q.**
-   Too many logs: ``/opt/retz-server/bin/retz-server`` outputs too many ``W0704
-  17:29:51.465764 4270 sched.cpp:696] Ignoring framework registered
+Q.
+--
+Too many logs: ``/opt/retz-server/bin/retz-server`` outputs too many
+
+::
+
+  W0704 17:29:51.465764 4270 sched.cpp:696] Ignoring framework registered
   message because it was sent from 'master@192.168.100.121:5050'
-  instead of the leading master 'master@127.0.0.1:5050'``
+  instead of the leading master 'master@127.0.0.1:5050'
 
-**A.** Mesos is bound to invalid address such as `0.0.0.0:5050` or
-`127.0.0.1:5050` .  Set an accessible IP address to both
+A.
+~~
+Mesos is bound to invalid address such as ``0.0.0.0:5050`` or
+``127.0.0.1:5050`` .  Set an accessible IP address to both
 ``/etc/mesos-master/ip`` and ``retz.mesos`` in ``retz.properties``.
 
 Q.
-   How to output debug log for diagnosis?
-A.  Add ``-Dlogback.configurationFile=/path/to/logback-debug.xml`` to
-   JVM boot option.  For Retz servers installed with package managers,
-   set environment variable ``RETZ_SERVER_OPTS`` like this: ``export
-   RETZ_SERVER_OPTS=-Dlogback.configurationFile=/opt/retz-server/etc/logback.xml``
-   For fat jar file users, ``java
-   -Dlogback.configurationFile=/path/to/logback-debug.xml -jar
-   path/to/retz-server-0.2.0-all.jar -C retz.properties``
+--
+How to output debug log for diagnosis?
+
+A.
+~~
+Add ``-Dlogback.configurationFile=/path/to/logback-debug.xml`` to
+JVM boot option.  For Retz servers installed with package managers,
+set environment variable ``RETZ_SERVER_OPTS`` like this::
+
+  export RETZ_SERVER_OPTS=-Dlogback.configurationFile=/opt/retz-server/etc/logback.xml
+
+For fat jar file users::
+
+  # java -Dlogback.configurationFile=/path/to/logback-debug.xml \
+    -jar path/to/retz-server-0.2.0-all.jar -C retz.properties

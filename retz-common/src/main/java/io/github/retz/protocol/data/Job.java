@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.github.retz.protocol.data.Job.JobState.*;
@@ -276,7 +277,7 @@ public class Job {
                 .append(", tags=[").append(String.join(",", tags.stream().sorted().collect(Collectors.toList()))).append("]")
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
-                .append(", env=").append(props)
+                .append(", env=").append(maskProperties(props))
                 .append(", resources=").append(resources.toString());
 
         sb.append(", priority=").append(priority);
@@ -308,7 +309,7 @@ public class Job {
                 .append(", tags=[").append(String.join(",", tags.stream().sorted().collect(Collectors.toList()))).append("]")
                 .append(", appid=").append(appid)
                 .append(", cmd=").append(cmd)
-                .append(", env=").append(props)
+                .append(", env=").append(maskProperties(props))
                 .append(", resources=").append(resources.toString());
 
         sb.append(", priority=").append(priority);
@@ -347,6 +348,17 @@ public class Job {
         STARTED,
         FINISHED,
         KILLED,
+    }
+
+    private Properties maskProperties(Properties props) {
+        Pattern p = Pattern.compile(".*(secret|password|token).*", Pattern.CASE_INSENSITIVE);
+        Properties maskedProps = new Properties();
+        props.forEach((key, value) -> {
+            String k = key.toString();
+            String v = (p.matcher(k).matches()) ? "<masked>" : value.toString();
+            maskedProps.setProperty(k, v);
+        });
+        return maskedProps;
     }
 
 }
