@@ -49,7 +49,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class Client implements AutoCloseable {
 
     public static final String VERSION_STRING;
-    public static final int MAX_BIN_SIZE = (int) DownloadFileRequest.MAX_FILE_SIZE;
 
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
 
@@ -193,8 +192,6 @@ public class Client implements AutoCloseable {
         } else if (size == 0) {
             // not bytes to save;
             return 0;
-        } else if (size > MAX_BIN_SIZE) {
-            throw new IOException("Download file too large: " + size);
         }
         try {
             return IOUtils.copy(conn.getInputStream(), out);

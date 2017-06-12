@@ -25,6 +25,7 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.misc.Pair;
+import io.github.retz.misc.Triad;
 import io.github.retz.planner.AppJobPair;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
@@ -39,9 +40,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
@@ -172,22 +173,20 @@ public class JobRequestHandler {
         LOG.debug("download: path={}", file);
 
         if (job.isPresent() && job.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
-
-            // TODO: This is soo inefficient; it stores all data into RAM without streaming
-            // THIS MUST BE FIXED SOON
-            Pair<Integer, byte[]> payload = MesosHTTPFetcher.downloadHTTPFile(job.get().url(), file);
-            res.status(payload.left());
-
-            if (payload.left() == 200) {
-                res.type("application/octet-stream");
-                res.raw().setContentLength(payload.right().length);
-                ByteArrayInputStream in = new ByteArrayInputStream(payload.right());
-
-                IOUtils.copy(in, res.raw().getOutputStream());
-                in.close();
-            }
+            MesosHTTPFetcher.downloadHTTPFile(job.get().url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
+                Integer statusCode = triad.left();
+                res.status(statusCode);
+                if (statusCode == 200) {
+                    Long length = triad.right().left();
+                    InputStream io = triad.right().right();
+                    res.raw().setHeader("Content-Length", length.toString());
+                    LOG.debug("start streaming of {} bytes", length);
+                    IOUtils.copyLarge(io, res.raw().getOutputStream());
+                } else {
+                    res.body(triad.center());
+                }
+            });
             return "";
-
         } else {
             res.status(404);
             return "";

@@ -16,8 +16,6 @@
  */
 package io.github.retz.misc;
 
-import java.util.Objects;
-
 public class Pair<T1, T2> {
     private final T1 t1;
     private final T2 t2;
