@@ -22,10 +22,9 @@ import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
@@ -111,5 +110,36 @@ public class JobTest {
         System.err.println(job.toString());
         System.err.println(job.pp());
         assertEquals(Job.JobState.QUEUED, job.state());
+    }
+
+    @Test
+    public void maskPropertiesTest() {
+        Properties props = job.props();
+        List<String> secretProperties = Arrays.asList("some_secret_string", "SOME_SECRET_STRING",
+                "some_password_string", "SOME_PASSWORD_STRING",
+                "some_token_string", "SOME_TOKEN_STRING");
+        secretProperties.forEach(k -> {
+            props.setProperty(k, "%STRING_TO_REPLACE%");
+        });
+        List<String> otherProperties = Arrays.asList("some_other_string", "SOME_OTHER_STRING");
+        otherProperties.forEach(k -> {
+            props.setProperty(k, "%STRING_NOT_TO_REPLACE%");
+        });
+
+        Arrays.asList(job.toString(), job.pp()).forEach(s -> {
+            System.err.println(s);
+            secretProperties.forEach(k -> {
+                Pattern p = Pattern.compile(String.format("^.*%s=([^,}]*).*$", k));
+                Matcher m = p.matcher(s);
+                assert(m.matches());
+                assertEquals(m.group(1), "<masked>");
+            });
+            otherProperties.forEach(k -> {
+                Pattern p = Pattern.compile(String.format("^.*%s=([^,}]*).*$", k));
+                Matcher m = p.matcher(s);
+                assert(m.matches());
+                assertEquals(m.group(1), "%STRING_NOT_TO_REPLACE%");
+            });
+        });
     }
 }
