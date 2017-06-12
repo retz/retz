@@ -184,8 +184,9 @@ public class JobRequestHandler {
                         throw new IOException("Stream file too large: " + length + " < " + maxFileSize);
                     }
                     res.raw().setHeader("Content-Length", length.toString());
-                    LOG.info("start streaming of {} bytes", length);
+                    LOG.debug("start streaming of {} bytes for {}", length, file);
                     IOUtils.copyLarge(io, res.raw().getOutputStream());
+                    LOG.debug("end streaming for {}", file);
                 } else {
                     res.body(triad.center());
                 }
