@@ -89,9 +89,13 @@ public final class WebConsole {
                     req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
         });
 
-        exception(JobNotFoundException.class, (exception, request, response) -> {
-            LOG.debug("Exception: {}", exception.toString(), exception);
-            response.status(404);
+        exception(Exception.class, (exception, request, response) -> {
+            LOG.debug("{}: {}", exception.getClass().getName(), exception.toString(), exception);
+            if (exception.getClass().isInstance(JobNotFoundException.class)) {
+                response.status(404);
+            } else {
+                response.status(500);
+            }
             ErrorResponse errorResponse = new ErrorResponse(exception.toString());
             try {
                 response.body(MAPPER.writeValueAsString(errorResponse));
