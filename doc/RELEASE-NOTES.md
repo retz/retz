@@ -1,5 +1,13 @@
 # Retz release notes
 
+## 0.2.7
+
+* Mask secret strings on server side logging.
+* Download from Agents' sandbox is fully sent in streaming
+  manner, both in clients and servers.
+* Move CI from Wercker to CircleCI.
+* Add 'application/json' content type to response of /kill API.
+
 ## 0.2.6
 
 * Fix a bug where kill is never sent to Mesos while state in Retz
