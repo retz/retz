@@ -91,7 +91,7 @@ public final class WebConsole {
         });
 
         exception(JobNotFoundException.class, (exception, request, response) -> {
-            LOG.debug("Exception: {}", exception.toString(), exception);
+            LOG.debug(exception.toString(), exception);
             response.status(404);
             ErrorResponse errorResponse = new ErrorResponse(exception.toString());
             try {
@@ -103,7 +103,7 @@ public final class WebConsole {
         });
 
         exception(DownloadFileSizeExceeded.class, (exception, request, response) -> {
-            LOG.warn("{}: {}", exception.getClass().getName(), exception.toString(), exception);
+            LOG.warn(exception.toString(), exception);
             response.status(500);
             ErrorResponse errorResponse = new ErrorResponse(exception.toString());
             try {
@@ -115,7 +115,7 @@ public final class WebConsole {
         });
 
         exception(Exception.class, (exception, request, response) -> {
-            LOG.error("{}: {}", exception.getClass().getName(), exception.toString(), exception);
+            LOG.error(exception.toString(), exception);
             response.status(500);
             ErrorResponse errorResponse = new ErrorResponse("Internal Server Error");
             try {
