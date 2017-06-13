@@ -90,18 +90,22 @@ public final class WebConsole {
                     req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
         });
 
-        exception(Exception.class, (exception, request, response) -> {
-            LOG.debug("{}: {}", exception.getClass().getName(), exception.toString(), exception);
-            String message;
-            if (exception.getClass().isInstance(RetzServerException.class)) {
-                RetzServerException retzException = (RetzServerException)exception;
-                response.status(retzException.getStatusCode());
-                message = retzException.getMessage();
-            } else {
-                response.status(500);
-                message = "Internal Server Error";
+        exception(JobNotFoundException.class, (exception, request, response) -> {
+            LOG.debug("Exception: {}", exception.toString(), exception);
+            response.status(404);
+            ErrorResponse errorResponse = new ErrorResponse(exception.toString());
+            try {
+                response.body(MAPPER.writeValueAsString(errorResponse));
+            } catch (JsonProcessingException e) {
+                LOG.error(e.toString(), e);
+                response.body(e.toString());
             }
-            ErrorResponse errorResponse = new ErrorResponse(message);
+        });
+
+        exception(Exception.class, (exception, request, response) -> {
+            LOG.error("{}: {}", exception.getClass().getName(), exception.toString(), exception);
+            response.status(500);
+            ErrorResponse errorResponse = new ErrorResponse("Internal Server Error");
             try {
                 response.body(MAPPER.writeValueAsString(errorResponse));
             } catch (JsonProcessingException e) {
