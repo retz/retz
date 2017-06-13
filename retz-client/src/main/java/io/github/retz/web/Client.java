@@ -18,13 +18,11 @@ package io.github.retz.web;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import feign.FeignException;
 import io.github.retz.auth.AuthHeader;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.misc.Pair;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
@@ -38,20 +36,15 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownServiceException;
-import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class Client implements AutoCloseable {
 
     public static final String VERSION_STRING;
-    public static final int MAX_BIN_SIZE = (int) DownloadFileRequest.MAX_FILE_SIZE;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
@@ -202,8 +195,6 @@ public class Client implements AutoCloseable {
         } else if (size == 0) {
             // not bytes to save;
             return 0;
-        } else if (size > MAX_BIN_SIZE) {
-            throw new IOException("Download file too large: " + size);
         }
         try {
             return IOUtils.copy(conn.getInputStream(), out);

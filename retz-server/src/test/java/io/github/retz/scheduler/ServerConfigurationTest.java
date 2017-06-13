@@ -42,6 +42,7 @@ public class ServerConfigurationTest {
         assertNotEquals("root", config.getUserName());
 
         assertEquals(42, config.getMaxListJobSize());
+        assertEquals(12345, config.getMaxFileSize());
     }
 
     @Test(expected=IllegalArgumentException.class)

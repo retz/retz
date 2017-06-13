@@ -56,6 +56,7 @@ public class RetzScheduler implements Scheduler {
     }
 
     private final ResourceQuantity MAX_JOB_SIZE;
+    private final Long MAX_FILE_SIZE;
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final Map<String, Protos.Offer> OFFER_STOCK = new ConcurrentHashMap<>();
     private final Planner PLANNER;
@@ -72,6 +73,7 @@ public class RetzScheduler implements Scheduler {
         this.slaves = new ConcurrentHashMap<>();
         this.filters = Protos.Filters.newBuilder().setRefuseSeconds(conf.getServerConfig().getRefuseSeconds()).build();
         MAX_JOB_SIZE = conf.getServerConfig().getMaxJobSize();
+        MAX_FILE_SIZE = conf.getServerConfig().getMaxFileSize();
     }
 
     @Override
@@ -439,4 +441,6 @@ public class RetzScheduler implements Scheduler {
     public ResourceQuantity maxJobSize() {
         return MAX_JOB_SIZE;
     }
+
+    public Long maxFileSize() { return MAX_FILE_SIZE; }
 }

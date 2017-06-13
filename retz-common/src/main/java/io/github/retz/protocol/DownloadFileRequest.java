@@ -26,8 +26,6 @@ import java.util.Objects;
 
 // Request to get text file; maps to files/read API of Mesos
 public class DownloadFileRequest extends Request {
-    public static long MAX_FILE_SIZE = 65536 * 1024; // in bytes
-
     private int id;
     private String file;
     //private long offset;

@@ -16,17 +16,6 @@
  */
 package io.github.retz.misc;
 
-public class Pair<T1, T2> {
-    private final T1 t1;
-    private final T2 t2;
-    public Pair(T1 t1, T2 t2) {
-        this.t1 = t1;
-        this.t2 = t2;
-    }
-    public T1 left() {
-        return t1;
-    }
-    public T2 right() {
-        return t2;
-    }
+public interface Receivable<T, E extends Throwable> {
+    void receive(T value) throws E;
 }
