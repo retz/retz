@@ -17,9 +17,9 @@
 package io.github.retz.mesosc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.retz.misc.Either;
 import io.github.retz.misc.Pair;
-import io.github.retz.protocol.DownloadFileRequest;
+import io.github.retz.misc.Receivable;
+import io.github.retz.misc.Triad;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,7 +209,7 @@ public class MesosHTTPFetcher {
         return ret;
     }
 
-    public static Pair<Integer, byte[]> downloadHTTPFile(String url, String name) throws IOException {
+    public static void downloadHTTPFile(String url, String name, Receivable<Triad<Integer, String, Pair<Long, InputStream>>, IOException> cb) throws IOException {
         String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
         LOG.debug("Downloading {}", addr);
 
@@ -217,39 +217,21 @@ public class MesosHTTPFetcher {
         try {
             conn = (HttpURLConnection) new URL(addr).openConnection();
             conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
 
-            LOG.debug("res={}, md5={}, length={}", conn.getResponseMessage(),
-                    conn.getHeaderField("Content-md5"), conn.getHeaderField("Content-Length"));
+            Integer statusCode = conn.getResponseCode();
+            String message = conn.getResponseMessage();
+            Long length = conn.getHeaderFieldLong("Content-Length", -1);
+            LOG.debug("res={}, md5={}, length={}", message,
+                    conn.getHeaderField("Content-md5"), length);
 
-            if (conn.getResponseCode() != 200) {
-                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage().getBytes(UTF_8));
-            }
-
-            long size = conn.getHeaderFieldLong("Content-Length", -1);
-            if (size < 0 || DownloadFileRequest.MAX_FILE_SIZE < size || Integer.MAX_VALUE < size) {
-                throw new IOException("Illegal Content size found at Mesos: " + size);
-            }
-
-            try (BufferedInputStream in = new BufferedInputStream(conn.getInputStream())) {
-                int len = (int)size;
-                byte[] buffer = new byte[len];
-                int offset = 0;
-                while (offset < len) {
-                    int read = in.read(buffer, offset, len - offset);
-                    if (read < 0) {
-                        break;
-                    }
-                    offset += read;
-                }
-                return new Pair<>(200, buffer);
-            }
-
-        } finally {
+            cb.receive(new Triad<>(statusCode, message, new Pair<>(length, conn.getInputStream())));
+        }
+        finally {
             if (conn != null) {
                 conn.disconnect();
             }
         }
+
     }
 
 
