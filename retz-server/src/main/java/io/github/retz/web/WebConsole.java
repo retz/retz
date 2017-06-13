@@ -28,7 +28,6 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.protocol.exception.RetzServerException;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.mesos.SchedulerDriver;

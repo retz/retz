@@ -16,9 +16,8 @@
  */
 package io.github.retz.protocol.exception;
 
-public class JobNotFoundException extends RetzServerException {
+public class JobNotFoundException extends Exception {
     private int id;
-    private int statusCode = 404;
 
     public JobNotFoundException(int id) {
         super("No such job: id=" + id);

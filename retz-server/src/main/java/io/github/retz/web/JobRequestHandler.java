@@ -32,7 +32,6 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.exception.RetzServerException;
 import io.github.retz.scheduler.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.mesos.Protos;
@@ -168,7 +167,7 @@ public class JobRequestHandler {
     }
 
     // A new HTTP endpoint to support binaries
-    static String downloadFile(spark.Request req, spark.Response res) throws IOException, RetzServerException {
+    static String downloadFile(spark.Request req, spark.Response res) throws IOException {
         Optional<Job> job = getJobAndVerify(req);
         String file = req.queryParams("path");
         LOG.debug("download: path={}", file);
