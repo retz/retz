@@ -92,15 +92,11 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Framework Message ({} bytes)", data.length);
     }
 
-    // There is a potential race between offerRescinded and using offer stocks;
-    // in case handleAll trying to schedule tasks, offers are removed from OFFER_STOCK
-    // but being used to schedule tasks - this message can't be in time ...
-    // The task with rescinded offer (slave) might fail in advance; TASK_FAILED or TASK_LOST?
-    // any way in this case it should be retried...
     @Override
     public void offerRescinded(SchedulerDriver driver, Protos.OfferID offerId) {
         LOG.info("Offer rescinded: {}", offerId.getValue());
-        OFFER_STOCK.remove(offerId.getValue());
+        // Hereby offers must be removed from OFFER_STOCK, instead it's removed at slaveLost() callback.
+        // This is based on an assumption that all offerRescinded calls come with slaveLost().
     }
 
     @Override
@@ -290,6 +286,20 @@ public class RetzScheduler implements Scheduler {
 
         // TODO: remove **ONLY** tasks that is running on the failed slave
         Stanchion.schedule(() -> maybeRecoverRunning(driver));
+
+        // There is a potential race between offerRescinded/slaveLost and using offer stocks;
+        // in case handleAll trying to schedule tasks, offers are removed from OFFER_STOCK
+        // but being used to schedule tasks - this message can't be in time ...
+        // The task with rescinded offer (slave) might fail in advance; TASK_FAILED or TASK_LOST?
+        // any way in this case it should be retried...
+        //
+        // Clean up stocked offers from lost slave, or kept long dead
+        // TODO: add tests on github #153 bug, this is a quick patch
+        synchronized (OFFER_STOCK) {
+            Protos.Offer offer = OFFER_STOCK.remove(slaveId.getValue());
+            driver.declineOffer(offer.getId());
+        }
+        updateOfferStats();
     }
 
     @Override

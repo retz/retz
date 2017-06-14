@@ -2,6 +2,7 @@
 
 ## 0.2.7
 
+* Fix double-counting-offers bug when an agent got lost (#153)
 * Improve error handling, server side IOException returns to
   clients as 500, which used to be 404.
 * Mask secret strings on server side logging.
