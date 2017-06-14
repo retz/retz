@@ -92,38 +92,17 @@ public final class WebConsole {
 
         exception(JobNotFoundException.class, (exception, request, response) -> {
             LOG.debug(exception.toString(), exception);
-            response.status(404);
-            ErrorResponse errorResponse = new ErrorResponse(exception.toString());
-            try {
-                response.body(MAPPER.writeValueAsString(errorResponse));
-            } catch (JsonProcessingException e) {
-                LOG.error(e.toString(), e);
-                response.body(e.toString());
-            }
+            handleException(404, exception.toString(), response);
         });
 
         exception(DownloadFileSizeExceeded.class, (exception, request, response) -> {
             LOG.warn(exception.toString(), exception);
-            response.status(500);
-            ErrorResponse errorResponse = new ErrorResponse(exception.toString());
-            try {
-                response.body(MAPPER.writeValueAsString(errorResponse));
-            } catch (JsonProcessingException e) {
-                LOG.error(e.toString(), e);
-                response.body(e.toString());
-            }
+            handleException(500, exception.toString(), response);
         });
 
         exception(Exception.class, (exception, request, response) -> {
             LOG.error(exception.toString(), exception);
-            response.status(500);
-            ErrorResponse errorResponse = new ErrorResponse("Internal Server Error");
-            try {
-                response.body(MAPPER.writeValueAsString(errorResponse));
-            } catch (JsonProcessingException e) {
-                LOG.error(e.toString(), e);
-                response.body(e.toString());
-            }
+            handleException(500, "Internal Server Error: " + exception.toString(), response);
         });
 
         // APIs to be in vanilla HTTP
@@ -159,6 +138,17 @@ public final class WebConsole {
         JobRequestHandler.setDriver(driver);
         JobRequestHandler.setScheduler(sched);
         scheduler = Optional.of(sched);
+    }
+
+    public static void handleException(int status, String mesg, Response response) {
+        response.status(status);
+        ErrorResponse errorResponse = new ErrorResponse(mesg);
+        try {
+            response.body(MAPPER.writeValueAsString(errorResponse));
+        } catch (JsonProcessingException e) {
+            LOG.error(e.toString(), e);
+            response.body(e.toString());
+        }
     }
 
     static void authenticate(Request req, Response res) throws IOException, URISyntaxException {

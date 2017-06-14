@@ -2,6 +2,8 @@
 
 ## 0.2.7
 
+* Improve error handling, server side IOException returns to
+  clients as 500, which used to be 404.
 * Mask secret strings on server side logging.
 * Download from Agents' sandbox is fully sent in streaming
   manner, both in clients and servers.
