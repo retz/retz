@@ -16,11 +16,13 @@
  */
 package io.github.retz.protocol.exception;
 
-public class JobNotFoundException extends Exception {
-    private int id;
+public class DownloadFileSizeExceeded extends Exception {
+    Long size;
+    Long maxSize;
 
-    public JobNotFoundException(int id) {
-        super("No such job: id=" + id);
-        this.id = id;
+    public DownloadFileSizeExceeded(Long size, Long maxSize) {
+        super("stream file too large: " + size + " < " + maxSize);
+        this.size = size;
+        this.maxSize = maxSize;
     }
 }

@@ -32,6 +32,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.exception.DownloadFileSizeExceeded;
 import io.github.retz.scheduler.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.mesos.Protos;
@@ -167,7 +168,7 @@ public class JobRequestHandler {
     }
 
     // A new HTTP endpoint to support binaries
-    static String downloadFile(spark.Request req, spark.Response res) throws IOException {
+    static String downloadFile(spark.Request req, spark.Response res) throws Exception {
         Optional<Job> job = getJobAndVerify(req);
         String file = req.queryParams("path");
         LOG.debug("download: path={}", file);
@@ -183,7 +184,7 @@ public class JobRequestHandler {
                     if (length < 0) {
                         throw new IOException("content length is negative: " + length);
                     } else if (0 <= maxFileSize && maxFileSize < length) { // negative maxFileSize indicates no limit
-                        throw new IOException("stream file too large: " + length + " < " + maxFileSize);
+                        throw new DownloadFileSizeExceeded(length, maxFileSize);
                     }
                     res.raw().setHeader("Content-Length", length.toString());
                     LOG.debug("start streaming of {} bytes for {}", length, file);

@@ -27,6 +27,7 @@ import io.github.retz.db.Database;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.User;
+import io.github.retz.protocol.exception.DownloadFileSizeExceeded;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.scheduler.RetzScheduler;
 import io.github.retz.scheduler.ServerConfiguration;
@@ -90,9 +91,33 @@ public final class WebConsole {
         });
 
         exception(JobNotFoundException.class, (exception, request, response) -> {
-            LOG.debug("Exception: {}", exception.toString(), exception);
+            LOG.debug(exception.toString(), exception);
             response.status(404);
             ErrorResponse errorResponse = new ErrorResponse(exception.toString());
+            try {
+                response.body(MAPPER.writeValueAsString(errorResponse));
+            } catch (JsonProcessingException e) {
+                LOG.error(e.toString(), e);
+                response.body(e.toString());
+            }
+        });
+
+        exception(DownloadFileSizeExceeded.class, (exception, request, response) -> {
+            LOG.warn(exception.toString(), exception);
+            response.status(500);
+            ErrorResponse errorResponse = new ErrorResponse(exception.toString());
+            try {
+                response.body(MAPPER.writeValueAsString(errorResponse));
+            } catch (JsonProcessingException e) {
+                LOG.error(e.toString(), e);
+                response.body(e.toString());
+            }
+        });
+
+        exception(Exception.class, (exception, request, response) -> {
+            LOG.error(exception.toString(), exception);
+            response.status(500);
+            ErrorResponse errorResponse = new ErrorResponse("Internal Server Error");
             try {
                 response.body(MAPPER.writeValueAsString(errorResponse));
             } catch (JsonProcessingException e) {

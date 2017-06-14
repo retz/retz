@@ -209,7 +209,7 @@ public class MesosHTTPFetcher {
         return ret;
     }
 
-    public static void downloadHTTPFile(String url, String name, Receivable<Triad<Integer, String, Pair<Long, InputStream>>, IOException> cb) throws IOException {
+    public static void downloadHTTPFile(String url, String name, Receivable<Triad<Integer, String, Pair<Long, InputStream>>, Exception> cb) throws Exception {
         String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
         LOG.debug("Downloading {}", addr);
 

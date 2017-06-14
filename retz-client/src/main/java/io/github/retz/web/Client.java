@@ -16,15 +16,14 @@
  */
 package io.github.retz.web;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import feign.FeignException;
 import io.github.retz.auth.AuthHeader;
 import io.github.retz.auth.Authenticator;
 import io.github.retz.cli.TimestampHelper;
-import io.github.retz.misc.Pair;
-import io.github.retz.protocol.DownloadFileRequest;
-import io.github.retz.protocol.GetJobResponse;
-import io.github.retz.protocol.Response;
-import io.github.retz.protocol.ScheduleResponse;
+import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.feign.Retz;
@@ -37,24 +36,23 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class Client implements AutoCloseable {
 
     public static final String VERSION_STRING;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
 
     static {
         ResourceBundle labels = ResourceBundle.getBundle("retz-client");
         VERSION_STRING = labels.getString("version");
+        MAPPER.registerModule(new Jdk8Module());
     }
 
     private final Retz retz;
@@ -175,14 +173,19 @@ public class Client implements AutoCloseable {
             }
             if (conn.getResponseCode() < 200) {
                 throw new AssertionError(conn.getResponseMessage());
-            } else if (conn.getResponseCode() < 300) {
-                return 0;
-            } else if (conn.getResponseCode() < 400) {
-                return 0;
             } else if (conn.getResponseCode() == 404) {
                 throw new FileNotFoundException(url.toString());
             } else {
-                return 0;
+                String message;
+                try {
+                    Response response = MAPPER.readValue(conn.getErrorStream(), Response.class);
+                    message = response.status();
+                    LOG.error(message, response);
+                } catch (JsonProcessingException e) {
+                    message = e.toString();
+                    LOG.error(message, e);
+                }
+                throw new UnknownError(message);
             }
         }
 
