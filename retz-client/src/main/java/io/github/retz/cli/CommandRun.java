@@ -22,9 +22,11 @@ import io.github.retz.protocol.ScheduleResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.Client;
 import io.github.retz.web.ClientHelper;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
@@ -55,7 +57,7 @@ public class CommandRun implements SubCommand {
     List<String> tags = Arrays.asList();
     @Parameter(names = "--timeout", description = "Timeout in minutes until kill from client (-1 or 0 for no timeout, default is 24 hours)")
     int timeout = 24 * 60;
-    @Parameter(names = {"-c", "--command", "-cmd"}, required = true, description = "Remote command")
+    @Parameter(names = {"-c", "--command", "-cmd"}, required = true, description = "Remote command (-) for command from stdin")
     private String remoteCmd;
     @Parameter(names = {"-A", "--appname"}, required = true, description = "Application name you loaded")
     private String appName;
@@ -78,6 +80,12 @@ public class CommandRun implements SubCommand {
             LOG.error("--ports must be within 0 to 1000: {} given.", ports);
             return -1;
         }
+
+        if ("-".equals(remoteCmd)) {
+            List<String> lines = IOUtils.readLines(System.in, StandardCharsets.UTF_8);
+            remoteCmd = String.join("\n", lines);
+        }
+
         Job job = new Job(appName, remoteCmd, envProps, cpu, mem, disk, gpu, ports);
         job.setPriority(priority);
         job.setName(name);
