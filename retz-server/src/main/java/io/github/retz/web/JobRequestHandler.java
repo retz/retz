@@ -33,6 +33,7 @@ import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.exception.DownloadFileSizeExceeded;
+import io.github.retz.protocol.exception.JobFileNotFoundException;
 import io.github.retz.scheduler.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.mesos.Protos;
@@ -169,31 +170,37 @@ public class JobRequestHandler {
 
     // A new HTTP endpoint to support binaries
     static String downloadFile(spark.Request req, spark.Response res) throws Exception {
-        Optional<Job> job = getJobAndVerify(req);
+        Optional<Job> maybeJob = getJobAndVerify(req);
         String file = req.queryParams("path");
         LOG.debug("download: path={}", file);
 
-        if (job.isPresent() && job.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
-            MesosHTTPFetcher.downloadHTTPFile(job.get().url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
-                Integer statusCode = triad.left();
-                res.status(statusCode);
-                if (statusCode == 200) {
-                    Long length = triad.right().left();
-                    InputStream io = triad.right().right();
-                    Long maxFileSize = scheduler.get().maxFileSize();
-                    if (length < 0) {
-                        throw new IOException("content length is negative: " + length);
-                    } else if (0 <= maxFileSize && maxFileSize < length) { // negative maxFileSize indicates no limit
-                        throw new DownloadFileSizeExceeded(length, maxFileSize);
+        if (maybeJob.isPresent() && maybeJob.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
+            Job job = maybeJob.get();
+            try {
+                MesosHTTPFetcher.downloadHTTPFile(job.url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
+                    Integer statusCode = triad.left();
+                    res.status(statusCode);
+                    if (statusCode == 200) {
+                        Long length = triad.right().left();
+                        InputStream io = triad.right().right();
+                        Long maxFileSize = scheduler.get().maxFileSize();
+                        if (length < 0) {
+                            throw new IOException("content length is negative: " + length);
+                        } else if (0 <= maxFileSize && maxFileSize < length) { // negative maxFileSize indicates no limit
+                            throw new DownloadFileSizeExceeded(length, maxFileSize);
+                        }
+                        res.raw().setHeader("Content-Length", length.toString());
+                        LOG.debug("start streaming of {} bytes for {}", length, file);
+                        IOUtils.copyLarge(io, res.raw().getOutputStream(), 0, length);
+                        LOG.debug("end streaming for {}", file);
+                    } else {
+                        res.body(triad.center());
                     }
-                    res.raw().setHeader("Content-Length", length.toString());
-                    LOG.debug("start streaming of {} bytes for {}", length, file);
-                    IOUtils.copyLarge(io, res.raw().getOutputStream(), 0, length);
-                    LOG.debug("end streaming for {}", file);
-                } else {
-                    res.body(triad.center());
-                }
-            });
+                });
+            }
+            catch (FileNotFoundException e) {
+                throw new JobFileNotFoundException(job.id(), file);
+            }
             return "";
         } else {
             res.status(404);
