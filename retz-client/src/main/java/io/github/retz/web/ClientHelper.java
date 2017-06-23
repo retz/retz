@@ -20,7 +20,6 @@ import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.protocol.exception.RetzClientError;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,7 +196,7 @@ public class ClientHelper {
     }
 
     // This interface is still in experiment, which may be changed even in patch release.
-    public static void getWholeBinaryFile(Client c, int id, String path, String output) throws IOException, RetzClientError {
+    public static void getWholeBinaryFile(Client c, int id, String path, String output) throws IOException {
         String fullpath = FilenameUtils.concat(output, FilenameUtils.getName(path));
         LOG.info("Saving {} as {}", path, fullpath);
         try (FileOutputStream out = new FileOutputStream(fullpath)) {
@@ -205,7 +204,7 @@ public class ClientHelper {
         }
     }
 
-    public static void getWholeBinaryFile(Client c, int id, String path, OutputStream out) throws IOException, RetzClientError {
+    public static void getWholeBinaryFile(Client c, int id, String path, OutputStream out) throws IOException {
         c.getBinaryFile(id, path, out);
     }
 

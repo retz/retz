@@ -16,8 +16,10 @@
  */
 package io.github.retz.protocol.exception;
 
-public class RetzClientError extends Exception {
-    public RetzClientError(String message) {
+import java.io.IOException;
+
+public class UnknownServerResponseException extends IOException {
+    public UnknownServerResponseException(String message) {
         super(message);
     }
 }

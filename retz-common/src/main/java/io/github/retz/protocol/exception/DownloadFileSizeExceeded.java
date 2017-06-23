@@ -16,7 +16,7 @@
  */
 package io.github.retz.protocol.exception;
 
-public class DownloadFileSizeExceeded extends RetzServerError {
+public class DownloadFileSizeExceeded extends Exception {
     Long size;
     Long maxSize;
 

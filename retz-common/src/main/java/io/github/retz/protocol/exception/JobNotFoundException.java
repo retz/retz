@@ -16,7 +16,7 @@
  */
 package io.github.retz.protocol.exception;
 
-public class JobNotFoundException extends RetzServerError {
+public class JobNotFoundException extends Exception {
     private int id;
 
     public JobNotFoundException(int id) {
