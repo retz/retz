@@ -169,12 +169,13 @@ public class JobRequestHandler {
 
     // A new HTTP endpoint to support binaries
     static String downloadFile(spark.Request req, spark.Response res) throws Exception {
-        Optional<Job> job = getJobAndVerify(req);
+        Optional<Job> maybeJob = getJobAndVerify(req);
         String file = req.queryParams("path");
         LOG.debug("download: path={}", file);
 
-        if (job.isPresent() && job.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
-            MesosHTTPFetcher.downloadHTTPFile(job.get().url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
+        if (maybeJob.isPresent() && maybeJob.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
+            Job job = maybeJob.get();
+            MesosHTTPFetcher.downloadHTTPFile(job.url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
                 Integer statusCode = triad.left();
                 res.status(statusCode);
                 if (statusCode == 200) {

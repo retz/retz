@@ -38,6 +38,7 @@ import spark.Request;
 import spark.Response;
 import spark.Spark;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -88,6 +89,11 @@ public final class WebConsole {
             LOG.info("{} {} {} {} from {} {}",
                     res.raw().getStatus(),
                     req.requestMethod(), req.url(), req.raw().getQueryString(), req.ip(), req.userAgent());
+        });
+
+        exception(FileNotFoundException.class, (exception, request, response) -> {
+            LOG.debug(exception.toString(), exception);
+            handleException(404, exception.toString(), response);
         });
 
         exception(JobNotFoundException.class, (exception, request, response) -> {
