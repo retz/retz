@@ -26,6 +26,7 @@ import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.exception.UnknownServerResponseException;
 import io.github.retz.web.feign.Retz;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -185,7 +186,7 @@ public class Client implements AutoCloseable {
                     message = e.toString();
                     LOG.error(message, e);
                 }
-                throw new UnknownError(message);
+                throw new UnknownServerResponseException(message);
             }
         }
 
