@@ -1,6 +1,11 @@
 # Retz release notes
 
-## 0.2.8
+## 0.2.9
+
+* Fix failing `uploadArtifact` by replacing aws-maven with
+  maven-publish plugin. Due to this issue 0.2.8 is abandoned.
+
+## 0.2.8 (abandoned release)
 
 * Update almost all dependencies
 * On fetching files from job sandbox, now servers return 404
