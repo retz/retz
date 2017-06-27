@@ -47,6 +47,7 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
     apply plugin: 'maven'
+    apply plugin: 'maven-publish'
 
     group = 'io.github.retz'
     // Note: You can't create RPM with hyphen included in version name
@@ -54,9 +55,7 @@ subprojects {
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
 
-    configurations {
-        deployerJars
-    }
+    ext.retzMavenRepo = project.version.contains("-SNAPSHOT") ? "s3://retz-maven/snapshots" : "s3://retz-maven/releases"
 
     dependencies {
         compile 'org.slf4j:slf4j-api:1.7.25'
@@ -67,8 +66,6 @@ subprojects {
         testCompile 'org.scalacheck:scalacheck_2.12:1.13.+'
         testCompile 'org.scalatest:scalatest_2.12:3.0.+'
         testCompile 'org.scala-lang:scala-library:2.12.+'
-
-        deployerJars 'org.springframework.build:aws-maven:5.0.0.RELEASE'
     }
 
     jar {
@@ -108,12 +105,20 @@ subprojects {
         }
     }
 
-    uploadArchives {
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact sourcesJar
+            }
+        }
         repositories {
-            mavenDeployer {
-                configuration = project.configurations.deployerJars
-                repository id: 'io.github.retz.releases', url: 's3://retz-maven/releases'
-                snapshotRepository id: 'io.github.retz.snapshots', url: 's3://retz-maven/snapshots'
+            maven {
+                url retzMavenRepo
+                credentials(AwsCredentials) {
+                    accessKey System.getenv('AWS_ACCESS_KEY_ID')
+                    secretKey System.getenv('AWS_SECRET_ACCESS_KEY')
+                }
             }
         }
     }
