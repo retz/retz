@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.2.8
+
+* Update almost all dependencies
+* On fetching files from job sandbox, now servers return 404
+  when requested files do not exist.
+* Read command from standard input at Client CLI
+
 ## 0.2.7
 
 * Fix double-counting-offers bug when an agent got lost (#153)

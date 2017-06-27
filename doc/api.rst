@@ -138,7 +138,7 @@ in Java API
 ``OPTIONS`` follows:
 
 * ``-A <appname>`` : Defines an application name (required)
-* ``-c|--command <commandline>``:   Defines command line to run (required)
+* ``-c|--command <commandline>``:   Defines command line to run (required)  With "-" it reads actual command from standard input.
 * ``-E env=value`` : Defines environment values. ``$HOME`` and
   ``$MESOS_*`` are overwritten by Mesos executor.
 * ``--cpu <int>``        :   Defines number of CPUs required for the job (default: 1)
