@@ -402,7 +402,7 @@ project('retz-inttest') {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.0'
-    distributionUrl = distributionUrl.replace("bin", "all")
+    distributionType = 'ALL'
 }
 
 buildScan {
