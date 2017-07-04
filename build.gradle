@@ -150,10 +150,12 @@ def makePropertyFile(basedir, testType, name, version) {
 
     // Bundle correctly corresponding file name; See RetzScheduler.setJarUri
     def prop = new Properties()
-    def propFile = new File("${basedir}/resources/${testType}/retz-server.properties")
     prop.setProperty("servername", serverName)
+    def propFile = new File(subdir, "retz-server.properties")
     propFile.createNewFile()
-    prop.store(propFile.newWriter(), null)
+    propFile.withOutputStream { out ->
+        prop.store(out, null)
+    }
 }
 
 def makeClientPropertyFile(basedir, testType, name, version) {
@@ -165,10 +167,12 @@ def makeClientPropertyFile(basedir, testType, name, version) {
     def fullVersion = "${name}-${version} (${gitVersion()})"
 
     def prop = new Properties()
-    def propFile = new File("${basedir}/resources/${testType}/retz-client.properties")
     prop.setProperty("version", fullVersion)
+    def propFile = new File(subdir, "retz-client.properties")
     propFile.createNewFile()
-    prop.store(propFile.newWriter(), null)
+    propFile.withOutputStream { out ->
+        prop.store(out, null)
+    }
 }
 
 
