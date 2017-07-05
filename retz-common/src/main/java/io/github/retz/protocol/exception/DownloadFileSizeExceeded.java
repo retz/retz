@@ -21,7 +21,7 @@ public class DownloadFileSizeExceeded extends Exception {
     Long maxSize;
 
     public DownloadFileSizeExceeded(Long size, Long maxSize) {
-        super("stream file too large: " + size + " < " + maxSize);
+        super("stream file too large: " + size + " (must be less than or equal to " + maxSize + ")");
         this.size = size;
         this.maxSize = maxSize;
     }
