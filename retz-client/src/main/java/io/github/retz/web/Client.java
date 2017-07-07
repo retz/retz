@@ -38,6 +38,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
@@ -138,12 +139,13 @@ public class Client implements AutoCloseable {
                 () -> retz.getFile(id, Objects.requireNonNull(file), offset, length));
     }
 
+    // @return int content size written to OutputStream
     public int getBinaryFile(int id, String file, OutputStream out) throws IOException {
         String date = TimestampHelper.now();
         // Encode path forcibly since we return decoded path by list files
         String encodedFile = file;
         try {
-            encodedFile = URLEncoder.encode(file, "UTF-8");
+            encodedFile = URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {
         }
         String resource = "/job/" + id + "/download?path=" + encodedFile;

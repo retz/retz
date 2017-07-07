@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -68,7 +69,7 @@ public class GetFileRequest extends Request {
     public String resource() {
         String encodedFile = file;
         try {
-            encodedFile = URLEncoder.encode(file, "UTF-8");
+            encodedFile = URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {
         }
 

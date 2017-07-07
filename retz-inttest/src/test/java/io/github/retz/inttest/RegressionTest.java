@@ -17,12 +17,8 @@
 package io.github.retz.inttest;
 
 import io.github.retz.cli.ClientCLIConfig;
-import io.github.retz.protocol.ListFilesRequest;
-import io.github.retz.protocol.ListFilesResponse;
-import io.github.retz.protocol.LoadAppResponse;
-import io.github.retz.protocol.Response;
+import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
 import io.github.retz.web.Client;
@@ -34,8 +30,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 

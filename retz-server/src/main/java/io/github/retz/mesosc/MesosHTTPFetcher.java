@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -327,7 +328,7 @@ public class MesosHTTPFetcher {
 
     private static String maybeURLEncode(String file) {
         try {
-            return URLEncoder.encode(file, "UTF-8");
+            return URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {
             return file;
         }

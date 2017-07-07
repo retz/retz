@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class ListFilesRequest extends Request {
@@ -51,7 +52,7 @@ public class ListFilesRequest extends Request {
     public String resource() {
         String encodedPath = path;
         try {
-            encodedPath = URLEncoder.encode(path, "UTF-8");
+            encodedPath = URLEncoder.encode(path, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {
         }
         StringBuilder builder = new StringBuilder("/job/")
