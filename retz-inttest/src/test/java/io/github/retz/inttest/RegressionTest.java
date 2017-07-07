@@ -17,7 +17,9 @@
 package io.github.retz.inttest;
 
 import io.github.retz.cli.ClientCLIConfig;
-import io.github.retz.protocol.*;
+import io.github.retz.protocol.ListFilesRequest;
+import io.github.retz.protocol.ListFilesResponse;
+import io.github.retz.protocol.LoadAppResponse;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
@@ -26,10 +28,12 @@ import io.github.retz.web.ClientHelper;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,6 +53,33 @@ public class RegressionTest extends IntTestBase {
     @Override
     ClientCLIConfig makeClientConfig() throws Exception {
         return new ClientCLIConfig("src/test/resources/retz-c.properties");
+    }
+
+    @Test // For GH163
+    public void binaryDownloadTest2() throws Exception {
+        URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
+        try (Client client = Client.newBuilder(uri)
+                .setAuthenticator(config.getAuthenticator())
+                .build()) {
+
+            String appName = "generate-binary2";
+            Application genbin = new Application(appName, Arrays.asList(), Arrays.asList(),
+                    Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
+            LoadAppResponse loadRes = (LoadAppResponse) client.load(genbin);
+            assertThat(loadRes.status(), is("ok"));
+
+            String filename = "dead + poet + society.txt";
+            String cmd = "echo palmface > '" + filename + "'";
+            Job job = new Job(appName, cmd, new Properties(), 2, 256, 32, 0, 0);
+            Job runRes = client.run(job);
+            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.state(), is(Job.JobState.FINISHED));
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            int res = client.getBinaryFile(runRes.id(), filename, out);
+            assertEquals(9, res);
+            assertEquals("palmface\n", out.toString(StandardCharsets.UTF_8.toString()));
+        }
     }
 
     @Test // For GH118
