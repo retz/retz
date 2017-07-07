@@ -29,6 +29,8 @@ import org.apache.mesos.Protos;
 import org.hamcrest.Matchers;
 import org.junit.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -477,5 +479,21 @@ public class WebConsoleCommonTests {
         res = client.schedule(new Job("t", "echo okay job", new Properties(), 1, 32, 32));
         System.err.println(res.status());
         assertEquals("ok", res.status());
+    }
+
+    @Test
+    public void getBinaryFile() throws Exception {
+        Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Optional.empty(), config.getUser().keyId(),
+                0, new MesosContainer(), true);
+        Database.getInstance().addApplication(app);
+        Job job = new Job(app.getAppid(), "hoge", null, 1, 200, 32);
+        Database.getInstance().safeAddJob(job);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            webClient.getBinaryFile(job.id(), "hoge +%/", out);
+        } catch (FileNotFoundException e) {
+            assertTrue(e.getMessage().endsWith("://localhost:9091/job/0/download?path=hoge+%2B%25%2F"));
+        }
     }
 }
