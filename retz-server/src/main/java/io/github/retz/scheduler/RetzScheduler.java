@@ -297,7 +297,9 @@ public class RetzScheduler implements Scheduler {
         // TODO: add tests on github #153 bug, this is a quick patch
         synchronized (OFFER_STOCK) {
             Protos.Offer offer = OFFER_STOCK.remove(slaveId.getValue());
-            driver.declineOffer(offer.getId());
+            if (offer != null) {
+                driver.declineOffer(offer.getId());
+            }
         }
         updateOfferStats();
     }
