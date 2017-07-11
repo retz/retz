@@ -48,7 +48,7 @@ public class PersistenceTest extends RetzIntTest {
     @Test
     public void persistence() throws Exception {
         User user = config.getUser();
-        List<String> e = Arrays.asList();
+        List<String> e = Collections.emptyList();
         Application application = new Application("t", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true);
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);
@@ -66,7 +66,7 @@ public class PersistenceTest extends RetzIntTest {
             }
             System.err.println("><");
 
-            List<Job> jobs = new LinkedList<>();
+            List<Job> jobs = new ArrayList<>();
             for (int i = 0; i < JOB_AMOUNT; i++) {
                 Job job = new Job("t", "echo " + i, new Properties(), 1, 64, 32);
                 Response response = client.schedule(job);

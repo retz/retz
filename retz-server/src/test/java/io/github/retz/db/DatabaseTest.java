@@ -25,7 +25,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
@@ -89,7 +94,7 @@ public class DatabaseTest {
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
 
-        List<String> emptyList = new LinkedList<>();
+        List<String> emptyList = Collections.emptyList();
         Application app = new Application("testapp", emptyList, emptyList,
                 Optional.of("unix-user"), u.keyId(),
                 128, new MesosContainer(), true);
@@ -123,7 +128,7 @@ public class DatabaseTest {
         assertEquals(u.secret(), db.getUser(u.keyId()).get().secret());
         System.err.println("User " + u.keyId() + " created.");
 
-        Application a = new Application("someapp", Arrays.asList(), Arrays.asList(),
+        Application a = new Application("someapp", Collections.emptyList(), Collections.emptyList(),
                 Optional.empty(), u.keyId(), 0, new MesosContainer(), true);
         db.addApplication(a);
 
@@ -193,14 +198,17 @@ public class DatabaseTest {
 
     @Test
     public void multiUsers() throws Exception {
-        List<User> users = new LinkedList<>();
-        for (int i = 0; i < 10; ++i) {
-            users.add(db.createUser("test user " + i));
-        }
+        List<User> users = IntStream.range(0, 10).mapToObj(i -> {
+            try {
+                return db.createUser("test user " + i);
+            } catch (JsonProcessingException | SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
         assertEquals(10, users.size());
 
-        List<Application> apps = new LinkedList<>();
-        List<String> emptyList = new LinkedList<>();
+        List<Application> apps = new ArrayList<>();
+        List<String> emptyList = Collections.emptyList();
         for (User u : users) {
             Application app = new Application(u.keyId(), emptyList, emptyList,
                     Optional.of("unix-user"), u.keyId(),

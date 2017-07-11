@@ -62,7 +62,7 @@ public class PlannerTest {
 
         planner = PlannerFactory.create(makePlannerName(), conf.getServerConfig());
          Application anon =
-                new Application(ANON_APPID, Arrays.asList(), Arrays.asList(),
+                new Application(ANON_APPID, Collections.emptyList(), Collections.emptyList(),
                         Optional.empty(), conf.getServerConfig().getUser().keyId(),
                         0, new MesosContainer(), true);
         Applications.load(anon);
@@ -75,8 +75,8 @@ public class PlannerTest {
     @Test
     public void noJobs() {
         {
-            List<Protos.Offer> offers = new LinkedList<>();
-            List<AppJobPair> jobs = new LinkedList<>();
+            List<Protos.Offer> offers = new ArrayList<>();
+            List<AppJobPair> jobs = new ArrayList<>();
             for (int i = 0; i < 8; ++i) {
                 String uuid = UUID.randomUUID().toString();
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
@@ -88,8 +88,8 @@ public class PlannerTest {
             assertEquals(0, p.getToStock().size());
         }
         {
-            List<Protos.Offer> offers = new LinkedList<>();
-            List<AppJobPair> jobs = new LinkedList<>();
+            List<Protos.Offer> offers = new ArrayList<>();
+            List<AppJobPair> jobs = new ArrayList<>();
             for (int i = 0; i < 8; ++i) {
                 String uuid = UUID.randomUUID().toString();
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
@@ -106,8 +106,8 @@ public class PlannerTest {
     public void twoJobs() {
         Optional<Application> app = Applications.get(ANON_APPID);
 
-        List<Protos.Offer> offers = new LinkedList<>();
-        List<AppJobPair> jobs = new LinkedList<>();
+        List<Protos.Offer> offers = new ArrayList<>();
+        List<AppJobPair> jobs = new ArrayList<>();
         for (int i = 0; i < 2; ++i) {
             String uuid = UUID.randomUUID().toString();
             offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
@@ -136,8 +136,8 @@ public class PlannerTest {
         assertTrue(app.isPresent());
 
         {
-            List<Protos.Offer> offers = new LinkedList<>();
-            List<AppJobPair> jobs = new LinkedList<>();
+            List<Protos.Offer> offers = new ArrayList<>();
+            List<AppJobPair> jobs = new ArrayList<>();
             for (int i = 0; i < 2; ++i) {
                 String uuid = UUID.randomUUID().toString();
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
@@ -162,8 +162,8 @@ public class PlannerTest {
             }
         }
         {
-            List<Protos.Offer> offers = new LinkedList<>();
-            List<AppJobPair> jobs = new LinkedList<>();
+            List<Protos.Offer> offers = new ArrayList<>();
+            List<AppJobPair> jobs = new ArrayList<>();
             for (int i = 0; i < 4; ++i) {
                 String uuid = UUID.randomUUID().toString();
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));

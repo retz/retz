@@ -103,8 +103,8 @@ public class ExtensiblePlanner implements Planner {
         io.github.retz.planner.spi.Plan p = extension.plan(mapOffers, jobs);
         List<Job> keep = p.getToKeep();
 
-        List<OfferAcceptor> acceptors = new LinkedList<>();
-        List<Protos.Offer> toStock = new LinkedList<>();
+        List<OfferAcceptor> acceptors = new ArrayList<>();
+        List<Protos.Offer> toStock = new ArrayList<>();
 
         for (Protos.Offer offer : offers) {
             if (p.getOfferIdsToStock().contains(offer.getId().getValue())) {

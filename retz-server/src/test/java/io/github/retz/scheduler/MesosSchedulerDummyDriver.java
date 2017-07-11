@@ -37,10 +37,10 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
     Protos.FrameworkInfo frameworkInfo;
     Protos.MasterInfo masterInfo;
 
-    List<Protos.OfferID> declined;
+    private final List<Protos.OfferID> declined;
 
-    List<Protos.OfferID> accepted;
-    List<Protos.TaskInfo> tasks;
+    private final List<Protos.OfferID> accepted;
+    private final List<Protos.TaskInfo> tasks;
 
 //    List<Protos.Resource> reserved;
 //    List<Protos.Resource> volumes;
@@ -72,9 +72,9 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
                 .setId("mesosMaster")
                 .setIp(10)
                 .build();
-        declined = new LinkedList<>();
-        accepted = new LinkedList<>();
-        tasks = new LinkedList<>();
+        declined = new ArrayList<>();
+        accepted = new ArrayList<>();
+        tasks = new ArrayList<>();
     }
 
     public Protos.Status start() {

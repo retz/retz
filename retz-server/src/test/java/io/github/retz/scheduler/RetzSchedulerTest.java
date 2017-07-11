@@ -30,7 +30,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -94,7 +94,7 @@ public class RetzSchedulerTest {
     //TODO: @Test
     public void launch() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(),
+        Applications.load(new Application("fooapp", Collections.emptyList(),
                 Arrays.asList(files), Optional.empty(), "deadbeef",
                 0, new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 32, 256);
@@ -139,7 +139,7 @@ public class RetzSchedulerTest {
     public void notEnough() throws Exception {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true, "notEnough test user"));
-        Applications.load(new Application("fooapp", new LinkedList<String>(),
+        Applications.load(new Application("fooapp", Collections.emptyList(),
                 Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 32, 256);
@@ -170,7 +170,7 @@ public class RetzSchedulerTest {
     // TODO: @Test
     public void slaveFail() throws InterruptedException, JsonProcessingException, IOException {
         String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
-        Applications.load(new Application("fooapp", new LinkedList<String>(),
+        Applications.load(new Application("fooapp", Collections.emptyList(),
                 Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
         Job job = new Job("fooapp", "foocmd", null, 2, 256, 256);

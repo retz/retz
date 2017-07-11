@@ -23,8 +23,8 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,10 +36,10 @@ public class LocalSchedulerDriver implements SchedulerDriver {
     Protos.FrameworkInfo frameworkInfo;
     Protos.MasterInfo masterInfo;
 
-    List<Protos.OfferID> declined;
+    private final List<Protos.OfferID> declined;
 
-    List<Protos.OfferID> accepted;
-    List<Protos.TaskInfo> tasks;
+    private final List<Protos.OfferID> accepted;
+    private final List<Protos.TaskInfo> tasks;
 
 //    List<Protos.Resource> reserved;
 //    List<Protos.Resource> volumes;
@@ -78,9 +78,9 @@ public class LocalSchedulerDriver implements SchedulerDriver {
                 .setId("mesosMaster")
                 .setIp(10)
                 .build();
-        declined = new LinkedList<>();
-        accepted = new LinkedList<>();
-        tasks = new LinkedList<>();
+        declined = new ArrayList<>();
+        accepted = new ArrayList<>();
+        tasks = new ArrayList<>();
     }
 
     public Protos.Status start() {

@@ -133,7 +133,7 @@ public class WebConsoleCommonTests {
     public void loadApp() throws Exception {
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Application app = new Application("foobar", new LinkedList<String>(), Arrays.asList(files),
+            Application app = new Application("foobar", Collections.emptyList(), Arrays.asList(files),
                     Optional.empty(), config.getUser().keyId(),
                     0, new MesosContainer(), true);
             Response res = webClient.load(app);
@@ -174,7 +174,7 @@ public class WebConsoleCommonTests {
 
         {
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
-            Application app = new Application("foobar", new LinkedList<>(), Arrays.asList(files),
+            Application app = new Application("foobar", Collections.emptyList(), Arrays.asList(files),
                     Optional.empty(), config.getUser().keyId(),
                     0, new MesosContainer(), true);
             Response res = webClient.load(app);
@@ -279,7 +279,7 @@ public class WebConsoleCommonTests {
 
     @Test
     public void status() throws Exception {
-        Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Optional.empty(), config.getUser().keyId(),
+        Application app = new Application("fooapp", Collections.emptyList(), Collections.emptyList(), Optional.empty(), config.getUser().keyId(),
                 0, new MesosContainer(), true);
         Database.getInstance().addApplication(app);
         Job job = new Job(app.getAppid(), "foocmd", null, 12000, 12000, 12000);
@@ -307,7 +307,7 @@ public class WebConsoleCommonTests {
     @Test
     public void isolation() throws Exception {
         // Prepare data
-        Application app1 = new Application("app1", Arrays.asList(), Arrays.asList(),
+        Application app1 = new Application("app1", Collections.emptyList(), Collections.emptyList(),
                 Optional.empty(), cliConfig.getUser().keyId(),
                 0, new MesosContainer(), true);
         Job job1 = new Job("app1", "ls", new Properties(), 1, 32, 32);
@@ -394,7 +394,7 @@ public class WebConsoleCommonTests {
                 System.err.println(res.status());
             }
             { // Charlie tries to steal Alice's application name
-                Application app2 = new Application("app1", Arrays.asList(), Arrays.asList(),
+                Application app2 = new Application("app1", Collections.emptyList(), Collections.emptyList(),
                         Optional.empty(), c2.getUser().keyId(),
                         0, new MesosContainer(), true);
                 Response res = client2.load(app2);
@@ -403,7 +403,7 @@ public class WebConsoleCommonTests {
             }
             { // Charlie tries to be Alice
                 System.err.println(cliConfig.getUser().keyId());
-                Application app2 = new Application("app2", Arrays.asList(), Arrays.asList(),
+                Application app2 = new Application("app2", Collections.emptyList(), Collections.emptyList(),
                         Optional.empty(), cliConfig.getUser().keyId(),
                         0, new MesosContainer(), true);
                 Response res = client2.load(app2);
@@ -427,7 +427,7 @@ public class WebConsoleCommonTests {
     @Test
     public void disableUser() throws Exception {
         User user = config.getUser();
-        List<String> e = Arrays.asList();
+        List<String> e = Collections.emptyList();
         Application application = new Application("t", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true);
 
@@ -483,7 +483,7 @@ public class WebConsoleCommonTests {
 
     @Test
     public void getBinaryFile() throws Exception {
-        Application app = new Application("fooapp", Arrays.asList(), Arrays.asList(), Optional.empty(), config.getUser().keyId(),
+        Application app = new Application("fooapp", Collections.emptyList(), Collections.emptyList(), Optional.empty(), config.getUser().keyId(),
                 0, new MesosContainer(), true);
         Database.getInstance().addApplication(app);
         Job job = new Job(app.getAppid(), "hoge", null, 1, 200, 32);

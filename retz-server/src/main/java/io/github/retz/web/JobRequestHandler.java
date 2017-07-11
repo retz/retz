@@ -45,7 +45,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -219,7 +219,7 @@ public class JobRequestHandler {
             path = "";
         }
 
-        List ret;
+        List<DirEntry> ret;
         if (job.isPresent() && job.get().url() != null) {
             try {
                 Pair<Integer, String> maybeJson = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
@@ -237,7 +237,7 @@ public class JobRequestHandler {
                 return MAPPER.writeValueAsString(new ErrorResponse(e.toString()));
             }
         } else {
-            ret = Arrays.asList();
+            ret = Collections.emptyList();
         }
 
         ListFilesResponse listFilesResponse = new ListFilesResponse(job, ret);

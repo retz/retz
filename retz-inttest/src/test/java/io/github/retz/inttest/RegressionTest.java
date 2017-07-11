@@ -63,7 +63,7 @@ public class RegressionTest extends IntTestBase {
                 .build()) {
 
             String appName = "generate-binary2";
-            Application genbin = new Application(appName, Arrays.asList(), Arrays.asList(),
+            Application genbin = new Application(appName, Collections.emptyList(), Collections.emptyList(),
                     Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
             LoadAppResponse loadRes = (LoadAppResponse) client.load(genbin);
             assertThat(loadRes.status(), is("ok"));
@@ -90,7 +90,7 @@ public class RegressionTest extends IntTestBase {
                 .build()) {
 
             String appName = "generate-binary";
-            Application genbin = new Application(appName, Arrays.asList(), Arrays.asList(),
+            Application genbin = new Application(appName, Collections.emptyList(), Collections.emptyList(),
                     Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
             LoadAppResponse loadRes = (LoadAppResponse) client.load(genbin);
             assertThat(loadRes.status(), is("ok"));

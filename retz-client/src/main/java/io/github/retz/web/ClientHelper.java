@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -44,7 +44,7 @@ public class ClientHelper {
     }
 
     public static List<Job> running(Client c) throws IOException {
-        List<Job> jobs = new LinkedList<>();
+        List<Job> jobs = new ArrayList<>();
         Response res = c.list(Job.JobState.STARTING, Optional.empty());
         jobs.addAll(((ListJobResponse) res).jobs());
         res = c.list(Job.JobState.STARTED, Optional.empty());
@@ -53,7 +53,7 @@ public class ClientHelper {
     }
 
     public static List<Job> finished(Client c) throws IOException {
-        List<Job> jobs = new LinkedList<>();
+        List<Job> jobs = new ArrayList<>();
         Response res = c.list(Job.JobState.FINISHED, Optional.empty());
         jobs.addAll(((ListJobResponse) res).jobs());
         res = c.list(Job.JobState.KILLED, Optional.empty());

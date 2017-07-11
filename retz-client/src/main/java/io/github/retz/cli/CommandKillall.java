@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -83,8 +83,8 @@ public class CommandKillall implements SubCommand {
             }
             r = (ListJobResponse) res;
 
-            List<Job> failed = new LinkedList<>();
-            List<Job> killed = new LinkedList<>();
+            List<Job> failed = new ArrayList<>();
+            List<Job> killed = new ArrayList<>();
             for (Job job : r.jobs()) {
                 Response response = c.kill(job.id());
                 if (response instanceof ErrorResponse) {
@@ -100,12 +100,12 @@ public class CommandKillall implements SubCommand {
             LOG.info("{}: {} jobs killed, {} jobs failed", state, killed.size(), failed.size());
 
             if (verbose) {
-                List<String> k = killed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
-                LOG.info("Jobs killed: {}", String.join(", ", k));
+                String k = killed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.joining(", "));
+                LOG.info("Jobs killed: {}", k);
             }
             if (!failed.isEmpty()) {
-                List<String> f = failed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.toList());
-                LOG.error("Failed to kill jobs: [{}]", String.join(",", f));
+                String f = failed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.joining(", "));
+                LOG.error("Failed to kill jobs: [{}]", f);
             }
 
         } while (r.more());

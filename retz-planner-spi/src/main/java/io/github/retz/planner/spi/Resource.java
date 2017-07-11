@@ -19,7 +19,7 @@ package io.github.retz.planner.spi;
 import io.github.retz.protocol.data.Range;
 import io.github.retz.protocol.data.ResourceQuantity;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +35,7 @@ public class Resource {
     private int diskMB;
 
     public Resource(double cpu, int memMB, int diskMB) {
-        this(cpu, memMB, diskMB, 0, new LinkedList<>());
+        this(cpu, memMB, diskMB, 0, new ArrayList<>());
     }
 
     public Resource(double cpu, int memMB, int diskMB, int gpu, List<Range> ports) {
@@ -99,7 +99,7 @@ public class Resource {
     }
 
     public Resource cut(int cpu, int memMB, int gpus, int ports, int lastPort) {
-        List<Range> ranges = new LinkedList<>();
+        List<Range> ranges = new ArrayList<>();
         int sum = 0;
         for (Range range : this.ports) {
             if (range.getMax() <= lastPort) {
@@ -134,7 +134,7 @@ public class Resource {
 
     @Override
     public String toString() {
-        String portRanges = String.join(", ", ports.stream().map(port -> port.toString()).collect(Collectors.toList()));
+        String portRanges = ports.stream().map(port -> port.toString()).collect(Collectors.joining(", "));
         return String.format("cpus=%.1f, mem=%dMB, disk=%dMB, gpu=%d, ports=[%s]", cpu, memMB, diskMB, gpu, portRanges);
     }
 }

@@ -21,12 +21,12 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.retz.protocol.data.Application;
 
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 
 
 public class ListAppResponse extends Response {
-    private List<Application> applicationList = new LinkedList<>();
+    private List<Application> applicationList = Collections.emptyList();
     @JsonCreator
     public ListAppResponse(@JsonProperty("applicationList") List<Application> applicationList) {
         this.applicationList = applicationList;

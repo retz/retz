@@ -16,8 +16,8 @@
  */
 package io.github.retz.cli;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -53,7 +53,7 @@ public class TableFormatter implements Iterable<String> {
         for (int i = 0; i < columnsTitles.length; i++) {
             this.widths[i] = this.titles[i].length();
         }
-        lines = new LinkedList<>();
+        lines = new ArrayList<>();
     }
 
     public void feed(String... cells) throws IllegalArgumentException {

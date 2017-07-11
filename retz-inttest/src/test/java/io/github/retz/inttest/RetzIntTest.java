@@ -65,7 +65,7 @@ public class RetzIntTest extends IntTestBase {
         Client client = Client.newBuilder(uri)
                 .setAuthenticator(config.getAuthenticator())
                 .build();
-        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList("file:///spawn_retz_server.sh"),
+        Application echoApp = new Application("echo-app", Collections.emptyList(), Arrays.asList("file:///spawn_retz_server.sh"),
                 Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         LoadAppResponse loadRes =
                 (LoadAppResponse) client.load(echoApp);
@@ -131,7 +131,7 @@ public class RetzIntTest extends IntTestBase {
                 .setAuthenticator(config.getAuthenticator())
                 .build();
 
-        Application echoApp = new Application("echo-app", Arrays.asList(), Arrays.asList(),
+        Application echoApp = new Application("echo-app", Collections.emptyList(), Collections.emptyList(),
                 Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         Response response = client.load(echoApp);
         System.err.println(response.status());
@@ -193,7 +193,7 @@ public class RetzIntTest extends IntTestBase {
                 .build()) {
             loadSimpleApp(client, "echo2");
 
-            List<EchoJob> finishedJobs = new LinkedList<>();
+            List<EchoJob> finishedJobs = new ArrayList<>();
             List<Integer> argvList = IntStream.rangeClosed(0, 32).boxed().collect(Collectors.toList());
             argvList.addAll(Arrays.asList(42, 63, 64, 127, 128, 151, 192, 255));
             int jobNum = argvList.size();
@@ -235,8 +235,8 @@ public class RetzIntTest extends IntTestBase {
     }
 
     private void loadSimpleApp(Client client, String appName) throws IOException {
-        Application app = new Application(appName, Arrays.asList(),
-                Arrays.asList(), Optional.empty(),
+        Application app = new Application(appName, Collections.emptyList(),
+                Collections.emptyList(), Optional.empty(),
                 "deadbeef", 0, new MesosContainer(), true);
         Response res = client.load(app);
 
@@ -251,7 +251,7 @@ public class RetzIntTest extends IntTestBase {
     }
 
     private List<EchoJob> scheduleEchoJobs(Client client, String appName, String cmdPrefix, List<Integer> argvList) throws IOException {
-        List<EchoJob> echoJobs = new LinkedList<>();
+        List<EchoJob> echoJobs = new ArrayList<>();
         for (Integer i : argvList) {
             Job job = new Job(appName, cmdPrefix + i.toString(), new Properties(), 1, 32, 32, 0, 3);
 
@@ -265,7 +265,7 @@ public class RetzIntTest extends IntTestBase {
     }
 
     private List<EchoJob> toRemove(Client client, List<EchoJob> echoJobs, boolean checkRetval) throws IOException, Exception {
-        List<EchoJob> toRemove = new LinkedList<>();
+        List<EchoJob> toRemove = new ArrayList<>();
         for (EchoJob echoJob : echoJobs) {
             Response response = client.getJob(echoJob.job.id());
             if (response instanceof GetJobResponse) {
@@ -304,7 +304,7 @@ public class RetzIntTest extends IntTestBase {
                 .build()) {
             loadSimpleApp(client, "echo3");
 
-            List<EchoJob> finishedJobs = new LinkedList<>();
+            List<EchoJob> finishedJobs = new ArrayList<>();
             List<Integer> argvList = IntStream.rangeClosed(0, 32).boxed().collect(Collectors.toList());
             argvList.addAll(Arrays.asList(42, 63, 64, 127, 128, 151, 192, 255));
             int jobNum = argvList.size();
@@ -495,7 +495,7 @@ public class RetzIntTest extends IntTestBase {
     @Test
     public void disableUser() throws Exception {
         User user = config.getUser();
-        List<String> e = Arrays.asList();
+        List<String> e = Collections.emptyList();
         Application application = new Application("t", e, e, Optional.empty(),
                 user.keyId(), 0, new MesosContainer(), true);
         URI uri = new URI("http://" + RETZ_HOST + ":" + RETZ_PORT);

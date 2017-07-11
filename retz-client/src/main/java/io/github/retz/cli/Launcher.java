@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Launcher {
@@ -35,7 +35,7 @@ public class Launcher {
     private static final List<SubCommand> SUB_COMMANDS;
 
     static {
-        SUB_COMMANDS = new LinkedList<>();
+        SUB_COMMANDS = new ArrayList<>();
 
         SUB_COMMANDS.add(new CommandHelp());
         SUB_COMMANDS.add(new CommandConfig());

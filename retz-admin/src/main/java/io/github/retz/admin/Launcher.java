@@ -26,8 +26,7 @@ import org.slf4j.LoggerFactory;
 import javax.management.JMException;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -44,21 +43,20 @@ retz-admin restore -path <src-file>
 public class Launcher {
     private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
-    static List<SubCommand> SUB_COMMANDS = new LinkedList<>();
+    private static final List<SubCommand> SUB_COMMANDS;
 
     static {
-        SubCommand[] subCommands = {
-                new CommandCreateUser(),
-                new CommandCreateUsers(),
-                new CommandDisableUser(),
-                new CommandEnableUser(),
-                new CommandGC(),
-                new CommandGetUser(),
-                new CommandHelp(),
-                new CommandListUser(),
-                new CommandUsage()
-        };
-        SUB_COMMANDS.addAll(Arrays.asList(subCommands));
+        SUB_COMMANDS = new ArrayList<>();
+
+        SUB_COMMANDS.add(new CommandCreateUser());
+        SUB_COMMANDS.add(new CommandCreateUsers());
+        SUB_COMMANDS.add(new CommandDisableUser());
+        SUB_COMMANDS.add(new CommandEnableUser());
+        SUB_COMMANDS.add(new CommandGC());
+        SUB_COMMANDS.add(new CommandGetUser());
+        SUB_COMMANDS.add(new CommandHelp());
+        SUB_COMMANDS.add(new CommandListUser());
+        SUB_COMMANDS.add(new CommandUsage());
     }
 
     public static void main(String... argv) throws Throwable {

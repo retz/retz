@@ -20,7 +20,6 @@ import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.protocol.data.Job;
-import io.github.retz.web.StatusCache;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.Protos;
@@ -28,9 +27,7 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.*;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
@@ -141,7 +138,7 @@ public final class Launcher {
         int offset = 0;
         int limit = 128;
         Map<String, Job> runningMap = running.stream().collect(Collectors.toMap(job -> job.taskId(), job -> job));
-        List<Job> recoveredJobs = new LinkedList<>();
+        List<Job> recoveredJobs = new ArrayList<>();
         while (true) {
             try {
                 List<Map<String, Object>> tasks = MesosHTTPFetcher.fetchTasks(master, frameworkId, offset, limit);

@@ -29,7 +29,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -190,13 +191,13 @@ public class MesosHTTPFetcher {
             conn.setDoOutput(true);
             return parseTasks(conn.getInputStream(), frameworkId);
         } catch (IOException e) {
-            return new LinkedList<>();
+            return Collections.emptyList();
         }
     }
 
     public static List<Map<String, Object>> parseTasks(InputStream in, String frameworkId) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        List<Map<String, Object>> ret = new LinkedList<>();
+        List<Map<String, Object>> ret = new ArrayList<>();
 
         Map<String, List<Map<String, Object>>> map = mapper.readValue(in, Map.class);
         List<Map<String, Object>> tasks = map.get("tasks");

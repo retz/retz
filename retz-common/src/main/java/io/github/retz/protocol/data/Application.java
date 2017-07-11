@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,8 +48,8 @@ public class Application {
                        @JsonProperty("container") Container container,
                        @JsonProperty("enabled") boolean enabled) {
         this.appid = Objects.requireNonNull(appid);
-        this.largeFiles = (largeFiles == null) ? Arrays.asList() : largeFiles;
-        this.files = (files == null) ? Arrays.asList() : files;
+        this.largeFiles = (largeFiles == null) ? Collections.emptyList() : largeFiles;
+        this.files = (files == null) ? Collections.emptyList() : files;
         this.owner = Objects.requireNonNull(owner);
         this.user = (user == null) ? Optional.empty() : user;
         if (gracePeriod > 0) {

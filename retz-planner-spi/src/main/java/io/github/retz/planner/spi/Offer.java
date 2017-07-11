@@ -16,7 +16,7 @@
  */
 package io.github.retz.planner.spi;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,7 +27,7 @@ public class Offer {
     // TODO: add several more in mesos.proto 'message Offer'
 
     public Offer(String id, Resource resource) {
-        this(id, resource, Arrays.asList());
+        this(id, resource, Collections.emptyList());
     }
 
     public Offer(String id, Resource resource, List<Attribute> attributes) {

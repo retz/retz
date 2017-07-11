@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,7 +64,7 @@ public class Applications {
             return Database.getInstance().getAllApplications();
         } catch (IOException e) {
             LOG.error(e.toString(), e);
-            return new LinkedList<>();
+            return Collections.emptyList();
         }
     }
 
@@ -73,7 +73,7 @@ public class Applications {
             return Database.getInstance().getAllApplications(id);
         } catch (IOException e) {
             LOG.error(e.toString(), e);
-            return new LinkedList<>();
+            return Collections.emptyList();
         }
     }
 
