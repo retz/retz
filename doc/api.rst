@@ -339,7 +339,7 @@ Server configuration file
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-* ``retz.mesos = localhost:5050``:   Mesos host name and port. (required)
+* ``retz.mesos = localhost:5050``:   Mesos host name and port. ZooKeeper address like `zk://192.168.0.1:2181/mesos` (should be same as `/etc/mesos/zk` in Mesos nodes) will handle Master temporary failures (required).
 * ``retz.mesos.role = retz`` : Set `a Mesos role <http://mesos.apache.org/documentation/latest/roles/>`_ name to
   register as a framework. If this is not specified, principal value
   is used for role name, too.

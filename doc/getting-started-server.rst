@@ -170,7 +170,9 @@ The following options must be set in the ``retz.properties`` file:
 
 * ``retz.mesos = 192.168.100.128:5050`` - A pair of IP address and port
   number where Mesos master is listening to. Thus Mesos master must be
-  running
+  running. **ZooKeeper location is strongly recommended** for production
+  use - the string is typicall same as that of ``/etc/mesos/zk`` like
+  ``zk://zk1:2181,zk2:2181,zk3:2181/mesos`` .
 * ``retz.bind = http://localhost:9090`` - An URL of host name and port
   number where Retz will bind and start Web server (port number must
   be > 1024)
