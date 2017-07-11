@@ -68,7 +68,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             Optional<User> maybeUser = Database.getInstance().getUser(name);
             return maybeEncodeAsJSON(maybeUser);
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return errorJSON(e.toString());
         }
     }
@@ -102,7 +102,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             List<User> users = Database.getInstance().allUsers();
             return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return Arrays.asList();
         }
     }
@@ -139,16 +139,8 @@ public class AdminConsole implements AdminConsoleMXBean {
             LOG.info("JMX enabled listening to {}", jmxPort);
             return Optional.of(jmxServer);
 
-        } catch (MalformedObjectNameException e) {
-            LOG.error(e.toString());
-        } catch (InstanceAlreadyExistsException e) {
-            LOG.error(e.toString());
-        } catch (MBeanRegistrationException e) {
-            LOG.error(e.toString());
-        } catch (NotCompliantMBeanException e) {
-            LOG.error(e.toString());
         } catch (JMException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return Optional.empty();
     }
@@ -157,7 +149,7 @@ public class AdminConsole implements AdminConsoleMXBean {
         try {
             return MAPPER.writeValueAsString(o);
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return errorJSON(e.toString());
         }
     }

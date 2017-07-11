@@ -95,7 +95,7 @@ public class JobQueue {
         try {
             return Database.getInstance().findFit(orderBy, total.getCpu(), total.getMemMB());
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return new LinkedList<>();
         }
     }
@@ -108,7 +108,7 @@ public class JobQueue {
         try {
             return Database.getInstance().getJob(id);
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return Optional.empty();
     }
@@ -147,7 +147,7 @@ public class JobQueue {
         try {
             return Database.getInstance().getJobFromTaskId(taskId);
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
     }
@@ -188,7 +188,7 @@ public class JobQueue {
                 LOG.info("Job id={} has finished at {} with return value={}", maybeJob.get().id(), finished, ret);
             }
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -203,7 +203,7 @@ public class JobQueue {
                 LOG.info("Job id={} has failed: {}", maybeJob.get().id(), msg);
             }
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 

@@ -73,17 +73,8 @@ public final class Launcher {
             } else {
                 LOG.info("Automatic garbage collection is turned off; use retz-admin gc to collect old jobs");
             }
-        } catch (ParseException e) {
-            LOG.error(e.toString());
-            return -1;
-        } catch (URISyntaxException e) {
-            LOG.error(e.toString());
-            return -1;
-        } catch (SQLException e){
-            LOG.error(e.toString());
-            return -1;
-        } catch (IOException e) {
-            LOG.error(e.toString());
+        } catch (ParseException | URISyntaxException | SQLException | IOException e) {
+            LOG.error(e.toString(), e);
             return -1;
         }
 
@@ -171,8 +162,8 @@ public final class Launcher {
                 }
                 offset = offset + tasks.size();
             } catch (MalformedURLException e) {
-                LOG.error(e.toString());
-                throw new RuntimeException(e.toString());
+                LOG.error(e.toString(), e);
+                throw new RuntimeException(e);
             }
         }
         Database.getInstance().updateJobs(recoveredJobs);

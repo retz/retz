@@ -36,7 +36,7 @@ public class Applications {
         try {
             return Database.getInstance().getApplication(appName);
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
     }
@@ -63,7 +63,7 @@ public class Applications {
         try {
             return Database.getInstance().getAllApplications();
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return new LinkedList<>();
         }
     }
@@ -72,7 +72,7 @@ public class Applications {
         try {
             return Database.getInstance().getAllApplications(id);
         } catch (IOException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return new LinkedList<>();
         }
     }
