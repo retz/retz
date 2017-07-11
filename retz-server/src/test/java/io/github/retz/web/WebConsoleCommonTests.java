@@ -178,7 +178,6 @@ public class WebConsoleCommonTests {
                     Optional.empty(), config.getUser().keyId(),
                     0, new MesosContainer(), true);
             Response res = webClient.load(app);
-            System.err.println(">>>" + res.status());
             assertThat(res, instanceOf(LoadAppResponse.class));
             assertThat(res.status(), is("ok"));
 
@@ -218,7 +217,8 @@ public class WebConsoleCommonTests {
             ListFilesResponse listFilesResponse = (ListFilesResponse) webClient.listFiles(sres.job.id(), ListFilesRequest.DEFAULT_SANDBOX_PATH);
             assertTrue(listFilesResponse.entries().isEmpty());
 
-            GetFileResponse getFileResponse = (GetFileResponse) webClient.getFile(sres.job.id(), "stdout", 0, 20000);
+            Response response = webClient.getFile(sres.job.id(), "stdout", 0, 20000);
+            GetFileResponse getFileResponse = (GetFileResponse)response;
             assertFalse(getFileResponse.file().isPresent());
         }
 

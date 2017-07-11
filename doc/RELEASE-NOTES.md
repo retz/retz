@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.2.10
+
+* Support standard format of Mesos master discovery address
+  e.g. `zk://zk1:2181,zk2:2181,zk3:2181/mesos`
+
 ## 0.2.9
 
 * Fix failing `uploadArtifact` by replacing aws-maven with

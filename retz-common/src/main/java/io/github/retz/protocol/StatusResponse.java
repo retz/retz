@@ -21,6 +21,9 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.retz.protocol.data.ResourceQuantity;
 
+import java.util.Objects;
+import java.util.Optional;
+
 public class StatusResponse extends Response {
     private int queueLength;
     private int runningLength;
@@ -28,6 +31,7 @@ public class StatusResponse extends Response {
     private int numSlaves; // TODO: use this value in report
     private int offers;
     private ResourceQuantity totalOffered;
+    private Optional<String> master;
     private final String serverVersion;
 
     @JsonCreator
@@ -37,6 +41,7 @@ public class StatusResponse extends Response {
                           @JsonProperty("numSlaves") int numSlaves,
                           @JsonProperty("offers") int offers,
                           @JsonProperty("totalOffered") ResourceQuantity totalOffered,
+                          @JsonProperty("master") Optional<String> master,
                           @JsonProperty("serverVersion") String serverVersion) {
         this.queueLength = queueLength;
         this.runningLength = runningLength;
@@ -44,6 +49,7 @@ public class StatusResponse extends Response {
         this.numSlaves = numSlaves;
         this.offers = offers;
         this.totalOffered = totalOffered;
+        this.master = (master == null) ? Optional.empty() : master;
         this.serverVersion = serverVersion;
     }
 
@@ -52,6 +58,7 @@ public class StatusResponse extends Response {
         this.serverVersion = serverVersion;
         totalOffered = new ResourceQuantity();
         totalUsed = new ResourceQuantity();
+        this.master = Optional.empty();
     }
 
     @JsonGetter("queueLength")
@@ -84,6 +91,11 @@ public class StatusResponse extends Response {
         return totalOffered;
     }
 
+    @JsonGetter("master")
+    public Optional<String> master() {
+        return master;
+    }
+
     @JsonGetter("serverVersion")
     public String serverVersion() {
         return serverVersion;
@@ -98,5 +110,13 @@ public class StatusResponse extends Response {
         this.queueLength = queueLength;
         this.runningLength = runningLength;
         this.totalUsed = totalUsed;
+    }
+
+    public void setMaster(String master) {
+        this.master = Optional.of(master);
+    }
+
+    public void voidMaster() {
+        this.master = Optional.empty();
     }
 }

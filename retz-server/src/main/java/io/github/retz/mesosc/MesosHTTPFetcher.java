@@ -62,7 +62,6 @@ public class MesosHTTPFetcher {
 
     // slave-hostname:5051/files/download?path=/tmp/mesos/slaves/<slaveid>/frameworks/<frameworkid>/exexutors/<executorid>/runs/<containerid>
     public static Optional<String> sandboxUri(String t, String master, String slaveId, String frameworkId, String executorId) {
-
         Optional<String> slaveAddr = fetchSlaveAddr(master, slaveId); // get master:5050/slaves with slaves/pid, cut with '@'
         LOG.debug("Agent address of executor {}: {}", executorId, slaveAddr);
 
@@ -81,6 +80,7 @@ public class MesosHTTPFetcher {
                     java.net.URLEncoder.encode(dir.get(), //builder.toString(),
                             java.nio.charset.StandardCharsets.UTF_8.toString())));
         } catch (UnsupportedEncodingException e) {
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
     }
@@ -90,6 +90,7 @@ public class MesosHTTPFetcher {
         try {
             url = new URL("http://" + master + "/slaves");
         } catch (MalformedURLException e) {
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
         HttpURLConnection conn;
@@ -99,6 +100,7 @@ public class MesosHTTPFetcher {
             conn.setDoOutput(true);
             return extractSlaveAddr(conn.getInputStream(), slaveId);
         } catch (IOException e) {
+            LOG.error("Failed to fetch Slave address of {} from master {}", slaveId, master, e);
             return Optional.empty();
         }
     }
@@ -134,11 +136,9 @@ public class MesosHTTPFetcher {
             conn.setRequestMethod("GET");
             conn.setDoOutput(true);
             return extractDirectory(conn.getInputStream(), frameworkId, executorId);
-
-        } catch (MalformedURLException e) {
-            // REVIEW: catch(MalformedURLException) clause can be removed because it <: IOException
-            return Optional.empty();
         } catch (IOException e) {
+            LOG.error("Failed to fetch directory of Slave {} (framework={}, executor={})",
+                    slave, frameworkId, executorId, e);
             return Optional.empty();
         }
     }
@@ -191,6 +191,7 @@ public class MesosHTTPFetcher {
             conn.setDoOutput(true);
             return parseTasks(conn.getInputStream(), frameworkId);
         } catch (IOException e) {
+            LOG.error(e.toString(), e);
             return Collections.emptyList();
         }
     }
@@ -250,7 +251,7 @@ public class MesosHTTPFetcher {
             return conn.getResponseCode() == 200 ||
                     conn.getResponseCode() == 204;
         } catch (IOException e) {
-            LOG.debug("Failed to fetch {}: {}", addr, e.toString());
+            LOG.error("Failed to fetch {}: {}", addr, e.toString());
             return false;
         } finally {
             if (conn != null) {
@@ -315,13 +316,13 @@ public class MesosHTTPFetcher {
         }
     }
 
-    public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws MalformedURLException, IOException {
+    public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws IOException {
         String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
                 + "&offset=" + offset + "&length=" + length;
         return fetchHTTP(addr);
     }
 
-    public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws MalformedURLException, IOException {
+    public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws IOException {
         // Just do 'files/browse and get JSON
         String addr = url + "%2F" + maybeURLEncode(path);
         return fetchHTTP(addr);

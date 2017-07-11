@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -101,6 +102,18 @@ public class StatusCache implements Runnable {
     public static void setUsedResources(int queueLength, int runningLenght, ResourceQuantity totalUsed) {
         synchronized (statusResponseCache) {
             statusResponseCache.setUsedResources(queueLength, runningLenght, totalUsed);
+        }
+    }
+
+    public static void updateMaster(String master) {
+        synchronized (statusResponseCache) {
+            statusResponseCache.setMaster(master);
+        }
+    }
+
+    public static void voidMaster() {
+        synchronized (statusResponseCache) {
+            statusResponseCache.voidMaster();
         }
     }
 }

@@ -33,6 +33,7 @@ import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.exception.DownloadFileSizeExceeded;
+import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.scheduler.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.mesos.Protos;
@@ -136,9 +137,13 @@ public class JobRequestHandler {
         return MAPPER.writeValueAsString(response);
     }
 
-    static String getFile(spark.Request req, spark.Response res) throws IOException {
-        Optional<Job> job = getJobAndVerify(req);
-
+    static String getFile(spark.Request req, spark.Response res) throws IOException, JobNotFoundException {
+        Optional<Job> maybeJob = getJobAndVerify(req);
+        if (! maybeJob.isPresent()) {
+            GetFileResponse getFileResponse = new GetFileResponse(maybeJob, Optional.empty());
+            getFileResponse.ok();
+            return MAPPER.writeValueAsString(getFileResponse);
+        }
         String file = req.queryParams("path");
         long offset = Long.parseLong(req.queryParams("offset"));
         long length = Long.parseLong(req.queryParams("length"));
@@ -146,60 +151,92 @@ public class JobRequestHandler {
         LOG.debug("get-file: path={}, offset={}, length={}", file, offset, length);
         res.type("application/json");
 
+        // Check file existence
         Optional<FileContent> fileContent;
-        if (job.isPresent() && job.get().url() != null // If url() is null, the job hasn't yet been started at Mesos
-                && MesosHTTPFetcher.statHTTPFile(job.get().url(), file)) {
-            Pair<Integer, String> payload = MesosHTTPFetcher.fetchHTTPFile(job.get().url(), file, offset, length);
-            LOG.debug("Payload length={}, offset={}", payload.right().length(), offset);
-            // TODO: what the heck happens when a file is not UTF-8 encodable???? How Mesos works?
-            if (payload.left() == 200) {
-                fileContent = Optional.ofNullable(MAPPER.readValue(payload.right(), FileContent.class));
-            } else {
-                return MAPPER.writeValueAsString(new ErrorResponse(payload.right()));
+        Job job = maybeJob.get();
+        if (job.url() == null) { // If url() is null, the job hasn't yet been started at Mesos / or Bug
+            // TODO: re-fetch job.url() again, because it CAN be null in case of race condition where
+            // updating the url on taskUpdate and master change.
+            if (job.state() != Job.JobState.CREATED && job.state() != Job.JobState.STARTING && job.state() != Job.JobState.QUEUED) {
+                LOG.error("Job (id={}) has its url null (state={})", job.id(), job.state());
+                res.status(500);
+                return "";
             }
-        } else {
-            fileContent = Optional.empty();
+            // The job has not yet started
+            GetFileResponse getFileResponse = new GetFileResponse(maybeJob, Optional.empty());
+            getFileResponse.ok();
+            return MAPPER.writeValueAsString(getFileResponse);
         }
-        GetFileResponse getFileResponse = new GetFileResponse(job, fileContent);
-        getFileResponse.ok();
-        res.status(200);
+        if (! MesosHTTPFetcher.statHTTPFile(job.url(), file)) {
+            // It is really confusing distinguishing 404 and 0-bytes to return considering offset and length
+            GetFileResponse getFileResponse = new GetFileResponse(maybeJob, Optional.empty());
+            getFileResponse.ok();
+            return MAPPER.writeValueAsString(getFileResponse);
+        }
 
-        return MAPPER.writeValueAsString(getFileResponse);
+        // Go download
+        Pair<Integer, String> payload = MesosHTTPFetcher.fetchHTTPFile(job.url(), file, offset, length);
+        LOG.debug("Payload length={}, offset={}", payload.right().length(), offset);
+        // If a file is not UTF-8 then --binary / downloadFile is the tool for it
+        if (payload.left() == 200) {
+            fileContent = Optional.ofNullable(MAPPER.readValue(payload.right(), FileContent.class));
+            GetFileResponse getFileResponse = new GetFileResponse(maybeJob, fileContent);
+            getFileResponse.ok();
+            res.status(200);
+            return MAPPER.writeValueAsString(getFileResponse);
+        } else {
+            LOG.error("{}", payload.left(), payload.right());
+            res.status(payload.left()); // Is it right to just propagate status from Mesos?
+            return MAPPER.writeValueAsString(new ErrorResponse(payload.right()));
+        }
     }
 
     // A new HTTP endpoint to support binaries
     static String downloadFile(spark.Request req, spark.Response res) throws Exception {
         Optional<Job> maybeJob = getJobAndVerify(req);
+        if (! maybeJob.isPresent()) {
+            throw new JobNotFoundException(Integer.parseInt(req.params(":id")));
+        }
         String file = req.queryParams("path");
         LOG.debug("download: path={}", file);
 
-        if (maybeJob.isPresent() && maybeJob.get().url() != null) { // If url() is null, the job hasn't yet been started at Mesos
-            Job job = maybeJob.get();
-            MesosHTTPFetcher.downloadHTTPFile(job.url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
-                Integer statusCode = triad.left();
-                res.status(statusCode);
-                if (statusCode == 200) {
-                    Long length = triad.right().left();
-                    InputStream io = triad.right().right();
-                    Long maxFileSize = scheduler.get().maxFileSize();
-                    if (length < 0) {
-                        throw new IOException("content length is negative: " + length);
-                    } else if (0 <= maxFileSize && maxFileSize < length) { // negative maxFileSize indicates no limit
-                        throw new DownloadFileSizeExceeded(length, maxFileSize);
-                    }
-                    res.raw().setHeader("Content-Length", length.toString());
-                    LOG.debug("start streaming of {} bytes for {}", length, file);
-                    IOUtils.copyLarge(io, res.raw().getOutputStream(), 0, length);
-                    LOG.debug("end streaming for {}", file);
-                } else {
-                    res.body(triad.center());
-                }
-            });
-            return "";
-        } else {
+        // Check file
+        Job job = maybeJob.get();
+        if (job.url() == null) { // If url() is null, the job hasn't yet been started at Mesos / or Bug
+            // TODO: re-fetch job.url() again, because it CAN be null in case of race condition where
+            // updating the url on taskUpdate and master change.
+            if (job.state() != Job.JobState.CREATED && job.state() != Job.JobState.STARTING && job.state() != Job.JobState.QUEUED) {
+                LOG.error("Job (id={}) has its url null (state={})", job.id(), job.state());
+                res.status(500);
+                return "";
+            }
+            // The job has not yet started
             res.status(404);
             return "";
         }
+
+        // Go download
+        MesosHTTPFetcher.downloadHTTPFile(job.url(), file, (Triad<Integer, String, Pair<Long, InputStream>> triad) -> {
+            Integer statusCode = triad.left();
+            res.status(statusCode);
+            if (statusCode == 200) {
+                Long length = triad.right().left();
+                InputStream io = triad.right().right();
+                Long maxFileSize = scheduler.get().maxFileSize();
+                if (length < 0) {
+                    throw new IOException("content length is negative: " + length);
+                } else if (0 <= maxFileSize && maxFileSize < length) { // negative maxFileSize indicates no limit
+                    throw new DownloadFileSizeExceeded(length, maxFileSize);
+                }
+                res.raw().setHeader("Content-Length", length.toString());
+                LOG.debug("start streaming of {} bytes for {}", length, file);
+                IOUtils.copyLarge(io, res.raw().getOutputStream(), 0, length);
+                LOG.debug("end streaming for {}", file);
+            } else {
+                res.body(triad.center());
+            }
+        });
+        return "";
     }
 
     static String getDir(spark.Request req, spark.Response res) throws JsonProcessingException {

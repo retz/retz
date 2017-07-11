@@ -39,7 +39,7 @@ public class SchedulerDriverFactory {
         try {
             switch (conf.launchMode) {
                 case LOCAL:
-                    return new LocalSchedulerDriver(scheduler, fw, conf.getMesosMaster());
+                    return new LocalSchedulerDriver(scheduler, fw, conf.getServerConfig().getUri().getHost());
                 case MESOS:
                     return createMesosSchedulerDriver(scheduler, conf, fw);
             }

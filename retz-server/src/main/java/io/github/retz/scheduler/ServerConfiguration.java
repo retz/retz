@@ -74,7 +74,7 @@ public class ServerConfiguration extends FileConfiguration {
     static final String DATABASE_PASSWORD = "retz.database.pass";
     // https://github.com/apache/mesos/blob/master/include/mesos/mesos.proto#L208-L210
     static final String USER_NAME = "retz.user";
-    static final String[] INVALID_BIND_ADDRESS = {"0.0.0.0", "localhost", "127.0.0.1"};
+    // static final String[] INVALID_BIND_ADDRESS = {"0.0.0.0", "localhost", "127.0.0.1"};
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfiguration.class);
     private final URI uri;
     private final int maxSimultaneousJobs;
@@ -105,18 +105,12 @@ public class ServerConfiguration extends FileConfiguration {
     public ServerConfiguration(InputStream in) throws IOException, URISyntaxException {
         super(in);
 
-        List<String> invalidBindAddresses = Arrays.asList(INVALID_BIND_ADDRESS);
 
         Objects.requireNonNull(properties.getProperty(BIND_ADDRESS), "Host and port are required");
         Objects.requireNonNull(getMesosMaster(), "Mesos address must not be empty");
 
-        if (invalidBindAddresses.contains(getMesosMaster().split(":")[0])) {
-            LOG.error("{} (now {}) must not be any of {}", MESOS_LOC_KEY, getMesosMaster(),
-                    String.join(", ", invalidBindAddresses));
-            throw new IllegalArgumentException();
-        }
-
         uri = new URI(properties.getProperty(BIND_ADDRESS));
+        // List<String> invalidBindAddresses = Arrays.asList(INVALID_BIND_ADDRESS);
         // loopback addresses must also be checked, but for now inttest uses localhost address
         if (uri.getHost().equals("0.0.0.0")) {
             LOG.error("retz.bind is told to Mesos; {}/32 should not be assigned", uri.getHost());
@@ -160,6 +154,8 @@ public class ServerConfiguration extends FileConfiguration {
         this(new FileInputStream(file));
     }
 
+    // This is not only for Mesos master address, but mainly for ZooKeeper location
+    // that enables Mesos master service discovery opaquely over failure.
     public String getMesosMaster() {
         return properties.getProperty(MESOS_LOC_KEY);
     }

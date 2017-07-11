@@ -47,7 +47,7 @@ public class ServerConfigurationTest {
 
     @Test(expected=IllegalArgumentException.class)
     public void wrongConfig() throws Exception {
-        String s = "retz.mesos = localhost:5050\nretz.bind = http://example.com:9090\nretz.access.key = foobar\nretz.access.secret = bazbax";
+        String s = "retz.mesos = localhost:5050\nretz.bind = http://0.0.0.0:9090\nretz.access.key = foobar\nretz.access.secret = bazbax";
         System.err.println(s);
         new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
     }

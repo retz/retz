@@ -90,7 +90,8 @@ public final class Launcher {
         // By hitting HTTP endpoints and comparing with database job states,
         // Retz can decide whether to re-run it or just finish it.
         // BTW after connecting to Mesos it looks like re-sending unacked messages.
-        maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getInstance().getRunning());
+        // TODO: this call should be replaced with reconcillation after reconnect / registerred callback
+        // maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getInstance().getRunning());
 
         RetzScheduler scheduler;
         try {
@@ -192,7 +193,7 @@ public final class Launcher {
                     .build());
         }
 
-        LOG.info("Connecting to Mesos master {} as {}", conf.getMesosMaster(), userName);
+        LOG.info("Trying to find Mesos master from {} and connecting as {}", conf.getMesosMaster(), userName);
         return fwBuilder.build();
     }
 
@@ -223,8 +224,6 @@ public final class Launcher {
 
         public Configuration(ServerConfiguration fileConfig) {
             Objects.requireNonNull(fileConfig, "File configuration cannot be null");
-            Objects.requireNonNull(fileConfig.getMesosMaster(), "Mesos master location cannot be empty");
-
             this.fileConfig = fileConfig;
         }
 

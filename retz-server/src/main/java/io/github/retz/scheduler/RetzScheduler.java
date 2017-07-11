@@ -64,6 +64,7 @@ public class RetzScheduler implements Scheduler {
     private Launcher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
     private Map<String, List<Protos.SlaveID>> slaves;
+    private Optional<String> master;
 
     public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) throws Throwable {
         MAPPER.registerModule(new Jdk8Module());
@@ -74,11 +75,15 @@ public class RetzScheduler implements Scheduler {
         this.filters = Protos.Filters.newBuilder().setRefuseSeconds(conf.getServerConfig().getRefuseSeconds()).build();
         MAX_JOB_SIZE = conf.getServerConfig().getMaxJobSize();
         MAX_FILE_SIZE = conf.getServerConfig().getMaxFileSize();
+        this.master = Optional.empty();
     }
 
     @Override
     public void disconnected(SchedulerDriver driver) {
-        LOG.warn("Disconnected from cluster");
+        Optional<String> prevMaster = this.master;
+        this.master = Optional.empty();
+        StatusCache.voidMaster();
+        LOG.warn("Disconnected from cluster (previous master={})", prevMaster);
     }
 
     @Override
@@ -101,7 +106,15 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void registered(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) {
-        LOG.info("Connected to master {}; Framework ID: {}", masterInfo.getHostname(), frameworkId.getValue());
+        String newMaster = new StringBuilder()
+                .append(masterInfo.getHostname())
+                .append(":")
+                .append(masterInfo.getPort())
+                .toString();
+
+        LOG.info("Connected to master {}; Framework ID: {}", newMaster, frameworkId.getValue());
+        this.master = Optional.of(newMaster);
+        StatusCache.updateMaster(newMaster);
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
 
         Optional<String> oldFrameworkId = Database.getInstance().getFrameworkId();
@@ -125,8 +138,15 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void reregistered(SchedulerDriver driver, Protos.MasterInfo masterInfo) {
-        LOG.info("Reconnected to master {}", masterInfo.getHostname());
         // Maybe long time split brain, recovering all states from master required.
+        String newMaster = new StringBuilder()
+                .append(masterInfo.getHostname())
+                .append(":")
+                .append(masterInfo.getPort())
+                .toString();
+        this.master = Optional.of(newMaster);
+        StatusCache.updateMaster(newMaster);
+        LOG.info("Reconnected to master {}", newMaster);
         maybeRecoverRunning(driver);
     }
 
@@ -349,9 +369,13 @@ public class RetzScheduler implements Scheduler {
 
                 case STARTING:
                     LOG.debug("Task {} starting", status.getTaskId().getValue());
-                    JobQueue.starting(job.get(), MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                            status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                            status.getExecutorId().getValue()), status.getTaskId().getValue());
+                    Optional<String> maybeUrl = Optional.empty();
+                    if (this.master.isPresent()) {
+                        maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+                                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                                status.getExecutorId().getValue());
+                    }
+                    JobQueue.starting(job.get(), maybeUrl, status.getTaskId().getValue());
                     break;
 
                 case KILLED: // kill by user...
@@ -378,10 +402,13 @@ public class RetzScheduler implements Scheduler {
     }
 
     void finished(Protos.TaskStatus status) {
-        Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                status.getExecutorId().getValue());
-
+        Optional<String> maybeUrl = Optional.empty();
+        if (this.master.isPresent()) {
+            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue());
+            LOG.info("finished: {}", maybeUrl);
+        }
         int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
         String finished = TimestampHelper.now();
         try {
@@ -396,9 +423,12 @@ public class RetzScheduler implements Scheduler {
     }
 
     void failed(Protos.TaskStatus status) {
-        Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                status.getExecutorId().getValue());
+        Optional<String> maybeUrl = Optional.empty();
+        if (this.master.isPresent()) {
+            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue());
+        }
         try {
             JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
         } catch (SQLException e) {
@@ -410,9 +440,12 @@ public class RetzScheduler implements Scheduler {
     }
 
     void started(Protos.TaskStatus status) {
-        Optional<String> maybeUrl = MesosHTTPFetcher.sandboxBaseUri(conf.getMesosMaster(),
-                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                status.getExecutorId().getValue());
+        Optional<String> maybeUrl = Optional.empty();
+        if (this.master.isPresent()) {
+            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue());
+        }
         try {
             JobQueue.started(status.getTaskId().getValue(), maybeUrl);
         } catch (SQLException e) {
