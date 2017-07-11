@@ -16,17 +16,17 @@
  */
 package io.github.retz.protocol;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.retz.protocol.data.DirEntry;
-import io.github.retz.protocol.data.FileContent;
-import io.github.retz.protocol.data.Job;
-
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.github.retz.protocol.data.DirEntry;
+import io.github.retz.protocol.data.Job;
 
 public class ListFilesResponse extends Response {
     private Optional<Job> job;
@@ -36,7 +36,7 @@ public class ListFilesResponse extends Response {
     public ListFilesResponse(@JsonProperty("job") Optional<Job> job,
                              @JsonProperty("entries") List<DirEntry> entries) {
         this.job = Objects.requireNonNull(job);
-        this.entries = (entries == null)? new LinkedList<>() : entries;
+        this.entries = (entries == null) ? Collections.emptyList() : entries;
     }
 
     @JsonGetter("job")

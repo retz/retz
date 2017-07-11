@@ -225,7 +225,7 @@ public class Database {
     }
 
     public List<User> allUsers() throws IOException {
-        List<User> ret = new LinkedList<>();
+        List<User> ret = new ArrayList<>();
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         //try (Connection conn = pool.getConnection();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection()) {
@@ -327,7 +327,7 @@ public class Database {
     }
 
     public List<Application> getAllApplications(String id) throws IOException {
-        List<Application> ret = new LinkedList<>();
+        List<Application> ret = Collections.emptyList();
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             ret = getApplications(conn, id);
@@ -342,7 +342,7 @@ public class Database {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
-        List<Application> ret = new LinkedList<>();
+        List<Application> ret = new ArrayList<>();
         String sql = "SELECT * FROM applications";
         if (id != null) {
             sql += " WHERE owner=?";
@@ -448,7 +448,7 @@ public class Database {
     }
 
     public List<Job> listJobs(String id, Job.JobState state, Optional<String> tag, int limit) throws SQLException {
-        List<Job> ret = new LinkedList<>();
+        List<Job> ret = new ArrayList<>();
         String prefix = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
         String sql = prefix + " AND j.state=? ORDER BY j.id DESC LIMIT ?";
 
@@ -481,7 +481,7 @@ public class Database {
 
     // This is for debug purpose
     List<Job> getAllJobs(String id) throws IOException {
-        List<Job> ret = new LinkedList<>();
+        List<Job> ret = new ArrayList<>();
         String sql = "SELECT j.json FROM jobs j";
         if (id != null) {
             sql = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
@@ -509,7 +509,7 @@ public class Database {
 
     // Selects all "finished" jobs
     public List<Job> finishedJobs(String start, String end) {
-        List<Job> ret = new LinkedList<>();
+        List<Job> ret = new ArrayList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE ? <= finished AND finished < ?")) {
             conn.setAutoCommit(true);
@@ -539,8 +539,8 @@ public class Database {
 
     // orderBy must not have any duplication
     public List<Job> findFit(List<String> orderBy, int cpu, int memMB) throws IOException {
-        List<Job> ret = new LinkedList<>();
-        String orders = String.join(", ", orderBy.stream().map(s -> s + " ASC").collect(Collectors.toList()));
+        List<Job> ret = new ArrayList<>();
+        String orders = orderBy.stream().map(s -> s + " ASC").collect(Collectors.joining(", "));
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY " + orders)) {
             conn.setAutoCommit(true);
@@ -571,7 +571,7 @@ public class Database {
     }
 
     public List<Job> queued(int limit) throws IOException, SQLException {
-        List<Job> ret = new LinkedList<>();
+        List<Job> ret = new ArrayList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC LIMIT ?")) {
             conn.setAutoCommit(true);
@@ -811,14 +811,14 @@ public class Database {
     }
 
     public List<Job> getRunning() {
-        List<Job> jobs = new LinkedList<>();
+        List<Job> jobs = new ArrayList<>(2);
         jobs.addAll(getByState(Job.JobState.STARTING));
         jobs.addAll(getByState(Job.JobState.STARTED));
         return jobs;
     }
 
     private List<Job> getByState(Job.JobState state) {
-        List<Job> jobs = new LinkedList<>();
+        List<Job> jobs = new ArrayList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT id, json FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);

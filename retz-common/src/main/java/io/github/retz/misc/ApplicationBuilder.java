@@ -20,7 +20,7 @@ import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Container;
 import io.github.retz.protocol.data.MesosContainer;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,7 +40,7 @@ public class ApplicationBuilder {
     public ApplicationBuilder(String name, String owner) {
         appid = name;
         this.owner = owner;
-        largeFiles = files = Arrays.asList();
+        largeFiles = files = Collections.emptyList();
         user = Optional.empty();
         container = new MesosContainer();
         enabled = true;

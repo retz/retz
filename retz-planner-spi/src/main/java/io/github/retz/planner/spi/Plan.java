@@ -18,26 +18,23 @@ package io.github.retz.planner.spi;
 
 import io.github.retz.protocol.data.Job;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Plan {
     private Map<String, List<Job>> jobSpecs = new HashMap<>();
-    private List<Job> toKeep = new LinkedList<>();
-    private List<String> offerIdsToStock = new LinkedList<>();
+    private List<Job> toKeep = new ArrayList<>();
+    private List<String> offerIdsToStock = new ArrayList<>();
 
     public Plan() {
     }
 
     public void setJob(String offerId, Job job) {
-        List<Job> jobs = jobSpecs.getOrDefault(offerId, new LinkedList<>());
+        List<Job> jobs = jobSpecs.computeIfAbsent(offerId, k -> new ArrayList<>());
         jobs.add(job);
-        if (!jobSpecs.containsKey(offerId)) {
-            jobSpecs.put(offerId, jobs);
-        }
     }
 
     public void addStock(String offerId) {
@@ -65,13 +62,11 @@ public class Plan {
         StringBuilder sb = new StringBuilder();
         sb.append("{").append("jobSpecs={");
         for (Map.Entry<String, List<Job>> entry : jobSpecs.entrySet()) {
-            sb.append(entry.getKey()).append("={")
-                    .append(String.join(",",
-                            entry.getValue().stream().map(j -> j.pp()).collect(Collectors.toList())))
-                    .append("},");
+            sb.append(entry.getKey()).append("=")
+                    .append(entry.getValue().stream().map(j -> j.pp()).collect(Collectors.joining(",", "{", "},")));
         }
         sb.append("}, toKeep={");
-        sb.append(String.join(", ", toKeep.stream().map(j -> j.pp()).collect(Collectors.toList())));
+        sb.append(toKeep.stream().map(j -> j.pp()).collect(Collectors.joining(", ")));
         sb.append("}, offerIdsToStock={");
         sb.append(String.join(", ", offerIdsToStock));
         sb.append("}}");

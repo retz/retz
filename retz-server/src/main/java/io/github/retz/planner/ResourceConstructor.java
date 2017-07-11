@@ -20,13 +20,13 @@ import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ResourceConstructor {
     public static List<Protos.Resource> construct(Resource r) {
-        List<Protos.Resource> list = new LinkedList<Protos.Resource>();
+        List<Protos.Resource> list = new ArrayList<Protos.Resource>();
         list.add(Protos.Resource.newBuilder()
                 .setName("cpus")
                 .setScalar(Protos.Value.Scalar.newBuilder().setValue(r.cpu()).build())
@@ -68,7 +68,7 @@ public class ResourceConstructor {
     }
 
     public static List<Protos.Resource> construct(int cpus, int memMB) {
-        List<Protos.Resource> list = new LinkedList<Protos.Resource>();
+        List<Protos.Resource> list = new ArrayList<Protos.Resource>();
         list.add(Protos.Resource.newBuilder()
                 .setName("cpus")
                 .setScalar(Protos.Value.Scalar.newBuilder().setValue(cpus).build())
@@ -103,7 +103,7 @@ public class ResourceConstructor {
 
     public static Resource decode(List<Protos.Resource> resources) {
         int memMB = 0, diskMB = 0, gpu = 0;
-        List<Range> ports = new LinkedList<>();
+        List<Range> ports = new ArrayList<>();
         double cpu = 0;
         for (Protos.Resource r : resources) {
             if (r.getName().equals("cpus")) {

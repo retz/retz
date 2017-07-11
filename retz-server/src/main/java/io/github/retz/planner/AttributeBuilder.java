@@ -20,13 +20,13 @@ import io.github.retz.planner.spi.Attribute;
 import io.github.retz.protocol.data.Range;
 import org.apache.mesos.Protos;
 
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 public class AttributeBuilder {
-    private List<Attribute> list = new LinkedList<>();
+    private final List<Attribute> list = new ArrayList<>();
 
     public AttributeBuilder(List<Protos.Attribute> attrs) {
         for (Protos.Attribute attr : attrs) {
@@ -40,7 +40,7 @@ public class AttributeBuilder {
             } else if (attr.hasRanges()) {
                 // converts to List<Range>
                 t = Attribute.Type.RANGES;
-                List<Range> ranges = new LinkedList<>();
+                List<Range> ranges = new ArrayList<>();
                 for (Protos.Value.Range range : attr.getRanges().getRangeList()) {
                     Range r = new Range(range.getBegin(), range.getEnd());
                     ranges.add(r);

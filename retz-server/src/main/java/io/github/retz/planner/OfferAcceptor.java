@@ -22,16 +22,16 @@ import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class OfferAcceptor {
     private final Protos.SlaveID slaveID;
-    private List<Protos.Offer> offers = new LinkedList<>();
-    private List<Protos.Offer.Operation> operations = new LinkedList<>();
-    private List<Job> jobs = new LinkedList<>();
+    private final List<Protos.Offer> offers = new ArrayList<>();
+    private final List<Protos.Offer.Operation> operations = new ArrayList<>();
+    private final List<Job> jobs = new ArrayList<>();
 
     public OfferAcceptor(Protos.Offer offer) {
         this.slaveID = Objects.requireNonNull(offer.getSlaveId());

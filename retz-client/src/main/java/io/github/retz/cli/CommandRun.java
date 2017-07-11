@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 public class CommandRun implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandRun.class);
@@ -54,7 +53,7 @@ public class CommandRun implements SubCommand {
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
     @Parameter(names = "--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
-    List<String> tags = Arrays.asList();
+    List<String> tags = Collections.emptyList();
     @Parameter(names = "--timeout", description = "Timeout in minutes until kill from client (-1 or 0 for no timeout, default is 24 hours)")
     int timeout = 24 * 60;
     @Parameter(names = {"-c", "--command", "-cmd"}, required = true, description = "Remote command (-) for command from stdin")

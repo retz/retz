@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.*;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,7 +40,7 @@ public class ExtensiblePlannerFactory {
         } else {
             LOG.warn("Classloader is somehow already not null");
         }
-        Class plannerClass = Class.forName(name, true, classLoader);
+        Class<?> plannerClass = Class.forName(name, true, classLoader);
         if (io.github.retz.planner.spi.Planner.class.isAssignableFrom(plannerClass)) {
             return (Planner)plannerClass.newInstance();
         }
@@ -49,7 +49,7 @@ public class ExtensiblePlannerFactory {
 
     static URL[] findJarFiles(String dir) throws URISyntaxException, MalformedURLException {
         File[] files = new File(dir).listFiles();
-        List<URI> jars = new LinkedList<>();
+        List<URI> jars = new ArrayList<>();
 
         if (files == null) {
             // Directory does not exist
@@ -67,13 +67,14 @@ public class ExtensiblePlannerFactory {
                 }
             }
         }
-        return (URL[])jars.stream().map(uri -> {
+        List<URL> urls = jars.stream().map(uri -> {
             try {
                 return uri.toURL();
             }catch (MalformedURLException e){
                 LOG.error("Cannot convert URI {} to URL", uri, e);
                 return null;
             }
-        }).collect(Collectors.toList()).toArray(new URL[]{});
+        }).collect(Collectors.toList());
+        return urls.toArray(new URL[urls.size()]);
     }
 }

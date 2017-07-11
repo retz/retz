@@ -136,21 +136,19 @@ public class RetzScheduler implements Scheduler {
 
         // Merge fresh offers from Mesos and offers in stock here, declining duplicate offers
         Stanchion.schedule(() -> {
-            List<Protos.Offer> available = new LinkedList<>();
+            List<Protos.Offer> available = new ArrayList<>();
             synchronized (OFFER_STOCK) {
                 // TODO: cleanup this code, optimize for max.stock = 0 case
                 Map<String, List<Protos.Offer>> allOffers = new HashMap<>();
                 for (Protos.Offer offer : OFFER_STOCK.values()) {
                     String key = offer.getSlaveId().getValue();
-                    List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
+                    List<Protos.Offer> list = allOffers.computeIfAbsent(key, k -> new ArrayList<>());
                     list.add(offer);
-                    allOffers.put(offer.getSlaveId().getValue(), list);
                 }
                 for (Protos.Offer offer : offers) {
                     String key = offer.getSlaveId().getValue();
-                    List<Protos.Offer> list = allOffers.getOrDefault(key, new LinkedList<>());
+                    List<Protos.Offer> list = allOffers.computeIfAbsent(key, k -> new ArrayList<>());
                     list.add(offer);
-                    allOffers.put(offer.getSlaveId().getValue(), list);
                 }
 
                 int declined = 0;
@@ -201,7 +199,7 @@ public class RetzScheduler implements Scheduler {
                 return;
             }
 
-            List<Protos.Offer> available = new LinkedList<>();
+            List<Protos.Offer> available = new ArrayList<>(OFFER_STOCK.size());
             synchronized (OFFER_STOCK) {
                 available.addAll(OFFER_STOCK.values());
                 OFFER_STOCK.clear();
@@ -224,7 +222,7 @@ public class RetzScheduler implements Scheduler {
         }
 
         // DO MAKE PLANNING
-        List<Job> cancel = new LinkedList<>();
+        List<Job> cancel = new ArrayList<>();
         List<AppJobPair> appJobPairs = PLANNER.filter(jobs, cancel, conf.getServerConfig().useGPU());
         // update database to change all jobs state to KILLED
         JobQueue.cancelAll(cancel);

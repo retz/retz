@@ -16,17 +16,15 @@
  */
 package io.github.retz.protocol;
 
+import java.util.Objects;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.retz.protocol.data.DirEntry;
+
 import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 public class GetFileResponse extends Response {
     private Optional<Job> job;

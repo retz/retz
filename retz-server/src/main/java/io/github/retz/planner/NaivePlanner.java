@@ -113,7 +113,7 @@ public class NaivePlanner implements Planner {
         }
 
         Optional<Resource> needs = jobs.stream().map(appjob -> new Resource(appjob.job().resources().getCpu(), appjob.job().resources().getMemMB(),
-                appjob.job().resources().getDiskMB(), appjob.job().resources().getGpu(), Arrays.asList())).reduce((lhs, rhs) -> {
+                appjob.job().resources().getDiskMB(), appjob.job().resources().getGpu(), Collections.emptyList())).reduce((lhs, rhs) -> {
             lhs.merge(rhs);
             return lhs;
         });
@@ -163,8 +163,8 @@ public class NaivePlanner implements Planner {
     @Override
     public Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock, String unixUser) {
 
-        List<OfferAcceptor> acceptors = new LinkedList<>();
-        List<Protos.Offer> toStock = new LinkedList<>();
+        List<OfferAcceptor> acceptors = new ArrayList<>();
+        List<Protos.Offer> toStock = new ArrayList<>();
 
         if (!resourceSufficient(offers, jobs)) {
             for (Protos.Offer offer : offers) {
@@ -180,11 +180,11 @@ public class NaivePlanner implements Planner {
                     toStock); // To be cancelled
         }
 
-        List<Job> keep = new LinkedList<>();
+        List<Job> keep = new ArrayList<>();
 
         pack(offers, jobs, acceptors, keep, Objects.requireNonNull(unixUser));
 
-        List<OfferAcceptor> trueAcceptors = new LinkedList<>();
+        List<OfferAcceptor> trueAcceptors = new ArrayList<>();
         for (OfferAcceptor acceptor : acceptors) {
             if (acceptor.getJobs().isEmpty() && toStock.size() < maxStock) {
                 for (Protos.Offer offer : acceptor.getOffers()) {

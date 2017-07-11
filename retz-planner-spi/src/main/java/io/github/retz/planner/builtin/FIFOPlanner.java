@@ -70,7 +70,7 @@ public class FIFOPlanner implements Planner {
     public Plan plan(Map<String, Offer> offers, List<Job> jobs) {
 
         Plan plan = new Plan();
-        List<Job> queue = new LinkedList<>(jobs);
+        List<Job> queue = new ArrayList<>(jobs);
         for (Map.Entry<String, Offer> entry : offers.entrySet()) {
             ResourceQuantity total = new ResourceQuantity();
             while (!queue.isEmpty() && entry.getValue().resource().cpu() - total.getCpu() > 0) {

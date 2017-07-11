@@ -29,6 +29,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,7 +67,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
             String[] jsons = (String[]) client.invokeOperation(objectName, "getUsage", start, end);
             return Arrays.asList(jsons);
         } catch (Exception o) {
-            return Arrays.asList();
+            return Collections.emptyList();
         }
     }
 
@@ -76,7 +77,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
             String[] jsons = (String[]) client.invokeOperation(objectName, "listUser");
             return Arrays.asList(jsons);
         } catch (Exception o) {
-            return Arrays.asList();
+            return Collections.emptyList();
         }
     }
 

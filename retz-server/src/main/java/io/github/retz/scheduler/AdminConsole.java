@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -103,7 +104,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
-            return Arrays.asList();
+            return Collections.emptyList();
         }
     }
 

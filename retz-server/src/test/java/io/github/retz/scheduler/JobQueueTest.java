@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +55,7 @@ public class JobQueueTest {
     }
     @Test
     public void q() throws Exception {
-        Application app = new Application("appq", Arrays.asList(), Arrays.asList(),
+        Application app = new Application("appq", Collections.emptyList(), Collections.emptyList(),
                 Optional.empty(), "deadbeef",0, new MesosContainer(), true);
         assertTrue(Applications.load(app));
 

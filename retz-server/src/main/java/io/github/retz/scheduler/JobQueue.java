@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -96,7 +96,7 @@ public class JobQueue {
             return Database.getInstance().findFit(orderBy, total.getCpu(), total.getMemMB());
         } catch (IOException e) {
             LOG.error(e.toString(), e);
-            return new LinkedList<>();
+            return Collections.emptyList();
         }
     }
 

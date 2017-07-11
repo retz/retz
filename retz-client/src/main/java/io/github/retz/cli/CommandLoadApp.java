@@ -34,11 +34,11 @@ public class CommandLoadApp implements SubCommand {
     private String appName;
 
     @Parameter(names = {"-F", "--file"}, description = "Smaller files in <scheme>://<resource-path> style (available scheme: https, http, hdfs, file)")
-    List<String> files = new LinkedList<>();
+    List<String> files = new ArrayList<>();
     //"http://server:8000/path/data.tar.gz,https://server:8000/file2.tar.gz");
 
     @Parameter(names = {"-L", "--large-file"}, description = "Large files that will be cached at agents, same style as '--file' option")
-    List<String> largeFiles = new LinkedList<>();
+    List<String> largeFiles = new ArrayList<>();
 
     @Parameter(names = {"-U", "--user"}, description = "Unix user name to run task at remote Mesos agent")
     private String user;
@@ -53,7 +53,7 @@ public class CommandLoadApp implements SubCommand {
     String image;
 
     @Parameter(names = "--docker-volumes", description = "Docker volume drivers")
-    List<String> volumeSpecs = new LinkedList<>();
+    List<String> volumeSpecs = new ArrayList<>();
 
     @Parameter(names = "--enabled", description = "Enable application [true|false]. If disabled, server returns 401 for any job scheduling request.")
     String enabledStr = "true";

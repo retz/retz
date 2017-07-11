@@ -17,10 +17,9 @@
 package io.github.retz.planner.spi;
 
 import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -33,6 +32,6 @@ public class PlannerMockTest {
         Planner p = new PlannerMock();
         p.orderBy();
         p.filter(new Job("1", "a", new Properties(), 1, 32, 32));
-        p.plan(new HashMap<>(), Arrays.asList());
+        p.plan(new HashMap<>(), Collections.emptyList());
     }
 }
