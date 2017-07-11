@@ -224,6 +224,7 @@ public final class WebConsole {
     }
 
     static String status(Request request, Response response) throws JsonProcessingException {
+        response.type("application/json");
         return StatusCache.getStatusResponse();
     }
 
