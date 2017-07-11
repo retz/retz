@@ -67,7 +67,7 @@ public class Property {
             p.execute();
             return true;
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return false;
         }
     }
@@ -82,7 +82,7 @@ public class Property {
                 return Optional.empty();
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
     }
@@ -96,7 +96,7 @@ public class Property {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return props;
     }
@@ -105,7 +105,7 @@ public class Property {
         try (PreparedStatement p = conn.prepareStatement("SELECT key, value, epoch FROM properties")) {
 
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 }

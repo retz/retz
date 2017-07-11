@@ -150,8 +150,7 @@ public class Database {
             conn.commit();
             LOG.info("All tables dropped successfully");
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -240,8 +239,7 @@ public class Database {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return ret;
     }
@@ -289,8 +287,7 @@ public class Database {
             conn.commit();
             return u;
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
     }
@@ -336,8 +333,7 @@ public class Database {
             ret = getApplications(conn, id);
             conn.commit();
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return ret;
     }
@@ -391,8 +387,7 @@ public class Database {
             return true;
 
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
             return false;
         }
     }
@@ -402,8 +397,7 @@ public class Database {
             conn.setAutoCommit(true);
             return getApplication(conn, appid);
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return Optional.empty();
     }
@@ -438,8 +432,7 @@ public class Database {
 
             conn.commit();
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -509,8 +502,7 @@ public class Database {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return ret;
     }
@@ -535,13 +527,12 @@ public class Database {
                         }
                         ret.add(job);
                     } catch (IOException e) {
-                        LOG.error(e.toString()); // JSON text is broken for sure
+                        LOG.error(e.toString(), e); // JSON text is broken for sure
                     }
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return ret;
     }
@@ -574,8 +565,7 @@ public class Database {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
-            e.printStackTrace();
+            LOG.error(e.toString(), e);
         }
         return ret;
     }
@@ -630,9 +620,9 @@ public class Database {
             conn.commit();
 
         } catch (IOException e) {
-            throw new RuntimeException(e.toString());
+            throw new RuntimeException(e);
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -657,7 +647,7 @@ public class Database {
                 // No such application
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return Optional.empty();
     }
@@ -680,7 +670,7 @@ public class Database {
                 // No such application
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return Optional.empty();
     }
@@ -706,7 +696,7 @@ public class Database {
                 // No such application
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return Optional.empty();
     }
@@ -719,7 +709,7 @@ public class Database {
             p.setInt(1, maxId);
             p.execute();
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -773,7 +763,7 @@ public class Database {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
         return -1;
     }
@@ -857,7 +847,7 @@ public class Database {
             LOG.info("setting new framework: {}", value);
             return new Property(conn).setFrameworkId(value);
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return false;
         }
     }
@@ -866,7 +856,7 @@ public class Database {
         try (Connection conn = dataSource.getConnection()) {
             return new Property(conn).getFrameworkId();
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
             return Optional.empty();
         }
     }
@@ -877,7 +867,7 @@ public class Database {
             new Property(conn).deleteAll();
             conn.commit();
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -889,10 +879,8 @@ public class Database {
                 jobs.updateJob(job);
             }
             conn.commit();
-        } catch (JsonProcessingException e) {
-            LOG.error(e.toString());
-        } catch (SQLException e) {
-            LOG.error(e.toString());
+        } catch (JsonProcessingException | SQLException e) {
+            LOG.error(e.toString(), e);
         }
     }
 
@@ -902,7 +890,7 @@ public class Database {
             new Jobs(conn, MAPPER).doRetry(ids);
             conn.commit();
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         }
     }
 }

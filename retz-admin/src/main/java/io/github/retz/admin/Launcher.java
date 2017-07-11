@@ -88,7 +88,6 @@ public class Launcher {
             LOG.error("JMX server is not up at localhost:{}", port);
         } catch (IOException e) {
             LOG.error("Invalid configuration file", e);
-            e.printStackTrace();
         } catch (URISyntaxException e) {
             LOG.error("Bad file format: {}", e.toString());
         } catch (MissingCommandException e) {

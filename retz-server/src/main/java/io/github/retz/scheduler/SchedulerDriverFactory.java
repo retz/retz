@@ -44,7 +44,7 @@ public class SchedulerDriverFactory {
                     return createMesosSchedulerDriver(scheduler, conf, fw);
             }
         } catch (InvalidProtocolBufferException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         } catch (IOException e) {
             LOG.error("Cannot read secret file: {}", e.toString());
         }

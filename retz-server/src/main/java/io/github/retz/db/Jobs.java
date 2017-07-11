@@ -77,9 +77,9 @@ public class Jobs {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString());
+            LOG.error(e.toString(), e);
         } catch (IOException e) {
-            LOG.error(e.toString()); // TODO: do we fail?
+            LOG.error(e.toString(), e); // TODO: do we fail?
         }
     }
 
