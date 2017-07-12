@@ -235,19 +235,17 @@ public class ClosableContainer implements AutoCloseable {
     }
 
     private Runnable createHolderTask(String name, String[] command) {
-        return new Runnable() {
-            public void run() {
-                try {
-                    ExecCreateCmdResponse spawnAgent = dockerClient
-                            .execCreateCmd(containerId).withTty(false)
-                            .withAttachStdout(false).withAttachStderr(false)
-                            .withCmd(command).exec();
-                    dockerClient.execStartCmd(spawnAgent.getId()).withDetach(true)
-                            .exec(new ExecStartResultCallback(System.out, System.err));
-                    System.err.println("Thread: " + name + " finished. Id=" + spawnAgent.getId());
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+        return () ->{
+            try {
+                ExecCreateCmdResponse spawnAgent = dockerClient
+                        .execCreateCmd(containerId).withTty(false)
+                        .withAttachStdout(false).withAttachStderr(false)
+                        .withCmd(command).exec();
+                dockerClient.execStartCmd(spawnAgent.getId()).withDetach(true)
+                        .exec(new ExecStartResultCallback(System.out, System.err));
+                System.err.println("Thread: " + name + " finished. Id=" + spawnAgent.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         };
     }

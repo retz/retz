@@ -55,6 +55,7 @@ COPY attributes /etc/mesos-slave/attributes
 COPY retz.properties /retz.properties
 COPY retz-persistent.properties /retz-persistent.properties
 COPY retz-postgres.properties /retz-postgres.properties
+COPY retz-zk.properties /retz-zk.properties
 
 # Want to know Mesos version
 RUN ls -l /usr/lib/libmesos*

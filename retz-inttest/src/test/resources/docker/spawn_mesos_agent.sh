@@ -27,6 +27,9 @@ mkdir -p /sys/fs/cgroup/systemd/mesos_executors.slice
 
 echo "Directory created."
 
-nohup /sbin/mesos-slave --master=${IP_ADDR}:15050 \
-      --port=15051 \
+##nohup /sbin/mesos-slave --master=${IP_ADDR}:15050
+ZK=`cat /etc/mesos/zk`
+echo ${ZK}
+nohup /sbin/mesos-slave --master=${ZK} \
+      --port=15051 --ip=${IP_ADDR} \
       --work_dir=/var/lib/mesos > /build/log/mesos-agent.log 2>&1 &
