@@ -100,4 +100,18 @@ public class OfferAcceptor {
             throw new AssertionError("Operations and jobs doesn't match in size: "+ operations.size() + "/" + jobs.size());
         }
     }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("OfferAcceptor{")
+                .append("slaveId=").append(slaveID.getValue())
+                .append(",\noffers=[")
+                .append(offers.stream().map((offer) -> offer.toString()).collect(Collectors.joining(",")))
+                .append("],\noperations=[")
+                .append(operations.stream().map((op) -> op.toString()).collect(Collectors.joining(",")))
+                .append("],\njobs=[")
+                .append(jobs.stream().map((job) -> job.pp()).collect(Collectors.joining(",\n")))
+                .append("]}")
+                .toString();
+    }
 }

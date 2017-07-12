@@ -16,6 +16,7 @@
  */
 package io.github.retz.scheduler
 
+import java.util
 import java.util.Properties
 
 import io.github.retz.planner.ResourceConstructor
@@ -67,6 +68,31 @@ class ResourceProp extends JUnitSuite {
         val nofit = cpus+1> q.getCpu || mem + 32 > q.getMemMB || gpus > q.getGpu || ports > q.getPorts || disk > q.getDiskMB
         println(cpus+1, mem+32, gpus, ports, q, fit, nofit, fit != nofit)
         fit != nofit
+      }
+    })
+  }
+
+  val resource: Gen[Resource] =
+    for {cpus <- Gen.posNum[Int]
+         mem <- Gen.posNum[Int]
+         gpus <- Gen.posNum[Int]
+         //ports <- Gen.posNum[Int]
+         disk <- Gen.posNum[Int]}
+      yield new Resource(cpus.toDouble, mem, disk, gpus, util.Arrays.asList())
+  @Test
+  def resourceCutProp() : Unit = {
+    Checkers.check(Prop.forAll(Gen.nonEmptyListOf(resource)) {
+      (resources: List[Resource]) => {
+        val total = resources.foldLeft(new Resource(0, 0, 0))( (t, r) => {
+          t.merge(r)
+          t
+        })
+        val remain = resources.foldLeft(total)((t, resource) => {
+          t.cut(resource.toQuantity, 0)
+          t
+        })
+        // TODO: generate and test on list of ports!
+        remain.cpu() < 0.001 && remain.diskMB() == 0 && remain.diskMB() == 0 && remain.gpu() == 0
       }
     })
   }

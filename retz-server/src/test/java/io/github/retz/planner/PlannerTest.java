@@ -143,7 +143,7 @@ public class PlannerTest {
                 offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             }
             for (int i = 0; i < 8; ++i) {
-                Job job = new Job(ANON_APPID, "cmd", new Properties(), 4, 128, 1024);
+                Job job = new Job(ANON_APPID, "cmd", new Properties(), 4, 128, 0);
                 job.schedule(i, TimestampHelper.now());
                 jobs.add(new AppJobPair(app, job));
 

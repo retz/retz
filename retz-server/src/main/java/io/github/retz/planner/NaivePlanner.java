@@ -59,17 +59,16 @@ public class NaivePlanner implements Planner {
             int lastPort = 0;
 
             while (!appJobs.isEmpty() &&
-                    assigned.cpu() <= resource.cpu() &&
-                    assigned.memMB() <= resource.memMB() &&
-                    assigned.gpu() <= resource.gpu() &&
-                    assigned.portAmount() <= resource.portAmount()) {
+                    0 <= resource.cpu() &&
+                    0 <= resource.memMB()) {
                 AppJobPair appJob = appJobs.get(0);
                 Job job = appJob.job();
 
-                if (assigned.cpu() + job.resources().getCpu() <= resource.cpu() &&
-                        assigned.memMB() + job.resources().getMemMB() <= resource.memMB() &&
-                        assigned.gpu() + job.resources().getGpu() <= resource.gpu() &&
-                        assigned.portAmount() + job.resources().getPorts() <= resource.portAmount()) {
+                if (job.resources().getCpu() <= resource.cpu() &&
+                        job.resources().getMemMB() <= resource.memMB() &&
+                        job.resources().getGpu() <= resource.gpu() &&
+                        job.resources().getDiskMB() <= resource.diskMB() &&
+                        job.resources().getPorts() <= resource.portAmount()) {
 
                     String id = Integer.toString(job.id());
                     // Not using simple CommandExecutor to keep the executor lifecycle with its assets

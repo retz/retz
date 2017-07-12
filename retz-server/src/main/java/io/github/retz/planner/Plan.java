@@ -21,6 +21,7 @@ import org.apache.mesos.Protos;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Plan {
     private List<OfferAcceptor> offerAcceptors;
@@ -45,5 +46,18 @@ public class Plan {
 
     public List<Protos.Offer> getToStock() {
         return toStock;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("plan={")
+                .append("\nofferAcceptors=[")
+                .append(offerAcceptors.stream().map((oa) -> oa.toString()).collect(Collectors.joining(",\n")))
+                .append("],\ntoKeep=[")
+                .append(toKeep.stream().map((job) -> job.pp()).collect(Collectors.joining(",\n")))
+                .append("],\ntoStock=[")
+                .append(toStock.stream().map((offer) -> offer.toString()).collect(Collectors.joining(",\n")))
+                .append("]}")
+                .toString();
     }
 }

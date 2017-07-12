@@ -95,10 +95,12 @@ public class Resource {
     }
 
     public Resource cut(ResourceQuantity q, int lastPort) {
-        return cut(q.getCpu(), q.getMemMB(), q.getGpu(), q.getPorts(), lastPort);
+        return cut(q.getCpu(), q.getMemMB(), q.getDiskMB(), q.getGpu(), q.getPorts(), lastPort);
     }
-
     public Resource cut(int cpu, int memMB, int gpus, int ports, int lastPort) {
+        return cut(cpu, memMB, 0, gpus, ports, lastPort);
+    }
+    public Resource cut(int cpu, int memMB, int diskMB, int gpus, int ports, int lastPort) {
         List<Range> ranges = new ArrayList<>();
         int sum = 0;
         for (Range range : this.ports) {
@@ -124,7 +126,15 @@ public class Resource {
                 ranges.add(new Range(start, end));
             }
         }
-        return new Resource(cpu, memMB, 0, gpus, ranges);
+
+        this.cpu -= cpu;
+        this.memMB -= memMB;
+        this.diskMB -= diskMB;
+        this.gpu -= gpus;
+        //TODO: implement this in list ranges
+        //this.ports -= ports;
+
+        return new Resource(cpu, memMB, diskMB, gpus, ranges);
     }
 
 
