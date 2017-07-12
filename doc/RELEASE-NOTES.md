@@ -3,7 +3,11 @@
 ## 0.2.10
 
 * Support standard format of Mesos master discovery address
-  e.g. `zk://zk1:2181,zk2:2181,zk3:2181/mesos`
+  e.g. `zk://zk1:2181,zk2:2181,zk3:2181/mesos` - with this
+  now Retz survives Mesos master change and restart (#140, #141)
+* Fix binary download failure on files that include `+` in
+  their names (#161)
+* Error log message cleanup
 
 ## 0.2.9
 
