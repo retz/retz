@@ -357,6 +357,9 @@ Server configuration file
 
   Although the default address is ``localhost``, it is recommended to
   use IP address that is accessible from external nodes.
+* ``retz.mesos.failover.timeout``: Mesos failover timeout in seconds.
+  In case of Retz process failure, Mesos waits for Retz to fail over
+  or to restart during this period. Default value is a week.
 
 * ``retz.authentication = true``:   Enable authentication between client and server. If this is false,
   Retz server does no verification and authentication on server side.

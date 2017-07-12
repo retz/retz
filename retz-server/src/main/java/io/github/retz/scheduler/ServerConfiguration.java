@@ -60,6 +60,8 @@ public class ServerConfiguration extends FileConfiguration {
     static final String MESOS_SECRET_FILE = "retz.mesos.secret.file";
     static final String MESOS_REFUSE_SECONDS = "retz.mesos.refuse";
     static final int DEFAULT_MESOS_REFUSE_SECONDS = 3;
+    static final String MESOS_FAILOVER_TIMEOUT = "retz.mesos.failover.timeout";
+    static final int DEFAULT_MESOS_FAILOVER_TIMEOUT = 3600 * 24 * 7;
 
     // Not yet used
     static final String QUEUE_MAX = "retz.max.queue";
@@ -148,6 +150,7 @@ public class ServerConfiguration extends FileConfiguration {
                 GC_INTERVAL, getGcInterval(),
                 MAX_LIST_JOB_SIZE, getMaxJobSize(),
                 MAX_FILE_SIZE, getMaxFileSize());
+        LOG.info("{}={}", MESOS_FAILOVER_TIMEOUT, getFailoverTimeout());
     }
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
@@ -258,6 +261,13 @@ public class ServerConfiguration extends FileConfiguration {
 
     public long getMaxFileSize() {
         return Long.parseLong(properties.getProperty(MAX_FILE_SIZE, DEFAULT_MAX_FILE_SIZE));
+    }
+
+    public int getFailoverTimeout() {
+        if (properties.containsKey(MESOS_FAILOVER_TIMEOUT)) {
+            return Integer.parseInt(properties.getProperty(MESOS_FAILOVER_TIMEOUT));
+        }
+        return DEFAULT_MESOS_FAILOVER_TIMEOUT;
     }
 
     public Properties copyAsProperties() {

@@ -2,6 +2,7 @@
 
 ## 0.2.10
 
+* Add `retz.mesos.failover.timeout` to set failover timeout
 * Fix bug in Resource#cut which was not actually cutting
   resource
 * Fix NaivePlanner was not taking disk resources into account (#165)

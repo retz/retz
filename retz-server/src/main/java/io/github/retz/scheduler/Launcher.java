@@ -175,10 +175,10 @@ public final class Launcher {
                 .setUser(userName)
                 .setName(RetzScheduler.FRAMEWORK_NAME)
                 .setWebuiUrl(conf.fileConfig.getUri().toASCIIString())
-                .setFailoverTimeout(3600 * 24 * 7)
+                .setFailoverTimeout(conf.getServerConfig().getFailoverTimeout())
                 .setCheckpoint(true)
                 .setPrincipal(conf.fileConfig.getPrincipal())
-                .setRole(conf.fileConfig.getRole());
+                .addAllRoles(Arrays.asList(conf.fileConfig.getRole()));
 
         Optional<String> fid = Database.getInstance().getFrameworkId();
         if (fid.isPresent()) {
