@@ -20,8 +20,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class Range {
-    // TODO: these should be long integer
+    // Inclusive
     public long min;
     public long max;
 
@@ -50,6 +57,41 @@ public class Range {
 
     public boolean overlap(Range rhs) {
         return (this.min - rhs.max) * (this.max - rhs.min) <= 0;
+    }
+
+    // this -- rhs
+    public List<Range> subtract(Range rhs) {
+        if (!this.overlap(rhs)) {
+            return Arrays.asList(this);
+        }
+        if (rhs.getMin() < this.getMin()) {
+            if (rhs.getMax() < this.getMax()) {
+                // rhs.min <= this.min <= rhs.max <=!!= this.max
+                return Arrays.asList(new Range(rhs.getMax() + 1, this.getMax()));
+            } else if (rhs.getMax() == this.getMax()) {
+                return Collections.emptyList();
+            } else {
+                // rhs.min <= this.min <=!!= this.max <= rhs.max
+                return Arrays.asList();
+            }
+        } else {
+            if (rhs.getMax() < this.getMax()) {
+                // this.min <!! rhs.min < rhs.max <=!!= this.max
+                if (this.getMin() == rhs.getMin()) {
+                    return Arrays.asList(new Range(rhs.getMax() + 1, this.getMax()));
+                }
+                return Arrays.asList(new Range(this.getMin(), rhs.getMin() - 1),
+                        new Range(rhs.getMax() + 1, this.getMax()));
+            } else if (rhs.getMax() == this.getMax()) {
+                if (this.getMin() == rhs.getMin()) {
+                    return Collections.emptyList();
+                }
+                return Arrays.asList(new Range(this.getMin(), rhs.getMin() - 1));
+            } else {
+                // this.min < rhs.min < this.max < rhs.max
+                return Arrays.asList(new Range(this.getMin(), rhs.getMin()-1));
+            }
+        }
     }
 
     public static Range parseRange(String s, String dflt) {
@@ -87,5 +129,23 @@ public class Range {
             b.append(max);
         }
         return b.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Range range = (Range) o;
+
+        if (min != range.min) return false;
+        return max == range.max;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (min ^ (min >>> 32));
+        result = 31 * result + (int) (max ^ (max >>> 32));
+        return result;
     }
 }

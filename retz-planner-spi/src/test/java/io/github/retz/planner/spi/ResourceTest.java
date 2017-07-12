@@ -37,6 +37,9 @@ public class ResourceTest {
             Resource resource = new Resource(1, 32, 0, 0, ports);
             Resource cut = resource.cut(1, 32, 0, 100, 0);
             assertEquals(100, cut.portAmount());
+            System.err.println(resource);
+            System.err.println(cut);
+            assertEquals(32000 - 31000 - 100 + 1, resource.portAmount());
         }
         {
             List<Range> ports = Arrays.asList(new Range(31000, 32000));

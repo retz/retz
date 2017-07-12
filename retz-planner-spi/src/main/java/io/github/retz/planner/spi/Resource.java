@@ -19,8 +19,7 @@ package io.github.retz.planner.spi;
 import io.github.retz.protocol.data.Range;
 import io.github.retz.protocol.data.ResourceQuantity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // TODO: overall cleanup is needed; is this is just for counting the amount of resources?
@@ -131,8 +130,23 @@ public class Resource {
         this.memMB -= memMB;
         this.diskMB -= diskMB;
         this.gpu -= gpus;
-        //TODO: implement this in list ranges
-        //this.ports -= ports;
+
+        List<Range> newPorts = this.ports.stream().map( (r) -> {
+            List<Range> remain = new LinkedList<>();
+            for (Range range : ranges) {
+                List<Range> s = r.subtract(range);
+                if (! (s.size() == 1 && s.get(0).equals(r))) {
+                    //System.err.println(r + remain.getClass().getName());
+                    //System.err.println(s.stream().map( (ra) -> ra.toString()).collect(Collectors.joining(",")));
+                    remain.addAll(s);
+                }
+            }
+            return remain;
+        }).reduce((lhs, rhs) -> {
+            lhs.addAll(rhs);
+            return lhs;
+        }).orElse(Collections.emptyList());
+        this.ports = newPorts;
 
         return new Resource(cpu, memMB, diskMB, gpus, ranges);
     }

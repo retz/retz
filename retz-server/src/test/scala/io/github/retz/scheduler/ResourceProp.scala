@@ -92,7 +92,7 @@ class ResourceProp extends JUnitSuite {
           t
         })
         // TODO: generate and test on list of ports!
-        remain.cpu() < 0.001 && remain.diskMB() == 0 && remain.diskMB() == 0 && remain.gpu() == 0
+        remain.cpu() < 0.001 && remain.diskMB() == 0 && remain.diskMB() == 0 && remain.gpu() == 0 && remain.portAmount() == 0
       }
     })
   }

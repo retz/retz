@@ -19,7 +19,10 @@ package io.github.retz.protocol;
 import io.github.retz.protocol.data.Range;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class RangeTest {
 
@@ -51,6 +54,50 @@ public class RangeTest {
         assertEquals(Long.MAX_VALUE, r.getMax());
     }
 
+    @Test
+    public void subtractTest() {
+        Range target = new Range(10, 20);
+
+        {
+            List<Range> result = target.subtract(new Range(5, 15));
+            assertEquals(1, result.size());
+            assertEquals(new Range(16, 20), result.get(0));
+        }
+        {
+            List<Range> result = target.subtract(new Range(15, 16));
+            assertEquals(2, result.size());
+            assertEquals(new Range(10, 14), result.get(0));
+            assertEquals(new Range(17, 20), result.get(1));
+        }
+        {
+            List<Range> result = target.subtract(new Range(15, 22));
+            assertEquals(1, result.size());
+            assertEquals(new Range(10, 14), result.get(0));
+        }
+        {
+            List<Range> result = target.subtract(new Range(5, 22));
+            assertEquals(0, result.size());
+        }
+        {
+            List<Range> result = target.subtract(new Range(5, 20));
+            assertEquals(0, result.size());
+        }
+        {
+            List<Range> result = target.subtract(new Range(15, 20));
+            assertEquals(1, result.size());
+            assertEquals(new Range(10, 14), result.get(0));
+        }
+        {
+            List<Range> result = target.subtract(new Range(10, 20));
+            assertEquals(0, result.size());
+        }
+        {
+            List<Range> result = target.subtract(new Range(10, 19));
+            assertEquals(1, result.size());
+            assertEquals(new Range(20, 20), result.get(0));
+        }
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void parseExceptionTest() {
         Range.parseRange("-3");
@@ -60,6 +107,4 @@ public class RangeTest {
     public void parseExceptionTest2() {
         Range.parseRange("2--23");
     }
-
-
 }
