@@ -155,12 +155,17 @@ public class JobRequestHandler {
         Optional<FileContent> fileContent;
         Job job = maybeJob.get();
         if (job.url() == null) { // If url() is null, the job hasn't yet been started at Mesos / or Bug
-            // TODO: re-fetch job.url() again, because it CAN be null in case of race condition where
-            // updating the url on taskUpdate and master change.
+            // TODO: re-fetch job.url() again, because it CAN be null in case of some race condition
+            // This is caused by updating the url on taskUpdate and master change - re-fetch job.url()
+            // requires slaveId saved with Job in database, or search the exact task from iterating over
+            // all tasks from master:5050/tasks?length=10&offset=10 endpoint. Or maybe time for a new
+            // clean Mesos client?
+            // ditto to downloadFile() method.
             if (job.state() != Job.JobState.CREATED && job.state() != Job.JobState.STARTING && job.state() != Job.JobState.QUEUED) {
                 LOG.error("Job (id={}) has its url null (state={})", job.id(), job.state());
                 res.status(500);
-                return "";
+                ErrorResponse response = new ErrorResponse("Cannot fetch file: Job has empty url");
+                return MAPPER.writeValueAsString(response);
             }
             // The job has not yet started
             GetFileResponse getFileResponse = new GetFileResponse(maybeJob, Optional.empty());
@@ -208,7 +213,8 @@ public class JobRequestHandler {
             if (job.state() != Job.JobState.CREATED && job.state() != Job.JobState.STARTING && job.state() != Job.JobState.QUEUED) {
                 LOG.error("Job (id={}) has its url null (state={})", job.id(), job.state());
                 res.status(500);
-                return "";
+                ErrorResponse response = new ErrorResponse("Cannot fetch file: Job has empty url");
+                return MAPPER.writeValueAsString(response);
             }
             // The job has not yet started
             res.status(404);
