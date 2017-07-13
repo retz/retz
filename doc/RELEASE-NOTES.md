@@ -2,6 +2,12 @@
 
 ## 0.2.10
 
+* Change default behaviour of empty `retz.mesos.role` configuration.
+  When it is empty Retz now registers as empty role framework without
+  `MULTI_ROLE` capabilty, which was previously using principle name as
+  role name. If a role name is specified Retz automatically registers
+  as `MULTI_ROLE` capable framework (but internally Retz does not
+  handle multiple roles).
 * Add `retz.mesos.failover.timeout` to set failover timeout
 * Fix bug in Resource#cut which was not actually cutting
   resource

@@ -180,6 +180,7 @@ public final class Launcher {
                 .setPrincipal(conf.fileConfig.getPrincipal());
 
         if (conf.getServerConfig().getRole().isPresent()) {
+            LOG.info("MULTI_ROLES capability set (role={})", conf.fileConfig.getRole().get());
             fwBuilder.addCapabilities(Protos.FrameworkInfo.Capability.newBuilder()
                     .setType(Protos.FrameworkInfo.Capability.Type.MULTI_ROLE)
                     .build())
