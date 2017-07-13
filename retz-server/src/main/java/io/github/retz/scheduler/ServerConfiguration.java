@@ -188,9 +188,11 @@ public class ServerConfiguration extends FileConfiguration {
         return properties.getProperty(MESOS_SECRET_FILE);
     }
 
-    public String getRole() {
-        // Same role as principal
-        return properties.getProperty(MESOS_ROLE, getPrincipal());
+    public Optional<String> getRole() {
+        // With no role specified it means "new-style framework wanting no roles"
+        // as shown in MESOS-6628
+        // TODO: support multiple roles definition in configuration file
+        return Optional.ofNullable(properties.getProperty(MESOS_ROLE));
     }
 
     public String getUserName() {

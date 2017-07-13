@@ -177,8 +177,14 @@ public final class Launcher {
                 .setWebuiUrl(conf.fileConfig.getUri().toASCIIString())
                 .setFailoverTimeout(conf.getServerConfig().getFailoverTimeout())
                 .setCheckpoint(true)
-                .setPrincipal(conf.fileConfig.getPrincipal())
-                .addAllRoles(Arrays.asList(conf.fileConfig.getRole()));
+                .setPrincipal(conf.fileConfig.getPrincipal());
+
+        if (conf.getServerConfig().getRole().isPresent()) {
+            fwBuilder.addCapabilities(Protos.FrameworkInfo.Capability.newBuilder()
+                    .setType(Protos.FrameworkInfo.Capability.Type.MULTI_ROLE)
+                    .build())
+                    .addRoles(conf.fileConfig.getRole().get());
+        }
 
         Optional<String> fid = Database.getInstance().getFrameworkId();
         if (fid.isPresent()) {
@@ -188,6 +194,7 @@ public final class Launcher {
 
         if (conf.fileConfig.useGPU()) {
             LOG.info("GPU enabled - registering with GPU_RESOURCES capability.");
+            // TODO: GPU_RESOURCES will be deprecated
             fwBuilder.addCapabilities(Protos.FrameworkInfo.Capability.newBuilder()
                     .setType(Protos.FrameworkInfo.Capability.Type.GPU_RESOURCES)
                     .build());
