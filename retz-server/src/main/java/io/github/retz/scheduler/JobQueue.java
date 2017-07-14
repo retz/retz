@@ -135,12 +135,10 @@ public class JobQueue {
 
     static void started(String taskId, Optional<String> maybeUrl) throws IOException, SQLException, JobNotFoundException {
         Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
-        if (maybeJob.isPresent()) {
-            Database.getInstance().updateJob(maybeJob.get().id(), job -> {
-                job.started(taskId, maybeUrl, TimestampHelper.now());
-                return Optional.of(job);
-            });
-        }
+        Database.getInstance().updateJob(maybeJob.get().id(), job -> {
+            job.started(taskId, maybeUrl, TimestampHelper.now());
+            return Optional.of(job);
+        });
     }
 
     public static Optional<Job> getFromTaskId(String taskId) {
