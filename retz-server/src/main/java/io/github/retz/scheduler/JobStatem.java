@@ -25,8 +25,8 @@ public class JobStatem {
     /**
      * State diagram of Events and Job to callback action method name
      * <p>
-     * Events   \ in Retz    | QUEUED   | STARTING | STARTED  | FINISHED | KILLED
-     * -----------------------+----------+----------+----------+----------+----------
+     * Events  \ in Retz    | QUEUED   | STARTING | STARTED  | FINISHED | KILLED
+     * ---------------------+----------+----------+----------+----------+--------
      * TASK_FINISHED_VALUE: | finished | finished | finished | noop     | never
      * TASK_ERROR_VALUE:    | failed   | failed   | failed   | never    | noop
      * TASK_FAILED_VALUE:   | ^^       | ^^       | ^^       | ^^       | noop
