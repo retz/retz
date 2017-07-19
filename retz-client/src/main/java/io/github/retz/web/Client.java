@@ -41,6 +41,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -53,7 +54,7 @@ public class Client implements AutoCloseable {
     static final Logger LOG = LoggerFactory.getLogger(Client.class);
 
     static {
-        ResourceBundle labels = ResourceBundle.getBundle("retz-client");
+        ResourceBundle labels = ResourceBundle.getBundle("retz-client", Locale.ROOT);
         VERSION_STRING = labels.getString("version");
         MAPPER.registerModule(new Jdk8Module());
     }
