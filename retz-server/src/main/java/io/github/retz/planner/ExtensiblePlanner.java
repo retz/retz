@@ -119,7 +119,6 @@ public class ExtensiblePlanner implements Planner {
                 Resource resource = ResourceConstructor.decode(offer.getResourcesList());
                 int last = resource.lastPort();
                 for (Job job : jobs1) {
-                    System.err.println(job.appid());
                     Application application = Applications.get(job.appid()).get();
                     TaskBuilder builder = new TaskBuilder();
                     String id = Integer.toString(job.id());

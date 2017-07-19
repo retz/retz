@@ -181,8 +181,6 @@ public class MesosHTTPFetcher {
                 both.addAll(completedExecutors);
             }
             Optional<String> s = extractDirectoryFromExecutors(both, executorId, containerId);
-            System.err.println(s);
-            System.err.println(framework);
             if (s.isPresent()) {
                 return s;
             }
@@ -199,7 +197,6 @@ public class MesosHTTPFetcher {
                 return Optional.ofNullable((String) executor.get("directory"));
             }
         }
-        LOG.error("No matching directory at executor={}, container={}", executorId, containerId);
         return Optional.empty();
     }
 
