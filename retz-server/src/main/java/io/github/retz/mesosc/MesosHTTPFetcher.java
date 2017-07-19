@@ -95,7 +95,7 @@ public class MesosHTTPFetcher {
             LOG.error(e.toString(), e);
             return Optional.empty();
         }
-        HttpURLConnection conn;
+        HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -104,6 +104,10 @@ public class MesosHTTPFetcher {
         } catch (IOException e) {
             LOG.error("Failed to fetch Slave address of {} from master {}", slaveId, master, e);
             return Optional.empty();
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
@@ -133,9 +137,10 @@ public class MesosHTTPFetcher {
 
     private static Optional<String> fetchDirectory(String slave, String frameworkId,
                                                    String executorId, String containerId) {
+        HttpURLConnection conn = null;
         try {
             URL url = new URL("http://" + slave + "/state");
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setDoOutput(true);
             return extractDirectory(conn.getInputStream(), frameworkId, executorId, containerId);
@@ -143,6 +148,10 @@ public class MesosHTTPFetcher {
             LOG.error("Failed to fetch directory of Slave {} (framework={}, executor={})",
                     slave, frameworkId, executorId, e);
             return Optional.empty();
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
@@ -193,7 +202,7 @@ public class MesosHTTPFetcher {
 
     public static List<Map<String, Object>> fetchTasks(String master, String frameworkId, int offset, int limit) throws MalformedURLException {
         URL url = new URL("http://" + master + "/tasks?offset=" + offset + "&limit=" + limit);
-        HttpURLConnection conn;
+        HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -202,6 +211,10 @@ public class MesosHTTPFetcher {
         } catch (IOException e) {
             LOG.error(e.toString(), e);
             return Collections.emptyList();
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
@@ -233,17 +246,15 @@ public class MesosHTTPFetcher {
             Integer statusCode = conn.getResponseCode();
             String message = conn.getResponseMessage();
             Long length = conn.getHeaderFieldLong("Content-Length", -1);
-            LOG.debug("res={}, md5={}, length={}", message,
-                    conn.getHeaderField("Content-md5"), length);
-
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("res={}, md5={}, length={}", message, conn.getHeaderField("Content-md5"), length);
+            }
             cb.receive(new Triad<>(statusCode, message, new Pair<>(length, conn.getInputStream())));
-        }
-        finally {
+        } finally {
             if (conn != null) {
                 conn.disconnect();
             }
         }
-
     }
 
 
@@ -256,11 +267,13 @@ public class MesosHTTPFetcher {
             conn = (HttpURLConnection) new URL(addr).openConnection();
             conn.setRequestMethod("HEAD");
             conn.setDoOutput(false);
-            LOG.debug(conn.getResponseMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(conn.getResponseMessage());
+            }
             return conn.getResponseCode() == 200 ||
                     conn.getResponseCode() == 204;
         } catch (IOException e) {
-            LOG.error("Failed to fetch {}: {}", addr, e.toString());
+            LOG.error("Failed to fetch {}: {}", addr, e.toString(), e);
             return false;
         } finally {
             if (conn != null) {
@@ -277,51 +290,63 @@ public class MesosHTTPFetcher {
     private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws IOException {
         LOG.debug("Fetching {}", addr);
         HttpURLConnection conn = null;
-
-        conn = (HttpURLConnection) new URL(addr).openConnection();
-        conn.setRequestMethod("GET");
-        conn.setDoOutput(true);
-        LOG.debug("{} {} for {}", conn.getResponseCode(), conn.getResponseMessage(), addr);
-
-        if (conn.getResponseCode() != 200) {
-            if (conn.getResponseCode() < 200) {
-                return fetchHTTP(addr, retry - 1);
-            } else if (conn.getResponseCode() < 300) {
-                return new Pair<>(conn.getResponseCode(), ""); // Mostly 204; success
-            } else if (conn.getResponseCode() < 400) {
-                // TODO: Mesos master failover
-                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
-            } else if (conn.getResponseCode() == 404) {
-                throw new FileNotFoundException(addr);
-            } else {
-                return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
+        try {
+            conn = (HttpURLConnection) new URL(addr).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setDoOutput(true);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("{} {} for {}", conn.getResponseCode(), conn.getResponseMessage(), addr);
             }
-        }
+            if (conn.getResponseCode() != 200) {
+                if (conn.getResponseCode() < 200) {
+                    conn.disconnect();
+                    conn = null;
+                    return fetchHTTP(addr, retry - 1);
+                } else if (conn.getResponseCode() < 300) {
+                    return new Pair<>(conn.getResponseCode(), ""); // Mostly 204; success
+                } else if (conn.getResponseCode() < 400) {
+                    // TODO: Mesos master failover
+                    return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
+                } else if (conn.getResponseCode() == 404) {
+                    throw new FileNotFoundException(addr);
+                } else {
+                    return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
+                }
+            }
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), UTF_8))) {
-            StringBuilder builder = new StringBuilder();
-            String line;
-            do {
-                line = reader.readLine();
-                builder.append(line);
-            } while (line != null);
-            LOG.debug("Fetched {} bytes from {}", builder.toString().length(), addr);
-            return new Pair<>(conn.getResponseCode(), builder.toString());
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), UTF_8))) {
+                StringBuilder builder = new StringBuilder();
+                String line;
+                do {
+                    line = reader.readLine();
+                    builder.append(line);
+                } while (line != null);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Fetched {} bytes from {}", builder.toString().length(), addr);
+                }
+                return new Pair<>(conn.getResponseCode(), builder.toString());
 
-        } catch (FileNotFoundException e) {
-            throw e;
-        } catch (IOException e) {
-            // Somehow this happens even HTTP was correct
-            LOG.debug("Cannot fetch file {}: {}", addr, e.toString());
-            // Just retry until your stack get stuck; thanks to SO:33340848
-            // and to that crappy HttpURLConnection
-            if (retry < 0) {
-                LOG.error("Retry failed. Last error was: {}", e.toString());
+            } catch (FileNotFoundException e) {
                 throw e;
+            } catch (IOException e) {
+                // Somehow this happens even HTTP was correct
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Cannot fetch file {}: {}", addr, e.toString());
+                }
+                // Just retry until your stack get stuck; thanks to SO:33340848
+                // and to that crappy HttpURLConnection
+                if (retry < 0) {
+                    LOG.error("Retry failed. Last error was: {}", e.toString());
+                    throw e;
+                }
+                conn.disconnect();
+                conn = null;
+                return fetchHTTP(addr, retry - 1);
             }
-            return fetchHTTP(addr, retry - 1);
         } finally {
-            conn.disconnect();
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
     }
 
