@@ -31,7 +31,7 @@ public class PlannerFactory {
         if (serverConfig.isBuiltInPlanner()) {
 
             if ("priority".equals(name)) {
-                LOG.info("Using PriorityPlanner({})", name);
+                LOG.warn("Using PriorityPlanner({})", name);
                 return new PriorityPlanner();
 
             } else if ("fifo".equals(name)) {

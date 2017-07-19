@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 public class FIFOPlanner implements Planner {
-
     private static final Logger LOG = LoggerFactory.getLogger(FIFOPlanner.class);
     private final List<String> ORDER_BY = Arrays.asList("id");
 

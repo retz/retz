@@ -16,10 +16,15 @@
  */
 package io.github.retz.planner.builtin;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class PriorityPlanner extends FIFOPlanner {
+    private static final Logger LOG = LoggerFactory.getLogger(PriorityPlanner.class);
+
     private final List<String> ORDER_BY = Arrays.asList("priority", "id");
 
     @Override
