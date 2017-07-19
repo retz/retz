@@ -302,7 +302,11 @@ public class MesosHTTPFetcher {
                     conn.disconnect();
                     conn = null;
                     return fetchHTTP(addr, retry - 1);
-                } else if (conn.getResponseCode() < 300) {
+                }
+
+                LOG.warn("Non-200 status {} returned from Mesos '{}' for GET {}",
+                        conn.getResponseCode(), conn.getResponseMessage(), addr);
+                if (conn.getResponseCode() < 300) {
                     return new Pair<>(conn.getResponseCode(), ""); // Mostly 204; success
                 } else if (conn.getResponseCode() < 400) {
                     // TODO: Mesos master failover
