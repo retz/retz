@@ -29,11 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -43,12 +39,16 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class MesosHTTPFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosHTTPFetcher.class);
 
-    public static Optional<String> sandboxBaseUri(String master, String slaveId, String frameworkId, String executorId) {
-        return sandboxUri("browse", master, slaveId, frameworkId, executorId);
+    public static Optional<String> sandboxBaseUri(String master, String slaveId,
+                                                  String frameworkId, String executorId,
+                                                  String containerId) {
+        return sandboxUri("browse", master, slaveId, frameworkId, executorId, containerId);
     }
 
-    public static Optional<String> sandboxDownloadUri(String master, String slaveId, String frameworkId, String executorId, String path) {
-        Optional<String> base = sandboxUri("download", master, slaveId, frameworkId, executorId);
+    public static Optional<String> sandboxDownloadUri(String master, String slaveId,
+                                                      String frameworkId, String executorId,
+                                                      String containerId, String path) {
+        Optional<String> base = sandboxUri("download", master, slaveId, frameworkId, executorId, containerId);
         if (base.isPresent()) {
             try {
                 String encodedPath = java.net.URLEncoder.encode(path, java.nio.charset.StandardCharsets.UTF_8.toString());
@@ -61,7 +61,9 @@ public class MesosHTTPFetcher {
     }
 
     // slave-hostname:5051/files/download?path=/tmp/mesos/slaves/<slaveid>/frameworks/<frameworkid>/exexutors/<executorid>/runs/<containerid>
-    public static Optional<String> sandboxUri(String t, String master, String slaveId, String frameworkId, String executorId) {
+    public static Optional<String> sandboxUri(String t, String master, String slaveId,
+                                              String frameworkId, String executorId,
+                                              String containerId) {
         Optional<String> slaveAddr = fetchSlaveAddr(master, slaveId); // get master:5050/slaves with slaves/pid, cut with '@'
         LOG.debug("Agent address of executor {}: {}", executorId, slaveAddr);
 
@@ -69,7 +71,7 @@ public class MesosHTTPFetcher {
             return Optional.empty();
         }
 
-        Optional<String> dir = fetchDirectory(slaveAddr.get(), frameworkId, executorId);
+        Optional<String> dir = fetchDirectory(slaveAddr.get(), frameworkId, executorId, containerId);
         if (!dir.isPresent()) {
             return Optional.empty();
         }
@@ -129,13 +131,14 @@ public class MesosHTTPFetcher {
     }
 
 
-    private static Optional<String> fetchDirectory(String slave, String frameworkId, String executorId) {
+    private static Optional<String> fetchDirectory(String slave, String frameworkId,
+                                                   String executorId, String containerId) {
         try {
             URL url = new URL("http://" + slave + "/state");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setDoOutput(true);
-            return extractDirectory(conn.getInputStream(), frameworkId, executorId);
+            return extractDirectory(conn.getInputStream(), frameworkId, executorId, containerId);
         } catch (IOException e) {
             LOG.error("Failed to fetch directory of Slave {} (framework={}, executor={})",
                     slave, frameworkId, executorId, e);
@@ -143,42 +146,51 @@ public class MesosHTTPFetcher {
         }
     }
 
-    public static Optional<String> extractDirectory(InputStream stream, String frameworkId, String executorId) throws IOException {
-        // REVIEW: this may prepare corresponded object type instead of using java.util.Map
-        //  { ... "frameworks" : [ { ... "executors":[ { "id":"sum", "completed_tasks":[], "tasks":[], "queued_tasks":[]} ] ...
+    public static Optional<String> extractDirectory(InputStream stream, String frameworkId,
+                                                    String executorId, String containerId) throws IOException {
+        // TODO: prepare corresponding object type instead of using java.util.Map
+        // Search path: {frameworks|complated_frameworks}/{completed_executors|executors}[.container='containerId'].directory
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Map<String, Object>> map = mapper.readValue(stream, java.util.Map.class);
-        List<Map<String, Object>> list = (List) map.get("frameworks");
+        List<Map<String, Object>> frameworks = new ArrayList<>();
+        if ( map.get("frameworks") != null) {
+            frameworks.addAll((List) map.get("frameworks"));
+        }
+        if (map.get("completed_frameworks") != null) {
+            frameworks.addAll((List) map.get("completed_frameworks"));
+        }
 
         // TODO: use json-path for cleaner and flexible code
-        for (Map<String, Object> executors : list) {
-            if (executors.get("executors") != null) {
-                for (Map<String, Object> executor : (List<Map<String, Object>>) executors.get("executors")) {
-                    if (executor.get("id").equals(executorId)) {
-                        return Optional.ofNullable((String) executor.get("directory"));
-                    }
-                }
+        for (Map<String, Object> framework : frameworks) {
+            List<Map<String ,Object>> both = new ArrayList<>();
+            List<Map<String, Object>> executors = (List) framework.get("executors");
+            if (executors != null) {
+                both.addAll(executors);
+            }
+            List<Map<String, Object>> completedExecutors = (List) framework.get("completed_executors");
+            if (completedExecutors != null) {
+                both.addAll(completedExecutors);
+            }
+            Optional<String> s = extractDirectoryFromExecutors(both, executorId, containerId);
+            System.err.println(s);
+            System.err.println(framework);
+            if (s.isPresent()) {
+                return s;
             }
         }
+        LOG.error("No matching directory at framework={}, executor={}, container={}", frameworkId, executorId, containerId);
         return Optional.empty();
     }
 
-    public static Optional<String> extractContainerId(InputStream stream, String frameworkId, String executorId) throws IOException {
-        //  { ... "frameworks" : [ { ... "executors":[ { "id":"sum", "completed_tasks":[], "tasks":[], "queued_tasks":[]} ] ...
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, Map<String, Object>> map = mapper.readValue(stream, java.util.Map.class);
-        List<Map<String, Object>> list = (List) map.get("frameworks");
-
-        // TODO: use json-path for cleaner and flexible code
-        for (Map<String, Object> executors : list) {
-            if (executors.get("executors") != null) {
-                for (Map<String, Object> executor : (List<Map<String, Object>>) executors.get("executors")) {
-                    if (executor.get("id").equals(executorId)) {
-                        return Optional.ofNullable((String) executor.get("container"));
-                    }
-                }
+    private static Optional<String> extractDirectoryFromExecutors(List<Map<String, Object>> executors,
+                                                                  String executorId, String containerId) {
+        for (Map<String, Object> executor : executors) {
+            if (executorId.equals(executor.get("id")) && containerId.equals(executor.get("container"))) {
+                // TODO: verify frameworkId
+                return Optional.ofNullable((String) executor.get("directory"));
             }
         }
+        LOG.error("No matching directory at executor={}, container={}", executorId, containerId);
         return Optional.empty();
     }
 

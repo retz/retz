@@ -1,1 +1,316 @@
-{"attributes":{},"build_date":"2016-04-14 15:43:08","build_time":1460648589.0,"build_user":"root","completed_frameworks":[],"flags":{"appc_simple_discovery_uri_prefix":"http:\/\/","appc_store_dir":"\/tmp\/mesos\/store\/appc","authenticatee":"crammd5","cgroups_cpu_enable_pids_and_tids_count":"false","cgroups_enable_cfs":"false","cgroups_hierarchy":"\/sys\/fs\/cgroup","cgroups_limit_swap":"false","cgroups_root":"mesos","container_disk_watch_interval":"15secs","containerizers":"mesos","default_role":"*","disk_watch_interval":"1mins","docker":"docker","docker_kill_orphans":"true","docker_registry":"https:\/\/registry-1.docker.io","docker_remove_delay":"6hrs","docker_socket":"\/var\/run\/docker.sock","docker_stop_timeout":"0ns","docker_store_dir":"\/tmp\/mesos\/store\/docker","enforce_container_disk_quota":"false","executor_registration_timeout":"1mins","executor_shutdown_grace_period":"5secs","fetcher_cache_dir":"\/tmp\/mesos\/fetch","fetcher_cache_size":"2GB","frameworks_home":"","gc_delay":"1weeks","gc_disk_headroom":"0.1","hadoop_home":"","help":"false","hostname_lookup":"true","image_provisioner_backend":"copy","initialize_driver_logging":"true","isolation":"posix\/cpu,posix\/mem","launcher_dir":"\/usr\/libexec\/mesos","log_dir":"\/var\/log\/mesos","logbufsecs":"0","logging_level":"INFO","master":"zk:\/\/localhost:2181\/mesos","oversubscribed_resources_interval":"15secs","perf_duration":"10secs","perf_interval":"1mins","port":"5051","qos_correction_interval_min":"0ns","quiet":"false","recover":"reconnect","recovery_timeout":"15mins","registration_backoff_factor":"1secs","revocable_cpu_low_priority":"true","sandbox_directory":"\/mnt\/mesos\/sandbox","strict":"true","switch_user":"true","systemd_enable_support":"true","systemd_runtime_directory":"\/run\/systemd\/system","version":"false","work_dir":"\/tmp\/mesos"},"frameworks":[{"checkpoint":false,"completed_executors":[{"completed_tasks":[{"executor_id":"sum","framework_id":"3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000","id":"retz-task-id-0","name":"retz-task-name-0","resources":{"cpus":4.0,"disk":23809.0,"mem":6799.0,"ports":"[31000-32000]"},"slave_id":"6c751ae7-6856-4127-aea1-42f3a9210846-S0","state":"TASK_FAILED","statuses":[]}],"container":"d9b0e1d9-49dc-4dd1-8773-d53366fc1517","directory":"\/tmp\/mesos\/slaves\/6c751ae7-6856-4127-aea1-42f3a9210846-S0\/frameworks\/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000\/executors\/sum\/runs\/d9b0e1d9-49dc-4dd1-8773-d53366fc1517","id":"sum","name":"","queued_tasks":[],"resources":{"cpus":0,"disk":0,"mem":0},"source":"","tasks":[]},{"completed_tasks":[{"executor_id":"sum","framework_id":"3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000","id":"retz-task-id-1","name":"retz-task-name-1","resources":{"cpus":4.0,"disk":23809.0,"mem":6799.0,"ports":"[31000-32000]"},"slave_id":"6c751ae7-6856-4127-aea1-42f3a9210846-S0","state":"TASK_FAILED","statuses":[]}],"container":"48308555-7d5a-4c37-8c50-db9bcf58c637","directory":"\/tmp\/mesos\/slaves\/6c751ae7-6856-4127-aea1-42f3a9210846-S0\/frameworks\/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000\/executors\/sum\/runs\/48308555-7d5a-4c37-8c50-db9bcf58c637","id":"sum","name":"","queued_tasks":[],"resources":{"cpus":0,"disk":0,"mem":0},"source":"","tasks":[]}],"executors":[{"completed_tasks":[{"executor_id":"sum","framework_id":"3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000","id":"retz-task-id-2","name":"retz-task-name-2","resources":{"cpus":4.0,"disk":23809.0,"mem":6799.0,"ports":"[31000-32000]"},"slave_id":"6c751ae7-6856-4127-aea1-42f3a9210846-S0","state":"TASK_FAILED","statuses":[{"container_status":{"network_infos":[{"ip_address":"127.0.0.1","ip_addresses":[{"ip_address":"127.0.0.1"}]}]},"state":"TASK_RUNNING","timestamp":1465276799.84053},{"container_status":{"network_infos":[{"ip_address":"127.0.0.1","ip_addresses":[{"ip_address":"127.0.0.1"}]}]},"state":"TASK_FAILED","timestamp":1465276799.84061}]},{"executor_id":"sum","framework_id":"3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000","id":"retz-task-id-3","name":"retz-task-name-3","resources":{"cpus":4.0,"disk":23809.0,"mem":6799.0,"ports":"[31000-32000]"},"slave_id":"6c751ae7-6856-4127-aea1-42f3a9210846-S0","state":"TASK_FAILED","statuses":[{"container_status":{"network_infos":[{"ip_address":"127.0.0.1","ip_addresses":[{"ip_address":"127.0.0.1"}]}]},"state":"TASK_RUNNING","timestamp":1465277288.40612},{"container_status":{"network_infos":[{"ip_address":"127.0.0.1","ip_addresses":[{"ip_address":"127.0.0.1"}]}]},"state":"TASK_FAILED","timestamp":1465277288.40679}]},{"executor_id":"sum","framework_id":"3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000","id":"retz-task-id-4","name":"retz-task-name-4","resources":{"cpus":4.0,"disk":23809.0,"mem":6799.0,"ports":"[31000-32000]"},"slave_id":"6c751ae7-6856-4127-aea1-42f3a9210846-S0","state":"TASK_FINISHED","statuses":[{"container_status":{"network_infos":[{"ip_address":"127.0.0.1","ip_addresses":[{"ip_address":"127.0.0.1"}]}]},"state":"TASK_RUNNING","timestamp":1465277932.13005},{"container_status":{"network_infos":[{"ip_address":"127.0.0.1","ip_addresses":[{"ip_address":"127.0.0.1"}]}]},"state":"TASK_FINISHED","timestamp":1465277932.13085}]}],"container":"927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa","directory":"\/tmp\/mesos\/slaves\/6c751ae7-6856-4127-aea1-42f3a9210846-S0\/frameworks\/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000\/executors\/sum\/runs\/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa","id":"sum","name":"","queued_tasks":[],"resources":{"cpus":0,"disk":0,"mem":0},"source":"","tasks":[]}],"failover_timeout":0.0,"hostname":"localhost","id":"3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000","name":"Retz-Framework","role":"*","user":"kuenishi"}],"git_sha":"555db235a34afbb9fb49940376cc33a66f1f85f0","git_tag":"0.28.1","hostname":"localhost","id":"6c751ae7-6856-4127-aea1-42f3a9210846-S0","log_dir":"\/var\/log\/mesos","master_hostname":"localhost","pid":"slave(1)@127.0.0.1:5051","resources":{"cpus":4.0,"disk":23809.0,"mem":6799.0,"ports":"[31000-32000]"},"start_time":1465276699.87327,"version":"0.28.1"}
+{
+    "attributes": {},
+    "build_date": "2016-04-14 15:43:08",
+    "build_time": 1460648589.0,
+    "build_user": "root",
+    "completed_frameworks": [],
+    "flags": {
+        "appc_simple_discovery_uri_prefix": "http://",
+        "appc_store_dir": "/tmp/mesos/store/appc",
+        "authenticatee": "crammd5",
+        "cgroups_cpu_enable_pids_and_tids_count": "false",
+        "cgroups_enable_cfs": "false",
+        "cgroups_hierarchy": "/sys/fs/cgroup",
+        "cgroups_limit_swap": "false",
+        "cgroups_root": "mesos",
+        "container_disk_watch_interval": "15secs",
+        "containerizers": "mesos",
+        "default_role": "*",
+        "disk_watch_interval": "1mins",
+        "docker": "docker",
+        "docker_kill_orphans": "true",
+        "docker_registry": "https://registry-1.docker.io",
+        "docker_remove_delay": "6hrs",
+        "docker_socket": "/var/run/docker.sock",
+        "docker_stop_timeout": "0ns",
+        "docker_store_dir": "/tmp/mesos/store/docker",
+        "enforce_container_disk_quota": "false",
+        "executor_registration_timeout": "1mins",
+        "executor_shutdown_grace_period": "5secs",
+        "fetcher_cache_dir": "/tmp/mesos/fetch",
+        "fetcher_cache_size": "2GB",
+        "frameworks_home": "",
+        "gc_delay": "1weeks",
+        "gc_disk_headroom": "0.1",
+        "hadoop_home": "",
+        "help": "false",
+        "hostname_lookup": "true",
+        "image_provisioner_backend": "copy",
+        "initialize_driver_logging": "true",
+        "isolation": "posix/cpu,posix/mem",
+        "launcher_dir": "/usr/libexec/mesos",
+        "log_dir": "/var/log/mesos",
+        "logbufsecs": "0",
+        "logging_level": "INFO",
+        "master": "zk://localhost:2181/mesos",
+        "oversubscribed_resources_interval": "15secs",
+        "perf_duration": "10secs",
+        "perf_interval": "1mins",
+        "port": "5051",
+        "qos_correction_interval_min": "0ns",
+        "quiet": "false",
+        "recover": "reconnect",
+        "recovery_timeout": "15mins",
+        "registration_backoff_factor": "1secs",
+        "revocable_cpu_low_priority": "true",
+        "sandbox_directory": "/mnt/mesos/sandbox",
+        "strict": "true",
+        "switch_user": "true",
+        "systemd_enable_support": "true",
+        "systemd_runtime_directory": "/run/systemd/system",
+        "version": "false",
+        "work_dir": "/tmp/mesos"
+    },
+    "frameworks": [
+        {
+            "checkpoint": false,
+            "completed_executors": [
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "sum",
+                            "framework_id": "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
+                            "id": "retz-task-id-0",
+                            "name": "retz-task-name-0",
+                            "resources": {
+                                "cpus": 4.0,
+                                "disk": 23809.0,
+                                "mem": 6799.0,
+                                "ports": "[31000-32000]"
+                            },
+                            "slave_id": "6c751ae7-6856-4127-aea1-42f3a9210846-S0",
+                            "state": "TASK_FAILED",
+                            "statuses": []
+                        }
+                    ],
+                    "container": "d9b0e1d9-49dc-4dd1-8773-d53366fc1517",
+                    "directory": "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/d9b0e1d9-49dc-4dd1-8773-d53366fc1517",
+                    "id": "sum",
+                    "name": "",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0,
+                        "disk": 0,
+                        "mem": 0
+                    },
+                    "source": "",
+                    "tasks": []
+                },
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "sum",
+                            "framework_id": "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
+                            "id": "retz-task-id-1",
+                            "name": "retz-task-name-1",
+                            "resources": {
+                                "cpus": 4.0,
+                                "disk": 23809.0,
+                                "mem": 6799.0,
+                                "ports": "[31000-32000]"
+                            },
+                            "slave_id": "6c751ae7-6856-4127-aea1-42f3a9210846-S0",
+                            "state": "TASK_FAILED",
+                            "statuses": []
+                        }
+                    ],
+                    "container": "48308555-7d5a-4c37-8c50-db9bcf58c637",
+                    "directory": "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/48308555-7d5a-4c37-8c50-db9bcf58c637",
+                    "id": "sum",
+                    "name": "",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0,
+                        "disk": 0,
+                        "mem": 0
+                    },
+                    "source": "",
+                    "tasks": []
+                }
+            ],
+            "executors": [
+                {
+                    "completed_tasks": [
+                        {
+                            "executor_id": "sum",
+                            "framework_id": "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
+                            "id": "retz-task-id-2",
+                            "name": "retz-task-name-2",
+                            "resources": {
+                                "cpus": 4.0,
+                                "disk": 23809.0,
+                                "mem": 6799.0,
+                                "ports": "[31000-32000]"
+                            },
+                            "slave_id": "6c751ae7-6856-4127-aea1-42f3a9210846-S0",
+                            "state": "TASK_FAILED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.0.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.0.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1465276799.84053
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.0.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.0.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FAILED",
+                                    "timestamp": 1465276799.84061
+                                }
+                            ]
+                        },
+                        {
+                            "executor_id": "sum",
+                            "framework_id": "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
+                            "id": "retz-task-id-3",
+                            "name": "retz-task-name-3",
+                            "resources": {
+                                "cpus": 4.0,
+                                "disk": 23809.0,
+                                "mem": 6799.0,
+                                "ports": "[31000-32000]"
+                            },
+                            "slave_id": "6c751ae7-6856-4127-aea1-42f3a9210846-S0",
+                            "state": "TASK_FAILED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.0.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.0.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1465277288.40612
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.0.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.0.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FAILED",
+                                    "timestamp": 1465277288.40679
+                                }
+                            ]
+                        },
+                        {
+                            "executor_id": "sum",
+                            "framework_id": "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
+                            "id": "retz-task-id-4",
+                            "name": "retz-task-name-4",
+                            "resources": {
+                                "cpus": 4.0,
+                                "disk": 23809.0,
+                                "mem": 6799.0,
+                                "ports": "[31000-32000]"
+                            },
+                            "slave_id": "6c751ae7-6856-4127-aea1-42f3a9210846-S0",
+                            "state": "TASK_FINISHED",
+                            "statuses": [
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.0.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.0.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_RUNNING",
+                                    "timestamp": 1465277932.13005
+                                },
+                                {
+                                    "container_status": {
+                                        "network_infos": [
+                                            {
+                                                "ip_address": "127.0.0.1",
+                                                "ip_addresses": [
+                                                    {
+                                                        "ip_address": "127.0.0.1"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "state": "TASK_FINISHED",
+                                    "timestamp": 1465277932.13085
+                                }
+                            ]
+                        }
+                    ],
+                    "container": "927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa",
+                    "directory": "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa",
+                    "id": "sum",
+                    "name": "",
+                    "queued_tasks": [],
+                    "resources": {
+                        "cpus": 0,
+                        "disk": 0,
+                        "mem": 0
+                    },
+                    "source": "",
+                    "tasks": []
+                }
+            ],
+            "failover_timeout": 0.0,
+            "hostname": "localhost",
+            "id": "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
+            "name": "Retz-Framework",
+            "role": "*",
+            "user": "kuenishi"
+        }
+    ],
+    "git_sha": "555db235a34afbb9fb49940376cc33a66f1f85f0",
+    "git_tag": "0.28.1",
+    "hostname": "localhost",
+    "id": "6c751ae7-6856-4127-aea1-42f3a9210846-S0",
+    "log_dir": "/var/log/mesos",
+    "master_hostname": "localhost",
+    "pid": "slave(1)@127.0.0.1:5051",
+    "resources": {
+        "cpus": 4.0,
+        "disk": 23809.0,
+        "mem": 6799.0,
+        "ports": "[31000-32000]"
+    },
+    "start_time": 1465276699.87327,
+    "version": "0.28.1"
+}

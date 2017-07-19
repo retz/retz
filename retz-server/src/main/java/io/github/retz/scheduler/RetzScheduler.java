@@ -373,7 +373,8 @@ public class RetzScheduler implements Scheduler {
                     if (this.master.isPresent()) {
                         maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
                                 status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                                status.getExecutorId().getValue());
+                                status.getExecutorId().getValue(),
+                                status.getContainerStatus().getContainerId().getValue());
                     }
                     JobQueue.starting(job.get(), maybeUrl, status.getTaskId().getValue());
                     break;
@@ -406,7 +407,8 @@ public class RetzScheduler implements Scheduler {
         if (this.master.isPresent()) {
             maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue());
+                    status.getExecutorId().getValue(),
+                    status.getContainerStatus().getContainerId().getValue());
             LOG.info("finished: {}", maybeUrl);
         }
         int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
@@ -427,7 +429,8 @@ public class RetzScheduler implements Scheduler {
         if (this.master.isPresent()) {
             maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue());
+                    status.getExecutorId().getValue(),
+                    status.getContainerStatus().getContainerId().getValue());
         }
         try {
             JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
@@ -444,7 +447,8 @@ public class RetzScheduler implements Scheduler {
         if (this.master.isPresent()) {
             maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue());
+                    status.getExecutorId().getValue(),
+                    status.getContainerStatus().getContainerId().getValue());
         }
         try {
             JobQueue.started(status.getTaskId().getValue(), maybeUrl);
