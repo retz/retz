@@ -372,9 +372,27 @@ project('retz-inttest') {
 
     task buildDocker {
         doLast {
+
+            // Use latest Mesos by default
+            def mesos_version = System.getProperty('mesos_version', '')
+            System.err.println("mesos version = ${mesos_version}")
+
+            def mesos_package_name = 'mesos'
+            if (mesos_version != null && ! mesos_version.isEmpty() ) {
+                def supported_mesos_versions = ['1.2.1-2.0.1', '1.3.0-2.0.3']
+                if (! supported_mesos_versions.contains(mesos_version)) {
+                    System.err.println("Mesos version should be one of " + supported_mesos_versions + " but is: " + mesos_version)
+                    exit
+                }
+                mesos_package_name = "mesos-${mesos_version}"
+            }
+            System.err.println("mesos package name = ${mesos_package_name}")
+
             exec {
                 executable "docker"
-                args "build", "-t", "mesos-retz", "${projectDir}/src/test/resources/docker"
+                args "build", "-t", "mesos-retz", "--build-arg",
+                        "MESOS_PACKAGE_NAME=${mesos_package_name}",
+                        "${projectDir}/src/test/resources/docker"
             }
         }
     }

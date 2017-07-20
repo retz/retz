@@ -2,6 +2,8 @@
 
 ## 0.2.11
 
+**This release requires Mesos >= 1.2.0 due to MESOS-6625. **
+
 * Fix unnecessary 'null' being appended to result of 'get-file' and 'list-files'
   in response from Mesos.
 * Add 3-times retry when Mesos' HTTP response was wrong and HttpURLConnection

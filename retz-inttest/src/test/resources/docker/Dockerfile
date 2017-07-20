@@ -6,18 +6,19 @@ ENV container docker
 ## Handling the OverlayFS’s aspect which is incompatible with other filesystems:
 RUN yum -y install yum-plugin-ovl
 
-RUN yum -y install iproute httpd
-
 # SystemD, or cgroups, is necessary for mesos-slave, mesos-master does not need it.
 RUN yum -y install systemd; yum clean all
 
 # Retz dependencies
-RUN yum install -y java-1.8.0-openjdk postgresql postgresql-server
+RUN yum install -y java-1.8.0-openjdk postgresql postgresql-server iproute httpd
 
 RUN yum -y install epel-release
 
-RUN yum -y install http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-2.noarch.rpm
-RUN yum -y install mesos mesosphere-el-repo mesosphere-zookeeper
+RUN yum -y install http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-3.noarch.rpm
+RUN yum -y install mesosphere-el-repo mesosphere-zookeeper
+ARG MESOS_PACKAGE_NAME
+RUN echo $MESOS_PACKAGE_NAME
+RUN yum -y install $MESOS_PACKAGE_NAME
 
 # cf. Running systemd within a Docker Container – Red Hat Developer Blog
 #   http://developers.redhat.com/blog/2014/05/05/running-systemd-within-docker-container/

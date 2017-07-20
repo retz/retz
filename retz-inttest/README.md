@@ -22,6 +22,17 @@ $ sudo socat TCP-LISTEN:2375,reuseaddr,fork UNIX-CONNECT:/var/run/docker.sock
 Then set `DOCKER_HOST=tcp://127.0.0.1:2375` as an environment variable where
 you run inttest.
 
+If integration testing with old Mesos versions, define `mesos_version` as an
+Gradle argument. Currently `1.2.1-2.0.1` and `1.3.0-2.0.3` are supported.
+If it is not defined, just `mesos` will be installed by YUM. Example:
+
+```
+$ ../gradlew test -Dinttest -Dmesos_version=1.2.1-2.0.1
+```
+
+Supported Mesos version is defined in toplevel `build.gradle`, which is
+originally imported from result of `yum list mesos`
+
 ## Docker Setup: CentOS 7
 
 ```

@@ -9,7 +9,12 @@ test:
 	$(GRADLE) test
 
 inttest:
-	$(GRADLE) test -Dinttest -is
+	@echo Testing Apache Mesos 1.2
+	$(GRADLE) :retz-inttest:test -Dinttest -is -Dmesos_version=1.2.1-2.0.1
+	@echo Testing Apache Mesos 1.3
+	$(GRADLE) :retz-inttest:test -Dinttest -is -Dmesos_version=1.3.0-2.0.3
+	@echo Testing latest Apache Mesos (could be same as 1.3)
+	$(GRADLE) :retz-inttest:test -Dinttest -is
 
 build:
 	$(GRADLE) build jacocoTestReport
