@@ -1,5 +1,18 @@
 # Retz release notes
 
+## 0.2.11
+
+* Fix unnecessary 'null' being appended to result of 'get-file' and 'list-files'
+  in response from Mesos.
+* Add 3-times retry when Mesos' HTTP response was wrong and HttpURLConnection
+  failed to parse as HTTP response, or when the TCP connection unexpectedly
+  closed.
+* Fix wrong JSON parsing in response of `/state` API of agents, which
+  used to result in Job#url often being 'null' and forever null, preventing
+  'get-file' from clients. But this is just a workaround as those API
+  calls can be replaced with deterministic URL construction involving
+  Job data structure change, which requires incompatible protocol change.
+
 ## 0.2.10
 
 * Change default behaviour of empty `retz.mesos.role` configuration.
