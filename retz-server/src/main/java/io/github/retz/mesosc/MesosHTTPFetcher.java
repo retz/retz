@@ -38,17 +38,18 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  */
 public class MesosHTTPFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosHTTPFetcher.class);
+    private static final int RETRY_LIMIT = 3;
 
     public static Optional<String> sandboxBaseUri(String master, String slaveId,
                                                   String frameworkId, String executorId,
                                                   String containerId) {
-        return sandboxUri("browse", master, slaveId, frameworkId, executorId, containerId);
+        return sandboxUri("browse", master, slaveId, frameworkId, executorId, containerId, RETRY_LIMIT);
     }
 
     public static Optional<String> sandboxDownloadUri(String master, String slaveId,
                                                       String frameworkId, String executorId,
                                                       String containerId, String path) {
-        Optional<String> base = sandboxUri("download", master, slaveId, frameworkId, executorId, containerId);
+        Optional<String> base = sandboxUri("download", master, slaveId, frameworkId, executorId, containerId, RETRY_LIMIT);
         if (base.isPresent()) {
             try {
                 String encodedPath = java.net.URLEncoder.encode(path, java.nio.charset.StandardCharsets.UTF_8.toString());
@@ -58,6 +59,29 @@ public class MesosHTTPFetcher {
             }
         }
         return Optional.empty();
+    }
+
+    public static Optional<String> sandboxUri(String t, String master, String slaveId,
+                                              String frameworkId, String executorId,
+                                              String containerId, int retryRemain) {
+        if (retryRemain > 0) {
+            Optional<String> maybeUri = sandboxUri(t, master, slaveId, frameworkId, executorId, containerId);
+            if (maybeUri.isPresent()) {
+                return maybeUri;
+            } else {
+                // NOTE: this sleep is so short because this function may be called in the context of
+                // Mesos Scheduler API callback
+                // TODO: sole resolution is to remove all these uri fetching but to build it of Job information, including SlaveId
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                }
+                return sandboxUri(t, master, slaveId, frameworkId, executorId, containerId, retryRemain - 1);
+            }
+        } else {
+            LOG.error("{} retries on fetching sandbox URI failed", RETRY_LIMIT);
+            return Optional.empty();
+        }
     }
 
     // slave-hostname:5051/files/download?path=/tmp/mesos/slaves/<slaveid>/frameworks/<frameworkid>/exexutors/<executorid>/runs/<containerid>
