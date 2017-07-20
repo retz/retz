@@ -71,6 +71,7 @@ public class MesosHTTPFetcher {
                 // NOTE: this sleep is so short because this function may be called in the context of
                 // Mesos Scheduler API callback
                 // TODO: sole resolution is to remove all these uri fetching but to build it of Job information, including SlaveId
+                LOG.warn("{} retry happening for frameworkId={}, executorId={}, containerId={}", RETRY_LIMIT - retryRemain + 1, frameworkId, executorId, containerId);
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
