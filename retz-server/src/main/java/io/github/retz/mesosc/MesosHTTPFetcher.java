@@ -120,7 +120,7 @@ public class MesosHTTPFetcher {
             LOG.error(e.toString(), e);
             return Optional.empty();
         } catch (IOException e) {
-            LOG.error("Failed to fetch Slave address of {} from master {}", slaveId, master, e);
+            LOG.warn("Failed to fetch Slave address of {} from master {}", slaveId, master, e);
             return Optional.empty();
         }
     }
@@ -155,7 +155,7 @@ public class MesosHTTPFetcher {
         try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
             return extractDirectory(conn.getInputStream(), frameworkId, executorId, containerId);
         } catch (IOException e) {
-            LOG.error("Failed to fetch directory of Slave {} (framework={}, executor={})",
+            LOG.warn("Failed to fetch directory of Slave {} (framework={}, executor={})",
                     slave, frameworkId, executorId, e);
             return Optional.empty();
         }
