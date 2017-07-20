@@ -290,15 +290,15 @@ public class MesosHTTPFetcher {
                 }
             }
 
-            try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(), UTF_8);
-                 StringWriter writer = new StringWriter()) {
+            try (InputStream in = conn.getInputStream();
+                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
                 long toRead = conn.getContentLength();
                 if (toRead < 0) {
                     LOG.warn("Content length is not known ({}) on getting {}", toRead, addr);
-                    IOUtils.copy(reader, writer);
-                    return new Pair<>(statusCode, writer.toString());
+                    IOUtils.copy(in, out);
+                    return new Pair<>(statusCode, out.toString(UTF_8.toString()));
                 }
-                long read = IOUtils.copyLarge(reader, writer, 0, toRead);
+                long read = IOUtils.copyLarge(in, out, 0, toRead);
 
                 if (read < toRead) {
                     LOG.warn("Unexpected EOF at {}/{} getting {}", read, toRead, addr);
@@ -307,7 +307,7 @@ public class MesosHTTPFetcher {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Fetched {} bytes from {}", read, addr);
                 }
-                return new Pair<>(statusCode, writer.toString());
+                return new Pair<>(statusCode, out.toString(UTF_8.toString()));
 
             } catch (FileNotFoundException e) {
                 throw e;
