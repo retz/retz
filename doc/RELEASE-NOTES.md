@@ -1,5 +1,10 @@
 # Retz release notes
 
+## 0.2.12
+
+* Add version check when registered to Mesos. Currently 1.2 and 1.3 are supported.
+  If Retz is registered to Mesos master of unsupported version, it aborts.
+
 ## 0.2.11
 
 **This release requires Mesos >= 1.2.0 due to MESOS-6625. **

@@ -106,13 +106,20 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void registered(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) {
+        if (! validMesosVersion(masterInfo.getVersion())) {
+            // TODO: if the master is in maintenance period, Retz does not abort but sleep and retry later?
+            driver.abort();
+            return;
+        }
+
         String newMaster = new StringBuilder()
                 .append(masterInfo.getHostname())
                 .append(":")
                 .append(masterInfo.getPort())
                 .toString();
 
-        LOG.info("Connected to master {}; Framework ID: {}", newMaster, frameworkId.getValue());
+        LOG.info("Connected to master {} version={}; Framework ID: {}",
+                 newMaster, masterInfo.getVersion(), frameworkId.getValue());
         this.master = Optional.of(newMaster);
         StatusCache.updateMaster(newMaster);
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
@@ -136,9 +143,26 @@ public class RetzScheduler implements Scheduler {
         }
     }
 
+    protected boolean validMesosVersion(String version) {
+        if (version != null) {
+            if (version.startsWith("1.2") ||
+                    version.startsWith("1.3")) {
+                return true;
+            }
+        }
+        LOG.error("Unsupported Mesos version {}, should be one of [1.2, 1.3]", version);
+        return false;
+    }
+
     @Override
     public void reregistered(SchedulerDriver driver, Protos.MasterInfo masterInfo) {
         // Maybe long time split brain, recovering all states from master required.
+
+        if (! validMesosVersion(masterInfo.getVersion())) {
+            driver.abort();
+            return;
+        }
+
         String newMaster = new StringBuilder()
                 .append(masterInfo.getHostname())
                 .append(":")
