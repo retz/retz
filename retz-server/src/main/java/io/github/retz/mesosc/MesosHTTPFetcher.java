@@ -331,13 +331,13 @@ public class MesosHTTPFetcher {
     public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws IOException {
         String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
                 + "&offset=" + offset + "&length=" + length;
-        return fetchHTTP(addr, 3);
+        return fetchHTTP(addr, RETRY_LIMIT);
     }
 
     public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws IOException {
         // Just do 'files/browse and get JSON
         String addr = url + "%2F" + maybeURLEncode(path);
-        return fetchHTTP(addr, 3);
+        return fetchHTTP(addr, RETRY_LIMIT);
     }
 
     private static String maybeURLEncode(String file) {
