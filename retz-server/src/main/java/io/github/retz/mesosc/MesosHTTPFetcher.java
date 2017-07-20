@@ -28,7 +28,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -52,7 +51,7 @@ public class MesosHTTPFetcher {
         Optional<String> base = sandboxUri("download", master, slaveId, frameworkId, executorId, containerId, RETRY_LIMIT);
         if (base.isPresent()) {
             try {
-                String encodedPath = java.net.URLEncoder.encode(path, java.nio.charset.StandardCharsets.UTF_8.toString());
+                String encodedPath = URLEncoder.encode(path, UTF_8.toString());
                 return Optional.of(base.get() + encodedPath);
             } catch (UnsupportedEncodingException e) {
                 return Optional.empty();
@@ -103,8 +102,8 @@ public class MesosHTTPFetcher {
         try {
             return Optional.of(String.format("http://%s/files/%s?path=%s",
                     slaveAddr.get(), t,
-                    java.net.URLEncoder.encode(dir.get(), //builder.toString(),
-                            java.nio.charset.StandardCharsets.UTF_8.toString())));
+                    URLEncoder.encode(dir.get(), //builder.toString(),
+                            UTF_8.toString())));
         } catch (UnsupportedEncodingException e) {
             LOG.error(e.toString(), e);
             return Optional.empty();
@@ -112,26 +111,15 @@ public class MesosHTTPFetcher {
     }
 
     private static Optional<String> fetchSlaveAddr(String master, String slaveId) {
-        URL url;
-        try {
-            url = new URL("http://" + master + "/slaves");
+        String addr = "http://" + master + "/slaves";
+        try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
+            return extractSlaveAddr(conn.getInputStream(), slaveId);
         } catch (MalformedURLException e) {
             LOG.error(e.toString(), e);
             return Optional.empty();
-        }
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
-            return extractSlaveAddr(conn.getInputStream(), slaveId);
         } catch (IOException e) {
             LOG.error("Failed to fetch Slave address of {} from master {}", slaveId, master, e);
             return Optional.empty();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
         }
     }
 
@@ -161,21 +149,13 @@ public class MesosHTTPFetcher {
 
     private static Optional<String> fetchDirectory(String slave, String frameworkId,
                                                    String executorId, String containerId) {
-        HttpURLConnection conn = null;
-        try {
-            URL url = new URL("http://" + slave + "/state");
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
+        String addr = "http://" + slave + "/state";
+        try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
             return extractDirectory(conn.getInputStream(), frameworkId, executorId, containerId);
         } catch (IOException e) {
             LOG.error("Failed to fetch directory of Slave {} (framework={}, executor={})",
                     slave, frameworkId, executorId, e);
             return Optional.empty();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
         }
     }
 
@@ -225,20 +205,12 @@ public class MesosHTTPFetcher {
     }
 
     public static List<Map<String, Object>> fetchTasks(String master, String frameworkId, int offset, int limit) throws MalformedURLException {
-        URL url = new URL("http://" + master + "/tasks?offset=" + offset + "&limit=" + limit);
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
+        String addr = "http://" + master + "/tasks?offset=" + offset + "&limit=" + limit;
+        try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
             return parseTasks(conn.getInputStream(), frameworkId);
         } catch (IOException e) {
             LOG.error(e.toString(), e);
             return Collections.emptyList();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
         }
     }
 
@@ -261,12 +233,7 @@ public class MesosHTTPFetcher {
     public static void downloadHTTPFile(String url, String name, Receivable<Triad<Integer, String, Pair<Long, InputStream>>, Exception> cb) throws Exception {
         String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
         LOG.debug("Downloading {}", addr);
-
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setRequestMethod("GET");
-
+        try (UrlConnector conn = new UrlConnector(addr, "GET")) {
             Integer statusCode = conn.getResponseCode();
             String message = conn.getResponseMessage();
             Long length = conn.getHeaderFieldLong("Content-Length", -1);
@@ -274,10 +241,6 @@ public class MesosHTTPFetcher {
                 LOG.debug("res={}, md5={}, length={}", message, conn.getHeaderField("Content-md5"), length);
             }
             cb.receive(new Triad<>(statusCode, message, new Pair<>(length, conn.getInputStream())));
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
         }
     }
 
@@ -285,24 +248,15 @@ public class MesosHTTPFetcher {
     // Actually Mesos 1.1.0 returns whole body even if it gets HEAD request.
     public static boolean statHTTPFile(String url, String name) {
         String addr = url.replace("files/browse", "files/download") + "%2F" + maybeURLEncode(name);
-
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setRequestMethod("HEAD");
-            conn.setDoOutput(false);
+        try (UrlConnector conn = new UrlConnector(addr, "HEAD", false)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug(conn.getResponseMessage());
             }
-            return conn.getResponseCode() == 200 ||
-                    conn.getResponseCode() == 204;
+            int statusCode = conn.getResponseCode();
+            return statusCode == 200 || statusCode == 204;
         } catch (IOException e) {
             LOG.error("Failed to fetch {}: {}", addr, e.toString(), e);
             return false;
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
         }
     }
 
@@ -313,32 +267,28 @@ public class MesosHTTPFetcher {
     // Only for String contents
     private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws IOException {
         LOG.debug("Fetching {}", addr);
-        HttpURLConnection conn = null;
-        try {
-            conn = (HttpURLConnection) new URL(addr).openConnection();
-            conn.setRequestMethod("GET");
-            conn.setDoOutput(true);
+        block: try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
+            int statusCode = conn.getResponseCode();
+            String message = conn.getResponseMessage();
             if (LOG.isDebugEnabled()) {
-                LOG.debug("{} {} for {}", conn.getResponseCode(), conn.getResponseMessage(), addr);
+                LOG.debug("{} {} for {}", statusCode, message, addr);
             }
-            if (conn.getResponseCode() != 200) {
-                if (conn.getResponseCode() < 200) {
-                    conn.disconnect();
-                    conn = null;
-                    return fetchHTTP(addr, retry - 1);
+            if (statusCode != 200) {
+                if (statusCode < 200) {
+                    break block; // retry
                 }
 
                 LOG.warn("Non-200 status {} returned from Mesos '{}' for GET {}",
-                        conn.getResponseCode(), conn.getResponseMessage(), addr);
-                if (conn.getResponseCode() < 300) {
-                    return new Pair<>(conn.getResponseCode(), ""); // Mostly 204; success
-                } else if (conn.getResponseCode() < 400) {
+                        statusCode, message, addr);
+                if (statusCode < 300) {
+                    return new Pair<>(statusCode, ""); // Mostly 204; success
+                } else if (statusCode < 400) {
                     // TODO: Mesos master failover
-                    return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
-                } else if (conn.getResponseCode() == 404) {
+                    return new Pair<>(statusCode, message);
+                } else if (statusCode == 404) {
                     throw new FileNotFoundException(addr);
                 } else {
-                    return new Pair<>(conn.getResponseCode(), conn.getResponseMessage());
+                    return new Pair<>(statusCode, message);
                 }
             }
 
@@ -352,7 +302,7 @@ public class MesosHTTPFetcher {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Fetched {} bytes from {}", builder.toString().length(), addr);
                 }
-                return new Pair<>(conn.getResponseCode(), builder.toString());
+                return new Pair<>(statusCode, builder.toString());
 
             } catch (FileNotFoundException e) {
                 throw e;
@@ -367,15 +317,10 @@ public class MesosHTTPFetcher {
                     LOG.error("Retry failed. Last error was: {}", e.toString());
                     throw e;
                 }
-                conn.disconnect();
-                conn = null;
-                return fetchHTTP(addr, retry - 1);
-            }
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
+                break block; // retry
             }
         }
+        return fetchHTTP(addr, retry - 1);
     }
 
     public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws IOException {
@@ -392,9 +337,67 @@ public class MesosHTTPFetcher {
 
     private static String maybeURLEncode(String file) {
         try {
-            return URLEncoder.encode(file, StandardCharsets.UTF_8.toString());
+            return URLEncoder.encode(file, UTF_8.toString());
         } catch (UnsupportedEncodingException e) {
             return file;
+        }
+    }
+
+    static class UrlConnector implements Closeable {
+
+        private HttpURLConnection conn;
+
+        public UrlConnector(String addr, String method) throws MalformedURLException, IOException {
+            URL url = new URL(addr);
+            this.conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod(method);
+        }
+
+        public UrlConnector(String addr, String method, boolean dooutput) throws MalformedURLException, IOException {
+            this(addr, method);
+            conn.setDoOutput(dooutput);
+        }
+
+        public int getResponseCode() throws IOException {
+            return conn.getResponseCode();
+        }
+
+        public String getResponseMessage() throws IOException {
+            return conn.getResponseMessage();
+        }
+
+        public String getHeaderField(String name) {
+            return conn.getHeaderField(name);
+        }
+
+        public long getHeaderFieldLong(String name, long Default) {
+            return conn.getHeaderFieldLong(name, Default);
+        }
+
+        public InputStream getInputStream() throws IOException {
+            try {
+                return conn.getInputStream();
+            } catch (IOException e) {
+                Integer statusCode;
+                try {
+                    statusCode = conn.getResponseCode();
+                } catch (IOException e1) {
+                    LOG.debug("getInputStream.getResponseCode", e1);
+                    statusCode = null;
+                }
+                String field0 = conn.getHeaderField(0);
+                LOG.warn("getInputStream exception={}, responseCode={}, headerField0={}", e.toString(), statusCode,
+                        field0);
+                throw e;
+            }
+        }
+
+        @Override
+        public void close() {
+            if (conn != null) {
+                conn.disconnect();
+                conn = null;
+            }
         }
     }
 }
