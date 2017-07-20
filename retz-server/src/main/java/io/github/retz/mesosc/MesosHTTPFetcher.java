@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.retz.misc.Pair;
 import io.github.retz.misc.Receivable;
 import io.github.retz.misc.Triad;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,7 +168,7 @@ public class MesosHTTPFetcher {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Map<String, Object>> map = mapper.readValue(stream, java.util.Map.class);
         List<Map<String, Object>> frameworks = new ArrayList<>();
-        if ( map.get("frameworks") != null) {
+        if (map.get("frameworks") != null) {
             frameworks.addAll((List) map.get("frameworks"));
         }
         if (map.get("completed_frameworks") != null) {
@@ -176,7 +177,7 @@ public class MesosHTTPFetcher {
 
         // TODO: use json-path for cleaner and flexible code
         for (Map<String, Object> framework : frameworks) {
-            List<Map<String ,Object>> both = new ArrayList<>();
+            List<Map<String, Object>> both = new ArrayList<>();
             List<Map<String, Object>> executors = (List) framework.get("executors");
             if (executors != null) {
                 both.addAll(executors);
@@ -261,14 +262,10 @@ public class MesosHTTPFetcher {
         }
     }
 
-    private static Pair<Integer, String> fetchHTTP(String addr) throws IOException {
-        return fetchHTTP(addr, 3);
-    }
-
     // Only for String contents
     private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws IOException {
-        LOG.debug("Fetching {}", addr);
-        block: try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
+        block:
+        try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
             int statusCode = conn.getResponseCode();
             String message = conn.getResponseMessage();
             if (LOG.isDebugEnabled()) {
@@ -293,17 +290,24 @@ public class MesosHTTPFetcher {
                 }
             }
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), UTF_8))) {
-                StringBuilder builder = new StringBuilder();
-                String line;
-                do {
-                    line = reader.readLine();
-                    builder.append(line);
-                } while (line != null);
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Fetched {} bytes from {}", builder.toString().length(), addr);
+            try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(), UTF_8);
+                 StringWriter writer = new StringWriter()) {
+                long toRead = conn.getContentLength();
+                if (toRead < 0) {
+                    LOG.warn("Content length is not known ({}) on getting {}", toRead, addr);
+                    IOUtils.copy(reader, writer);
+                    return new Pair<>(statusCode, writer.toString());
                 }
-                return new Pair<>(statusCode, builder.toString());
+                long read = IOUtils.copyLarge(reader, writer, 0, toRead);
+
+                if (read < toRead) {
+                    LOG.warn("Unexpected EOF at {}/{} getting {}", read, toRead, addr);
+                    break block;
+                }
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Fetched {} bytes from {}", read, addr);
+                }
+                return new Pair<>(statusCode, writer.toString());
 
             } catch (FileNotFoundException e) {
                 throw e;
@@ -327,13 +331,13 @@ public class MesosHTTPFetcher {
     public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws IOException {
         String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
                 + "&offset=" + offset + "&length=" + length;
-        return fetchHTTP(addr);
+        return fetchHTTP(addr, 3);
     }
 
     public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws IOException {
         // Just do 'files/browse and get JSON
         String addr = url + "%2F" + maybeURLEncode(path);
-        return fetchHTTP(addr);
+        return fetchHTTP(addr, 3);
     }
 
     private static String maybeURLEncode(String file) {
@@ -373,6 +377,10 @@ public class MesosHTTPFetcher {
 
         public long getHeaderFieldLong(String name, long Default) {
             return conn.getHeaderFieldLong(name, Default);
+        }
+
+        public long getContentLength() {
+            return conn.getContentLengthLong();
         }
 
         public InputStream getInputStream() throws IOException {
