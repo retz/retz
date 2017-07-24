@@ -50,22 +50,44 @@ public class MesosHTTPFetcherTest {
 
     @Test
     public void parseSlaveState() throws IOException {
-        InputStream in;
-        Optional<String> s;
+        verify("3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum", "d9b0e1d9-49dc-4dd1-8773-d53366fc1517",
+                "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/d9b0e1d9-49dc-4dd1-8773-d53366fc1517");
 
-        in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-state.json");
-        s = MesosHTTPFetcher.extractDirectory(in, "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
-                "sum", "d9b0e1d9-49dc-4dd1-8773-d53366fc1517");
-        assertTrue(s.isPresent());
-        assertThat(s.get(),
-                is("/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/d9b0e1d9-49dc-4dd1-8773-d53366fc1517"));
+        verify("3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum", "48308555-7d5a-4c37-8c50-db9bcf58c637",
+                "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/48308555-7d5a-4c37-8c50-db9bcf58c637");
 
-        in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-state.json");
-        s = MesosHTTPFetcher.extractDirectory(in, "3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000",
-                "sum", "927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa");
-        assertTrue(s.isPresent());
-        assertThat(s.get(),
-                is("/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa"));
+        verify("3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum", "927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa",
+                "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa");
+    }
+
+    private void verify(String frameworkId, String executorId, String containerId, String directory) throws IOException {
+        try (InputStream in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-state.json")) {
+            Optional<String> s = MesosHTTPFetcher.extractDirectory(in, frameworkId, executorId, containerId);
+            assertTrue(s.isPresent());
+            assertThat(s.get(), is(directory));
+        }
+    }
+
+    @Test
+    public void parseSlaveState2() throws IOException {
+        verify2("3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum", "retz-task-id-0",
+                "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/d9b0e1d9-49dc-4dd1-8773-d53366fc1517");
+
+        verify2("3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum", "retz-task-id-1",
+                "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/48308555-7d5a-4c37-8c50-db9bcf58c637");
+
+        verify2("3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000", "sum", "retz-task-id-2",
+                "/tmp/mesos/slaves/6c751ae7-6856-4127-aea1-42f3a9210846-S0/frameworks/3a3e9491-84a5-4c9d-8fed-5ca10c23d922-0000/executors/sum/runs/927b4c8a-bcfb-40fb-bf24-fcd4a430e2aa");
+    }
+
+    private void verify2(String frameworkId, String executorId, String taskId, String directory) throws IOException {
+        System.err.println("extracting frameworkId=" + frameworkId + " executorId=" + executorId + " taskId=" + taskId);
+        try (InputStream in = MesosHTTPFetcherTest.class.getResourceAsStream("/slave-state.json")) {
+            Optional<String> s = MesosHTTPFetcher.extractDirectory2(in, frameworkId, executorId, taskId);
+            System.err.println(s);
+            assertTrue(s.isPresent());
+            assertThat(s.get(), is(directory));
+        }
     }
 
     @Test

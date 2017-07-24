@@ -395,10 +395,10 @@ public class RetzScheduler implements Scheduler {
                     LOG.debug("Task {} starting", status.getTaskId().getValue());
                     Optional<String> maybeUrl = Optional.empty();
                     if (this.master.isPresent()) {
-                        maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+                        maybeUrl = MesosHTTPFetcher.sandboxBaseUri2(this.master.get(),
                                 status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                                 status.getExecutorId().getValue(),
-                                status.getContainerStatus().getContainerId().getValue());
+                                status.getTaskId().getValue());
                     }
                     JobQueue.starting(job.get(), maybeUrl, status.getTaskId().getValue());
                     break;
@@ -429,10 +429,10 @@ public class RetzScheduler implements Scheduler {
     void finished(Protos.TaskStatus status) {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
-            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+            maybeUrl = MesosHTTPFetcher.sandboxBaseUri2(this.master.get(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                     status.getExecutorId().getValue(),
-                    status.getContainerStatus().getContainerId().getValue());
+                    status.getTaskId().getValue());
             LOG.info("finished: {}", maybeUrl);
         }
         int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
@@ -451,10 +451,10 @@ public class RetzScheduler implements Scheduler {
     void failed(Protos.TaskStatus status) {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
-            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+            maybeUrl = MesosHTTPFetcher.sandboxBaseUri2(this.master.get(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                     status.getExecutorId().getValue(),
-                    status.getContainerStatus().getContainerId().getValue());
+                    status.getTaskId().getValue());
         }
         try {
             JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
@@ -469,10 +469,10 @@ public class RetzScheduler implements Scheduler {
     void started(Protos.TaskStatus status) {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
-            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+            maybeUrl = MesosHTTPFetcher.sandboxBaseUri2(this.master.get(),
                     status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
                     status.getExecutorId().getValue(),
-                    status.getContainerStatus().getContainerId().getValue());
+                    status.getTaskId().getValue());
         }
         try {
             JobQueue.started(status.getTaskId().getValue(), maybeUrl);

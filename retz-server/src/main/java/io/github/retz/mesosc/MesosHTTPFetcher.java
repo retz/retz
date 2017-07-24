@@ -165,6 +165,9 @@ public class MesosHTTPFetcher {
                                                     String executorId, String containerId) throws IOException {
         // TODO: prepare corresponding object type instead of using java.util.Map
         // Search path: {frameworks|complated_frameworks}/{completed_executors|executors}[.container='containerId'].directory
+        // basically path is the directory where slave, framework, executor and task id matches -
+        // which can be specified **without** container id - even MESOS-6625 is present
+        // path = {work_dir}/slaves/{slave_id}/frameworks/{framework_id}/executors/{executor_id}/runs/{container_id}
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Map<String, Object>> map = mapper.readValue(stream, java.util.Map.class);
         List<Map<String, Object>> frameworks = new ArrayList<>();
@@ -206,6 +209,141 @@ public class MesosHTTPFetcher {
         return Optional.empty();
     }
 
+    // Extract directory from framework, executor, task id from JSON workaround for MESOS-6625
+    // directory can be specified **without** container id - even MESOS-6625 is present
+    // A bit inefficient compared to extractDirectory() because it travercies down to task objects
+    public static Optional<String> sandboxBaseUri2(String master, String slaveId,
+                                                  String frameworkId, String executorId,
+                                                  String containerId) {
+        return sandboxUri2("browse", master, slaveId, frameworkId, executorId, containerId, RETRY_LIMIT);
+    }
+
+    public static Optional<String> sandboxUri2(String t, String master, String slaveId,
+                                              String frameworkId, String executorId,
+                                              String containerId, int retryRemain) {
+        if (retryRemain > 0) {
+            Optional<String> maybeUri = sandboxUri(t, master, slaveId, frameworkId, executorId, containerId);
+            if (maybeUri.isPresent()) {
+                return maybeUri;
+            } else {
+                // NOTE: this sleep is so short because this function may be called in the context of
+                // Mesos Scheduler API callback
+                // TODO: sole resolution is to remove all these uri fetching but to build it of Job information, including SlaveId
+                LOG.warn("{} retry happening for frameworkId={}, executorId={}, containerId={}", RETRY_LIMIT - retryRemain + 1, frameworkId, executorId, containerId);
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                }
+                return sandboxUri2(t, master, slaveId, frameworkId, executorId, containerId, retryRemain - 1);
+            }
+        } else {
+            LOG.error("{} retries on fetching sandbox URI failed", RETRY_LIMIT);
+            return Optional.empty();
+        }
+    }
+
+    // slave-hostname:5051/files/download?path=/tmp/mesos/slaves/<slaveid>/frameworks/<frameworkid>/exexutors/<executorid>/runs/<containerid>
+    public static Optional<String> sandboxUri2(String t, String master, String slaveId,
+                                              String frameworkId, String executorId,
+                                              String containerId) {
+        Optional<String> slaveAddr = fetchSlaveAddr(master, slaveId); // get master:5050/slaves with slaves/pid, cut with '@'
+        LOG.debug("Agent address of executor {}: {}", executorId, slaveAddr);
+
+        if (!slaveAddr.isPresent()) {
+            return Optional.empty();
+        }
+
+        Optional<String> dir = fetchDirectory2(slaveAddr.get(), frameworkId, executorId, containerId);
+        if (!dir.isPresent()) {
+            return Optional.empty();
+        }
+
+        try {
+            return Optional.of(String.format("http://%s/files/%s?path=%s",
+                    slaveAddr.get(), t,
+                    URLEncoder.encode(dir.get(), //builder.toString(),
+                            UTF_8.toString())));
+        } catch (UnsupportedEncodingException e) {
+            LOG.error(e.toString(), e);
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<String> fetchDirectory2(String slave, String frameworkId,
+                                                   String executorId, String containerId) {
+        String addr = "http://" + slave + "/state";
+        try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
+            return extractDirectory2(conn.getInputStream(), frameworkId, executorId, containerId);
+        } catch (IOException e) {
+            LOG.warn("Failed to fetch directory of Slave {} (framework={}, executor={})",
+                    slave, frameworkId, executorId, e);
+            return Optional.empty();
+        }
+    }
+
+    public static Optional<String> extractDirectory2(InputStream stream, String frameworkId,
+                                                     String executorId, String taskId) throws IOException {
+        // path = {work_dir}/slaves/{slave_id}/frameworks/{framework_id}/executors/{executor_id}/runs/{container_id}
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Map<String, Object>> map = mapper.readValue(stream, java.util.Map.class);
+        List<Map<String, Object>> frameworks = new ArrayList<>();
+        if (map.get("frameworks") != null) {
+            frameworks.addAll((List) map.get("frameworks"));
+        }
+        if (map.get("completed_frameworks") != null) {
+            frameworks.addAll((List) map.get("completed_frameworks"));
+        }
+
+        // TODO: use json-path for cleaner and flexible code
+        for (Map<String, Object> framework : frameworks) {
+            List<Map<String, Object>> both = new ArrayList<>();
+            List<Map<String, Object>> executors = (List) framework.get("executors");
+            if (executors != null) {
+                both.addAll(executors);
+            }
+            List<Map<String, Object>> completedExecutors = (List) framework.get("completed_executors");
+            if (completedExecutors != null) {
+                both.addAll(completedExecutors);
+            }
+            Optional<String> s = extractDirectoryFromExecutors2(both, executorId, taskId);
+            if (s.isPresent()) {
+                return s;
+            }
+        }
+        LOG.error("No matching directory at framework={}, executor={}, container={}", frameworkId, executorId, taskId);
+        return Optional.empty();
+    }
+
+    private static Optional<String> extractDirectoryFromExecutors2(List<Map<String, Object>> executors,
+                                                                  String executorId, String taskId) {
+        for (Map<String, Object> executor : executors) {
+            if (executorId.equals(executor.get("id"))) {
+                String directory = (String) executor.get("directory");
+                System.err.println("executorId=" + executor.get("id") + " directory=" + directory);
+                List<Map<String, Object>> tasks = new ArrayList<>();
+
+                List<Map<String, Object>> e;
+                e = (List<Map<String, Object>> )executor.get("completed_tasks");
+                if (e != null) {
+                    tasks.addAll(e);
+                }
+                e = (List<Map<String, Object>> )executor.get("tasks");
+                if (e != null) {
+                    tasks.addAll(e);
+                }
+                System.err.println("len(tasks)=" + tasks.size());
+                for ( Map<String, Object> task : tasks) {
+                    if (task.containsKey("id")) {
+                        if (taskId.equals( task.get("id") )) {
+                            System.err.println(executor.get("id") + " task id=" + task.get("id") + " " + directory);
+                            return Optional.of(directory);
+                        }
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
     public static List<Map<String, Object>> fetchTasks(String master, String frameworkId, int offset, int limit) throws MalformedURLException {
         String addr = "http://" + master + "/tasks?offset=" + offset + "&limit=" + limit;
         try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
