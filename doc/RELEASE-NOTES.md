@@ -22,6 +22,8 @@
 
 ## 0.2.10
 
+** This is the last version that works with Mesos 1.1 and older.**
+
 * Change default behaviour of empty `retz.mesos.role` configuration.
   When it is empty Retz now registers as empty role framework without
   `MULTI_ROLE` capabilty, which was previously using principle name as
