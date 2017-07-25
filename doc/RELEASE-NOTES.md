@@ -1,13 +1,12 @@
 # Retz release notes
 
-## 0.2.12
+## 0.3.0
 
+* Remove support of Mesos 1.0 and 1.1 (see MESOS-6625) 
 * Add version check when registered to Mesos. Currently 1.2 and 1.3 are supported.
   If Retz is registered to Mesos master of unsupported version, it aborts.
 
-## 0.2.11
-
-**This release requires Mesos >= 1.2.0 due to MESOS-6625. **
+## 0.2.11 (abondoned)
 
 * Fix unnecessary 'null' being appended to result of 'get-file' and 'list-files'
   in response from Mesos.
