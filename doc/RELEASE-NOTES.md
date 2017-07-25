@@ -1,12 +1,18 @@
 # Retz release notes
 
+## 0.3.1
+
+* Change default planner from `naive` to `fifo`. `naive` and `priority` planner
+  are deprecated and will be removed in future versions. Use `fifo` or `priority2`
+  instead.
+
 ## 0.3.0
 
 * Remove support of Mesos 1.0 and 1.1 (see MESOS-6625) 
 * Add version check when registered to Mesos. Currently 1.2 and 1.3 are supported.
   If Retz is registered to Mesos master of unsupported version, it aborts.
 
-## 0.2.11 (abondoned)
+## 0.2.11 (abandoned)
 
 * Fix unnecessary 'null' being appended to result of 'get-file' and 'list-files'
   in response from Mesos.

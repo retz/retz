@@ -31,8 +31,12 @@ public class PlannerFactory {
         if (serverConfig.isBuiltInPlanner()) {
 
             if ("priority".equals(name)) {
-                LOG.warn("Using PriorityPlanner({})", name);
+                LOG.warn("Using PriorityPlanner({}) which is deprecated and to be removed in future version", name);
                 return new PriorityPlanner();
+
+            } else if ("naive".equals(name)) {
+                LOG.warn("Using FIFOPlanner, which is deprecated and to be removed in future version");
+                return new NaivePlanner();
 
             } else if ("fifo".equals(name)) {
                 LOG.info("Using FIFOPlanner 2", name);
@@ -44,10 +48,9 @@ public class PlannerFactory {
                 String classname = "io.github.retz.planner.builtin.PriorityPlanner";
                 return new ExtensiblePlanner(ExtensiblePlannerFactory.create(classname, serverConfig.classpath()), properties);
             }
-            LOG.info("Using FIFOPlanner");
-            return new NaivePlanner();
-        }
 
+            throw new AssertionError("Unknown planner name " + name);
+        }
         return new ExtensiblePlanner(ExtensiblePlannerFactory.create(name, serverConfig.classpath()), properties);
     }
 }

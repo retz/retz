@@ -84,7 +84,7 @@ public class ServerConfiguration extends FileConfiguration {
     private final String databaseDriver;
 
     private final String PLANNER_NAME = "retz.planner.name";
-    private final String DEFAULT_PLANNER_NAME = "naive";
+    private final String DEFAULT_PLANNER_NAME = "fifo";
     private final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
 
     private final String ADDITIONAL_CLASSPATH = "retz.classpath";
