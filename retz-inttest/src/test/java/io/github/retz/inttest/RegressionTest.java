@@ -76,7 +76,7 @@ public class RegressionTest extends IntTestBase {
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            int res = client.getBinaryFile(runRes.id(), filename, out);
+            long res = client.getBinaryFile(runRes.id(), filename, out);
             assertEquals(9, res);
             assertEquals("palmface\n", out.toString(StandardCharsets.UTF_8.toString()));
         }

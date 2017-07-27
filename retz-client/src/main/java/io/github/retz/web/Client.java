@@ -141,7 +141,7 @@ public class Client implements AutoCloseable {
     }
 
     // @return int content size written to OutputStream
-    public int getBinaryFile(int id, String file, OutputStream out) throws IOException {
+    public long getBinaryFile(int id, String file, OutputStream out) throws IOException {
         String date = TimestampHelper.now();
         // Encode path forcibly since we return decoded path by list files
         String encodedFile = file;
@@ -200,15 +200,15 @@ public class Client implements AutoCloseable {
             }
         }
 
-        int size = conn.getContentLength();
+        long size = conn.getContentLengthLong();
         if (size < 0) {
             throw new IOException("Illegal content length:" + size);
         } else if (size == 0) {
-            // not bytes to save;
+            // no bytes to save;
             return 0;
         }
         try {
-            return IOUtils.copy(conn.getInputStream(), out);
+            return IOUtils.copyLarge(conn.getInputStream(), out, 0, size);
         } finally {
             conn.disconnect();
         }
