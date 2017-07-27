@@ -42,13 +42,13 @@ class PlannerPropTest extends JUnitSuite {
     owner <- RetzGen.nonEmpty
     appid <- RetzGen.nonEmpty
     jobs <- Gen.listOfN(len, RetzDataGen.job(appid))
-  } yield jobs
+  } yield jobs // TODO: Jobs should not have duplicate number and Id
 
   def offers(fid: String) = for {
     len <- Gen.chooseNum[Int](1, 64)
     offer <- RetzDataGen.offer(fid)
     offers <- Gen.listOfN(len, RetzDataGen.offer(fid))
-  } yield (offer :: offers)
+  } yield (offer :: offers) // TODO: Offers should not have duplicate Id
 
   // input: offers and jobs, with max stock
   // output:
