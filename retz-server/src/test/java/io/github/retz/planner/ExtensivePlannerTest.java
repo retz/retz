@@ -18,6 +18,6 @@ package io.github.retz.planner;
 
 public class ExtensivePlannerTest extends PlannerTest {
     String makePlannerName() {
-        return "naive2";
+        return "fifo";
     }
 }

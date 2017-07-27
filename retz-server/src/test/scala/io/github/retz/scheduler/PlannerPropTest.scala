@@ -70,7 +70,7 @@ class PlannerPropTest extends JUnitSuite {
   @Test
   def plannerInvariantProp(): Unit = {
     Checkers.check(Prop.forAll(
-      Gen.oneOf("naive", "priority", "naive2", "priority2"),
+      Gen.oneOf("naive", "priority", "fifo", "priority2"),
       RetzDataGen.application(owner),
       jobs,
       offers(fid),
