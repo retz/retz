@@ -2,6 +2,7 @@
 
 ## 0.3.1
 
+* Fix downloading binary file more than `Integer.MAX_VALUE` size.
 * Change default planner from `naive` to `fifo`. `naive` and `priority` planner
   are deprecated and will be removed in future versions. Use `fifo` or `priority2`
   instead.
