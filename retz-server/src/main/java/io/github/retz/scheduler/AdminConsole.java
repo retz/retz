@@ -21,9 +21,9 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.bean.AdminConsoleMXBean;
 import io.github.retz.db.Database;
+import io.github.retz.misc.Pair;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
-import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,6 @@ import javax.management.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -126,16 +125,24 @@ public class AdminConsole implements AdminConsoleMXBean {
         }
     }
 
-    static Optional<JmxServer> startJmxServer(ServerConfiguration config) {
+    static Optional<JmxServer> startJmxServer(ServerConfiguration config, List<Pair<Object, String>> beans) {
         int jmxPort = config.getJmxPort();
 
         try {
             JmxServer jmxServer = new JmxServer(jmxPort);
 
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+
+            // Registering self
             ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
             AdminConsole mbean = new AdminConsole(config.getGcLeeway());
             mbs.registerMBean(mbean, name);
+
+            for (Pair<Object, String> pair: beans) {
+                ObjectName objectName = new ObjectName(pair.right());
+                mbs.registerMBean(pair.left(), objectName);
+            }
+
             jmxServer.start();
             LOG.info("JMX enabled listening to {}", jmxPort);
             return Optional.of(jmxServer);

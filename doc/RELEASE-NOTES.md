@@ -2,6 +2,7 @@
 
 ## 0.3.1
 
+* Make Tomcat thread pool metrics available via JMX.
 * Add default JVM options to each commands; "-Xms8m -XX:+UseSerialGC" to
  'retz-client' and 'retz-admin'.
 * Fix downloading binary file more than `Integer.MAX_VALUE` size.
