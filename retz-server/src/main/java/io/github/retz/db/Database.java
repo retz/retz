@@ -51,6 +51,7 @@ public class Database {
 
     Database() {
         MAPPER.registerModule(new Jdk8Module());
+        dataSource.setJmxEnabled(true);
     }
 
     public static Database getInstance() {
