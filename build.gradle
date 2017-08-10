@@ -229,6 +229,7 @@ project(':retz-server') {
     }
 
     mainClassName = 'io.github.retz.scheduler.Launcher'
+    applicationDefaultJvmArgs = ["-server"]
 
     findbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
 
@@ -288,6 +289,8 @@ project(':retz-client') {
     }
 
     mainClassName = 'io.github.retz.cli.Launcher'
+    // Won't set max heap size as large file download may happen
+    applicationDefaultJvmArgs = ["-Xms8m", "-client"]
 
     ospackage {
         os = LINUX
@@ -327,6 +330,8 @@ project('retz-admin') {
     }
 
     mainClassName = 'io.github.retz.admin.Launcher'
+    // Won't set max heap size as large file download may happen
+    applicationDefaultJvmArgs = ["-Xms8m", "-client"]
 
     ospackage {
         os = LINUX

@@ -2,6 +2,8 @@
 
 ## 0.3.1
 
+* Add default JVM options to each commands; "-Xms8m -client" to 'retz-client'
+  and 'retz-admin', "-server" to 'retz-server'.
 * Fix downloading binary file more than `Integer.MAX_VALUE` size.
 * Change default planner from `naive` to `fifo`. `naive` and `priority` planner
   are deprecated and will be removed in future versions. Use `fifo` or `priority2`
