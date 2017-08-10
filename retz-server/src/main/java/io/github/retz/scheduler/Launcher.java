@@ -19,6 +19,7 @@ package io.github.retz.scheduler;
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
+import io.github.retz.misc.Pair;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
@@ -27,6 +28,7 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.JMException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -74,13 +76,15 @@ public final class Launcher {
             LOG.error(e.toString(), e);
             return -1;
         }
-
-        Optional<JmxServer> maybeJmxServer = AdminConsole.startJmxServer(conf.getServerConfig());
-        if (! maybeJmxServer.isPresent()) {
+        
+        List<Pair<Object, String>> pairs = Arrays.asList(
+                new Pair<>(Database.getDataSource().getPool().getJmxPool(),
+                "io.github.retz.db:type=TomcatThreadPool"));
+        Optional<JmxServer> maybeJmxServer = AdminConsole.startJmxServer(conf.getServerConfig(), pairs);
+        if (!maybeJmxServer.isPresent()) {
             LOG.error("Failed to start JMX Server");
             return -1;
         }
-        JmxServer jmxServer = maybeJmxServer.get();
 
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
 
@@ -96,7 +100,7 @@ public final class Launcher {
         RetzScheduler scheduler;
         try {
             scheduler = new RetzScheduler(conf, fw);
-        }catch (Throwable t) {
+        } catch (Throwable t) {
             LOG.error("Cannot initialize scheduler", t);
             return -1;
         }
@@ -129,7 +133,7 @@ public final class Launcher {
         WebConsole.stop(); // Stop web server
         GarbageJobCollector.stop();
         Database.getInstance().stop();
-        jmxServer.stop();
+        maybeJmxServer.get().stop();
 
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }

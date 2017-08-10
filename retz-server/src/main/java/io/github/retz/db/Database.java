@@ -57,6 +57,10 @@ public class Database {
         return database;
     }
 
+    public static DataSource getDataSource() {
+        return getInstance().dataSource;
+    }
+
     static Database newMemInstance(String name) throws IOException, SQLException {
         Database db = new Database();
         db.initOnMem(name);
