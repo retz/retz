@@ -29,6 +29,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +45,7 @@ public class AdminConsoleTest {
 
         ServerConfiguration config = new ServerConfiguration(in);
         Database.getInstance().init(config);
-        Optional<JmxServer> server = AdminConsole.startJmxServer(config);
+        Optional<JmxServer> server = AdminConsole.startJmxServer(config, Collections.emptyList());
         port = config.getJmxPort();
         jmxServer = server.get();
     }
