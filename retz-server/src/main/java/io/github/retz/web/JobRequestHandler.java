@@ -24,6 +24,7 @@ import io.github.retz.auth.AuthHeader;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.misc.Pair;
 import io.github.retz.misc.Triad;
 import io.github.retz.planner.AppJobPair;
@@ -99,8 +100,8 @@ public class JobRequestHandler {
             res.status(200);
             res.type("application/json");
             return MAPPER.writeValueAsString(listJobResponse);
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+        } catch (IOException e) {
+            LogUtil.warn(LOG, "JobRequestHandler.listJob failed, returns HTTP500", e);
             res.status(500);
             return "\"Internal Error\"";
         }

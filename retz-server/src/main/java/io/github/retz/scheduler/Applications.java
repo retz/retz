@@ -16,15 +16,14 @@
  */
 package io.github.retz.scheduler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.retz.db.Database;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,45 +35,28 @@ public class Applications {
         try {
             return Database.getInstance().getApplication(appName);
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.warn(LOG, "Applications.get() failed, returns empty", e);
             return Optional.empty();
         }
     }
 
-    public static boolean load(Application application) {
-        try {
-            return Database.getInstance().addApplication(application);
-        } catch (JsonProcessingException e) {
-            return false; // Maybe this must be handled inside addApplication...
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
-            return false;
-        }
+    public static boolean load(Application application) throws IOException {
+        return Database.getInstance().addApplication(application);
     }
 
     @Deprecated
-    public static void unload(String appName) {
+    public static void unload(String appName) throws IOException {
         // Volumes are destroyed lazily
         LOG.info("deleting {}", appName);
         Database.getInstance().safeDeleteApplication(appName);
     }
 
-    public static List<Application> getAll() {
-        try {
-            return Database.getInstance().getAllApplications();
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
-            return Collections.emptyList();
-        }
+    public static List<Application> getAll() throws IOException {
+        return Database.getInstance().getAllApplications();
     }
 
-    public static List<Application> getAll(String id) {
-        try {
-            return Database.getInstance().getAllApplications(id);
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
-            return Collections.emptyList();
-        }
+    public static List<Application> getAll(String id) throws IOException {
+        return Database.getInstance().getAllApplications(id);
     }
 
     public static Protos.ContainerInfo appToContainerInfo(Application application) {

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.bean.AdminConsoleMXBean;
 import io.github.retz.db.Database;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.misc.Pair;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
@@ -30,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import javax.management.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,9 +54,8 @@ public class AdminConsole implements AdminConsoleMXBean {
             User user = Database.getInstance().createUser(info);
             LOG.info(maybeEncodeAsJSON(user));
             return maybeEncodeAsJSON(user);
-        } catch (SQLException e) {
-            return errorJSON(e.toString());
         } catch (IOException e) {
+            LogUtil.error(LOG, "AdminConsole.createUser() failed", e);
             return errorJSON(e.toString());
         }
     }
@@ -68,7 +67,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             Optional<User> maybeUser = Database.getInstance().getUser(name);
             return maybeEncodeAsJSON(maybeUser);
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "AdminConsole.getUser() failed", e);
             return errorJSON(e.toString());
         }
     }
@@ -79,17 +78,14 @@ public class AdminConsole implements AdminConsoleMXBean {
         try {
             Database.getInstance().enableUser(id, enabled);
             return true;
-        } catch (SQLException e) {
-            LOG.error("Failed to disable user {}", id, e);
-            return false;
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "AdminConsole.enableUser() failed", e);
             return false;
         }
     }
 
     @Override
-    public List<String> getUsage(String start, String end) {
+    public List<String> getUsage(String start, String end) throws IOException {
         LOG.info("Querying usage at [{}, {})", start, end); //TODO
         List<Job> jobs = Database.getInstance().finishedJobs(start, end);
         return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
@@ -102,7 +98,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             List<User> users = Database.getInstance().allUsers();
             return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "AdminConsole.listUser() failed", e);
             return Collections.emptyList();
         }
     }
@@ -120,7 +116,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             Database.getInstance().deleteOldJobs(LEEWAY);
             return true;
         } catch (Throwable t) {
-            LOG.info(t.toString(), t);
+            LogUtil.info(LOG, "AdminConsole.gc() failed", t);
             return false;
         }
     }
@@ -148,7 +144,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             return Optional.of(jmxServer);
 
         } catch (JMException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "AdminConsole.startJmxServer() failed", e);
         }
         return Optional.empty();
     }
@@ -157,7 +153,7 @@ public class AdminConsole implements AdminConsoleMXBean {
         try {
             return MAPPER.writeValueAsString(o);
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "AdminConsole.maybeEncodeAsJSON() failed", e);
             return errorJSON(e.toString());
         }
     }

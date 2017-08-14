@@ -30,11 +30,11 @@ import io.github.retz.web.StatusCache;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
+import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -124,7 +124,12 @@ public class RetzScheduler implements Scheduler {
         StatusCache.updateMaster(newMaster);
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
 
-        Optional<String> oldFrameworkId = Database.getInstance().getFrameworkId();
+        Optional<String> oldFrameworkId;
+        try {
+            oldFrameworkId = Database.getInstance().getFrameworkId();
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
         if (oldFrameworkId.isPresent()) {
             if (oldFrameworkId.get().equals(frameworkId.getValue())) {
                 // framework exists. nothing to do
@@ -136,9 +141,13 @@ public class RetzScheduler implements Scheduler {
                 driver.stop();
             }
         } else {
-            if (Database.getInstance().setFrameworkId(frameworkId.getValue())) {
-            } else {
-                LOG.warn("Failed to remember frameworkID...");
+            try {
+                if (Database.getInstance().setFrameworkId(frameworkId.getValue())) {
+                } else {
+                    LOG.warn("Failed to remember frameworkID...");
+                }
+            } catch (IOException e) {
+                throw new RuntimeIOException(e);
             }
         }
     }
@@ -418,10 +427,8 @@ public class RetzScheduler implements Scheduler {
         }
         try {
             JobQueue.retry(status.getTaskId().getValue(), reason);
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
         } catch (JobNotFoundException e) {
-            LOG.warn(e.toString(), e);
+            LOG.warn("retry({}) failed", status, e);
             // TODO: re-insert the failed job again?
         }
     }
@@ -439,10 +446,8 @@ public class RetzScheduler implements Scheduler {
         String finished = TimestampHelper.now();
         try {
             JobQueue.finished(status.getTaskId().getValue(), maybeUrl, ret, finished);
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
         } catch (JobNotFoundException e) {
-            LOG.warn(e.toString(), e);
+            LOG.warn("finished({}) failed", status, e);
             // TODO: re-insert the failed job again?
         }
 
@@ -458,10 +463,8 @@ public class RetzScheduler implements Scheduler {
         }
         try {
             JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
         } catch (JobNotFoundException e) {
-            LOG.warn(e.toString(), e);
+            LOG.warn("failed({}) failed", status, e);
             // TODO: re-insert the failed job again?
         }
     }
@@ -476,13 +479,11 @@ public class RetzScheduler implements Scheduler {
         }
         try {
             JobQueue.started(status.getTaskId().getValue(), maybeUrl);
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
         } catch (JobNotFoundException e) {
-            LOG.warn(e.toString(), e);
+            LOG.warn("started({}) failed", status, e);
             // TODO: re-insert the failed job again?
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LOG.warn("started({}) failed", status, e);
         }
     }
 
@@ -501,8 +502,13 @@ public class RetzScheduler implements Scheduler {
     // This call must be offloaded from scheduler callback thread if schedule is active;
     // while if it's not active, it must block all other operations.
     private void maybeRecoverRunning(SchedulerDriver driver) {
-        List<Job> jobs = Database.getInstance().getRunning();
-        Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
+        List<Job> jobs;
+        try {
+            jobs = Database.getInstance().getRunning();
+            Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
     }
 
     public boolean validateJob(Job job) {

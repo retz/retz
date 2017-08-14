@@ -43,11 +43,11 @@ public class Jobs {
         this.conn = Objects.requireNonNull(c);
         this.mapper = Objects.requireNonNull(m);
         if (conn.getAutoCommit()) {
-            throw new RuntimeException("Connection must have autocommit disabled");
+            throw new AssertionError("autocommit must be false");
         }
     }
 
-    public List<Job> getAllRunning() throws SQLException {
+    public List<Job> getAllRunning() throws SQLException, IOException {
         List<Job> ret = new ArrayList<>();
         try (PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE state='STARTING' OR state='STARTED'");
              ResultSet res = p.executeQuery()) {
@@ -60,26 +60,18 @@ public class Jobs {
                 LOG.info("Retrying job: {}", job);
                 updateJob(job);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Broken JSON: " + e.toString());
         }
         return ret;
     }
 
-    public void doRetry(List<Integer> ids) {
-        try {
-            for (int id : ids) {
-                Optional<Job> maybeJob = getJob(id);
-                if (maybeJob.isPresent()) {
-                    Job job = maybeJob.get();
-                    job.doRetry();
-                    updateJob(job);
-                }
+    public void doRetry(List<Integer> ids) throws SQLException, IOException {
+        for (int id : ids) {
+            Optional<Job> maybeJob = getJob(id);
+            if (maybeJob.isPresent()) {
+                Job job = maybeJob.get();
+                job.doRetry();
+                updateJob(job);
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-        } catch (IOException e) {
-            LOG.error(e.toString(), e); // TODO: do we fail?
         }
     }
 

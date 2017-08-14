@@ -16,30 +16,44 @@
  */
 package io.github.retz.db;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import io.github.retz.cli.TimestampHelper;
-import io.github.retz.protocol.data.Application;
-import io.github.retz.protocol.data.Job;
-import io.github.retz.protocol.data.User;
-import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.planner.AppJobPair;
-import io.github.retz.scheduler.Launcher;
-import io.github.retz.scheduler.ServerConfiguration;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.*;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import io.github.retz.cli.TimestampHelper;
+import io.github.retz.misc.LogUtil;
+import io.github.retz.planner.AppJobPair;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
+import io.github.retz.protocol.data.User;
+import io.github.retz.protocol.exception.JobNotFoundException;
+import io.github.retz.scheduler.Launcher;
+import io.github.retz.scheduler.ServerConfiguration;
 
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
@@ -61,7 +75,7 @@ public class Database {
         return getInstance().dataSource;
     }
 
-    static Database newMemInstance(String name) throws IOException, SQLException {
+    static Database newMemInstance(String name) throws IOException {
         Database db = new Database();
         db.initOnMem(name);
         return db;
@@ -76,7 +90,7 @@ public class Database {
         }
     }
 
-    public void init(ServerConfiguration config) throws IOException, SQLException {
+    public void init(ServerConfiguration config) throws IOException {
         databaseURL = Objects.requireNonNull(config.getDatabaseURL());
         LOG.info("Initializing database {}", databaseURL);
 
@@ -101,7 +115,7 @@ public class Database {
         }
     }
 
-    void initOnMem(String name) throws IOException, SQLException {
+    void initOnMem(String name) throws IOException {
         PoolProperties props = new PoolProperties();
         databaseURL = "jdbc:h2:mem:" + name + ";DB_CLOSE_DELAY=-1";
         props.setUrl(databaseURL);
@@ -110,7 +124,7 @@ public class Database {
         init(props, false);
     }
 
-    private void init(PoolProperties props, boolean enableJmx) throws IOException, SQLException {
+    private void init(PoolProperties props, boolean enableJmx) throws IOException {
         props.setValidationQuery("select 1;");
         props.setJmxEnabled(enableJmx);
 
@@ -127,6 +141,8 @@ public class Database {
             }
             maybeCreateTables(conn);
             conn.commit();
+        } catch (SQLException | IOException e) {
+            throw new IOException("Database.init() failed" ,e);
         }
     }
 
@@ -154,7 +170,7 @@ public class Database {
             conn.commit();
             LOG.info("All tables dropped successfully");
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "Database.clear() failed", e);
         }
     }
 
@@ -162,12 +178,12 @@ public class Database {
         try (Connection conn = dataSource.getConnection()) {
             return allTableExists(conn);
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.warn(LOG, "Database.allTableExists() failed", e);
             return false;
         }
     }
 
-    boolean allTableExists(Connection conn) throws SQLException {
+    private boolean allTableExists(Connection conn) throws SQLException {
         DatabaseMetaData meta = conn.getMetaData();
 
         // PostgreSQL accepts only lower case names while
@@ -211,7 +227,7 @@ public class Database {
         return false;
     }
 
-    void maybeCreateTables(Connection conn) throws SQLException, IOException {
+    private void maybeCreateTables(Connection conn) throws SQLException, IOException {
         LOG.info("Checking database schema of {} ...", databaseURL);
 
         if (allTableExists(conn)) {
@@ -242,14 +258,14 @@ public class Database {
                     ret.add(u);
                 }
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            return ret;
+        } catch (SQLException | IOException e) {
+            throw new IOException("Database.allUsers() failed", e);
         }
-        return ret;
     }
 
     // Maybe this must return Optional<User> ?
-    public User createUser(String info) throws SQLException, JsonProcessingException {
+    public User createUser(String info) throws IOException {
         String keyId = UUID.randomUUID().toString().replace("-", "");
         String secret = UUID.randomUUID().toString().replace("-", "");
         User u = new User(keyId, secret, true, info);
@@ -258,7 +274,7 @@ public class Database {
         return u;
     }
 
-    public boolean addUser(User u) throws SQLException, JsonProcessingException {
+    public boolean addUser(User u) throws IOException {
         //try (Connection conn = DriverManager.getConnection(databaseURL)) {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("INSERT INTO users(key_id, secret, enabled, json) values(?, ?, ?, ?)")) {
@@ -270,6 +286,8 @@ public class Database {
             p.setString(4, MAPPER.writeValueAsString(u));
             p.execute();
             return true;
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.addUser({0}) failed", u.keyId()), e);
         }
     }
 
@@ -290,15 +308,14 @@ public class Database {
             Optional<User> u = getUser(conn, keyId);
             conn.commit();
             return u;
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-            return Optional.empty();
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.getUser({0}) failed", keyId), e);
         }
     }
 
-    public Optional<User> getUser(Connection conn, String keyId) throws SQLException, IOException {
+    private Optional<User> getUser(Connection conn, String keyId) throws SQLException, IOException {
         if (conn.getAutoCommit()) {
-            throw new RuntimeException("Autocommit on");
+            throw new AssertionError("autocommit must be false");
         }
         try (PreparedStatement p = conn.prepareStatement("SELECT * FROM USERS WHERE key_id = ?")) {
 
@@ -314,7 +331,7 @@ public class Database {
         }
     }
 
-    public void enableUser(String keyId, boolean enabled) throws SQLException, IOException {
+    public void enableUser(String keyId, boolean enabled) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             Optional<User> user = getUser(conn, keyId);
@@ -323,6 +340,8 @@ public class Database {
                 updateUser(conn, user.get());
             }
             conn.commit();
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.enableUser({0}) failed", keyId), e);
         }
     }
 
@@ -336,13 +355,13 @@ public class Database {
             conn.setAutoCommit(false);
             ret = getApplications(conn, id);
             conn.commit();
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            return ret;
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.getAllApplications({0}) failed", id), e);
         }
-        return ret;
     }
 
-    public List<Application> getApplications(Connection conn, String id) throws SQLException, IOException {
+    private List<Application> getApplications(Connection conn, String id) throws SQLException, IOException  {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
@@ -390,9 +409,9 @@ public class Database {
             conn.commit();
             return true;
 
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-            return false;
+        } catch (SQLException | IOException e) {
+            throw new IOException(
+                    MessageFormat.format("Database.addApplication({0}, {1}) failed", a.getAppid(), a.getOwner()), e);
         }
     }
 
@@ -401,12 +420,11 @@ public class Database {
             conn.setAutoCommit(true);
             return getApplication(conn, appid);
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException(MessageFormat.format("Database.getApplication({0}) failed", appid), e);
         }
-        return Optional.empty();
     }
 
-    public Optional<Application> getApplication(Connection conn, String appid) throws SQLException, IOException {
+    private Optional<Application> getApplication(Connection conn, String appid) throws SQLException, IOException {
         try (PreparedStatement p = conn.prepareStatement("SELECT * FROM applications WHERE appid = ?")) {
 
             p.setString(1, appid);
@@ -421,12 +439,12 @@ public class Database {
                     return Optional.of(app);
                 }
                 // No such application
+                return Optional.empty();
             }
         }
-        return Optional.empty();
     }
 
-    public void safeDeleteApplication(String appid) {
+    public void safeDeleteApplication(String appid) throws IOException {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
             // TODO: check there are no non-finished Jobs
@@ -436,12 +454,12 @@ public class Database {
 
             conn.commit();
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException(MessageFormat.format("Database.safeDeleteApplication({0}) failed", appid), e);
         }
     }
 
     // Within transaction context and autocommit must be false
-    public void deleteApplication(Connection conn, String appid) throws SQLException {
+    private void deleteApplication(Connection conn, String appid) throws SQLException {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
@@ -451,7 +469,7 @@ public class Database {
         }
     }
 
-    public List<Job> listJobs(String id, Job.JobState state, Optional<String> tag, int limit) throws SQLException {
+    public List<Job> listJobs(String id, Job.JobState state, Optional<String> tag, int limit) throws IOException {
         List<Job> ret = new ArrayList<>();
         String prefix = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
         String sql = prefix + " AND j.state=? ORDER BY j.id DESC LIMIT ?";
@@ -479,8 +497,10 @@ public class Database {
                     }
                 }
             }
+            return ret;
+        } catch (SQLException e) {
+            throw new IOException(MessageFormat.format("Database.listJobs({0}, {1}) failed", id, state), e);
         }
-        return ret;
     }
 
     // This is for debug purpose
@@ -506,13 +526,13 @@ public class Database {
                 }
             }
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.error(LOG, "Database.getAllJobs() failed", e);
         }
         return ret;
     }
 
     // Selects all "finished" jobs
-    public List<Job> finishedJobs(String start, String end) {
+    public List<Job> finishedJobs(String start, String end) throws IOException {
         List<Job> ret = new ArrayList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE ? <= finished AND finished < ?")) {
@@ -521,24 +541,19 @@ public class Database {
             p.setString(1, start);
             p.setString(2, end);
             try (ResultSet res = p.executeQuery()) {
-
                 while (res.next()) {
                     String json = res.getString("json");
-                    try {
-                        Job job = MAPPER.readValue(json, Job.class);
-                        if (job == null) {
-                            throw new AssertionError("Cannot be null!!");
-                        }
-                        ret.add(job);
-                    } catch (IOException e) {
-                        LOG.error(e.toString(), e); // JSON text is broken for sure
+                    Job job = MAPPER.readValue(json, Job.class);
+                    if (job == null) {
+                        throw new AssertionError("Cannot be null!!");
                     }
+                    ret.add(job);
                 }
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            return ret;
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.finishedJobs({0}, {1}) failed", start, end), e);
         }
-        return ret;
     }
 
     // orderBy must not have any duplication
@@ -568,13 +583,13 @@ public class Database {
                     }
                 }
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            return ret;
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.findFit({0}, {1}) failed", cpu, memMB), e);
         }
-        return ret;
     }
 
-    public List<Job> queued(int limit) throws IOException, SQLException {
+    public List<Job> queued(int limit) throws IOException {
         List<Job> ret = new ArrayList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY id ASC LIMIT ?")) {
@@ -593,11 +608,13 @@ public class Database {
                     }
                 }
             }
+            return ret;
+        } catch (SQLException | IOException e) {
+            throw new IOException("Database.queued() failed", e);
         }
-        return ret;
     }
 
-    public void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
+    private void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
         try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());
             p.setInt(2, j.id());
@@ -611,7 +628,7 @@ public class Database {
         }
     }
 
-    public void safeAddJob(Job j) {
+    public void safeAddJob(Job j) throws IOException {
         try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
             conn.setAutoCommit(false);
 
@@ -623,10 +640,8 @@ public class Database {
             addJob(conn, j);
             conn.commit();
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.safeAddJob({0}) failed", j.appid()), e);
         }
     }
 
@@ -649,14 +664,14 @@ public class Database {
                     return Optional.of(new AppJobPair(Optional.of(app), job));
                 }
                 // No such application
+                return Optional.empty();
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.getAppJob({0}) failed", id), e);
         }
-        return Optional.empty();
     }
 
-    public Optional<Job> getJob(int id) throws JsonProcessingException, IOException {
+    public Optional<Job> getJob(int id) throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE id = ?")) {
             conn.setAutoCommit(true);
@@ -672,20 +687,19 @@ public class Database {
                     return Optional.of(job);
                 }
                 // No such application
+                return Optional.empty();
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.getJob({0}) failed", id), e);
         }
-        return Optional.empty();
     }
 
-    public Optional<Job> getJobFromTaskId(String taskId) throws JsonProcessingException, IOException {
+    public Optional<Job> getJobFromTaskId(String taskId) throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE taskid=?")) {
             conn.setAutoCommit(true);
 
             p.setString(1, taskId);
-
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
                     String json = res.getString("json");
@@ -696,37 +710,37 @@ public class Database {
                     }
                     return Optional.of(job);
                 }
-                LOG.info("no such application/job");
-                // No such application
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+
+            LOG.info("no such application/job");
+            return Optional.empty();
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.getJobFromTaskId({0}) failed", taskId), e);
         }
-        return Optional.empty();
     }
 
     // Delete all jobs that has ID smaller than id
-    public void deleteAllJob(int maxId) {
+    public void deleteAllJob(int maxId) throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("DELETE FROM jobs WHERE id < ?")) {
             conn.setAutoCommit(true);
             p.setInt(1, maxId);
             p.execute();
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException(MessageFormat.format("Database.deleteAllJob({0}) failed", maxId), e);
         }
     }
 
-    public void deleteOldJobs(int leeway) {
+    public void deleteOldJobs(int leeway) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             new Jobs(conn, MAPPER).collect(leeway);
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException(MessageFormat.format("Database.deleteOldJobs({0}) failed", leeway), e);
         }
     }
 
-    public void setJobStarting(int id, Optional<String> maybeUrl, String taskId) throws IOException, SQLException, JobNotFoundException {
+    public void setJobStarting(int id, Optional<String> maybeUrl, String taskId) throws IOException, JobNotFoundException {
         updateJob(id, job -> {
             job.starting(taskId, maybeUrl, TimestampHelper.now());
             LOG.info("TaskId of id={}: {} / {}", id, taskId, job.taskId());
@@ -734,7 +748,7 @@ public class Database {
         });
     }
 
-    public void updateJob(int id, Function<Job, Optional<Job>> fun) throws IOException, SQLException, JobNotFoundException {
+    public void updateJob(int id, Function<Job, Optional<Job>> fun) throws IOException, JobNotFoundException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE id=?")) {
             conn.setAutoCommit(false);
@@ -754,10 +768,12 @@ public class Database {
                     throw new JobNotFoundException(id);
                 }
             }
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.updateJob({0}) failed", id), e);
         }
     }
 
-    public int countJobs() {
+    public int countJobs() throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs")) {
             conn.setAutoCommit(true);
@@ -766,24 +782,25 @@ public class Database {
                     return set.getInt(1);
                 }
             }
+            return -1;
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException("Database.countJobs() failed", e);
         }
-        return -1;
     }
 
-    public int countRunning() {
+    public int countRunning() throws IOException {
         return countByState(Job.JobState.STARTED) + countByState(Job.JobState.STARTING);
     }
 
-    public int countQueued() {
+    public int countQueued() throws IOException {
         return countByState(Job.JobState.QUEUED);
     }
 
-    private int countByState(Job.JobState state) {
+    private int countByState(Job.JobState state) throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT count(id) FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);
+
             p.setString(1, state.toString());
             try (ResultSet set = p.executeQuery()) {
                 if (set.next()) {
@@ -792,12 +809,11 @@ public class Database {
                 return 0;
             }
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException(MessageFormat.format("Database.countByState({0}) failed", state), e);
         }
-        return -1;
     }
 
-    public int getLatestJobId() {
+    public int getLatestJobId() throws IOException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT id FROM jobs ORDER BY id DESC LIMIT 1")) {
             conn.setAutoCommit(true);
@@ -806,26 +822,27 @@ public class Database {
                     int id = res.getInt("id");
                     return id;
                 }
-                // No such application
             }
+            // No such application
+            return 0;
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException("Database.getLatestJobId() failed", e);
         }
-        return 0;
     }
 
-    public List<Job> getRunning() {
+    public List<Job> getRunning() throws IOException {
         List<Job> jobs = new ArrayList<>(2);
         jobs.addAll(getByState(Job.JobState.STARTING));
         jobs.addAll(getByState(Job.JobState.STARTED));
         return jobs;
     }
 
-    private List<Job> getByState(Job.JobState state) {
+    private List<Job> getByState(Job.JobState state) throws IOException {
         List<Job> jobs = new ArrayList<>();
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT id, json FROM jobs WHERE state = ?")) {
             conn.setAutoCommit(true);
+
             p.setString(1, state.toString());
             try (ResultSet set = p.executeQuery()) {
                 while (set.next()) {
@@ -839,43 +856,41 @@ public class Database {
                     }
                 }
             }
+            return jobs;
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException(MessageFormat.format("Database.getByState({0}) failed", state), e);
         }
-        return jobs;
     }
 
-    public boolean setFrameworkId(String value) {
+    public boolean setFrameworkId(String value) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(true);
             LOG.info("setting new framework: {}", value);
             return new Property(conn).setFrameworkId(value);
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-            return false;
+            throw new IOException(MessageFormat.format("Database.setFrameworkId({0}) failed", value), e);
         }
     }
 
-    public Optional<String> getFrameworkId() {
+    public Optional<String> getFrameworkId() throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             return new Property(conn).getFrameworkId();
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-            return Optional.empty();
+            throw new IOException("Database.getFrameworkId() failed", e);
         }
     }
 
-    public void deleteAllProperties() {
+    public void deleteAllProperties() throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             new Property(conn).deleteAll();
             conn.commit();
         } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+            throw new IOException("Database.deleteAllProperties() failed", e);
         }
     }
 
-    public void updateJobs(List<Job> list) {
+    public void updateJobs(List<Job> list) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             Jobs jobs = new Jobs(conn, MAPPER);
@@ -883,18 +898,19 @@ public class Database {
                 jobs.updateJob(job);
             }
             conn.commit();
-        } catch (JsonProcessingException | SQLException e) {
-            LOG.error(e.toString(), e);
+        } catch (SQLException | IOException e) {
+            String ids = list.stream().map(job -> job.appid()).collect(Collectors.joining(","));
+            throw new IOException(MessageFormat.format("Database.updateJobs({0}) failed", ids), e);
         }
     }
 
-    public void retryJobs(List<Integer> ids) {
+    public void retryJobs(List<Integer> ids) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
             new Jobs(conn, MAPPER).doRetry(ids);
             conn.commit();
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
+        } catch (SQLException | IOException e) {
+            throw new IOException(MessageFormat.format("Database.updateJobs({0}) failed", ids), e);
         }
     }
 }

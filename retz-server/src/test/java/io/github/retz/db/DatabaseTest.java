@@ -25,9 +25,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import java.sql.SQLException;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -201,7 +199,7 @@ public class DatabaseTest {
         List<User> users = IntStream.range(0, 10).mapToObj(i -> {
             try {
                 return db.createUser("test user " + i);
-            } catch (JsonProcessingException | SQLException e) {
+            } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }).collect(Collectors.toList());
@@ -263,7 +261,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void testProps() {
+    public void testProps() throws IOException {
         String frameworkId = "foorbartest....";
         assertFalse(db.getFrameworkId().isPresent());
         assertTrue(db.setFrameworkId(frameworkId));
@@ -271,7 +269,7 @@ public class DatabaseTest {
     }
 
     @Test
-    public void gc() {
+    public void gc() throws IOException {
         db.deleteOldJobs(1024);
     }
 }
