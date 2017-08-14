@@ -37,15 +37,15 @@ public class Property {
         conn = c;
     }
 
-    public boolean setFrameworkId(String value) {
+    public boolean setFrameworkId(String value) throws SQLException {
         return setProperty("FrameworkID", value);
     }
 
-    public Optional<String> getFrameworkId() {
+    public Optional<String> getFrameworkId() throws SQLException {
         return getProperty("FrameworkID");
     }
 
-    private boolean setProperty(String key, String value) {
+    private boolean setProperty(String key, String value) throws SQLException {
         try (PreparedStatement p = conn.prepareStatement("INSERT INTO properties(key, value, epoch) VALUES (?, ?, ?)")) {
             conn.setAutoCommit(false);
             p.setString(1, key);
@@ -54,25 +54,22 @@ public class Property {
             p.execute();
             return true;
         } catch (SQLException e) {
-            LOG.error("setting {}={} into properties => {}: trying update...", key, value, e.toString());
+            LOG.warn("setting {}={} into properties => {}: trying update...", key, value, e.toString());
             return updateProperty(key, value);
         }
     }
 
-    private boolean updateProperty(String key, String value) {
+    private boolean updateProperty(String key, String value) throws SQLException {
         try (PreparedStatement p = conn.prepareStatement("UPDATE properties SET value=?, epoch=epoch+1 WHERE key=?")) {
             conn.setAutoCommit(false);
             p.setString(3, key);
             p.setString(1, value);
             p.execute();
             return true;
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-            return false;
         }
     }
 
-    private Optional<String> getProperty(String key) {
+    private Optional<String> getProperty(String key) throws SQLException {
         try (PreparedStatement p = conn.prepareStatement("SELECT key, value, epoch FROM properties WHERE key=?")) {
             p.setString(1, key);
             try (ResultSet res = p.executeQuery()) {
@@ -81,13 +78,10 @@ public class Property {
                 }
                 return Optional.empty();
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
-            return Optional.empty();
         }
     }
 
-    public Properties getAllProperties() {
+    public Properties getAllProperties() throws SQLException {
         Properties props = new Properties();
         try (PreparedStatement p = conn.prepareStatement("SELECT key, value, epoch FROM properties")) {
             try (ResultSet res = p.executeQuery()) {
@@ -95,17 +89,12 @@ public class Property {
                     props.setProperty(res.getString("key"), res.getString("value"));
                 }
             }
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
         }
         return props;
     }
 
-    public void deleteAll() {
+    public void deleteAll() throws SQLException {
         try (PreparedStatement p = conn.prepareStatement("SELECT key, value, epoch FROM properties")) {
-
-        } catch (SQLException e) {
-            LOG.error(e.toString(), e);
         }
     }
 }

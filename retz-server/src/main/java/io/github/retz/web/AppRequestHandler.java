@@ -43,7 +43,7 @@ public class AppRequestHandler {
         MAPPER.registerModule(new Jdk8Module());
     }
 
-    static String listApp(Request req, Response res) throws JsonProcessingException {
+    static String listApp(Request req, Response res) throws IOException {
         Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
         LOG.info("Listing all apps owned by {}", authHeaderValue.get().key());
         ListAppResponse response = new ListAppResponse(Applications.getAll(authHeaderValue.get().key()));
@@ -51,7 +51,7 @@ public class AppRequestHandler {
         return MAPPER.writeValueAsString(response);
     }
 
-    static String loadApp(Request req, Response res) throws JsonProcessingException, IOException {
+    static String loadApp(Request req, Response res) throws IOException {
         LOG.debug(LoadAppRequest.resourcePattern());
         Optional<AuthHeader> authHeaderValue = getAuthInfo(req);
         res.type("application/json");
@@ -125,7 +125,7 @@ public class AppRequestHandler {
         }
     }
 
-    static String unloadAppRequest(Request req, Response res) throws JsonProcessingException {
+    static String unloadAppRequest(Request req, Response res) throws IOException {
         String appname = req.params(":name");
         LOG.warn("deleting app {} (This API is deprecated)", appname);
         // TODO: deletion may be done only if it has no job

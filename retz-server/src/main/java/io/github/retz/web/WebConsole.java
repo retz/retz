@@ -24,6 +24,7 @@ import io.github.retz.auth.Authenticator;
 import io.github.retz.auth.HmacSHA256Authenticator;
 import io.github.retz.auth.NoopAuthenticator;
 import io.github.retz.db.Database;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.protocol.*;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.User;
@@ -107,7 +108,7 @@ public final class WebConsole {
         });
 
         exception(Exception.class, (exception, request, response) -> {
-            LOG.error(exception.toString(), exception);
+            LogUtil.warn(LOG, "WebConsole failed, returns HTTP500", exception);
             handleException(500, "Internal Server Error: " + exception.toString(), response);
         });
 
@@ -168,7 +169,9 @@ public final class WebConsole {
         } else {
             resource = new URI(req.url()).getPath();
         }
-        LOG.debug("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("{} {} from {} {}", req.requestMethod(), resource, req.ip(), req.userAgent());
+        }
 
         // TODO: authenticator must be per each user and single admin user
         Optional<Authenticator> adminAuthenticator = Optional.ofNullable(config.getAuthenticator());
@@ -184,7 +187,9 @@ public final class WebConsole {
         }
         String date = req.headers("date");
 
-        LOG.debug("req={}, res={}, resource=", req, res, resource);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("req={}, res={}, resource=", req, res, resource);
+        }
         // These don't require authentication to simplify operation
         if (NO_AUTH_PAGES.contains(resource)) {
             return;
@@ -214,11 +219,12 @@ public final class WebConsole {
         if (!authenticator.authenticate(verb, md5, date, resource,
                 authHeaderValue.get().key(), authHeaderValue.get().signature())) {
             String string2sign = authenticator.string2sign(verb, md5, date, resource);
+            if (LOG.isDebugEnabled()) {
                 LOG.debug("Auth failed. Calculated signature={}, Given signature={}, S2S={}",
                         authenticator.signature(verb, md5, date, resource),
                         authHeaderValue.get().signature(),
                         string2sign);
-
+            }
             halt(401, "Authentication failed. String to sign: " + string2sign);
         }
     }
@@ -230,8 +236,9 @@ public final class WebConsole {
 
     static Optional<AuthHeader> getAuthInfo(Request req) {
         String givenSignature = req.headers(AuthHeader.AUTHORIZATION);
-        LOG.debug("Signature from client: {}", givenSignature);
-
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Signature from client: {}", givenSignature);
+        }
         return AuthHeader.parseHeaderValue(givenSignature);
     }
 

@@ -19,20 +19,20 @@ package io.github.retz.scheduler;
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.misc.Pair;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
+import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.JMException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,8 +72,8 @@ public final class Launcher {
             } else {
                 LOG.info("Automatic garbage collection is turned off; use retz-admin gc to collect old jobs");
             }
-        } catch (ParseException | URISyntaxException | SQLException | IOException e) {
-            LOG.error(e.toString(), e);
+        } catch (ParseException | URISyntaxException | IOException e) {
+            LogUtil.error(LOG, "launch error", e);
             return -1;
         }
         
@@ -138,7 +138,7 @@ public final class Launcher {
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }
 
-    private static void maybeRequeueRunningJobs(String master, String frameworkId, List<Job> running) {
+    private static void maybeRequeueRunningJobs(String master, String frameworkId, List<Job> running) throws IOException {
         LOG.info("{} jobs found in DB 'STARTING' or 'STARTED' state. Requeuing...", running.size());
         int offset = 0;
         int limit = 128;
@@ -191,7 +191,12 @@ public final class Launcher {
                     .addRoles(conf.fileConfig.getRole().get());
         }
 
-        Optional<String> fid = Database.getInstance().getFrameworkId();
+        Optional<String> fid;
+        try {
+            fid = Database.getInstance().getFrameworkId();
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
         if (fid.isPresent()) {
             LOG.info("FrameworkID {} found", fid.get());
             fwBuilder.setId(Protos.FrameworkID.newBuilder().setValue(fid.get()).build());

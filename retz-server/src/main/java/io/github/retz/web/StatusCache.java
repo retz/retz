@@ -24,11 +24,13 @@ import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.scheduler.RetzScheduler;
+
+import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -86,8 +88,14 @@ public class StatusCache implements Runnable {
 
     public static void updateUsedResources() {
         // Do cache update here
-        int queueLength = Database.getInstance().countQueued();
-        List<Job> jobs = Database.getInstance().getRunning();
+        int queueLength;
+        List<Job> jobs;
+        try {
+            queueLength = Database.getInstance().countQueued();
+            jobs = Database.getInstance().getRunning();
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
         ResourceQuantity total = new ResourceQuantity();
         for (Job  job : jobs ){
             total.add(job.resources());

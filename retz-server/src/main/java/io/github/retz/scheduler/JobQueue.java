@@ -18,15 +18,16 @@ package io.github.retz.scheduler;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import org.apache.mesos.Protos;
+import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -42,14 +43,19 @@ public class JobQueue {
     private static final AtomicInteger COUNTER;
 
     static {
-        int latest = Database.getInstance().getLatestJobId();
+        int latest;
+        try {
+            latest = Database.getInstance().getLatestJobId();
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
         COUNTER = new AtomicInteger(latest + 1);
     }
 
     private JobQueue() {
     }
 
-    public static List<Job> list(String user, Job.JobState state, Optional<String> tag, int limit) throws IOException, SQLException {
+    public static List<Job> list(String user, Job.JobState state, Optional<String> tag, int limit) throws IOException {
         return Database.getInstance().listJobs(user, state, tag, limit);
     }
 
@@ -59,7 +65,7 @@ public class JobQueue {
         return COUNTER.getAndIncrement(); // Just have to be unique
     }
 
-    public static void push(Job job) throws InterruptedException {
+    public static void push(Job job) throws InterruptedException, IOException {
         // TODO: set a cap of queue
         Database.getInstance().safeAddJob(job);
     }
@@ -71,10 +77,14 @@ public class JobQueue {
                 job.killed(TimestampHelper.now(), Optional.empty(), "Changed via JobQueue.cancelAll check");
             }
         }
-        Database.getInstance().updateJobs(jobs);
+        try {
+            Database.getInstance().updateJobs(jobs);
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
     }
 
-    public static Optional<Job> cancel(int id, String reason) throws SQLException, IOException, JobNotFoundException {
+    public static Optional<Job> cancel(int id, String reason) throws IOException, JobNotFoundException {
         Optional<Job> maybeJob = getJob(id);
         if (maybeJob.isPresent()) {
             Database.getInstance().updateJob(id, (job -> {
@@ -95,45 +105,36 @@ public class JobQueue {
         try {
             return Database.getInstance().findFit(orderBy, total.getCpu(), total.getMemMB());
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.warn(LOG, "JobQueue.findFit() failed, returns emptyList", e);
             return Collections.emptyList();
         }
     }
 
-    public static List<Job> queued(int limit) throws SQLException, IOException {
+    public static List<Job> queued(int limit) throws IOException {
         return Database.getInstance().queued(limit);
     }
 
-    public synchronized static Optional<Job> getJob(int id) {
-        try {
-            return Database.getInstance().getJob(id);
-        } catch (IOException e) {
-            LOG.error(e.toString(), e);
-        }
-        return Optional.empty();
+    public synchronized static Optional<Job> getJob(int id) throws IOException {
+        return Database.getInstance().getJob(id);
     }
 
-    public synchronized static void clear() {
+    public synchronized static void clear() throws IOException {
         Database.getInstance().deleteAllJob(Integer.MAX_VALUE);
     }
 
-    public static int size() {
+    public static int size() throws IOException {
         return Database.getInstance().countJobs();
     }
 
     public static void starting(Job job, Optional<String> url, String taskId) {
         try {
             Database.getInstance().setJobStarting(job.id(), url, taskId);
-        } catch (IOException e) {
-
-        } catch (SQLException e) {
-
-        } catch (JobNotFoundException e) {
-
+        } catch (IOException | JobNotFoundException e) {
+            LogUtil.warn(LOG, "JobQueue.starting() failed", e);
         }
     }
 
-    static void started(String taskId, Optional<String> maybeUrl) throws IOException, SQLException, JobNotFoundException {
+    static void started(String taskId, Optional<String> maybeUrl) throws IOException, JobNotFoundException {
         Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
         Database.getInstance().updateJob(maybeJob.get().id(), job -> {
             job.started(taskId, maybeUrl, TimestampHelper.now());
@@ -145,12 +146,12 @@ public class JobQueue {
         try {
             return Database.getInstance().getJobFromTaskId(taskId);
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.warn(LOG, "JobQueue.getFromTaskId() failed, returns empty", e);
             return Optional.empty();
         }
     }
 
-    public static void retry(String taskId, String reason) throws SQLException, JobNotFoundException {
+    public static void retry(String taskId, String reason) throws JobNotFoundException {
         try {
             Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
@@ -170,12 +171,12 @@ public class JobQueue {
                 });
             }
         } catch (IOException e) {
-            LOG.warn("Retry failed: {}", e.toString());
+            LogUtil.warn(LOG, "JobQueue.retry() failed", e);
         }
     }
 
     // Whether it's success, fail, or killed
-    static void finished(String taskId, Optional<String> maybeUrl, int ret, String finished) throws SQLException, JobNotFoundException {
+    static void finished(String taskId, Optional<String> maybeUrl, int ret, String finished) throws JobNotFoundException {
         try {
             Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
@@ -186,11 +187,11 @@ public class JobQueue {
                 LOG.info("Job id={} has finished at {} with return value={}", maybeJob.get().id(), finished, ret);
             }
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.warn(LOG, "JobQueue.finished() failed", e);
         }
     }
 
-    public static void failed(String taskId, Optional<String> maybeUrl, String msg) throws SQLException, JobNotFoundException {
+    public static void failed(String taskId, Optional<String> maybeUrl, String msg) throws JobNotFoundException {
         try {
             Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
             if (maybeJob.isPresent()) {
@@ -201,12 +202,16 @@ public class JobQueue {
                 LOG.info("Job id={} has failed: {}", maybeJob.get().id(), msg);
             }
         } catch (IOException e) {
-            LOG.error(e.toString(), e);
+            LogUtil.warn(LOG, "JobQueue.failed() failed", e);
         }
     }
 
     public static int countRunning() {
-        return Database.getInstance().countRunning();
+        try {
+            return Database.getInstance().countRunning();
+        } catch (IOException e) {
+            throw new RuntimeIOException(e);
+        }
     }
 
     //TODO: make this happen.... with admin APIs
