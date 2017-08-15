@@ -17,7 +17,6 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.db.Database;
-import io.github.retz.misc.LogUtil;
 import io.github.retz.protocol.data.*;
 import org.apache.mesos.Protos;
 import org.slf4j.Logger;
@@ -31,13 +30,8 @@ import java.util.Optional;
 public class Applications {
     private static final Logger LOG = LoggerFactory.getLogger(Applications.class);
 
-    public static Optional<Application> get(String appName) {
-        try {
-            return Database.getInstance().getApplication(appName);
-        } catch (IOException e) {
-            LogUtil.warn(LOG, "Applications.get() failed, returns empty", e);
-            return Optional.empty();
-        }
+    public static Optional<Application> get(String appName) throws IOException {
+        return Database.getInstance().getApplication(appName);
     }
 
     public static boolean load(Application application) throws IOException {

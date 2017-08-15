@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
+import io.github.retz.misc.LogUtil;
 import io.github.retz.planner.*;
 import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
@@ -30,7 +31,6 @@ import io.github.retz.web.StatusCache;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +106,14 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void registered(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) {
+        try {
+            registered0(driver, frameworkId, masterInfo);
+        } catch (IOException e) {
+            LogUtil.warn(LOG, "RetzScheduler.registered() failed", e);
+        }
+    }
+
+    private void registered0(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) throws IOException {
         if (! validMesosVersion(masterInfo.getVersion())) {
             // TODO: if the master is in maintenance period, Retz does not abort but sleep and retry later?
             driver.abort();
@@ -124,12 +132,7 @@ public class RetzScheduler implements Scheduler {
         StatusCache.updateMaster(newMaster);
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
 
-        Optional<String> oldFrameworkId;
-        try {
-            oldFrameworkId = Database.getInstance().getFrameworkId();
-        } catch (IOException e) {
-            throw new RuntimeIOException(e);
-        }
+        Optional<String> oldFrameworkId = Database.getInstance().getFrameworkId();
         if (oldFrameworkId.isPresent()) {
             if (oldFrameworkId.get().equals(frameworkId.getValue())) {
                 // framework exists. nothing to do
@@ -141,13 +144,9 @@ public class RetzScheduler implements Scheduler {
                 driver.stop();
             }
         } else {
-            try {
-                if (Database.getInstance().setFrameworkId(frameworkId.getValue())) {
-                } else {
-                    LOG.warn("Failed to remember frameworkID...");
-                }
-            } catch (IOException e) {
-                throw new RuntimeIOException(e);
+            if (Database.getInstance().setFrameworkId(frameworkId.getValue())) {
+            } else {
+                LOG.warn("Failed to remember frameworkID...");
             }
         }
     }
@@ -165,6 +164,14 @@ public class RetzScheduler implements Scheduler {
 
     @Override
     public void reregistered(SchedulerDriver driver, Protos.MasterInfo masterInfo) {
+        try {
+            reregistered0(driver, masterInfo);
+        } catch (IOException e) {
+            LogUtil.warn(LOG, "RetzScheduler.reregistered() failed", e);
+        }
+    }
+
+    private void reregistered0(SchedulerDriver driver, Protos.MasterInfo masterInfo) throws IOException {
         // Maybe long time split brain, recovering all states from master required.
 
         if (! validMesosVersion(masterInfo.getVersion())) {
@@ -263,7 +270,7 @@ public class RetzScheduler implements Scheduler {
         });
     }
 
-    public void handleAll(List<Protos.Offer> offers, List<Job> jobs, SchedulerDriver driver) {
+    public void handleAll(List<Protos.Offer> offers, List<Job> jobs, SchedulerDriver driver) throws IOException {
 
         // TODO: this is fleaky limitation, build this into Planner.plan as a constraint
         // Check if simultaneous jobs exceeded its limit
@@ -501,14 +508,9 @@ public class RetzScheduler implements Scheduler {
     // If it's not lost, just update state. Otherwise, set its state as QUEUED back.
     // This call must be offloaded from scheduler callback thread if schedule is active;
     // while if it's not active, it must block all other operations.
-    private void maybeRecoverRunning(SchedulerDriver driver) {
-        List<Job> jobs;
-        try {
-            jobs = Database.getInstance().getRunning();
-            Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
-        } catch (IOException e) {
-            throw new RuntimeIOException(e);
-        }
+    private void maybeRecoverRunning(SchedulerDriver driver) throws IOException {
+        List<Job> jobs = Database.getInstance().getRunning();
+        Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
     }
 
     public boolean validateJob(Job job) {

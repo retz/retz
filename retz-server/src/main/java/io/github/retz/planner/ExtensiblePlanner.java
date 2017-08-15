@@ -28,6 +28,7 @@ import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,7 @@ public class ExtensiblePlanner implements Planner {
     }
 
     @Override
-    public List<AppJobPair> filter(List<Job> jobs, List<Job> keep, boolean useGPU) {
+    public List<AppJobPair> filter(List<Job> jobs, List<Job> keep, boolean useGPU) throws IOException {
         extension.setUseGpu(useGPU);
 
         // TODO: better splitter
@@ -63,10 +64,11 @@ public class ExtensiblePlanner implements Planner {
                     return job;
                 }).collect(Collectors.toList()));
 
-        List<AppJobPair> appJobs = run.stream().map(job -> {
+        List<AppJobPair> appJobs = new ArrayList<>(run.size());
+        for (Job job : run) {
             Optional<Application> app = Applications.get(job.appid());
-            return new AppJobPair(app, job);
-        }).collect(Collectors.toList());
+            appJobs.add(new AppJobPair(app, job));
+        }
 
         keep.addAll(appJobs.stream()
                 .filter(appJobPair -> !appJobPair.hasApplication())
@@ -81,7 +83,7 @@ public class ExtensiblePlanner implements Planner {
     }
 
     @Override
-    public Plan plan(List<Protos.Offer> offers, List<AppJobPair> appJobPairs, int maxStock, String unixUser) {
+    public Plan plan(List<Protos.Offer> offers, List<AppJobPair> appJobPairs, int maxStock, String unixUser) throws IOException {
         extension.setMaxStock(maxStock);
 
         Map<String, Offer> mapOffers = new LinkedHashMap<>();

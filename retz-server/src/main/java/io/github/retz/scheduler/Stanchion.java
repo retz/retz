@@ -19,8 +19,10 @@ package io.github.retz.scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import java.io.IOException;
 import java.util.concurrent.*;
+
+import io.github.retz.misc.LogUtil;
 
 // An executor that serializes all request processing here
 public class Stanchion {
@@ -28,32 +30,27 @@ public class Stanchion {
 
     static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
-    static void schedule(Runnable runnable) {
+    @FunctionalInterface
+    public interface RunnableWithException {
+        public void run() throws IOException;
+    }
+
+    static void schedule(RunnableWithException runnable) {
         EXECUTOR.submit( () -> {
             try {
                 runnable.run();
             } catch (Exception e) {
-                LOG.error("Exception in Stanchion: {}", e.toString(), e);
+                LogUtil.error(LOG, "Exception in Stanchion", e);
             }
         });
     }
 
-    public static <R> Optional<R> call(Callable<R> callable) {
-        Future<Optional<R>> future = EXECUTOR.submit( () -> {
-        try {
-            return Optional.of(callable.call());
-        } catch (Exception e) {
-            LOG.debug(e.toString(), e);
-            return Optional.empty();
-        }});
+    public static <R> R call(Callable<R> callable) throws IOException {
+        Future<R> future = EXECUTOR.submit(callable);
         try {
             return future.get();
-        } catch (ExecutionException e) {
-            LOG.error(e.toString(), e);
-        } catch (InterruptedException e) {
-            LOG.error(e.toString(), e);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new IOException(e);
         }
-        return Optional.empty();
     }
-
 }

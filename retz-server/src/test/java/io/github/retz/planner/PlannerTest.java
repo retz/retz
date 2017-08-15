@@ -73,7 +73,7 @@ public class PlannerTest {
         Database.getInstance().stop();
     }
     @Test
-    public void noJobs() {
+    public void noJobs() throws Exception {
         {
             List<Protos.Offer> offers = new ArrayList<>();
             List<AppJobPair> jobs = new ArrayList<>();
@@ -103,7 +103,7 @@ public class PlannerTest {
     }
 
     @Test
-    public void twoJobs() {
+    public void twoJobs() throws Exception {
         Optional<Application> app = Applications.get(ANON_APPID);
 
         List<Protos.Offer> offers = new ArrayList<>();
@@ -131,7 +131,7 @@ public class PlannerTest {
     }
 
     @Test
-    public void eightJobs() {
+    public void eightJobs() throws Exception {
         Optional<Application> app = Applications.get(ANON_APPID);
         assertTrue(app.isPresent());
 
