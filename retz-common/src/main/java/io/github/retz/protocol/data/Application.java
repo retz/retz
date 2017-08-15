@@ -108,11 +108,9 @@ public class Application {
 
     @Override
     public String toString() {
-        String maybeUser = "";
-        if (user.isPresent()) {
-            maybeUser = "user=" + user.get();
-        }
+        String maybeUser = user.orElse("");
         String enabledStr = "";
+
         if (!enabled) {
             enabledStr = "(disabled)";
         }
