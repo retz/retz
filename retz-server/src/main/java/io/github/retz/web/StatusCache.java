@@ -25,11 +25,11 @@ import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.scheduler.RetzScheduler;
 
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -94,7 +94,7 @@ public class StatusCache implements Runnable {
             queueLength = Database.getInstance().countQueued();
             jobs = Database.getInstance().getRunning();
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new UncheckedIOException(e);
         }
         ResourceQuantity total = new ResourceQuantity();
         for (Job  job : jobs ){

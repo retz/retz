@@ -19,6 +19,7 @@ package io.github.retz.planner;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface Planner {
@@ -26,7 +27,7 @@ public interface Planner {
     List<String> orderBy();
 
     // TODO: make useGPU and maxStock configuration of each instance
-    List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU);
+    List<AppJobPair> filter(List<Job> jobs, List<Job> cancel, boolean useGPU) throws IOException;
 
-    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock, String unixUser);
+    Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock, String unixUser) throws IOException;
 }

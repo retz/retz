@@ -46,7 +46,6 @@ import spark.Request;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -289,7 +288,7 @@ public class JobRequestHandler {
         return MAPPER.writeValueAsString(listFilesResponse);
     }
 
-    static String kill(Request req, spark.Response res) throws JsonProcessingException {
+    static String kill(Request req, spark.Response res) throws IOException {
         LOG.debug("kill", req.params(":id"));
         res.type("application/json");
         int id = Integer.parseInt(req.params(":id"));
@@ -308,7 +307,7 @@ public class JobRequestHandler {
             return MAPPER.writeValueAsString(response);
         }
 
-        Optional<Boolean> result = Stanchion.call(() -> {
+        boolean result = Stanchion.call(() -> {
             Optional<Job> maybeJob2 = JobQueue.cancel(id, "Canceled by user");
 
             if (maybeJob2.isPresent()) {
@@ -328,7 +327,7 @@ public class JobRequestHandler {
         });
 
         Response response;
-        if (result.isPresent() && result.get()) {
+        if (result) {
             response = new KillResponse();
             res.status(200);
             response.ok();
@@ -341,7 +340,7 @@ public class JobRequestHandler {
         return MAPPER.writeValueAsString(response);
     }
 
-    static String schedule(spark.Request req, spark.Response res) throws IOException, InterruptedException {
+    static String schedule(spark.Request req, spark.Response res) throws IOException {
         ScheduleRequest scheduleRequest = MAPPER.readValue(req.bodyAsBytes(), ScheduleRequest.class);
         res.type("application/json");
         Optional<Application> maybeApp = Applications.get(scheduleRequest.job().appid()); // TODO check owner right here

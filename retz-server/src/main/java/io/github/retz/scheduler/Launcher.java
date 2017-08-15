@@ -26,11 +26,11 @@ import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -195,7 +195,7 @@ public final class Launcher {
         try {
             fid = Database.getInstance().getFrameworkId();
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new UncheckedIOException(e);
         }
         if (fid.isPresent()) {
             LOG.info("FrameworkID {} found", fid.get());

@@ -23,11 +23,11 @@ import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import org.apache.mesos.Protos;
-import org.eclipse.jetty.io.RuntimeIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -47,7 +47,7 @@ public class JobQueue {
         try {
             latest = Database.getInstance().getLatestJobId();
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new UncheckedIOException(e);
         }
         COUNTER = new AtomicInteger(latest + 1);
     }
@@ -65,7 +65,7 @@ public class JobQueue {
         return COUNTER.getAndIncrement(); // Just have to be unique
     }
 
-    public static void push(Job job) throws InterruptedException, IOException {
+    public static void push(Job job) throws IOException {
         // TODO: set a cap of queue
         Database.getInstance().safeAddJob(job);
     }
@@ -80,7 +80,7 @@ public class JobQueue {
         try {
             Database.getInstance().updateJobs(jobs);
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -210,7 +210,7 @@ public class JobQueue {
         try {
             return Database.getInstance().countRunning();
         } catch (IOException e) {
-            throw new RuntimeIOException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

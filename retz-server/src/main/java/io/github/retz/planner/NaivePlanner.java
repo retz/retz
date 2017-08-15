@@ -26,6 +26,7 @@ import org.apache.mesos.Protos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -125,7 +126,7 @@ public class NaivePlanner implements Planner {
     }
 
     @Override
-    public List<AppJobPair> filter(List<Job> jobs, List<Job> keep, boolean useGPU) {
+    public List<AppJobPair> filter(List<Job> jobs, List<Job> keep, boolean useGPU) throws IOException {
         // TODO: better splitter
         // Not using GPU or (using GPU and GPU enabled)
         List<Job> run = jobs.stream().filter(job -> job.resources().getGpu() == 0 || useGPU).collect(Collectors.toList());
@@ -138,10 +139,11 @@ public class NaivePlanner implements Planner {
                     return job;
                 }).collect(Collectors.toList()));
 
-        List<AppJobPair> appJobs = run.stream().map(job -> {
+        List<AppJobPair> appJobs = new ArrayList<>(run.size());
+        for (Job job : run) {
             Optional<Application> app = Applications.get(job.appid());
-            return new AppJobPair(app, job);
-        }).collect(Collectors.toList());
+            appJobs.add(new AppJobPair(app, job));
+        }
 
         keep.addAll(appJobs.stream()
                 .filter(appJobPair -> !appJobPair.hasApplication())
