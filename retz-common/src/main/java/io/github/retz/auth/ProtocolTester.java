@@ -44,7 +44,7 @@ public class ProtocolTester {
 
     public void test() {
         if (!validate()) {
-            LOG.error("Client server version does not match: {} and {}", serverVersion, clientVersion);
+            LOG.warn("Client and server version does not match: {} and {}", serverVersion, clientVersion);
         }
     }
 

@@ -17,5 +17,9 @@
 package io.github.retz.protocol;
 
 public class Protocol {
+    // Protocol version x.y.z
+    // if z does not match: a few API does not work
+    // if y does not match: most API does not work
+    // if x does not match: ALL API does not work
     public static final String PROTOCOL_VERSION = "0.2.0";
 }
