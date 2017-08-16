@@ -263,7 +263,7 @@ public class MesosHTTPFetcher {
     }
 
     // Only for String contents
-    private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws IOException {
+    private static Pair<Integer, String> fetchHTTP(String addr, int retry) throws FileNotFoundException, IOException {
         block:
         try (UrlConnector conn = new UrlConnector(addr, "GET", true)) {
             int statusCode = conn.getResponseCode();
@@ -328,13 +328,13 @@ public class MesosHTTPFetcher {
         return fetchHTTP(addr, retry - 1);
     }
 
-    public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws IOException {
+    public static Pair<Integer, String> fetchHTTPFile(String url, String name, long offset, long length) throws FileNotFoundException, IOException {
         String addr = url.replace("files/browse", "files/read") + "%2F" + maybeURLEncode(name)
                 + "&offset=" + offset + "&length=" + length;
         return fetchHTTP(addr, RETRY_LIMIT);
     }
 
-    public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws IOException {
+    public static Pair<Integer, String> fetchHTTPDir(String url, String path) throws FileNotFoundException, IOException {
         // Just do 'files/browse and get JSON
         String addr = url + "%2F" + maybeURLEncode(path);
         return fetchHTTP(addr, RETRY_LIMIT);
