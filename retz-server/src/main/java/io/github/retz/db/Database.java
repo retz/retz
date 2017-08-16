@@ -174,16 +174,15 @@ public class Database {
         }
     }
 
-    public boolean allTableExists() {
+    public boolean allTableExists() throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             return allTableExists(conn);
         } catch (SQLException e) {
-            LogUtil.warn(LOG, "Database.allTableExists() failed", e);
-            return false;
+            throw new IOException("Database.allTableExists() failed", e);
         }
     }
 
-    private boolean allTableExists(Connection conn) throws SQLException {
+    private boolean allTableExists(Connection conn) throws SQLException, IOException {
         DatabaseMetaData meta = conn.getMetaData();
 
         // PostgreSQL accepts only lower case names while
@@ -203,7 +202,7 @@ public class Database {
         } else if (!userTableExists && !applicationTableExists && !jobTableExists && !propTableExists) {
             return false;
         } else {
-            throw new RuntimeException("Database is partially ready: quitting");
+            throw new IOException("Database is partially ready: quitting");
         }
     }
 
@@ -485,16 +484,12 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
                     String json = res.getString(1);
-                    try {
-                        Job job = MAPPER.readValue(json, Job.class);
-                        assert job.state() == state;
-                        if (tag.isPresent() && !job.tags().contains(tag.get())) {
-                            continue;
-                        }
-                        ret.add(job);
-                    } catch (IOException e) {
-                        LOG.warn("Failed to decode json", e);
+                    Job job = MAPPER.readValue(json, Job.class);
+                    assert job.state() == state;
+                    if (tag.isPresent() && !job.tags().contains(tag.get())) {
+                        continue;
                     }
+                    ret.add(job);
                 }
             }
             return ret;
@@ -526,7 +521,7 @@ public class Database {
                 }
             }
         } catch (SQLException e) {
-            LogUtil.error(LOG, "Database.getAllJobs() failed", e);
+            throw new IOException("Database.getAllJobs() failed", e);
         }
         return ret;
     }
@@ -634,7 +629,7 @@ public class Database {
 
             Optional<Application> app = getApplication(conn, j.appid());
             if (!app.isPresent()) {
-                throw new RuntimeException("No such application: " + j.appid());
+                throw new IllegalStateException("No such application: " + j.appid());
             }
 
             addJob(conn, j);
@@ -846,14 +841,9 @@ public class Database {
             p.setString(1, state.toString());
             try (ResultSet set = p.executeQuery()) {
                 while (set.next()) {
-                    String json = "";
-                    try {
-                        json = set.getString("json");
-                        Job job = MAPPER.readValue(json, Job.class);
-                        jobs.add(job);
-                    } catch (IOException e) {
-                        LOG.warn("Skipping job({}) due to exception", json, e);
-                    }
+                    String json = set.getString("json");
+                    Job job = MAPPER.readValue(json, Job.class);
+                    jobs.add(job);
                 }
             }
             return jobs;

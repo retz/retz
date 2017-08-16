@@ -109,7 +109,7 @@ public class RetzScheduler implements Scheduler {
         try {
             registered0(driver, frameworkId, masterInfo);
         } catch (IOException e) {
-            LogUtil.warn(LOG, "RetzScheduler.registered() failed", e);
+            LogUtil.error(LOG, "RetzScheduler.registered() failed", e);
         }
     }
 
@@ -167,7 +167,7 @@ public class RetzScheduler implements Scheduler {
         try {
             reregistered0(driver, masterInfo);
         } catch (IOException e) {
-            LogUtil.warn(LOG, "RetzScheduler.reregistered() failed", e);
+            LogUtil.error(LOG, "RetzScheduler.reregistered() failed", e);
         }
     }
 
@@ -427,7 +427,7 @@ public class RetzScheduler implements Scheduler {
     }
 
     // Maybe Retry
-    void retry(Protos.TaskStatus status) {
+    void retry(Protos.TaskStatus status) throws IOException {
         String reason = "";
         if (status.hasMessage()) {
             reason = status.getMessage();
@@ -440,7 +440,7 @@ public class RetzScheduler implements Scheduler {
         }
     }
 
-    void finished(Protos.TaskStatus status) {
+    void finished(Protos.TaskStatus status) throws IOException {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
             maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
@@ -460,7 +460,7 @@ public class RetzScheduler implements Scheduler {
 
     }
 
-    void failed(Protos.TaskStatus status) {
+    void failed(Protos.TaskStatus status) throws IOException {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
             maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
@@ -476,7 +476,7 @@ public class RetzScheduler implements Scheduler {
         }
     }
 
-    void started(Protos.TaskStatus status) {
+    void started(Protos.TaskStatus status) throws IOException {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
             maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
@@ -489,8 +489,6 @@ public class RetzScheduler implements Scheduler {
         } catch (JobNotFoundException e) {
             LOG.warn("started({}) failed", status, e);
             // TODO: re-insert the failed job again?
-        } catch (IOException e) {
-            LOG.warn("started({}) failed", status, e);
         }
     }
 

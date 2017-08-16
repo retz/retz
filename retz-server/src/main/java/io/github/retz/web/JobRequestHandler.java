@@ -16,7 +16,6 @@
  */
 package io.github.retz.web;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -24,7 +23,6 @@ import io.github.retz.auth.AuthHeader;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
 import io.github.retz.mesosc.MesosHTTPFetcher;
-import io.github.retz.misc.LogUtil;
 import io.github.retz.misc.Pair;
 import io.github.retz.misc.Triad;
 import io.github.retz.planner.AppJobPair;
@@ -86,24 +84,18 @@ public class JobRequestHandler {
         LOG.debug("q: state={}, tag={}",
                 listJobRequest.state(), listJobRequest.tag());
         String user = Objects.requireNonNull(authHeaderValue.get().key());
-        try {
-            List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag(), MAX_LIST_JOB_SIZE);
+        List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag(), MAX_LIST_JOB_SIZE);
 
-            boolean more = false;
-            if (jobs.size() > ListJobResponse.MAX_JOB_NUMBER) {
-                more = true;
-                jobs = jobs.subList(0, ListJobResponse.MAX_JOB_NUMBER);
-            }
-            ListJobResponse listJobResponse = new ListJobResponse(jobs, more);
-            listJobResponse.ok();
-            res.status(200);
-            res.type("application/json");
-            return MAPPER.writeValueAsString(listJobResponse);
-        } catch (IOException e) {
-            LogUtil.warn(LOG, "JobRequestHandler.listJob failed, returns HTTP500", e);
-            res.status(500);
-            return "\"Internal Error\"";
+        boolean more = false;
+        if (jobs.size() > ListJobResponse.MAX_JOB_NUMBER) {
+            more = true;
+            jobs = jobs.subList(0, ListJobResponse.MAX_JOB_NUMBER);
         }
+        ListJobResponse listJobResponse = new ListJobResponse(jobs, more);
+        listJobResponse.ok();
+        res.status(200);
+        res.type("application/json");
+        return MAPPER.writeValueAsString(listJobResponse);
     }
 
     private static Optional<Job> getJobAndVerify(Request req) throws IOException {
@@ -180,7 +172,14 @@ public class JobRequestHandler {
         }
 
         // Go download
-        Pair<Integer, String> payload = MesosHTTPFetcher.fetchHTTPFile(job.url(), file, offset, length);
+        Pair<Integer, String> payload;
+        try {
+            payload = MesosHTTPFetcher.fetchHTTPFile(job.url(), file, offset, length);
+        } catch (FileNotFoundException e) {
+            res.status(404);
+            LOG.warn("path {} not found", file);
+            return MAPPER.writeValueAsString(new ErrorResponse(file + " not found"));
+        }
         LOG.debug("Payload length={}, offset={}", payload.right().length(), offset);
         // If a file is not UTF-8 then --binary / downloadFile is the tool for it
         if (payload.left() == 200) {
@@ -245,7 +244,7 @@ public class JobRequestHandler {
         return "";
     }
 
-    static String getDir(spark.Request req, spark.Response res) throws JsonProcessingException {
+    static String getDir(spark.Request req, spark.Response res) throws IOException {
         Optional<Job> job;
         try {
             job = getJobAndVerify(req);
@@ -264,20 +263,19 @@ public class JobRequestHandler {
 
         List<DirEntry> ret;
         if (job.isPresent() && job.get().url() != null) {
+            Pair<Integer, String> maybeJson;
             try {
-                Pair<Integer, String> maybeJson = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
-                if (maybeJson.left() == 200) {
-                    ret = MAPPER.readValue(maybeJson.right(), new TypeReference<List<DirEntry>>() {
-                    });
-                } else {
-                    return MAPPER.writeValueAsString(new ErrorResponse(path + ":" + maybeJson.left() + " " + maybeJson.right()));
-                }
+                maybeJson = MesosHTTPFetcher.fetchHTTPDir(job.get().url(), path);
             } catch (FileNotFoundException e) {
                 res.status(404);
                 LOG.warn("path {} not found", path);
                 return MAPPER.writeValueAsString(new ErrorResponse(path + " not found"));
-            } catch (IOException e) {
-                return MAPPER.writeValueAsString(new ErrorResponse(e.toString()));
+            }
+            if (maybeJson.left() == 200) {
+                ret = MAPPER.readValue(maybeJson.right(), new TypeReference<List<DirEntry>>() {
+                });
+            } else {
+                return MAPPER.writeValueAsString(new ErrorResponse(path + ":" + maybeJson.left() + " " + maybeJson.right()));
             }
         } else {
             ret = Collections.emptyList();

@@ -23,15 +23,15 @@ import org.slf4j.Logger;
 public class LogUtil {
 
     public static void error(Logger logger, String message, Throwable throwable) {
-        action(logger, message, throwable, (log, m, t) -> log.error(m, t));
+        action(logger, message, throwable, (log, m, t) -> log.error("{}", m, t));
     }
 
     public static void warn(Logger logger, String message, Throwable throwable) {
-        action(logger, message, throwable, (log, m, t) -> log.warn(m, t));
+        action(logger, message, throwable, (log, m, t) -> log.warn("{}", m, t));
     }
 
     public static void info(Logger logger, String message, Throwable throwable) {
-        action(logger, message, throwable, (log, m, t) -> log.info(m, t));
+        action(logger, message, throwable, (log, m, t) -> log.info("{}", m, t));
     }
 
     @FunctionalInterface

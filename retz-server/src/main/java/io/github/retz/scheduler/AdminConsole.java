@@ -85,10 +85,15 @@ public class AdminConsole implements AdminConsoleMXBean {
     }
 
     @Override
-    public List<String> getUsage(String start, String end) throws IOException {
+    public List<String> getUsage(String start, String end) {
         LOG.info("Querying usage at [{}, {})", start, end); //TODO
-        List<Job> jobs = Database.getInstance().finishedJobs(start, end);
-        return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
+        try {
+            List<Job> jobs = Database.getInstance().finishedJobs(start, end);
+            return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
+        } catch (IOException e) {
+            LogUtil.error(LOG, "AdminConsole.getUsage() failed", e);
+            return Collections.singletonList(errorJSON(e.toString()));
+        }
     }
 
     @Override
@@ -99,7 +104,7 @@ public class AdminConsole implements AdminConsoleMXBean {
             return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
         } catch (IOException e) {
             LogUtil.error(LOG, "AdminConsole.listUser() failed", e);
-            return Collections.emptyList();
+            return Collections.singletonList(e.toString());
         }
     }
 
