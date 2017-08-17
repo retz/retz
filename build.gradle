@@ -46,6 +46,7 @@ subprojects {
     apply plugin: 'scala'
     apply plugin: 'eclipse'
     apply plugin: 'findbugs'
+    apply plugin: 'checkstyle'
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
 
@@ -103,6 +104,12 @@ subprojects {
             // TODO: update this until Gradle 5.0
             html.destination "${buildDir}/reports/jacoco"
         }
+    }
+
+    checkstyle {
+        toolVersion = "8.1"
+        configFile = rootProject.file('checkstyle.xml')
+        ignoreFailures = true
     }
 
     publishing {
