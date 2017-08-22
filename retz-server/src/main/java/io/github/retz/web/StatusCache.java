@@ -79,6 +79,10 @@ public class StatusCache implements Runnable {
         }
     }
 
+    public static StatusResponse getRawStatusResponse() {
+       return statusResponseCache;
+    }
+
 
     public static void setOfferStats(int size, ResourceQuantity offered) {
         synchronized (statusResponseCache) {
