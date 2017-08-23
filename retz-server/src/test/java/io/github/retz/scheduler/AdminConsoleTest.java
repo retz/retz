@@ -23,6 +23,7 @@ import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.admin.AdminConsoleClient;
 import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
+import io.github.retz.jmx.RetzJmxServer;
 import io.github.retz.protocol.data.User;
 import org.junit.After;
 import org.junit.Before;
@@ -45,7 +46,7 @@ public class AdminConsoleTest {
 
         ServerConfiguration config = new ServerConfiguration(in);
         Database.getInstance().init(config);
-        Optional<JmxServer> server = AdminConsole.startJmxServer(config, Collections.emptyList());
+        Optional<JmxServer> server = RetzJmxServer.startJmxServer(config, Collections.emptyList());
         port = config.getJmxPort();
         jmxServer = server.get();
     }

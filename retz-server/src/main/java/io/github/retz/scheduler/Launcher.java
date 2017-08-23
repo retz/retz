@@ -19,6 +19,7 @@ package io.github.retz.scheduler;
 import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.db.Database;
 import io.github.retz.jmx.MBeanCollector;
+import io.github.retz.jmx.RetzJmxServer;
 import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.misc.LogUtil;
 import io.github.retz.misc.Pair;
@@ -82,7 +83,7 @@ public final class Launcher {
         jmxPairs.add(new Pair<>(Database.getDataSource().getPool().getJmxPool(),
                 "io.github.retz.db:type=TomcatThreadPool"));
         jmxPairs.addAll(MBeanCollector.beans());
-        Optional<JmxServer> maybeJmxServer = AdminConsole.startJmxServer(conf.getServerConfig(), jmxPairs);
+        Optional<JmxServer> maybeJmxServer = RetzJmxServer.startJmxServer(conf.getServerConfig(), jmxPairs);
         if (!maybeJmxServer.isPresent()) {
             LOG.error("Failed to start JMX Server");
             return -1;

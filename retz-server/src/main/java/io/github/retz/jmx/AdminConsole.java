@@ -14,23 +14,19 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.jmx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.bean.AdminConsoleMXBean;
 import io.github.retz.db.Database;
 import io.github.retz.misc.LogUtil;
-import io.github.retz.misc.Pair;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.*;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -119,34 +115,6 @@ public class AdminConsole implements AdminConsoleMXBean {
             LogUtil.info(LOG, "AdminConsole.gc() failed", t);
             return false;
         }
-    }
-
-    static Optional<JmxServer> startJmxServer(ServerConfiguration config, List<Pair<Object, String>> beans) {
-        int jmxPort = config.getJmxPort();
-
-        try {
-            JmxServer jmxServer = new JmxServer(jmxPort);
-
-            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-
-            // Registering self
-            ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
-            AdminConsole mbean = new AdminConsole(config.getGcLeeway());
-            mbs.registerMBean(mbean, name);
-
-            for (Pair<Object, String> pair: beans) {
-                ObjectName objectName = new ObjectName(pair.right());
-                mbs.registerMBean(pair.left(), objectName);
-            }
-
-            jmxServer.start();
-            LOG.info("JMX enabled listening to {}", jmxPort);
-            return Optional.of(jmxServer);
-
-        } catch (JMException e) {
-            LogUtil.error(LOG, "AdminConsole.startJmxServer() failed", e);
-        }
-        return Optional.empty();
     }
 
     private String maybeEncodeAsJSON(Object o) {
