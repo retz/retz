@@ -17,46 +17,45 @@
 package io.github.retz.jmx;
 
 import com.j256.simplejmx.server.JmxServer;
+import io.github.retz.db.Database;
 import io.github.retz.misc.LogUtil;
-import io.github.retz.misc.Pair;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.JMException;
-import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
-import java.util.List;
 import java.util.Optional;
 
 public class RetzJmxServer {
     private static final Logger LOG = LoggerFactory.getLogger(RetzJmxServer.class);
 
-    public static Optional<JmxServer> startJmxServer(ServerConfiguration config, List<Pair<Object, String>> beans) {
+    private static void registerMBean(Object mbean, String name) {
+        try {
+            ManagementFactory.getPlatformMBeanServer().registerMBean(mbean, new ObjectName(name));
+        } catch (JMException e) {
+            LogUtil.error(LOG, "RetzJmxServer.registerMBean() failed with " + name, e);
+        }
+    }
+
+    public static Optional<JmxServer> start(ServerConfiguration config) {
         int jmxPort = config.getJmxPort();
 
         try {
+            registerMBean(new AdminConsole(config.getGcLeeway()), "io.github.retz.scheduler:type=AdminConsole");
+            registerMBean(Database.getDataSource().getPool().getJmxPool(), "io.github.retz.db:type=TomcatThreadPool");
+            registerMBean(new StatusAdapter(), "io.github.retz:type=Stats,name=Status");
+            registerMBean(ResourceQuantityAdapter.newTotalOfferedQuantityAdapter() , "io.github.retz:type=Stats,name=TotalOffered");
+            registerMBean(ResourceQuantityAdapter.newTotalUsedQuantityAdapter(), "io.github.retz:type=Stats,name=TotalUsed");
+
             JmxServer jmxServer = new JmxServer(jmxPort);
-
-            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-
-            // Registering self
-            ObjectName name = new ObjectName("io.github.retz.scheduler:type=AdminConsole");
-            AdminConsole mbean = new AdminConsole(config.getGcLeeway());
-            mbs.registerMBean(mbean, name);
-
-            for (Pair<Object, String> pair: beans) {
-                ObjectName objectName = new ObjectName(pair.right());
-                mbs.registerMBean(pair.left(), objectName);
-            }
-
             jmxServer.start();
             LOG.info("JMX enabled listening to {}", jmxPort);
             return Optional.of(jmxServer);
 
         } catch (JMException e) {
-            LogUtil.error(LOG, "RetzJmxServer.startJmxServer() failed", e);
+            LogUtil.error(LOG, "RetzJmxServer.start() failed", e);
         }
         return Optional.empty();
     }

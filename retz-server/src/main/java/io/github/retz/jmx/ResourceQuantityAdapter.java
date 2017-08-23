@@ -62,4 +62,14 @@ public class ResourceQuantityAdapter implements ResourceQuantityMXBean {
     private ResourceQuantity getResourceQuantity() {
         return resourceGetter.apply(StatusCache.getRawStatusResponse());
     }
+
+    public static ResourceQuantityAdapter newTotalOfferedQuantityAdapter() {
+        Function<StatusResponse, ResourceQuantity> getTotalOfferedFun = (status) -> status.totalOffered();
+        return new ResourceQuantityAdapter(getTotalOfferedFun);
+    }
+
+    public static ResourceQuantityAdapter newTotalUsedQuantityAdapter() {
+        Function<StatusResponse, ResourceQuantity> getTotalUsedFun = (status) -> status.totalUsed();
+        return new ResourceQuantityAdapter(getTotalUsedFun);
+    }
 }

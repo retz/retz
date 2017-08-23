@@ -14,7 +14,7 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-package io.github.retz.scheduler;
+package io.github.retz.jmx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -25,18 +25,19 @@ import io.github.retz.cli.FileConfiguration;
 import io.github.retz.db.Database;
 import io.github.retz.jmx.RetzJmxServer;
 import io.github.retz.protocol.data.User;
+import io.github.retz.scheduler.Launcher;
+import io.github.retz.scheduler.ServerConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.management.ObjectName;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class AdminConsoleTest {
+public class RetzJmxServerTest {
     private JmxServer jmxServer;
     private int port;
 
@@ -46,7 +47,7 @@ public class AdminConsoleTest {
 
         ServerConfiguration config = new ServerConfiguration(in);
         Database.getInstance().init(config);
-        Optional<JmxServer> server = RetzJmxServer.startJmxServer(config, Collections.emptyList());
+        Optional<JmxServer> server = RetzJmxServer.start(config);
         port = config.getJmxPort();
         jmxServer = server.get();
     }
@@ -62,8 +63,9 @@ public class AdminConsoleTest {
     public void smoke() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new Jdk8Module());
+        JmxClient jmxClient = new JmxClient("localhost", port);
 
-        try (AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
+        try (AdminConsoleClient client = new AdminConsoleClient(jmxClient)) {
             List<String> users = client.listUser();
             assertFalse(users.isEmpty());
             assertEquals(1, users.size());
@@ -89,6 +91,13 @@ public class AdminConsoleTest {
                 User user = client.getUserAsObject("deadbeef");
                 assertNotNull(user);
                 assertFalse(user.enabled());
+            }
+
+            {
+                assertNotEquals(0, jmxClient.getAttributesInfo(new ObjectName("io.github.retz.db:type=TomcatThreadPool")).length);
+                assertNotEquals(0, jmxClient.getAttributesInfo(new ObjectName("io.github.retz:type=Stats,name=Status")).length);
+                assertNotEquals(0, jmxClient.getAttributesInfo(new ObjectName("io.github.retz:type=Stats,name=TotalOffered")).length);
+                assertNotEquals(0, jmxClient.getAttributesInfo(new ObjectName("io.github.retz:type=Stats,name=TotalUsed")).length);
             }
         }
     }
