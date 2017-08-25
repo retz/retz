@@ -1,4 +1,5 @@
-.PHONY: test build clean inttest rpm deb dist javadoc license client-jar
+.PHONY: test build clean inttest inttest-old inttest-latest \
+    rpm deb dist javadoc license client-jar
 
 GRADLE=./gradlew
 
@@ -8,16 +9,23 @@ javadoc:
 test:
 	$(GRADLE) test
 
-inttest:
+inttest: inttest-latest inttest-old
+
+inttest-latest:
 	$(GRADLE) clean
+	docker rmi mesos-retz
+	@echo "Testing latest Apache Mesos (could be same as 1.3)"
+	$(GRADLE) :retz-inttest:test -Dinttest -is
+
+inttest-old:
+	$(GRADLE) clean
+	docker rmi mesos-retz
 	@echo "Testing Apache Mesos 1.2"
 	$(GRADLE) :retz-inttest:test -Dinttest -is -Dmesos_version=1.2.1-2.0.1
 	$(GRADLE) clean
+	docker rmi mesos-retz
 	@echo "Testing Apache Mesos 1.3"
 	$(GRADLE) :retz-inttest:test -Dinttest -is -Dmesos_version=1.3.0-2.0.3
-	$(GRADLE) clean
-	@echo "Testing latest Apache Mesos (could be same as 1.3)"
-	$(GRADLE) :retz-inttest:test -Dinttest -is
 
 build:
 	$(GRADLE) build jacocoTestReport
