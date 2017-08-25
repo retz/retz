@@ -26,10 +26,12 @@ import org.slf4j.LoggerFactory;
 import javax.management.JMException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
-import java.util.Optional;
 
 public class RetzJmxServer {
     private static final Logger LOG = LoggerFactory.getLogger(RetzJmxServer.class);
+
+    // Singleton
+    private static JmxServer jmxServer = null;
 
     private static void registerMBean(Object mbean, String name) {
         try {
@@ -39,24 +41,29 @@ public class RetzJmxServer {
         }
     }
 
-    public static Optional<JmxServer> start(ServerConfiguration config) {
+    public static synchronized void start(ServerConfiguration config) throws JMException {
+        if (jmxServer != null) {
+            throw new RuntimeException("Tried to start duplicate JMX server");
+        }
         int jmxPort = config.getJmxPort();
 
-        try {
-            registerMBean(new AdminConsole(config.getGcLeeway()), "io.github.retz.scheduler:type=AdminConsole");
-            registerMBean(Database.getDataSource().getPool().getJmxPool(), "io.github.retz.db:type=TomcatThreadPool");
-            registerMBean(new StatusAdapter(), "io.github.retz:type=Stats,name=Status");
-            registerMBean(ResourceQuantityAdapter.newTotalOfferedQuantityAdapter() , "io.github.retz:type=Stats,name=TotalOffered");
-            registerMBean(ResourceQuantityAdapter.newTotalUsedQuantityAdapter(), "io.github.retz:type=Stats,name=TotalUsed");
+        registerMBean(new AdminConsole(config.getGcLeeway()), "io.github.retz.scheduler:type=AdminConsole");
+        registerMBean(Database.getDataSource().getPool().getJmxPool(), "io.github.retz.db:type=TomcatThreadPool");
+        registerMBean(new StatusAdapter(), "io.github.retz:type=Stats,name=Status");
+        registerMBean(ResourceQuantityAdapter.newTotalOfferedQuantityAdapter() , "io.github.retz:type=Stats,name=TotalOffered");
+        registerMBean(ResourceQuantityAdapter.newTotalUsedQuantityAdapter(), "io.github.retz:type=Stats,name=TotalUsed");
 
-            JmxServer jmxServer = new JmxServer(jmxPort);
-            jmxServer.start();
-            LOG.info("JMX enabled listening to {}", jmxPort);
-            return Optional.of(jmxServer);
+        jmxServer = new JmxServer(jmxPort);
+        jmxServer.start();
+        LOG.info("JMX enabled listening to {}", jmxPort);
+    }
 
-        } catch (JMException e) {
-            LogUtil.error(LOG, "RetzJmxServer.start() failed", e);
+    public static synchronized void stop() {
+        if (jmxServer == null) {
+            return;
         }
-        return Optional.empty();
+
+        jmxServer.stop();
+        jmxServer = null;
     }
 }

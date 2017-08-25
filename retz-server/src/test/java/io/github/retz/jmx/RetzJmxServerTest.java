@@ -38,7 +38,6 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class RetzJmxServerTest {
-    private JmxServer jmxServer;
     private int port;
 
     @Before
@@ -47,16 +46,15 @@ public class RetzJmxServerTest {
 
         ServerConfiguration config = new ServerConfiguration(in);
         Database.getInstance().init(config);
-        Optional<JmxServer> server = RetzJmxServer.start(config);
+        RetzJmxServer.start(config);
         port = config.getJmxPort();
-        jmxServer = server.get();
     }
 
     @After
     public void after() throws Exception {
+        RetzJmxServer.stop();
         Database.getInstance().clear();
         Database.getInstance().stop();
-        jmxServer.stop();
     }
 
     @Test

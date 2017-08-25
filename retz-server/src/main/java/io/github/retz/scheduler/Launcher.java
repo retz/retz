@@ -29,6 +29,7 @@ import org.apache.mesos.SchedulerDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.JMException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
@@ -72,14 +73,10 @@ public final class Launcher {
             } else {
                 LOG.info("Automatic garbage collection is turned off; use retz-admin gc to collect old jobs");
             }
-        } catch (ParseException | URISyntaxException | IOException e) {
-            LogUtil.error(LOG, "launch error", e);
-            return -1;
-        }
 
-        Optional<JmxServer> maybeJmxServer = RetzJmxServer.start(conf.getServerConfig());
-        if (!maybeJmxServer.isPresent()) {
-            LOG.error("Failed to start JMX Server");
+            RetzJmxServer.start(conf.getServerConfig());
+        } catch (ParseException | URISyntaxException | IOException | JMException e ) {
+            LogUtil.error(LOG, "launch error", e);
             return -1;
         }
 
@@ -130,7 +127,7 @@ public final class Launcher {
         WebConsole.stop(); // Stop web server
         GarbageJobCollector.stop();
         Database.getInstance().stop();
-        maybeJmxServer.get().stop();
+        RetzJmxServer.stop();
 
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
     }
