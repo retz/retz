@@ -16,15 +16,16 @@
  */
 package io.github.retz.bean;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface AdminConsoleMXBean {
-    List<String> listUser();
-    String createUser(String info);
-    String getUser(String keyId);
-    boolean enableUser(String id, boolean enabled);
+    List<String> listUser() throws IOException;
+    String createUser(String info) throws IOException;
+    String getUser(String keyId) throws IOException;
+    boolean enableUser(String id, boolean enabled) throws IOException;
+    List<String> getUsage(String start, String end) throws IOException;
 
-    List<String> getUsage(String start, String end);
     boolean gc();
     boolean gc(int leeway);
 }

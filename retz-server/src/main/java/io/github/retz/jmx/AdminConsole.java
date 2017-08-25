@@ -16,6 +16,7 @@
  */
 package io.github.retz.jmx;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.bean.AdminConsoleMXBean;
@@ -27,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,64 +44,41 @@ public class AdminConsole implements AdminConsoleMXBean {
     }
 
     @Override
-    public String createUser(String info) {
+    public String createUser(String info) throws IOException {
         LOG.info("AdminConsole.createUser({})", info);
-        try {
-            User user = Database.getInstance().createUser(info);
-            LOG.info(maybeEncodeAsJSON(user));
-            return maybeEncodeAsJSON(user);
-        } catch (IOException e) {
-            LogUtil.error(LOG, "AdminConsole.createUser() failed", e);
-            return errorJSON(e.toString());
-        }
+        User user = Database.getInstance().createUser(info);
+        LOG.info(maybeEncodeAsJSON(user));
+        return maybeEncodeAsJSON(user);
     }
 
     @Override
-    public String getUser(String name) {
+    public String getUser(String name) throws IOException {
         LOG.info("AdminConsole.getUser({})", name);
-        try {
-            Optional<User> maybeUser = Database.getInstance().getUser(name);
-            return maybeEncodeAsJSON(maybeUser);
-        } catch (IOException e) {
-            LogUtil.error(LOG, "AdminConsole.getUser() failed", e);
-            return errorJSON(e.toString());
-        }
+        Optional<User> maybeUser = Database.getInstance().getUser(name);
+        return maybeEncodeAsJSON(maybeUser);
     }
 
     @Override
-    public boolean enableUser(String id, boolean enabled) {
+    public boolean enableUser(String id, boolean enabled) throws IOException {
         LOG.info("AdminConsole.enableUser({}, {})", id, enabled);
-        try {
-            Database.getInstance().enableUser(id, enabled);
-            return true;
-        } catch (IOException e) {
-            LogUtil.error(LOG, "AdminConsole.enableUser() failed", e);
-            return false;
-        }
+        Database.getInstance().enableUser(id, enabled);
+        return true;
     }
 
     @Override
-    public List<String> getUsage(String start, String end) {
+    public List<String> getUsage(String start, String end) throws IOException {
         LOG.info("Querying usage at [{}, {})", start, end); //TODO
-        try {
-            List<Job> jobs = Database.getInstance().finishedJobs(start, end);
-            return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
-        } catch (IOException e) {
-            LogUtil.error(LOG, "AdminConsole.getUsage() failed", e);
-            return Collections.singletonList(errorJSON(e.toString()));
-        }
+        List<Job> jobs = Database.getInstance().finishedJobs(start, end);
+        return jobs.stream().map(job -> maybeEncodeAsJSON(job)).collect(Collectors.toList());
     }
 
     @Override
-    public List<String> listUser() {
+    public List<String> listUser() throws IOException {
         LOG.info("AdminConsole.listUser()");
-        try {
-            List<User> users = Database.getInstance().allUsers();
-            return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
-        } catch (IOException e) {
-            LogUtil.error(LOG, "AdminConsole.listUser() failed", e);
-            return Collections.singletonList(e.toString());
-        }
+
+        List<User> users = Database.getInstance().allUsers();
+        return users.stream().map(user -> user.keyId()).collect(Collectors.toList());
+
     }
 
     @Override
@@ -125,7 +102,7 @@ public class AdminConsole implements AdminConsoleMXBean {
     private String maybeEncodeAsJSON(Object o) {
         try {
             return MAPPER.writeValueAsString(o);
-        } catch (IOException e) {
+        } catch (JsonProcessingException e) {
             LogUtil.error(LOG, "AdminConsole.maybeEncodeAsJSON() failed", e);
             return errorJSON(e.toString());
         }

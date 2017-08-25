@@ -56,6 +56,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         try {
             return (boolean) client.invokeOperation(objectName, "enableUser", id, enabled);
         } catch (Exception o) {
+            LOG.error("Failed to enable user {}", id, o);
             return false;
         }
     }
@@ -67,6 +68,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
             String[] jsons = (String[]) client.invokeOperation(objectName, "getUsage", start, end);
             return Arrays.asList(jsons);
         } catch (Exception o) {
+            LOG.error("Failed to get usage {}-{}", start, end, o);
             return Collections.emptyList();
         }
     }
@@ -77,6 +79,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
             String[] jsons = (String[]) client.invokeOperation(objectName, "listUser");
             return Arrays.asList(jsons);
         } catch (Exception o) {
+            LOG.error("Failed to list user", o);
             return Collections.emptyList();
         }
     }
@@ -91,7 +94,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         try {
             return (String) client.invokeOperation(objectName, "createUser", info);
         } catch (Exception o) {
-            LOG.error(o.toString(), o);
+            LOG.error("Failed to create user {}", info, o);
             return "{}";
         }
     }
@@ -106,6 +109,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         try {
             return (String) client.invokeOperation(objectName, "getUser", keyId);
         } catch (Exception o) {
+            LOG.error("Failed to get user {}", keyId, o);
             return "{}";
         }
     }
@@ -115,6 +119,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         try {
             return (boolean) client.invokeOperation(objectName, "gc");
         } catch (Exception e) {
+            LOG.error("Failed to run GC", e);
             return false;
         }
     }
@@ -124,6 +129,7 @@ public class AdminConsoleClient implements AdminConsoleMXBean, AutoCloseable {
         try {
             return (boolean) client.invokeOperation(objectName, "gc", leeway);
         } catch (Exception e) {
+            LOG.error("Failed to run GC", e);
             return false;
         }
     }
