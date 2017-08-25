@@ -16,7 +16,6 @@
  */
 package io.github.retz.bean;
 
-import java.io.IOException;
 import java.util.List;
 
 public interface AdminConsoleMXBean {
@@ -25,7 +24,7 @@ public interface AdminConsoleMXBean {
     String getUser(String keyId);
     boolean enableUser(String id, boolean enabled);
 
-    List<String> getUsage(String start, String end) throws IOException;
+    List<String> getUsage(String start, String end);
     boolean gc();
     boolean gc(int leeway);
 }

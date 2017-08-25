@@ -108,7 +108,7 @@ public final class WebConsole {
         });
 
         exception(Exception.class, (exception, request, response) -> {
-            LogUtil.warn(LOG, "WebConsole failed, returns HTTP500", exception);
+            LogUtil.error(LOG, "WebConsole failed, returns HTTP500", exception);
             handleException(500, "Internal Server Error: " + exception.toString(), response);
         });
 
