@@ -202,7 +202,8 @@ public class Database {
         } else if (!userTableExists && !applicationTableExists && !jobTableExists && !propTableExists) {
             return false;
         } else {
-            throw new IOException("Database is partially ready: quitting");
+            LOG.error("user:{}, applicaion:{}, job:{}, prop:{}", userTableExists, applicationTableExists, jobTableExists, propTableExists);
+            throw new AssertionError("Database is partially ready: quitting");
         }
     }
 
