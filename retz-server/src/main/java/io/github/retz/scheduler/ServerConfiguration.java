@@ -62,6 +62,8 @@ public class ServerConfiguration extends FileConfiguration {
     static final int DEFAULT_MESOS_REFUSE_SECONDS = 3;
     static final String MESOS_FAILOVER_TIMEOUT = "retz.mesos.failover.timeout";
     static final int DEFAULT_MESOS_FAILOVER_TIMEOUT = 3600 * 24 * 7;
+    static final String RECOVER_ON_RECONNECT = "retz.recover-on-reconnect";
+    static final String DEFAULT_RECOVER_ON_RECONNECT = "true";
 
     // Not yet used
     static final String QUEUE_MAX = "retz.max.queue";
@@ -270,6 +272,12 @@ public class ServerConfiguration extends FileConfiguration {
             return Integer.parseInt(properties.getProperty(MESOS_FAILOVER_TIMEOUT));
         }
         return DEFAULT_MESOS_FAILOVER_TIMEOUT;
+    }
+
+    public boolean getRecoverOnReconnect() {
+        return Boolean.parseBoolean(properties.getProperty(
+                RECOVER_ON_RECONNECT,
+                DEFAULT_RECOVER_ON_RECONNECT));
     }
 
     public Properties copyAsProperties() {

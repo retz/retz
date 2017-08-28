@@ -43,6 +43,7 @@ public class ServerConfigurationTest {
 
         assertEquals(42, config.getMaxListJobSize());
         assertEquals(12345, config.getMaxFileSize());
+        assertEquals(false, config.getRecoverOnReconnect());
     }
 
     @Test(expected=IllegalArgumentException.class)
