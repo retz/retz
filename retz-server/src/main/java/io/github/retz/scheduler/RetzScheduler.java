@@ -136,8 +136,10 @@ public class RetzScheduler implements Scheduler {
         if (oldFrameworkId.isPresent()) {
             if (oldFrameworkId.get().equals(frameworkId.getValue())) {
                 // framework exists. nothing to do
-                LOG.info("Framework id={} existed in past. Recovering any running jobs...", frameworkId.getValue());
-                maybeRecoverRunning(driver);
+                if (conf.fileConfig.getRecoverOnReconnect()) {
+                    LOG.info("Framework id={} existed in past. Recovering any running jobs...", frameworkId.getValue());
+                    maybeRecoverRunning(driver);
+                }
             } else {
                 LOG.error("Old different framework ({}) exists (!= {}). Quitting",
                         oldFrameworkId.get(), frameworkId.getValue());
@@ -186,8 +188,10 @@ public class RetzScheduler implements Scheduler {
                 .toString();
         this.master = Optional.of(newMaster);
         StatusCache.updateMaster(newMaster);
-        LOG.info("Reconnected to master {}", newMaster);
-        maybeRecoverRunning(driver);
+        if (conf.fileConfig.getRecoverOnReconnect()) {
+            LOG.info("Reconnected to master {}", newMaster);
+            maybeRecoverRunning(driver);
+        }
     }
 
     @Override
