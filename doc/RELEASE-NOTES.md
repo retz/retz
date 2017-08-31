@@ -2,6 +2,9 @@
 
 ## 0.4.0
 
+* Use reconcileTasks() driver API instead of rolling back all job
+  states to QUEUED. This change prevents duplicate invocation of
+  already running jobs, addressing #158 and #180 .
 * Add 'slaveId' field to Job. This introduces incompatibility (1) on
   client library interface (esp. constructors of Job class), (2) on
   old version clients with newer servers, and (3) old servers with

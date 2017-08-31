@@ -137,7 +137,7 @@ public class RetzScheduler implements Scheduler {
             if (oldFrameworkId.get().equals(frameworkId.getValue())) {
                 // framework exists. nothing to do
                 LOG.info("Framework id={} existed in past. Recovering any running jobs...", frameworkId.getValue());
-                maybeRecoverRunning(driver);
+                reconcileAllRunningJobs(driver);
             } else {
                 LOG.error("Old different framework ({}) exists (!= {}). Quitting",
                         oldFrameworkId.get(), frameworkId.getValue());
@@ -187,7 +187,7 @@ public class RetzScheduler implements Scheduler {
         this.master = Optional.of(newMaster);
         StatusCache.updateMaster(newMaster);
         LOG.info("Reconnected to master {}", newMaster);
-        maybeRecoverRunning(driver);
+        reconcileAllRunningJobs(driver);
     }
 
     @Override
@@ -343,7 +343,7 @@ public class RetzScheduler implements Scheduler {
         }
 
         // TODO: remove **ONLY** tasks that is running on the failed slave
-        Stanchion.schedule(() -> maybeRecoverRunning(driver));
+        Stanchion.schedule(() -> reconcileAllRunningJobs(driver));
 
         // There is a potential race between offerRescinded/slaveLost and using offer stocks;
         // in case handleAll trying to schedule tasks, offers are removed from OFFER_STOCK
@@ -502,14 +502,20 @@ public class RetzScheduler implements Scheduler {
         StatusCache.setOfferStats(OFFER_STOCK.size(), total);
     }
 
-    // Get all running jobs and sync its latest state in Mesos
-    // If it's not lost, just update state. Otherwise, set its state as QUEUED back.
-    // This call must be offloaded from scheduler callback thread if schedule is active;
-    // while if it's not active, it must block all other operations.
-    private void maybeRecoverRunning(SchedulerDriver driver) throws IOException {
-        // TODO: reconcile all those jobs
+    // Get all running jobs and reconcile all of them - status update on database
+    // will be done after statusUpdate() received. See how reconciliation must work
+    // in http://mesos.apache.org/documentation/latest/reconciliation/ .
+    private void reconcileAllRunningJobs(SchedulerDriver driver) throws IOException {
         List<Job> jobs = Database.getInstance().getRunning();
-        Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
+        List<Protos.TaskStatus> taskStatuses = jobs.stream().map( job -> {
+            Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder()
+                    .setTaskId(Protos.TaskID.newBuilder().setValue(job.taskId()));
+            if (job.slaveId() != null) {
+                builder.setSlaveId(Protos.SlaveID.newBuilder().setValue(job.slaveId()));
+            }
+            return builder.build();
+        }).collect(Collectors.toList());
+        driver.reconcileTasks(taskStatuses);
     }
 
     public boolean validateJob(Job job) {

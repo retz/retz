@@ -81,17 +81,8 @@ public final class Launcher {
         }
 
         Protos.FrameworkInfo fw = buildFrameworkInfo(conf);
-
-        // Retz must do all recovery process before launching scheduler;
-        // This is because running scheduler changes state of any jobs if it
-        // has successfully connected to Mesos master.
-        // By hitting HTTP endpoints and comparing with database job states,
-        // Retz can decide whether to re-run it or just finish it.
-        // BTW after connecting to Mesos it looks like re-sending unacked messages.
-        // TODO: this call should be replaced with reconcillation after reconnect / registerred callback
-        // maybeRequeueRunningJobs(conf.getMesosMaster(), fw.getId().getValue(), Database.getInstance().getRunning());
-
         RetzScheduler scheduler;
+
         try {
             scheduler = new RetzScheduler(conf, fw);
         } catch (Throwable t) {
@@ -130,45 +121,6 @@ public final class Launcher {
         RetzJmxServer.stop();
 
         return (status == Protos.Status.DRIVER_STOPPED ? 0 : 255);
-    }
-
-    private static void maybeRequeueRunningJobs(String master, String frameworkId, List<Job> running) throws IOException {
-        // TODO: replace all these code with reconcilation
-        LOG.info("{} jobs found in DB 'STARTING' or 'STARTED' state. Requeuing...", running.size());
-        /*
-        int offset = 0;
-        int limit = 128;
-        Map<String, Job> runningMap = running.stream().collect(Collectors.toMap(job -> job.taskId(), job -> job));
-        List<Job> recoveredJobs = new ArrayList<>();
-        while (true) {
-            try {
-                List<Map<String, Object>> tasks = MesosHTTPFetcher.fetchTasks(master, frameworkId, offset, limit);
-                if (tasks.isEmpty()) {
-                    break;
-                }
-
-                for (Map<String, Object> task : tasks) {
-                    String state = (String) task.get("state");
-                    // Get TaskId
-                    String taskId = (String) task.get("id");
-                    String slaveId = (String) task.get("slave_id");
-                    if (runningMap.containsKey(taskId)) {
-                        Job job = runningMap.remove(taskId);
-
-                        recoveredJobs.add(JobQueue.updateJobStatus(job, state));
-                    } else {
-                        LOG.warn("Unknown job!");
-                    }
-                }
-                offset = offset + tasks.size();
-            } catch (MalformedURLException e) {
-                LOG.error(e.toString(), e);
-                throw new RuntimeException(e);
-            }
-        }
-        Database.getInstance().updateJobs(recoveredJobs);
-        LOG.info("{} jobs rescheduled, {} jobs didn't need change.", recoveredJobs.size(), runningMap.size());
-        */
     }
 
     private static Protos.FrameworkInfo buildFrameworkInfo(Configuration conf) {
