@@ -507,8 +507,9 @@ public class RetzScheduler implements Scheduler {
     // This call must be offloaded from scheduler callback thread if schedule is active;
     // while if it's not active, it must block all other operations.
     private void maybeRecoverRunning(SchedulerDriver driver) throws IOException {
-        //List<Job> jobs = Database.getInstance().getRunning();
         // TODO: reconcile all those jobs
+        List<Job> jobs = Database.getInstance().getRunning();
+        Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
     }
 
     public boolean validateJob(Job job) {
