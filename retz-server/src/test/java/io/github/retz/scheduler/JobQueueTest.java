@@ -79,7 +79,7 @@ public class JobQueueTest {
 
         String taskId = "foobar-taskid";
         {
-            JobQueue.started(taskId, Optional.empty());
+            JobQueue.started(taskId, "slaveId", Optional.empty());
             List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0, 0));
             for (Job j : fit) {
                 System.err.println(j.name() + " " +j.cmd());

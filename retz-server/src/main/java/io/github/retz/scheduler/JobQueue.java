@@ -128,10 +128,10 @@ public class JobQueue {
         }
     }
 
-    static void started(String taskId, Optional<String> maybeUrl) throws IOException, JobNotFoundException {
+    static void started(String taskId, String slaveId, Optional<String> maybeUrl) throws IOException, JobNotFoundException {
         Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
         Database.getInstance().updateJob(maybeJob.get().id(), job -> {
-            job.started(taskId, maybeUrl, TimestampHelper.now());
+            job.started(taskId, slaveId, maybeUrl, TimestampHelper.now());
             return Optional.of(job);
         });
     }
@@ -188,53 +188,4 @@ public class JobQueue {
         return Database.getInstance().countRunning();
     }
 
-    //TODO: make this happen.... with admin APIs
-    public static void compact() {
-        throw new AssertionError("Not yet implemented");
-    }
-
-    /*
-     * Update local job state according to status in Mesos
-     *
-                      | STARTING   | STARTED
-        --------------+------------+------------
-        TASK_RUNNING  | STARTED    | keep
-        TASK_STAGING  | keep       | -
-        TASK_STARTING | keep       | -
-        TASK_LOST     | QUEUED     | QUEUED
-        TASK_FINISHED | FINISHED   | FINISHED
-        TASK_KILLED   | KILLED     | KILLED
-        TASK_ERROR    | KILLED     | KILLED
-     */
-    public static Job updateJobStatus(Job job, String stateInMesos) {
-        Protos.TaskState taskState = Protos.TaskState.valueOf(stateInMesos);
-        switch (taskState.getNumber()) {
-            case Protos.TaskState.TASK_STAGING_VALUE:
-            case Protos.TaskState.TASK_STARTING_VALUE:
-                break;
-            case Protos.TaskState.TASK_RUNNING_VALUE:
-                if (job.state() == Job.JobState.STARTING) {
-                    job.started(job.taskId(), Optional.empty(), TimestampHelper.now());
-                }
-                break;
-            case Protos.TaskState.TASK_LOST_VALUE:
-                job.doRetry();
-                break;
-            case Protos.TaskState.TASK_FINISHED_VALUE:
-                //TODO: recover all information right here
-                job.finished(TimestampHelper.now(), Optional.empty(), 0);
-                break;
-            case Protos.TaskState.TASK_KILLED_VALUE:
-            case Protos.TaskState.TASK_KILLING_VALUE:
-                job.killed(TimestampHelper.now(), Optional.empty(), "KILLED");
-                break;
-            case Protos.TaskState.TASK_ERROR_VALUE:
-                job.killed(TimestampHelper.now(), Optional.empty(), "ERROR");
-                break;
-            default:
-                LOG.error("Unknown state: {}", stateInMesos);
-                break;
-        }
-        return job;
-    }
 }

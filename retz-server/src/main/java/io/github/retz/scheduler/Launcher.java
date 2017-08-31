@@ -134,36 +134,7 @@ public final class Launcher {
 
     private static void maybeRequeueRunningJobs(String master, String frameworkId, List<Job> running) throws IOException {
         LOG.info("{} jobs found in DB 'STARTING' or 'STARTED' state. Requeuing...", running.size());
-        int offset = 0;
-        int limit = 128;
-        Map<String, Job> runningMap = running.stream().collect(Collectors.toMap(job -> job.taskId(), job -> job));
-        List<Job> recoveredJobs = new ArrayList<>();
-        while (true) {
-            try {
-                List<Map<String, Object>> tasks = MesosHTTPFetcher.fetchTasks(master, frameworkId, offset, limit);
-                if (tasks.isEmpty()) {
-                    break;
-                }
-
-                for (Map<String, Object> task : tasks) {
-                    String state = (String) task.get("state");
-                    // Get TaskId
-                    String taskId = (String) task.get("id");
-                    if (runningMap.containsKey(taskId)) {
-                        Job job = runningMap.remove(taskId);
-                        recoveredJobs.add(JobQueue.updateJobStatus(job, state));
-                    } else {
-                        LOG.warn("Unknown job!");
-                    }
-                }
-                offset = offset + tasks.size();
-            } catch (MalformedURLException e) {
-                LOG.error(e.toString(), e);
-                throw new RuntimeException(e);
-            }
-        }
-        Database.getInstance().updateJobs(recoveredJobs);
-        LOG.info("{} jobs rescheduled, {} jobs didn't need change.", recoveredJobs.size(), runningMap.size());
+        // TODO!!!
     }
 
     private static Protos.FrameworkInfo buildFrameworkInfo(Configuration conf) {

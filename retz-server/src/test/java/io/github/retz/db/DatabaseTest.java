@@ -233,6 +233,7 @@ public class DatabaseTest {
                     new ResourceQuantity(1, 32, 0, 0, 0, 0),
                     Optional.empty(),
                     null,
+                    null,
                     Job.JobState.QUEUED);
             job.addTags(Arrays.asList("tag1", "tag2"));
             db.safeAddJob(job);

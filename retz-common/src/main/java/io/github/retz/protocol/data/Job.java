@@ -44,6 +44,7 @@ public class Job {
     private int priority;
     private String name; // TODO: make this configurable;
     private String taskId; // TaskId assigned by Mesos (or other scheduler)
+    private String slaveId;
     private JobState state;
 
     public Job(String appName, String cmd, Properties props, int cpu, int memMB, int disk) {
@@ -58,6 +59,8 @@ public class Job {
         this.state = CREATED;
         this.retry = 0;
         this.priority = 0;
+        this.taskId = null;
+        this.slaveId = null;
     }
 
     public Job(String appName, String cmd, Properties props, int cpu, int memMB, int disk, int gpu, int ports) {
@@ -90,6 +93,7 @@ public class Job {
                @JsonProperty(value = "resources", required = true) ResourceQuantity resources,
                @JsonProperty("attributes") Optional<String> attributes,
                @JsonProperty("taskId") String taskId,
+               @JsonProperty("slaveId") String slaveId,
                @JsonProperty("state") JobState state) {
         this.cmd = Objects.requireNonNull(cmd);
         this.scheduled = scheduled;
@@ -110,6 +114,7 @@ public class Job {
         this.resources = resources;
         this.attributes = attributes;
         this.taskId = taskId;
+        this.slaveId = slaveId;
         this.state = Objects.requireNonNull(state);
     }
 
@@ -192,9 +197,15 @@ public class Job {
     public Optional<String> attributes() {
         return attributes;
     }
+
     @JsonGetter("taskId")
     public String taskId() {
         return taskId;
+    }
+
+    @JsonGetter("slaveId")
+    public String slaveId() {
+        return slaveId;
     }
 
     @JsonGetter("state")
@@ -222,9 +233,10 @@ public class Job {
         this.state = STARTING;
     }
 
-    public void started(String taskId, Optional<String> maybeUrl, String now) {
+    public void started(String taskId, String slaveId, Optional<String> maybeUrl, String now) {
         this.started = now;
         this.taskId = taskId;
+        this.slaveId = Objects.requireNonNull(slaveId);
         if (maybeUrl.isPresent()) {
             this.url = maybeUrl.get();
         }
@@ -298,6 +310,7 @@ public class Job {
             sb.append(", reason=").append(reason);
         }
         sb.append(", taskid=").append(taskId)
+                .append(", slaveid=").append(slaveId)
                 .append("}");
         return sb.toString();
     }
@@ -331,6 +344,9 @@ public class Job {
         }
         if (taskId != null) {
             sb.append(", taskid=").append(taskId);
+        }
+        if (slaveId != null) {
+            sb.append(", slaveid=").append(slaveId);
         }
         return sb.append("}").toString();
     }

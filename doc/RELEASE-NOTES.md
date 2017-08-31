@@ -1,5 +1,12 @@
 # Retz release notes
 
+## 0.4.0
+
+* Add 'slaveId' field to Job. This introduces incompatibility (1) on
+  client library interface (esp. constructors of Job class), (2) on
+  old version clients with newer servers, and (3) old servers with
+  database created by newer servers.
+
 ## 0.3.1
 
 * Improve DB error logging as well as several other log levels.

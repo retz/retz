@@ -16,12 +16,15 @@
  */
 package io.github.retz.protocol;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,6 +60,7 @@ public class JobTest {
                 new ResourceQuantity(32, 65536, 8, 0, 0, 0),
                 Optional.empty(),
                 "my-sample-taskid",
+                null,
                 Job.JobState.CREATED);
         job.setName("job=name");
         job.setPriority(-10);
@@ -82,7 +86,7 @@ public class JobTest {
 
     @Test
     public void ppStarted() {
-        job.started("retz-new-task-id-2354", Optional.empty(), TimestampHelper.now());
+        job.started("retz-new-task-id-2354", "me is new slave", Optional.empty(), TimestampHelper.now());
         System.err.println(job.toString());
         System.err.println(job.pp());
         assertEquals(Job.JobState.STARTED, job.state());
@@ -141,5 +145,21 @@ public class JobTest {
                 assertEquals(m.group(1), "%STRING_NOT_TO_REPLACE%");
             });
         });
+    }
+
+    @Test
+    public void formatCompat() throws IOException {
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new Jdk8Module());
+        System.err.println(mapper.writeValueAsString(job));
+
+        {
+            // This is a JSON-encoded 'job' WITHOUT null entries
+            String json = "{\"cmd\":\"bin/yaess-batch.sh m3bp.example.sales -date ....\",\"scheduled\":\"2017-08-31T17:36:46.431+09:00\",\"started\":null,\"finished\":null,\"result\":-42,\"id\":10000042,\"url\":\"https://example.com:5050/path/to/sandbox\",\"reason\":\"hey, aren't you a Mesos task?? (<=reason)\",\"retry\":0,\"priority\":-10,\"appid\":\"sample-app\",\"name\":\"job=name\",\"tags\":[\"tag1\",\"tag2\"],\"resources\":{\"cpu\":32,\"memMB\":65536,\"gpu\":8,\"ports\":0,\"diskMB\":0,\"nodes\":0},\"taskId\":\"my-sample-taskid\",\"state\":\"CREATED\",\"props\":{}}";
+            // And test whether it has backward compatibility with old job formats, before "slaveId" addition
+            Job job2 = mapper.readValue(json, Job.class);
+            System.err.println(job2.pp());
+        }
     }
 }

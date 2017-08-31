@@ -57,10 +57,10 @@ object DatabaseSpec extends Commands {
                    queued: Map[Int, Job],
                    running: Map[Int, Job],
                    name: String) {
-    def start(id : Int, taskId: String) : State = {
+    def start(id : Int, taskId: String, slaveId: String) : State = {
       var job: Job = queued.get(id).get
       //job.killed(TimestampHelper.now(), Optional.empty(), "reason")
-      job.started(taskId, Optional.empty(), TimestampHelper.now())
+      job.started(taskId, slaveId, Optional.empty(), TimestampHelper.now())
       State(users, applications, queued - id, running + (id -> job), name)
     }
     def addUser(user: User) : State = {

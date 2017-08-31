@@ -408,7 +408,7 @@ public class RetzScheduler implements Scheduler {
                     break;
 
                 case STARTING:
-                    LOG.debug("Task {} starting", status.getTaskId().getValue());
+                    // LOG.info("Task {} starting at {}", status.getTaskId().getValue(), status.getSlaveId().getValue());
                     Optional<String> maybeUrl = Optional.empty();
                     if (this.master.isPresent()) {
                         maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
@@ -485,7 +485,7 @@ public class RetzScheduler implements Scheduler {
                     status.getContainerStatus().getContainerId().getValue());
         }
         try {
-            JobQueue.started(status.getTaskId().getValue(), maybeUrl);
+            JobQueue.started(status.getTaskId().getValue(), status.getSlaveId().getValue(), maybeUrl);
         } catch (JobNotFoundException e) {
             LOG.warn("started({}) failed", status, e);
             // TODO: re-insert the failed job again?
@@ -507,8 +507,8 @@ public class RetzScheduler implements Scheduler {
     // This call must be offloaded from scheduler callback thread if schedule is active;
     // while if it's not active, it must block all other operations.
     private void maybeRecoverRunning(SchedulerDriver driver) throws IOException {
-        List<Job> jobs = Database.getInstance().getRunning();
-        Database.getInstance().retryJobs(jobs.stream().map(job -> job.id()).collect(Collectors.toList()));
+        //List<Job> jobs = Database.getInstance().getRunning();
+        // TODO: reconcile all those jobs
     }
 
     public boolean validateJob(Job job) {
