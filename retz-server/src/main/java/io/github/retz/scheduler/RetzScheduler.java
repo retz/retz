@@ -55,11 +55,11 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Server name in HTTP(S) header: {}", HTTP_SERVER_NAME);
     }
 
-    private final ResourceQuantity MAX_JOB_SIZE;
-    private final Long MAX_FILE_SIZE;
-    private final ObjectMapper MAPPER = new ObjectMapper();
-    private final Map<String, Protos.Offer> OFFER_STOCK = new ConcurrentHashMap<>();
-    private final Planner PLANNER;
+    private final ResourceQuantity maxJobSize;
+    private final Long maxFileSize;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, Protos.Offer> offerStock = new ConcurrentHashMap<>();
+    private final Planner planner;
     private final Protos.Filters filters;
     private Launcher.Configuration conf;
     private Protos.FrameworkInfo frameworkInfo;
@@ -67,14 +67,14 @@ public class RetzScheduler implements Scheduler {
     private Optional<String> master;
 
     public RetzScheduler(Launcher.Configuration conf, Protos.FrameworkInfo frameworkInfo) throws Throwable {
-        MAPPER.registerModule(new Jdk8Module());
-        PLANNER = PlannerFactory.create(conf.getServerConfig().getPlannerName(), conf.getServerConfig());
+        objectMapper.registerModule(new Jdk8Module());
+        planner = PlannerFactory.create(conf.getServerConfig().getPlannerName(), conf.getServerConfig());
         this.conf = Objects.requireNonNull(conf);
         this.frameworkInfo = frameworkInfo;
         this.slaves = new ConcurrentHashMap<>();
         this.filters = Protos.Filters.newBuilder().setRefuseSeconds(conf.getServerConfig().getRefuseSeconds()).build();
-        MAX_JOB_SIZE = conf.getServerConfig().getMaxJobSize();
-        MAX_FILE_SIZE = conf.getServerConfig().getMaxFileSize();
+        maxJobSize = conf.getServerConfig().getMaxJobSize();
+        maxFileSize = conf.getServerConfig().getMaxFileSize();
         this.master = Optional.empty();
     }
 
@@ -100,7 +100,7 @@ public class RetzScheduler implements Scheduler {
     @Override
     public void offerRescinded(SchedulerDriver driver, Protos.OfferID offerId) {
         LOG.info("Offer rescinded: {}", offerId.getValue());
-        // Hereby offers must be removed from OFFER_STOCK, instead it's removed at slaveLost() callback.
+        // Hereby offers must be removed from offerStock, instead it's removed at slaveLost() callback.
         // This is based on an assumption that all offerRescinded calls come with slaveLost().
     }
 
@@ -114,7 +114,7 @@ public class RetzScheduler implements Scheduler {
     }
 
     private void registered0(SchedulerDriver driver, Protos.FrameworkID frameworkId, Protos.MasterInfo masterInfo) throws IOException {
-        if (! validMesosVersion(masterInfo.getVersion())) {
+        if (!validMesosVersion(masterInfo.getVersion())) {
             // TODO: if the master is in maintenance period, Retz does not abort but sleep and retry later?
             driver.abort();
             return;
@@ -127,7 +127,7 @@ public class RetzScheduler implements Scheduler {
                 .toString();
 
         LOG.info("Connected to master {} version={}; Framework ID: {}",
-                 newMaster, masterInfo.getVersion(), frameworkId.getValue());
+                newMaster, masterInfo.getVersion(), frameworkId.getValue());
         this.master = Optional.of(newMaster);
         StatusCache.updateMaster(newMaster);
         frameworkInfo = frameworkInfo.toBuilder().setId(frameworkId).build();
@@ -144,8 +144,7 @@ public class RetzScheduler implements Scheduler {
                 driver.stop();
             }
         } else {
-            if (Database.getInstance().setFrameworkId(frameworkId.getValue())) {
-            } else {
+            if (!Database.getInstance().setFrameworkId(frameworkId.getValue())) {
                 LOG.warn("Failed to remember frameworkID...");
             }
         }
@@ -153,8 +152,7 @@ public class RetzScheduler implements Scheduler {
 
     protected boolean validMesosVersion(String version) {
         if (version != null) {
-            if (version.startsWith("1.2") ||
-                    version.startsWith("1.3")) {
+            if (version.startsWith("1.2") || version.startsWith("1.3")) {
                 return true;
             }
         }
@@ -174,7 +172,7 @@ public class RetzScheduler implements Scheduler {
     private void reregistered0(SchedulerDriver driver, Protos.MasterInfo masterInfo) throws IOException {
         // Maybe long time split brain, recovering all states from master required.
 
-        if (! validMesosVersion(masterInfo.getVersion())) {
+        if (!validMesosVersion(masterInfo.getVersion())) {
             driver.abort();
             return;
         }
@@ -197,10 +195,10 @@ public class RetzScheduler implements Scheduler {
         // Merge fresh offers from Mesos and offers in stock here, declining duplicate offers
         Stanchion.schedule(() -> {
             List<Protos.Offer> available = new ArrayList<>();
-            synchronized (OFFER_STOCK) {
+            synchronized (offerStock) {
                 // TODO: cleanup this code, optimize for max.stock = 0 case
                 Map<String, List<Protos.Offer>> allOffers = new HashMap<>();
-                for (Protos.Offer offer : OFFER_STOCK.values()) {
+                for (Protos.Offer offer : offerStock.values()) {
                     String key = offer.getSlaveId().getValue();
                     List<Protos.Offer> list = allOffers.computeIfAbsent(key, k -> new ArrayList<>());
                     list.add(offer);
@@ -225,7 +223,7 @@ public class RetzScheduler implements Scheduler {
                 if (conf.fileConfig.getMaxStockSize() > 0) {
                     LOG.info("Offer stock renewal: {} offers available ({} declined from stock)", available.size(), declined);
                 }
-                OFFER_STOCK.clear();
+                offerStock.clear();
             }
 
             ResourceQuantity total = new ResourceQuantity();
@@ -237,7 +235,7 @@ public class RetzScheduler implements Scheduler {
             total.setNodes(offers.size());
 
             // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
-            List<Job> jobs = JobQueue.findFit(PLANNER.orderBy(), total);
+            List<Job> jobs = JobQueue.findFit(planner.orderBy(), total);
             handleAll(available, jobs, driver);
             // As this section is whole serialized by Stanchion, it is safe to do fetching jobs
             // from database and updating database state change from queued => starting at
@@ -249,9 +247,9 @@ public class RetzScheduler implements Scheduler {
         Stanchion.schedule(() -> {
             try {
                 List<Job> queued = JobQueue.queued(1);
-                if (queued.size() == 1 && queued.get(0).id() == job.id()) {
-                    // OK
-                } else {
+                // Make sure it's the only job in the queue - otherwise return
+                // and wait in the queue
+                if (!(queued.size() == 1 && queued.get(0).id() == job.id())) {
                     return;
                 }
             } catch (Exception e) {
@@ -259,10 +257,10 @@ public class RetzScheduler implements Scheduler {
                 return;
             }
 
-            List<Protos.Offer> available = new ArrayList<>(OFFER_STOCK.size());
-            synchronized (OFFER_STOCK) {
-                available.addAll(OFFER_STOCK.values());
-                OFFER_STOCK.clear();
+            List<Protos.Offer> available = new ArrayList<>(offerStock.size());
+            synchronized (offerStock) {
+                available.addAll(offerStock.values());
+                offerStock.clear();
             }
             // Only if the queue is empty, and with offer stock, try job invocation
             List<Job> jobs = Arrays.asList(job);
@@ -283,14 +281,14 @@ public class RetzScheduler implements Scheduler {
 
         // DO MAKE PLANNING
         List<Job> cancel = new ArrayList<>();
-        List<AppJobPair> appJobPairs = PLANNER.filter(jobs, cancel, conf.getServerConfig().useGPU());
+        List<AppJobPair> appJobPairs = planner.filter(jobs, cancel, conf.getServerConfig().useGPU());
         // update database to change all jobs state to KILLED
         JobQueue.cancelAll(cancel);
 
         // TODO: split pure-planning code and Mesos-related code; don't create TaskInfo and Launches here
         // TODO: unix user name is used for TaskInfo setup and not related to pure planning.
         // FIXME: TODO: this↑ is definitely a tech debt!
-        Plan bestPlan = PLANNER.plan(offers, appJobPairs, conf.getServerConfig().getMaxStockSize(), conf.getServerConfig().getUserName());
+        Plan bestPlan = planner.plan(offers, appJobPairs, conf.getServerConfig().getMaxStockSize(), conf.getServerConfig().getUserName());
 
         int declined = 0;
         // Accept offers from mesos
@@ -306,7 +304,7 @@ public class RetzScheduler implements Scheduler {
             }
         }
         for (Protos.Offer offer : bestPlan.getToStock()) {
-            OFFER_STOCK.put(offer.getSlaveId().getValue(), offer);
+            offerStock.put(offer.getSlaveId().getValue(), offer);
         }
         LOG.info("{} accepted, {} declined ({} offers back in stock)",
                 bestPlan.getOfferAcceptors().stream().mapToInt(offerAcceptor -> offerAcceptor.getJobs().size()).sum(),
@@ -321,10 +319,10 @@ public class RetzScheduler implements Scheduler {
         LOG.info("Executor {} of slave {}  stopped: {}", executorId.getValue(), slaveId.getValue(), status);
 
         // TODO: do we really need to manage slaves?
-        List<Protos.SlaveID> slaves = this.slaves.get(executorId.getValue());
-        if (slaves != null) {
-            slaves.remove(slaveId);
-            this.slaves.put(executorId.getValue(), slaves);
+        List<Protos.SlaveID> mySlaves = this.slaves.get(executorId.getValue());
+        if (mySlaves != null) {
+            mySlaves.remove(slaveId);
+            this.slaves.put(executorId.getValue(), mySlaves);
         }
     }
 
@@ -346,15 +344,15 @@ public class RetzScheduler implements Scheduler {
         Stanchion.schedule(() -> reconcileAllRunningJobs(driver));
 
         // There is a potential race between offerRescinded/slaveLost and using offer stocks;
-        // in case handleAll trying to schedule tasks, offers are removed from OFFER_STOCK
+        // in case handleAll trying to schedule tasks, offers are removed from offerStock
         // but being used to schedule tasks - this message can't be in time ...
         // The task with rescinded offer (slave) might fail in advance; TASK_FAILED or TASK_LOST?
         // any way in this case it should be retried...
         //
         // Clean up stocked offers from lost slave, or kept long dead
         // TODO: add tests on github #153 bug, this is a quick patch
-        synchronized (OFFER_STOCK) {
-            Protos.Offer offer = OFFER_STOCK.remove(slaveId.getValue());
+        synchronized (offerStock) {
+            Protos.Offer offer = offerStock.remove(slaveId.getValue());
             if (offer != null) {
                 driver.declineOffer(offer.getId());
             }
@@ -494,12 +492,12 @@ public class RetzScheduler implements Scheduler {
 
     private void updateOfferStats() {
         ResourceQuantity total = new ResourceQuantity();
-        for (Map.Entry<String, Protos.Offer> e : OFFER_STOCK.entrySet()) {
+        for (Map.Entry<String, Protos.Offer> e : offerStock.entrySet()) {
             Resource r = ResourceConstructor.decode(e.getValue().getResourcesList());
             total.add(r.toQuantity());
         }
-        total.setNodes(OFFER_STOCK.size());
-        StatusCache.setOfferStats(OFFER_STOCK.size(), total);
+        total.setNodes(offerStock.size());
+        StatusCache.setOfferStats(offerStock.size(), total);
     }
 
     // Get all running jobs and reconcile all of them - status update on database
@@ -519,12 +517,14 @@ public class RetzScheduler implements Scheduler {
     }
 
     public boolean validateJob(Job job) {
-        return MAX_JOB_SIZE.fits(job);
+        return maxJobSize.fits(job);
     }
 
     public ResourceQuantity maxJobSize() {
-        return MAX_JOB_SIZE;
+        return maxJobSize;
     }
 
-    public Long maxFileSize() { return MAX_FILE_SIZE; }
+    public Long maxFileSize() {
+        return maxFileSize;
+    }
 }
