@@ -25,7 +25,8 @@ import java.util.function.Function;
 
 public class ResourceQuantityAdapter implements ResourceQuantityMXBean {
     private final Function<StatusResponse, ResourceQuantity> resourceGetter;
-    public ResourceQuantityAdapter(Function<StatusResponse, ResourceQuantity> resourceGetter){
+
+    public ResourceQuantityAdapter(Function<StatusResponse, ResourceQuantity> resourceGetter) {
         this.resourceGetter = resourceGetter;
     }
 

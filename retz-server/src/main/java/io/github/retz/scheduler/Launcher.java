@@ -16,12 +16,9 @@
  */
 package io.github.retz.scheduler;
 
-import com.j256.simplejmx.server.JmxServer;
 import io.github.retz.db.Database;
 import io.github.retz.jmx.RetzJmxServer;
-import io.github.retz.mesosc.MesosHTTPFetcher;
 import io.github.retz.misc.LogUtil;
-import io.github.retz.protocol.data.Job;
 import io.github.retz.web.WebConsole;
 import org.apache.commons.cli.*;
 import org.apache.mesos.Protos;
@@ -32,10 +29,9 @@ import org.slf4j.LoggerFactory;
 import javax.management.JMException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Optional;
 
 public final class Launcher {
     static final Option OPT_CONFIG;
@@ -53,6 +49,9 @@ public final class Launcher {
         OPTIONS = new Options();
         OPTIONS.addOption(OPT_CONFIG);
         OPTIONS.addOption(OPT_MODE);
+    }
+
+    private Launcher() {
     }
 
     public static void main(String... argv) {
@@ -75,7 +74,7 @@ public final class Launcher {
             }
 
             RetzJmxServer.start(conf.getServerConfig());
-        } catch (ParseException | URISyntaxException | IOException | JMException e ) {
+        } catch (ParseException | URISyntaxException | IOException | JMException e) {
             LogUtil.error(LOG, "launch error", e);
             return -1;
         }

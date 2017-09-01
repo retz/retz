@@ -27,10 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ExtensiblePlannerFactory {
+public final class ExtensiblePlannerFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ExtensiblePlannerFactory.class);
 
     private static URLClassLoader classLoader = null;
+
+    private ExtensiblePlannerFactory() {
+    }
 
     public static Planner create(String name, String classpath) throws Throwable {
         // Load!! Dynamically!!
@@ -42,7 +45,7 @@ public class ExtensiblePlannerFactory {
         }
         Class<?> plannerClass = Class.forName(name, true, classLoader);
         if (io.github.retz.planner.spi.Planner.class.isAssignableFrom(plannerClass)) {
-            return (Planner)plannerClass.newInstance();
+            return (Planner) plannerClass.newInstance();
         }
         throw new IllegalArgumentException(name + " does not implement retz.spi.Planner");
     }
@@ -57,7 +60,7 @@ public class ExtensiblePlannerFactory {
             return new URL[]{};
         }
 
-        for(File file : files) {
+        for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".jar")) {
                 jars.add(file.toURI());
             } else if (file.isDirectory()) {
@@ -70,7 +73,7 @@ public class ExtensiblePlannerFactory {
         List<URL> urls = jars.stream().map(uri -> {
             try {
                 return uri.toURL();
-            }catch (MalformedURLException e){
+            } catch (MalformedURLException e) {
                 LOG.error("Cannot convert URI {} to URL", uri, e);
                 return null;
             }

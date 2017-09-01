@@ -54,7 +54,7 @@ public final class WebConsole {
     private static final Logger LOG = LoggerFactory.getLogger(WebConsole.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final List<String> NO_AUTH_PAGES;
-    private static ServerConfiguration config;
+    private static ServerConfiguration serverConfiguration;
 
     private static Optional<RetzScheduler> scheduler = Optional.empty();
 
@@ -64,6 +64,9 @@ public final class WebConsole {
                 "/ping", "/status",
                 "/", "/update.js", "/style.css", "/favicon.ico"};
         NO_AUTH_PAGES = Arrays.asList(noAuthPages);
+    }
+
+    private WebConsole() {
     }
 
     public static void start(ServerConfiguration config) {
@@ -81,7 +84,7 @@ public final class WebConsole {
         ipAddress(config.getUri().getHost());
         staticFileLocation("/public");
 
-        WebConsole.config = config;
+        WebConsole.serverConfiguration = config;
         JobRequestHandler.setMaxListJobSize(config.getMaxListJobSize());
 
         before(WebConsole::authenticate);
@@ -174,7 +177,7 @@ public final class WebConsole {
         }
 
         // TODO: authenticator must be per each user and single admin user
-        Optional<Authenticator> adminAuthenticator = Optional.ofNullable(config.getAuthenticator());
+        Optional<Authenticator> adminAuthenticator = Optional.ofNullable(serverConfiguration.getAuthenticator());
         if (!adminAuthenticator.isPresent()) {
             // No authentication required
             return;
@@ -210,7 +213,7 @@ public final class WebConsole {
         } else {
             halt(403, "No such user");
         }
-        if (config.authenticationEnabled()) {
+        if (serverConfiguration.authenticationEnabled()) {
             authenticator = new HmacSHA256Authenticator(u.get().keyId(), u.get().secret());
         } else {
             authenticator = new NoopAuthenticator(u.get().keyId());

@@ -22,8 +22,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-public class PlannerFactory {
+public final class PlannerFactory {
     private static final Logger LOG = LoggerFactory.getLogger(PlannerFactory.class);
+
+    private PlannerFactory() {
+    }
 
     public static Planner create(String name, ServerConfiguration serverConfig) throws Throwable {
         Properties properties = serverConfig.copyAsProperties();

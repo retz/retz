@@ -20,7 +20,10 @@ import io.github.retz.misc.Pair;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
 
-public class JobStatem {
+public final class JobStatem {
+
+    private JobStatem() {
+    }
 
     /**
      * State diagram of Events and Job to callback action method name
@@ -144,7 +147,7 @@ public class JobStatem {
             case Protos.TaskState.TASK_STARTING_VALUE:
                 if (job.state() == Job.JobState.STARTING) {
                     return Action.STARTING;
-                } else if (job.state() == Job.JobState.STARTED){
+                } else if (job.state() == Job.JobState.STARTED) {
                     return Action.NOOP;
                 } else {
                     return Action.LOG;

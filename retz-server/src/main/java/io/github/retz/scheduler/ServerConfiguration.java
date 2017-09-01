@@ -83,12 +83,12 @@ public class ServerConfiguration extends FileConfiguration {
     private final String databaseURL;
     private final String databaseDriver;
 
-    private final String PLANNER_NAME = "retz.planner.name";
-    private final String DEFAULT_PLANNER_NAME = "fifo";
-    private final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
+    private static final String PLANNER_NAME = "retz.planner.name";
+    private static final String DEFAULT_PLANNER_NAME = "fifo";
+    private static final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
 
-    private final String ADDITIONAL_CLASSPATH = "retz.classpath";
-    private final String DEFAULT_ADDITIONAL_CLASSPATH = "/opt/retz-server/lib";
+    private static final String ADDITIONAL_CLASSPATH = "retz.classpath";
+    private static final String DEFAULT_ADDITIONAL_CLASSPATH = "/opt/retz-server/lib";
 
     // Leeway seconds before old job entries get deleted by Retz.
     // As we may think of many race conditions on task finish at Mesos
@@ -97,11 +97,11 @@ public class ServerConfiguration extends FileConfiguration {
     // For example, if a cluster usage accounting batch is scheduled
     // every week, this must be long enough that *all* jobs are
     // accounted and not deleted before any batch.
-    private final String GC = "retz.gc";
-    private final String GC_LEEWAY = "retz.gc.leeway";
-    private final int DEFAULT_GC_LEEWAY = 7 * 86400; // a week in seconds
-    private final String GC_INTERVAL = "retz.gc.interval";
-    private final int DEFAULT_GC_INTERVAL = 600; // 10 minutes in seconds
+    private static final String GC = "retz.gc";
+    private static final String GC_LEEWAY = "retz.gc.leeway";
+    private static final int DEFAULT_GC_LEEWAY = 7 * 86400; // a week in seconds
+    private static final String GC_INTERVAL = "retz.gc.interval";
+    private static final int DEFAULT_GC_INTERVAL = 600; // 10 minutes in seconds
 
 
     public ServerConfiguration(InputStream in) throws IOException, URISyntaxException {
@@ -273,7 +273,7 @@ public class ServerConfiguration extends FileConfiguration {
     }
 
     public Properties copyAsProperties() {
-        return (Properties)properties.clone();
+        return (Properties) properties.clone();
     }
 
     public String classpath() {

@@ -24,7 +24,6 @@ import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.scheduler.RetzScheduler;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,38 +34,35 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by kuenishi on 16/12/19.
- */
 public class StatusCache implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(StatusCache.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static boolean on = true;
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private static final StatusResponse statusResponseCache = new StatusResponse(RetzScheduler.HTTP_SERVER_NAME);
+    private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
+    private static final StatusResponse STATUS_RESPONSE_CACHE = new StatusResponse(RetzScheduler.HTTP_SERVER_NAME);
 
-    private final int INTERVAL;
+    private final int interval;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
     }
 
     StatusCache(int interval) {
-        this.INTERVAL = interval;
+        this.interval = interval;
     }
 
     @Override
     public void run() {
         StatusCache.updateUsedResources();
         if (on) {
-            scheduler.schedule(new StatusCache(INTERVAL), INTERVAL, TimeUnit.SECONDS);
+            SCHEDULER.schedule(new StatusCache(interval), interval, TimeUnit.SECONDS);
         }
     }
 
     static void start(int interval) {
         LOG.info("Starting status cache updater with interval={}s", interval);
-        scheduler.schedule(new StatusCache(interval), interval, TimeUnit.SECONDS);
+        SCHEDULER.schedule(new StatusCache(interval), interval, TimeUnit.SECONDS);
     }
 
     static void stop() {
@@ -74,19 +70,19 @@ public class StatusCache implements Runnable {
     }
 
     static String getStatusResponse() throws JsonProcessingException {
-        synchronized (statusResponseCache) {
-            return MAPPER.writeValueAsString(statusResponseCache);
+        synchronized (STATUS_RESPONSE_CACHE) {
+            return MAPPER.writeValueAsString(STATUS_RESPONSE_CACHE);
         }
     }
 
     public static StatusResponse getRawStatusResponse() {
-       return statusResponseCache;
+        return STATUS_RESPONSE_CACHE;
     }
 
 
     public static void setOfferStats(int size, ResourceQuantity offered) {
-        synchronized (statusResponseCache) {
-            statusResponseCache.setOffers(size, offered);
+        synchronized (STATUS_RESPONSE_CACHE) {
+            STATUS_RESPONSE_CACHE.setOffers(size, offered);
         }
     }
 
@@ -101,7 +97,7 @@ public class StatusCache implements Runnable {
             throw new UncheckedIOException(e);
         }
         ResourceQuantity total = new ResourceQuantity();
-        for (Job  job : jobs ){
+        for (Job job : jobs) {
             total.add(job.resources());
         }
         int running = jobs.size();
@@ -112,20 +108,20 @@ public class StatusCache implements Runnable {
     }
 
     public static void setUsedResources(int queueLength, int runningLenght, ResourceQuantity totalUsed) {
-        synchronized (statusResponseCache) {
-            statusResponseCache.setUsedResources(queueLength, runningLenght, totalUsed);
+        synchronized (STATUS_RESPONSE_CACHE) {
+            STATUS_RESPONSE_CACHE.setUsedResources(queueLength, runningLenght, totalUsed);
         }
     }
 
     public static void updateMaster(String master) {
-        synchronized (statusResponseCache) {
-            statusResponseCache.setMaster(master);
+        synchronized (STATUS_RESPONSE_CACHE) {
+            STATUS_RESPONSE_CACHE.setMaster(master);
         }
     }
 
     public static void voidMaster() {
-        synchronized (statusResponseCache) {
-            statusResponseCache.voidMaster();
+        synchronized (STATUS_RESPONSE_CACHE) {
+            STATUS_RESPONSE_CACHE.voidMaster();
         }
     }
 }

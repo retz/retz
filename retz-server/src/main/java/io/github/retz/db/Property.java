@@ -95,6 +95,7 @@ public class Property {
 
     public void deleteAll() throws SQLException {
         try (PreparedStatement p = conn.prepareStatement("SELECT key, value, epoch FROM properties")) {
+            p.execute();
         }
     }
 }

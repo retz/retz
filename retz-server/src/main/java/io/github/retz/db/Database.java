@@ -16,35 +16,9 @@
  */
 package io.github.retz.db;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import org.apache.tomcat.jdbc.pool.DataSource;
-import org.apache.tomcat.jdbc.pool.PoolProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.misc.LogUtil;
 import io.github.retz.planner.AppJobPair;
@@ -54,17 +28,31 @@ import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.scheduler.Launcher;
 import io.github.retz.scheduler.ServerConfiguration;
+import org.apache.tomcat.jdbc.pool.DataSource;
+import org.apache.tomcat.jdbc.pool.PoolProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.*;
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
     private static Database database = new Database();
 
-    private final ObjectMapper MAPPER = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
     private final DataSource dataSource = new DataSource();
     String databaseURL = null;
 
     Database() {
-        MAPPER.registerModule(new Jdk8Module());
+        mapper.registerModule(new Jdk8Module());
     }
 
     public static Database getInstance() {
@@ -87,6 +75,9 @@ public class Database {
         try (Connection conn = dataSource.getConnection();
              Statement s = conn.createStatement();
              ResultSet r = s.executeQuery("select 1")) {
+            if (!r.next()) {
+                throw new AssertionError("Database is not ready: result has no next");
+            }
         }
     }
 
@@ -142,7 +133,7 @@ public class Database {
             maybeCreateTables(conn);
             conn.commit();
         } catch (SQLException | IOException e) {
-            throw new IOException("Database.init() failed" ,e);
+            throw new IOException("Database.init() failed", e);
         }
     }
 
@@ -254,7 +245,7 @@ public class Database {
 
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
-                    User u = MAPPER.readValue(res.getString("json"), User.class);
+                    User u = mapper.readValue(res.getString("json"), User.class);
                     ret.add(u);
                 }
             }
@@ -283,7 +274,7 @@ public class Database {
             p.setString(1, u.keyId());
             p.setString(2, u.secret());
             p.setBoolean(3, true);
-            p.setString(4, MAPPER.writeValueAsString(u));
+            p.setString(4, mapper.writeValueAsString(u));
             p.execute();
             return true;
         } catch (SQLException | IOException e) {
@@ -295,7 +286,7 @@ public class Database {
         try (PreparedStatement p = conn.prepareStatement("UPDATE users SET secret=?, enabled=?, json=? WHERE key_id=?")) {
             p.setString(1, updatedUser.secret());
             p.setBoolean(2, updatedUser.enabled());
-            p.setString(3, MAPPER.writeValueAsString(updatedUser));
+            p.setString(3, mapper.writeValueAsString(updatedUser));
             p.setString(4, updatedUser.keyId());
             p.execute();
         }
@@ -322,7 +313,7 @@ public class Database {
             p.setString(1, keyId);
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
-                    User u = MAPPER.readValue(res.getString("json"), User.class);
+                    User u = mapper.readValue(res.getString("json"), User.class);
                     return Optional.of(u);
                 }
             }
@@ -361,7 +352,7 @@ public class Database {
         }
     }
 
-    private List<Application> getApplications(Connection conn, String id) throws SQLException, IOException  {
+    private List<Application> getApplications(Connection conn, String id) throws SQLException, IOException {
         if (conn.getAutoCommit()) {
             throw new AssertionError("autocommit must be false");
         }
@@ -377,7 +368,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
                     String json = res.getString("json");
-                    Application app = MAPPER.readValue(json, Application.class);
+                    Application app = mapper.readValue(json, Application.class);
                     ret.add(app);
                 }
             }
@@ -404,7 +395,7 @@ public class Database {
             deleteApplication(conn, a.getAppid());
             p.setString(1, a.getAppid());
             p.setString(2, a.getOwner());
-            p.setString(3, MAPPER.writeValueAsString(a));
+            p.setString(3, mapper.writeValueAsString(a));
             p.execute();
             conn.commit();
             return true;
@@ -431,7 +422,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
                     String json = res.getString("json");
-                    Application app = MAPPER.readValue(json, Application.class);
+                    Application app = mapper.readValue(json, Application.class);
                     if (!appid.equals(app.getAppid())) {
                         LOG.error("{} != {} in Database", appid, app.getAppid());
                         throw new AssertionError("Appid in JSON must be equal to the column");
@@ -485,7 +476,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
                     String json = res.getString(1);
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     assert job.state() == state;
                     if (tag.isPresent() && !job.tags().contains(tag.get())) {
                         continue;
@@ -517,7 +508,7 @@ public class Database {
                 while (res.next()) {
                     //String json = res.getString("j.json");
                     String json = res.getString(1);
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     ret.add(job);
                 }
             }
@@ -539,7 +530,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
                     String json = res.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     if (job == null) {
                         throw new AssertionError("Cannot be null!!");
                     }
@@ -566,7 +557,7 @@ public class Database {
 
                 while (res.next() && totalCpu <= cpu && totalMem <= memMB) {
                     String json = res.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
 
                     if (job == null) {
                         throw new AssertionError("Cannot be null!!");
@@ -595,7 +586,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 while (res.next()) {
                     String json = res.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
 
                     if (job == null || job.state() != Job.JobState.QUEUED) {
                         throw new AssertionError("Cannot be null!!");
@@ -619,7 +610,7 @@ public class Database {
             p.setInt(5, j.priority());
             p.setString(6, j.taskId());
             p.setString(7, j.state().toString());
-            p.setString(8, MAPPER.writeValueAsString(j));
+            p.setString(8, mapper.writeValueAsString(j));
             p.execute();
         }
     }
@@ -649,13 +640,13 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
                     String jjson = res.getString(1);
-                    Job job = MAPPER.readValue(jjson, Job.class);
+                    Job job = mapper.readValue(jjson, Job.class);
                     if (id != job.id()) {
                         LOG.error("{} != {} in Database", id, job.id());
                         throw new AssertionError("id in JSON must be equal to the column");
                     }
                     String ajson = res.getString(2);
-                    Application app = MAPPER.readValue(ajson, Application.class);
+                    Application app = mapper.readValue(ajson, Application.class);
 
                     return Optional.of(new AppJobPair(Optional.of(app), job));
                 }
@@ -675,7 +666,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
                     String json = res.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     if (id != job.id()) {
                         LOG.error("{} != {} in Database", id, job.id());
                         throw new AssertionError("id in JSON must be equal to the column");
@@ -699,7 +690,7 @@ public class Database {
             try (ResultSet res = p.executeQuery()) {
                 if (res.next()) {
                     String json = res.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     if (!taskId.equals(job.taskId())) {
                         LOG.error("{} != {} in Database", taskId, job.taskId());
                         throw new AssertionError("id in JSON must be equal to the column");
@@ -730,7 +721,7 @@ public class Database {
     public void deleteOldJobs(int leeway) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-            new Jobs(conn, MAPPER).collect(leeway);
+            new Jobs(conn, mapper).collect(leeway);
         } catch (SQLException e) {
             throw new IOException(MessageFormat.format("Database.deleteOldJobs({0}) failed", leeway), e);
         }
@@ -752,11 +743,11 @@ public class Database {
             try (ResultSet set = p.executeQuery()) {
                 if (set.next()) {
                     String json = set.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     Optional<Job> result = fun.apply(job);
                     if (result.isPresent()) {
                         // addJob..
-                        new Jobs(conn, MAPPER).updateJob(job);
+                        new Jobs(conn, mapper).updateJob(job);
                         conn.commit();
                         LOG.info("Job (id={}) status updated to {}", job.id(), job.state());
                     }
@@ -843,7 +834,7 @@ public class Database {
             try (ResultSet set = p.executeQuery()) {
                 while (set.next()) {
                     String json = set.getString("json");
-                    Job job = MAPPER.readValue(json, Job.class);
+                    Job job = mapper.readValue(json, Job.class);
                     jobs.add(job);
                 }
             }
@@ -884,7 +875,7 @@ public class Database {
     public void updateJobs(List<Job> list) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-            Jobs jobs = new Jobs(conn, MAPPER);
+            Jobs jobs = new Jobs(conn, mapper);
             for (Job job : list) {
                 jobs.updateJob(job);
             }
@@ -898,7 +889,7 @@ public class Database {
     public void retryJobs(List<Integer> ids) throws IOException {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
-            new Jobs(conn, MAPPER).doRetry(ids);
+            new Jobs(conn, mapper).doRetry(ids);
             conn.commit();
         } catch (SQLException | IOException e) {
             throw new IOException(MessageFormat.format("Database.updateJobs({0}) failed", ids), e);

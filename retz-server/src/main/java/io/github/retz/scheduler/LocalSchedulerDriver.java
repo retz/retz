@@ -46,7 +46,7 @@ public class LocalSchedulerDriver implements SchedulerDriver {
 //
 //    Map<Protos.OfferID, Protos.Offer> offers;
 
-    private final AtomicBoolean RUNNING = new AtomicBoolean(true);
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
     LocalSchedulerDriver(Scheduler scheduler,
                          Protos.FrameworkInfo frameworkInfo,
@@ -70,7 +70,7 @@ public class LocalSchedulerDriver implements SchedulerDriver {
                 .build();
         System.err.println(mesosMaster);
 
-        String master[] = mesosMaster.split(":");
+        String[] master = mesosMaster.split(":");
 
         this.masterInfo = Protos.MasterInfo.newBuilder()
                 .setHostname(master[0])
@@ -85,31 +85,31 @@ public class LocalSchedulerDriver implements SchedulerDriver {
 
     public Protos.Status start() {
         scheduler.registered(this, frameworkInfo.getId(), masterInfo);
-        RUNNING.set(true);
+        running.set(true);
         return Protos.Status.DRIVER_RUNNING;
     }
 
     public Protos.Status stop() {
         scheduler.disconnected(this);
-        RUNNING.lazySet(false);
+        running.lazySet(false);
         return Protos.Status.DRIVER_STOPPED;
     }
 
     public Protos.Status stop(boolean b) {
         scheduler.disconnected(this);
         scheduler.reregistered(this, masterInfo);
-        RUNNING.lazySet(false);
+        running.lazySet(false);
         return Protos.Status.DRIVER_STOPPED;
     }
 
     public Protos.Status abort() {
         scheduler.disconnected(this);
-        RUNNING.lazySet(false);
+        running.lazySet(false);
         return Protos.Status.DRIVER_ABORTED;
     }
 
     public Protos.Status join() {
-        while (RUNNING.get()) {
+        while (running.get()) {
             try {
                 Thread.sleep(1024);
             } catch (InterruptedException e) {
@@ -131,7 +131,7 @@ public class LocalSchedulerDriver implements SchedulerDriver {
 
     @Deprecated
     public Protos.Status launchTasks(Collection<Protos.OfferID> offerIds,
-                                     Collection<Protos.TaskInfo> tasks,
+                                     Collection<Protos.TaskInfo> tasksToLaunch,
                                      Protos.Filters filters) {
         // Shouldn't be used
         throw new UnknownError();
@@ -139,21 +139,21 @@ public class LocalSchedulerDriver implements SchedulerDriver {
 
     @Deprecated
     public Protos.Status launchTasks(Collection<Protos.OfferID> offerIds,
-                                     Collection<Protos.TaskInfo> tasks) {
+                                     Collection<Protos.TaskInfo> taskToLaunch) {
         // Shouldn't be used
         throw new UnknownError();
     }
 
     @Deprecated
     public Protos.Status launchTasks(Protos.OfferID offerId,
-                                     Collection<Protos.TaskInfo> tasks) {
+                                     Collection<Protos.TaskInfo> taskToLaunch) {
         // Shouldn't be used
         throw new UnknownError();
     }
 
     @Deprecated
     public Protos.Status launchTasks(Protos.OfferID offerId,
-                                     Collection<Protos.TaskInfo> tasks,
+                                     Collection<Protos.TaskInfo> tasksToLaunch,
                                      Protos.Filters filters) {
         // Shouldn't be used
         throw new UnknownError();

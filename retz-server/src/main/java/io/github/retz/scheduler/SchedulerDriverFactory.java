@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class SchedulerDriverFactory {
+public final class SchedulerDriverFactory {
     private static final Logger LOG = LoggerFactory.getLogger(SchedulerDriverFactory.class);
 
 
@@ -42,6 +42,8 @@ public class SchedulerDriverFactory {
                     return new LocalSchedulerDriver(scheduler, fw, conf.getServerConfig().getUri().getHost());
                 case MESOS:
                     return createMesosSchedulerDriver(scheduler, conf, fw);
+                default:
+                    throw new AssertionError("No scheduler specified");
             }
         } catch (InvalidProtocolBufferException e) {
             LOG.error(e.toString(), e);

@@ -24,7 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ResourceConstructor {
+public final class ResourceConstructor {
+    private ResourceConstructor() {
+    }
+
     public static List<Protos.Resource> construct(Resource r) {
         List<Protos.Resource> list = new ArrayList<Protos.Resource>();
         list.add(Protos.Resource.newBuilder()
@@ -51,7 +54,7 @@ public class ResourceConstructor {
                     .setType(Protos.Value.Type.SCALAR)
                     .build());
         }
-        if (! r.ports().isEmpty()) {
+        if (!r.ports().isEmpty()) {
             list.add(Protos.Resource.newBuilder()
                     .setName("ports")
                     .setRanges(Protos.Value.Ranges.newBuilder().addAllRange(
@@ -116,9 +119,9 @@ public class ResourceConstructor {
                 int size = (int) (r.getScalar().getValue());
                 diskMB = size;
             } else if (r.getName().equals("ports")) {
-                 for(Protos.Value.Range range : r.getRanges().getRangeList()) {
-                     ports.add(new Range((int)range.getBegin(), (int)range.getEnd()));
-                 }
+                for (Protos.Value.Range range : r.getRanges().getRangeList()) {
+                    ports.add(new Range((int) range.getBegin(), (int) range.getEnd()));
+                }
             } else if (r.getName().equals("gpus")) {
                 gpu = (int) (r.getScalar().getValue());
             }

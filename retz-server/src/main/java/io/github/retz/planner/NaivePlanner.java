@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 public class NaivePlanner implements Planner {
     private static final Logger LOG = LoggerFactory.getLogger(NaivePlanner.class);
-    private final List<String> ORDER_BY = Arrays.asList("id");
+    private static final List<String> ORDER_BY = Arrays.asList("id");
 
     @Override
     public List<String> orderBy() {
@@ -59,17 +59,15 @@ public class NaivePlanner implements Planner {
             Resource resource = e.getValue().totalResource();
             int lastPort = 0;
 
-            while (!appJobs.isEmpty() &&
-                    0 <= resource.cpu() &&
-                    0 <= resource.memMB()) {
+            while (!appJobs.isEmpty() && 0 <= resource.cpu() && 0 <= resource.memMB()) {
                 AppJobPair appJob = appJobs.get(0);
                 Job job = appJob.job();
 
-                if (job.resources().getCpu() <= resource.cpu() &&
-                        job.resources().getMemMB() <= resource.memMB() &&
-                        job.resources().getGpu() <= resource.gpu() &&
-                        job.resources().getDiskMB() <= resource.diskMB() &&
-                        job.resources().getPorts() <= resource.portAmount()) {
+                if (job.resources().getCpu() <= resource.cpu()
+                        && job.resources().getMemMB() <= resource.memMB()
+                        && job.resources().getGpu() <= resource.gpu()
+                        && job.resources().getDiskMB() <= resource.diskMB()
+                        && job.resources().getPorts() <= resource.portAmount()) {
 
                     String id = Integer.toString(job.id());
                     // Not using simple CommandExecutor to keep the executor lifecycle with its assets
@@ -118,11 +116,11 @@ public class NaivePlanner implements Planner {
             return lhs;
         });
         int portNeeds = jobs.stream().mapToInt(appJobPair -> appJobPair.job().resources().getPorts()).sum();
-        return needs.isPresent() &&
-                needs.get().cpu() <= totalCpu &&
-                needs.get().memMB() <= totalMem &&
-                needs.get().gpu() <= totalGPU &&
-                portNeeds <= totalPorts;
+        return needs.isPresent()
+                && needs.get().cpu() <= totalCpu
+                && needs.get().memMB() <= totalMem
+                && needs.get().gpu() <= totalGPU
+                && portNeeds <= totalPorts;
     }
 
     @Override

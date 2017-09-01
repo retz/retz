@@ -33,7 +33,10 @@ import io.github.retz.protocol.data.FileContent;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.exception.DownloadFileSizeExceeded;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.scheduler.*;
+import io.github.retz.scheduler.Applications;
+import io.github.retz.scheduler.JobQueue;
+import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.scheduler.Stanchion;
 import org.apache.commons.io.IOUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
@@ -52,16 +55,19 @@ import java.util.Optional;
 import static io.github.retz.web.WebConsole.validateOwner;
 import static spark.Spark.halt;
 
-public class JobRequestHandler {
+public final class JobRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(JobRequestHandler.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static Optional<RetzScheduler> scheduler = Optional.empty();
     private static Optional<SchedulerDriver> driver = Optional.empty();
-    private static int MAX_LIST_JOB_SIZE = Integer.MAX_VALUE;
+    private static int maxListJobSize = Integer.MAX_VALUE;
 
     static {
         MAPPER.registerModule(new Jdk8Module());
+    }
+
+    private JobRequestHandler() {
     }
 
     static void setScheduler(RetzScheduler sched) {
@@ -74,7 +80,7 @@ public class JobRequestHandler {
 
     static void setMaxListJobSize(int v) {
         LOG.info("Setting max list-job size as {}", v);
-        MAX_LIST_JOB_SIZE = v;
+        maxListJobSize = v;
     }
 
     static String listJob(spark.Request req, spark.Response res) throws IOException {
@@ -84,7 +90,7 @@ public class JobRequestHandler {
         LOG.debug("q: state={}, tag={}",
                 listJobRequest.state(), listJobRequest.tag());
         String user = Objects.requireNonNull(authHeaderValue.get().key());
-        List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag(), MAX_LIST_JOB_SIZE);
+        List<Job> jobs = JobQueue.list(user, listJobRequest.state(), listJobRequest.tag(), maxListJobSize);
 
         boolean more = false;
         if (jobs.size() > ListJobResponse.MAX_JOB_NUMBER) {
@@ -131,7 +137,7 @@ public class JobRequestHandler {
 
     static String getFile(spark.Request req, spark.Response res) throws IOException, JobNotFoundException {
         Optional<Job> maybeJob = getJobAndVerify(req);
-        if (! maybeJob.isPresent()) {
+        if (!maybeJob.isPresent()) {
             GetFileResponse getFileResponse = new GetFileResponse(maybeJob, Optional.empty());
             getFileResponse.ok();
             return MAPPER.writeValueAsString(getFileResponse);
@@ -164,7 +170,7 @@ public class JobRequestHandler {
             getFileResponse.ok();
             return MAPPER.writeValueAsString(getFileResponse);
         }
-        if (! MesosHTTPFetcher.statHTTPFile(job.url(), file)) {
+        if (!MesosHTTPFetcher.statHTTPFile(job.url(), file)) {
             // It is really confusing distinguishing 404 and 0-bytes to return considering offset and length
             GetFileResponse getFileResponse = new GetFileResponse(maybeJob, Optional.empty());
             getFileResponse.ok();
@@ -198,7 +204,7 @@ public class JobRequestHandler {
     // A new HTTP endpoint to support binaries
     static String downloadFile(spark.Request req, spark.Response res) throws Exception {
         Optional<Job> maybeJob = getJobAndVerify(req);
-        if (! maybeJob.isPresent()) {
+        if (!maybeJob.isPresent()) {
             throw new JobNotFoundException(Integer.parseInt(req.params(":id")));
         }
         String file = req.queryParams("path");

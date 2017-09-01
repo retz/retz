@@ -16,7 +16,6 @@
  */
 package io.github.retz.planner;
 
-import io.github.retz.planner.ResourceConstructor;
 import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import org.apache.mesos.Protos;
@@ -92,12 +91,12 @@ public class OfferAcceptor {
     public void verify() {
         for (Protos.Offer offer : offers) {
             if (!offer.getSlaveId().getValue().equals(slaveID.getValue())) {
-                throw new AssertionError("Different Slave ID in single offer acceptor (" +
-                        slaveID.getValue() + "):\t" + offer.getSlaveId().getValue());
+                throw new AssertionError("Different Slave ID in single offer acceptor ("
+                        + slaveID.getValue() + "):\t" + offer.getSlaveId().getValue());
             }
         }
         if (operations.size() != jobs.size()) {
-            throw new AssertionError("Operations and jobs doesn't match in size: "+ operations.size() + "/" + jobs.size());
+            throw new AssertionError("Operations and jobs doesn't match in size: " + operations.size() + "/" + jobs.size());
         }
     }
 

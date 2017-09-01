@@ -27,8 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class Applications {
+public final class Applications {
     private static final Logger LOG = LoggerFactory.getLogger(Applications.class);
+
+    private Applications() {
+    }
 
     public static Optional<Application> get(String appName) throws IOException {
         return Database.getInstance().getApplication(appName);

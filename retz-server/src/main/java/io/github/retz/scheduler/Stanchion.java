@@ -25,18 +25,21 @@ import java.util.concurrent.*;
 import io.github.retz.misc.LogUtil;
 
 // An executor that serializes all request processing here
-public class Stanchion {
+public final class Stanchion {
     private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
 
     static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
 
+    private Stanchion() {
+    }
+
     @FunctionalInterface
     public interface RunnableWithException {
-        public void run() throws IOException;
+        void run() throws IOException;
     }
 
     static void schedule(RunnableWithException runnable) {
-        EXECUTOR.submit( () -> {
+        EXECUTOR.submit(() -> {
             try {
                 runnable.run();
             } catch (Exception e) {

@@ -36,9 +36,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * A fetcher class that fetches various information from Mesos masters and slaves
  */
-public class MesosHTTPFetcher {
+public final class MesosHTTPFetcher {
     private static final Logger LOG = LoggerFactory.getLogger(MesosHTTPFetcher.class);
     private static final int RETRY_LIMIT = 3;
+
+    private MesosHTTPFetcher() {
+    }
 
     public static Optional<String> sandboxBaseUri(String master, String slaveId,
                                                   String frameworkId, String executorId,
@@ -352,13 +355,13 @@ public class MesosHTTPFetcher {
 
         private HttpURLConnection conn;
 
-        public UrlConnector(String addr, String method) throws MalformedURLException, IOException {
+        UrlConnector(String addr, String method) throws IOException {
             URL url = new URL(addr);
             this.conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod(method);
         }
 
-        public UrlConnector(String addr, String method, boolean dooutput) throws MalformedURLException, IOException {
+        UrlConnector(String addr, String method, boolean dooutput) throws IOException {
             this(addr, method);
             conn.setDoOutput(dooutput);
         }
@@ -375,8 +378,8 @@ public class MesosHTTPFetcher {
             return conn.getHeaderField(name);
         }
 
-        public long getHeaderFieldLong(String name, long Default) {
-            return conn.getHeaderFieldLong(name, Default);
+        public long getHeaderFieldLong(String name, long defaultValue) {
+            return conn.getHeaderFieldLong(name, defaultValue);
         }
 
         public long getContentLength() {

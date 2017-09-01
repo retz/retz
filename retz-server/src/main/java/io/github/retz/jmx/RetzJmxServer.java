@@ -27,11 +27,14 @@ import javax.management.JMException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
-public class RetzJmxServer {
+public final class RetzJmxServer {
     private static final Logger LOG = LoggerFactory.getLogger(RetzJmxServer.class);
 
     // Singleton
     private static JmxServer jmxServer = null;
+
+    private RetzJmxServer() {
+    }
 
     private static void registerMBean(Object mbean, String name) {
         try {

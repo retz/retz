@@ -21,6 +21,7 @@ import io.github.retz.protocol.data.Job;
 
 import java.util.Optional;
 
+// TODO: replace this with Pair<>
 public class AppJobPair {
     private final Optional<Application> app;
     private final Job job;

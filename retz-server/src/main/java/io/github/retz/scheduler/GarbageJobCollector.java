@@ -27,29 +27,29 @@ import java.util.concurrent.TimeUnit;
 public class GarbageJobCollector implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(GarbageJobCollector.class);
     private static boolean on = true;
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
 
-    private final int LEEWAY;
-    private final int INTERVAL;
+    private final int leeway;
+    private final int interval;
     GarbageJobCollector(int leeway, int interval) {
-        this.LEEWAY = leeway;
-        this.INTERVAL = interval;
+        this.leeway = leeway;
+        this.interval = interval;
     }
     @Override
     public void run() {
-        LOG.debug("beep! on={}, leeway={}", true, LEEWAY);
+        LOG.debug("beep! on={}, leeway={}", true, leeway);
         try {
-            Database.getInstance().deleteOldJobs(LEEWAY);
+            Database.getInstance().deleteOldJobs(leeway);
         } catch (Throwable t) {
             LOG.warn(t.toString(), t);
         }
         if (on) {
-            scheduler.schedule(new GarbageJobCollector(LEEWAY, INTERVAL), INTERVAL, TimeUnit.SECONDS);
+            SCHEDULER.schedule(new GarbageJobCollector(leeway, interval), interval, TimeUnit.SECONDS);
         }
     }
     static void start(int leeway, int interval) {
         LOG.info("Starting garbage job collector with leeway={}s, interval={}s", leeway, interval);
-        scheduler.schedule(new GarbageJobCollector(leeway, interval), interval, TimeUnit.SECONDS);
+        SCHEDULER.schedule(new GarbageJobCollector(leeway, interval), interval, TimeUnit.SECONDS);
     }
 
     static void stop() {

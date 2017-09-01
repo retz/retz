@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * TODO: make all these data tolerant against node or network failure
  * TODO: FIXME: re-design all exception handling, which to supress / which to return to client
  */
-public class JobQueue {
+public final class JobQueue {
     private static final Logger LOG = LoggerFactory.getLogger(JobQueue.class);
     private static final AtomicInteger COUNTER;
 
@@ -108,11 +108,11 @@ public class JobQueue {
         return Database.getInstance().queued(limit);
     }
 
-    public synchronized static Optional<Job> getJob(int id) throws IOException {
+    public static synchronized Optional<Job> getJob(int id) throws IOException {
         return Database.getInstance().getJob(id);
     }
 
-    public synchronized static void clear() throws IOException {
+    public static synchronized void clear() throws IOException {
         Database.getInstance().deleteAllJob(Integer.MAX_VALUE);
     }
 

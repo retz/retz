@@ -107,8 +107,7 @@ public class Jobs {
 
     public void collect(int leeway) throws SQLException {
         String last = TimestampHelper.past(leeway);
-        try (PreparedStatement p = conn.prepareStatement("DELETE FROM jobs WHERE finished < ? AND (state='FINISHED' OR state='KILLED')"))
-        {
+        try (PreparedStatement p = conn.prepareStatement("DELETE FROM jobs WHERE finished < ? AND (state='FINISHED' OR state='KILLED')")) {
             LOG.info("Deleting old jobs finished before {}...", last);
             p.setString(1, last);
             p.execute(); // returns true as the result of DELETE query is null.

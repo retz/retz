@@ -505,7 +505,7 @@ public class RetzScheduler implements Scheduler {
     // in http://mesos.apache.org/documentation/latest/reconciliation/ .
     private void reconcileAllRunningJobs(SchedulerDriver driver) throws IOException {
         List<Job> jobs = Database.getInstance().getRunning();
-        List<Protos.TaskStatus> taskStatuses = jobs.stream().map( job -> {
+        List<Protos.TaskStatus> taskStatuses = jobs.stream().map(job -> {
             Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder()
                     .setTaskId(Protos.TaskID.newBuilder().setValue(job.taskId()));
             if (job.slaveId() != null) {

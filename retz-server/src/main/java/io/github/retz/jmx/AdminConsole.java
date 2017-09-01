@@ -35,12 +35,12 @@ import java.util.stream.Collectors;
 public class AdminConsole implements AdminConsoleMXBean {
     private static final Logger LOG = LoggerFactory.getLogger(AdminConsole.class);
 
-    private final ObjectMapper MAPPER = new ObjectMapper();
-    private final int LEEWAY;
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final int defaultLeeway;
 
     public AdminConsole(int leeway) {
-        MAPPER.registerModule(new Jdk8Module());
-        this.LEEWAY = leeway;
+        mapper.registerModule(new Jdk8Module());
+        this.defaultLeeway = leeway;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class AdminConsole implements AdminConsoleMXBean {
 
     @Override
     public boolean gc() {
-        return gc(LEEWAY);
+        return gc(defaultLeeway);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class AdminConsole implements AdminConsoleMXBean {
         try {
             // TODO: do we do mutex to avoid concurrent execution even though it has transaction?
             LOG.info("Job GC invocation from JMX: leeway={}s", leeway);
-            Database.getInstance().deleteOldJobs(LEEWAY);
+            Database.getInstance().deleteOldJobs(leeway);
             return true;
         } catch (Throwable t) {
             LogUtil.info(LOG, "AdminConsole.gc() failed", t);
@@ -101,7 +101,7 @@ public class AdminConsole implements AdminConsoleMXBean {
 
     private String maybeEncodeAsJSON(Object o) {
         try {
-            return MAPPER.writeValueAsString(o);
+            return mapper.writeValueAsString(o);
         } catch (JsonProcessingException e) {
             LogUtil.error(LOG, "AdminConsole.maybeEncodeAsJSON() failed", e);
             return errorJSON(e.toString());

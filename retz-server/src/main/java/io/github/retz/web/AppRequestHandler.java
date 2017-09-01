@@ -34,12 +34,15 @@ import java.util.Optional;
 import static io.github.retz.web.WebConsole.getAuthInfo;
 import static io.github.retz.web.WebConsole.validateOwner;
 
-public class AppRequestHandler {
+public final class AppRequestHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AppRequestHandler.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     static {
         MAPPER.registerModule(new Jdk8Module());
+    }
+
+    private AppRequestHandler() {
     }
 
     static String listApp(Request req, Response res) throws IOException {
@@ -74,8 +77,8 @@ public class AppRequestHandler {
         }
 
         if (!(loadAppRequest.application().container() instanceof DockerContainer)) {
-            if (loadAppRequest.application().getUser().isPresent() &&
-                    loadAppRequest.application().getUser().get().equals("root")) {
+            if (loadAppRequest.application().getUser().isPresent()
+                    && loadAppRequest.application().getUser().get().equals("root")) {
                 res.status(400);
                 return MAPPER.writeValueAsString(new ErrorResponse("root user is only allowed with Docker container"));
             }
