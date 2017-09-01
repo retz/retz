@@ -386,6 +386,7 @@ public class RetzScheduler implements Scheduler {
 
                 case RETRY:
                     retry(status);
+                    maybeInvokeNow(driver, job.get());
                     break;
 
                 case NOOP:
@@ -507,13 +508,19 @@ public class RetzScheduler implements Scheduler {
         List<Job> jobs = Database.getInstance().getRunning();
         List<Protos.TaskStatus> taskStatuses = jobs.stream().map(job -> {
             Protos.TaskStatus.Builder builder = Protos.TaskStatus.newBuilder()
-                    .setTaskId(Protos.TaskID.newBuilder().setValue(job.taskId()));
+                    .setTaskId(Protos.TaskID.newBuilder().setValue(job.taskId()))
+                    // According to the document the master does not examine state but
+                    // is required by protobuf to encode
+                    .setState(Protos.TaskState.TASK_RUNNING);
             if (job.slaveId() != null) {
                 builder.setSlaveId(Protos.SlaveID.newBuilder().setValue(job.slaveId()));
             }
             return builder.build();
         }).collect(Collectors.toList());
-        driver.reconcileTasks(taskStatuses);
+
+        if (taskStatuses.size() > 0) {
+            driver.reconcileTasks(taskStatuses);
+        }
     }
 
     public boolean validateJob(Job job) {
