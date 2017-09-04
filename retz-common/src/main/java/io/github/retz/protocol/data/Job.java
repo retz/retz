@@ -281,6 +281,10 @@ public class Job {
         }
     }
 
+    public void setAttributes(String attributes) {
+        this.attributes = Optional.ofNullable(attributes);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("{")

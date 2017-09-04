@@ -2,6 +2,7 @@
 
 ## 0.4.0
 
+* Add '--attributes' option to CLI.
 * Use reconcileTasks() driver API instead of rolling back all job
   states to QUEUED. This change prevents duplicate invocation of
   already running jobs, addressing #158 and #180 .

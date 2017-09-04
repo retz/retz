@@ -50,6 +50,8 @@ public class CommandRun implements SubCommand {
     boolean stderr = false;
     @Parameter(names = {"--prio", "--priority"}, description = "Job priority")
     int priority = 0;
+    @Parameter(names = {"--attributes"}, description = "Attributes of the job (free format, depends on the planner)")
+    String attributes = null;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
     @Parameter(names = "--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
@@ -89,6 +91,7 @@ public class CommandRun implements SubCommand {
         job.setPriority(priority);
         job.setName(name);
         job.addTags(tags);
+        job.setAttributes(attributes);
 
         if (verbose) {
             LOG.info("Job: {}", job);
