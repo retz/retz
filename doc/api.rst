@@ -46,7 +46,7 @@ format
 and parsed with ``java.util.Properties`` .
 
 
-``retz.server.uri = http://10.0.0.1:5050``
+``retz.server.uri = http://10.0.0.1:9090``
 
 Defines Retz server location to send all requests.
 
