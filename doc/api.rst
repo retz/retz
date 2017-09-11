@@ -143,6 +143,7 @@ in Java API
   ``$MESOS_*`` are overwritten by Mesos executor.
 * ``--cpu <int>``        :   Defines number of CPUs required for the job (default: 1)
 * ``--mem <int>``        :   Defines amount of RAM in MiB required for the job (default: 32MB)
+* ``--disk <int>``       :   Defines amount of Disk in MiB required for the job (default: 32MB)
 * ``--ports <int>``      :   Defines number of IP ports required for the job (default: 0)
 * ``--gpu <int>``        :   Defines number of GPUs required for the job (default: 0)
 * ``--prio|--priority <int>``       :   Defines job priority (default: 0). Priority handling depends on server planner setting.
