@@ -2,6 +2,8 @@
 
 ## 0.4.0
 
+* Change some log levels around web service, mainly avoiding ERROR log.
+* Expose same metrics as `/status` resource through JMX.
 * Add '--attributes' option to CLI.
 * Use reconcileTasks() driver API instead of rolling back all job
   states to QUEUED. This change prevents duplicate invocation of
