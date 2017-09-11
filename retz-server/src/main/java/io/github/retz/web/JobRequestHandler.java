@@ -380,7 +380,8 @@ public final class JobRequestHandler {
 
             ScheduleResponse scheduleResponse = new ScheduleResponse(job);
             scheduleResponse.ok();
-            LOG.info("Job '{}' at {} has been scheduled at {}.", job.cmd(), job.appid(), job.scheduled());
+            LOG.info("Job (id={}) '{}' at {} has been scheduled at {}.",
+                    job.id(), job.cmd(), job.appid(), job.scheduled());
 
             res.status(201);
             return MAPPER.writeValueAsString(scheduleResponse);
