@@ -179,10 +179,10 @@ Both ``run`` and ``schedule`` have same options:
 
 * ``-A`` - tell your application name where you want to run the command
 * ``-E`` - set environment variable at runtime
-* ``-cpu``, ``-mem``, ``-gpu`` - numbers of resources you want. CPU is for
-  number of cores (default is 1), memory is for RAM size in MBs
-  (default is 32), GPU is for numbers of GPUs to be visible at
-  container (default is 0 [#]_ ).
+* ``-cpu``, ``-mem``, ``disk``, ``-gpu`` - numbers of resources you want.
+  CPU is for number of cores (default is 1), memory is for RAM size in MBs
+  (default is 32), disk is for temporary disk space in MBs (default is 32),
+  GPU is for numbers of GPUs to be visible at container (default is 0 [#]_ ).
 * ``-cmd`` - set command one liner - shell variables are to be evaluated.
 
 .. [#] Whether GPU is available or not depends on system setup,
