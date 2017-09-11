@@ -242,7 +242,7 @@ Then get some files:
 
 ::
 
-   $ retz-client get-file -id 11 --fetch stdout-11 -R path/to/result/dir
+   $ retz-client get-file -id 11 --path stdout-11 -R path/to/result/dir
 
 A file named ``stdout-11`` should be created at ``path/to/result/dir``
 . Without ``-R`` option, the file is printed out to standard output.
