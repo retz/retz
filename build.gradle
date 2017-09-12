@@ -261,6 +261,10 @@ project(':retz-server') {
         configurationFile('/opt/retz-server/etc/retz.properties')
         arch = 'AMD64'
     }
+
+    configurations.archives.artifacts.removeAll { entry ->
+        entry.type == 'zip' || entry.type == 'tar'
+    }
 }
 
 project(':retz-client') {
@@ -316,6 +320,10 @@ project(':retz-client') {
         arch = 'AMD64'
         configurationFile('/opt/retz-client/etc/retz.properties')
     }
+
+    configurations.archives.artifacts.removeAll { entry ->
+        entry.type == 'zip' || entry.type == 'tar'
+    }
 }
 
 project('retz-admin') {
@@ -349,6 +357,10 @@ project('retz-admin') {
     }
     buildDeb {
         arch = 'AMD64'
+    }
+
+    configurations.archives.artifacts.removeAll { entry ->
+        entry.type == 'zip' || entry.type == 'tar'
     }
 }
 project('retz-inttest') {
