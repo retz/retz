@@ -101,8 +101,7 @@ subprojects {
             html.enabled = true
             xml.enabled = true
             csv.enabled = false
-            // TODO: update this until Gradle 5.0
-            html.destination "${buildDir}/reports/jacoco"
+            html.destination file("${buildDir}/reports/jacoco")
         }
     }
 
