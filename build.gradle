@@ -443,7 +443,7 @@ project('retz-inttest') {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.0'
+    gradleVersion = '4.1'
     distributionType = 'ALL'
 }
 
