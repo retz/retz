@@ -16,7 +16,7 @@
  */
 package io.github.retz.protocol
 
-import java.util.{Optional, Properties}
+import java.util.{Optional, Properties, UUID}
 
 import io.github.retz.protocol.data.{Application, Job, MesosContainer, User}
 import org.scalacheck.Gen
@@ -69,9 +69,9 @@ object RetzDataGen {
   def offer(frameworkID: String) : Gen[Protos.Offer] = for {
     cpus <- nat
     mem <- Gen.chooseNum(32, 512*1024)
-    uuid <- RetzGen.nonEmpty
-    slaveId <- RetzGen.nonEmpty
   } yield {
+    var uuid = UUID.randomUUID.toString
+    var slaveId = UUID.randomUUID.toString
     RetzSchedulerTest.buildOffer(frameworkID, slaveId, uuid, cpus, mem)
   }
 }

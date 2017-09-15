@@ -16,6 +16,7 @@
  */
 package io.github.retz.scheduler
 
+import java.util
 import java.util.Optional
 
 import org.junit.Test
@@ -26,7 +27,7 @@ import io.github.retz.protocol.data.{Application, Job}
 import io.github.retz.protocol.RetzDataGen
 import io.github.retz.RetzGen
 import io.github.retz.planner.{AppJobPair, Plan, Planner, PlannerFactory}
-import org.apache.mesos.Protos.{FrameworkID, Offer}
+import org.apache.mesos.Protos.Offer
 
 import scala.collection.JavaConverters._
 
@@ -48,7 +49,7 @@ class PlannerPropTest extends JUnitSuite {
     len <- Gen.chooseNum[Int](1, 64)
     offer <- RetzDataGen.offer(fid)
     offers <- Gen.listOfN(len, RetzDataGen.offer(fid))
-  } yield (offer :: offers) // TODO: Offers should not have duplicate Id
+  } yield (offer :: offers)
 
   // input: offers and jobs, with max stock
   // output:
@@ -67,6 +68,7 @@ class PlannerPropTest extends JUnitSuite {
   //Plan plan(List<Protos.Offer> offers, List<AppJobPair> jobs, int maxStock);
   var owner: String = "deadbeef"
   var fid : String = "framewark-id"
+
   @Test
   def plannerInvariantProp(): Unit = {
     Checkers.check(Prop.forAllNoShrink(
@@ -84,8 +86,9 @@ class PlannerPropTest extends JUnitSuite {
         var appJobs = jobs.map(job => new AppJobPair(Optional.of(application), job))
         var planner: Planner = PlannerFactory.create(plannerName, config);
         var plan: Plan = planner.plan(offers.asJava, appJobs.asJava, maxStock, "nobody");
-        var totalJobsToLaunch = plan.getOfferAcceptors.asScala.foldLeft(0)( (sum, acceptor) => sum + acceptor.getJobs.size() )
-        println(jobs.size, offers.size, maxStock, "=>", plan.getOfferAcceptors.size(), plan.getToStock.size())
+        var totalJobsToLaunch = plan.getOfferAcceptors.asScala.foldLeft(0)((sum, acceptor) => sum + acceptor.getJobs.size())
+
+        println(plannerName, jobs.size, offers.size, maxStock, "=>", plan.getOfferAcceptors.size(), plan.getToStock.size())
 
         plan.getOfferAcceptors.asScala.foreach(acceptor => acceptor.verify());
 
