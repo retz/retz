@@ -21,14 +21,14 @@ import org.scalacheck.{Gen, Prop}
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.prop.Checkers
 
-class AuthenticatorProp extends JUnitSuite {
+class AuthenticatorPropTest extends JUnitSuite {
 
   val nonEmptyString = Gen.oneOf(Gen.alphaLowerStr, Gen.alphaNumStr, Gen.alphaUpperStr) suchThat (_.nonEmpty)
   val verb = Gen.oneOf("PUT", "GET", "DELETE", "POST", "PATCH")
 
   @Test
   def encodeDecode(): Unit = {
-    Checkers.check(Prop.forAll(nonEmptyString, nonEmptyString, nonEmptyString, verb, nonEmptyString) {
+    Checkers.check(Prop.forAllNoShrink(nonEmptyString, nonEmptyString, nonEmptyString, verb, nonEmptyString) {
       (key: String, secret: String, path: String, verb: String, md5: String) => {
         val authenticator = new HmacSHA256Authenticator(key, secret)
         val timestamp = TimestampHelper.now()
@@ -45,7 +45,7 @@ class AuthenticatorProp extends JUnitSuite {
 
   @Test
   def noop(): Unit = {
-    Checkers.check(Prop.forAll(nonEmptyString, nonEmptyString, nonEmptyString, verb, nonEmptyString) {
+    Checkers.check(Prop.forAllNoShrink(nonEmptyString, nonEmptyString, nonEmptyString, verb, nonEmptyString) {
       (key: String, signature: String, path: String, verb: String, md5: String) => {
         val authenticator = new NoopAuthenticator(key)
         val date = TimestampHelper.now()
