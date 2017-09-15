@@ -255,7 +255,7 @@ public class RetzSchedulerTest {
                         .setValue(sid)
                         .build())
                 .setFrameworkId(Protos.FrameworkID.newBuilder().setValue(fid).build())
-                .setHostname("127.0.0.1:5051")
+                .setHostname(sid + ":5051")
                 .setId(Protos.OfferID.newBuilder().setValue(offerId).build());
         return builder.build();
     }

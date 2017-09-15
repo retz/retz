@@ -100,6 +100,11 @@ public class ExtensiblePlanner implements Planner {
             mapOffers.put(offer.getId().getValue(), newOffer);
         }
 
+        if (mapOffers.keySet().size() != offers.size()) {
+            String s = String.join(",", offers.stream().map(offer -> offer.getId().getValue()).collect(Collectors.toList()));
+            throw new AssertionError("Duplicate offer ids! " + s);
+        }
+
         List<Job> jobs = appJobPairs.stream().map(appJobPair -> appJobPair.job()).collect(Collectors.toList());
 
         io.github.retz.planner.spi.Plan p = extension.plan(mapOffers, jobs);
