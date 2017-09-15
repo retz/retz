@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 
 public class ServerConfiguration extends FileConfiguration {
@@ -155,6 +156,10 @@ public class ServerConfiguration extends FileConfiguration {
 
     public ServerConfiguration(String file) throws IOException, URISyntaxException {
         this(new FileInputStream(file));
+    }
+
+    public ServerConfiguration(URL url) throws IOException, URISyntaxException {
+        this(url.openStream());
     }
 
     // This is not only for Mesos master address, but mainly for ZooKeeper location
