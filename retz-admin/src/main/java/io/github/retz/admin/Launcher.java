@@ -40,7 +40,7 @@ retz-admin list-user
 retz-admin snapshot -path <dest-file>
 retz-admin restore -path <src-file>
  */
-public class Launcher {
+public final class Launcher {
     private static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
     private static final List<SubCommand> SUB_COMMANDS;
@@ -57,6 +57,10 @@ public class Launcher {
         SUB_COMMANDS.add(new CommandHelp());
         SUB_COMMANDS.add(new CommandListUser());
         SUB_COMMANDS.add(new CommandUsage());
+    }
+
+    private Launcher() {
+        throw new UnsupportedOperationException();
     }
 
     public static void main(String... argv) throws Throwable {

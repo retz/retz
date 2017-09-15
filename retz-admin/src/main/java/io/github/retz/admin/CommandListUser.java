@@ -39,9 +39,9 @@ public class CommandListUser implements SubCommand {
     @Override
     public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port = fileConfig.getJmxPort();
-        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
+        try (AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             List<String> users = client.listUser();
-            for(String id: users) {
+            for (String id: users) {
                 LOG.info(id);
             }
             return 0;

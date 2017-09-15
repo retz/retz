@@ -56,16 +56,16 @@ public class ResourceQuantity {
         return fits(job.resources());
     }
 
-    public boolean fits (ResourceQuantity resourceQuantity) {
-        return resourceQuantity.getCpu() <= cpu &&
-                resourceQuantity.getMemMB() <= memMB &&
-                resourceQuantity.getGpu() <= gpu &&
-                resourceQuantity.getPorts() <= ports &&
-                resourceQuantity.getDiskMB() <= diskMB;
+    public boolean fits(ResourceQuantity resourceQuantity) {
+        return resourceQuantity.getCpu() <= cpu
+                && resourceQuantity.getMemMB() <= memMB
+                && resourceQuantity.getGpu() <= gpu
+                && resourceQuantity.getPorts() <= ports
+                && resourceQuantity.getDiskMB() <= diskMB;
     }
 
     @JsonGetter("cpu")
-    public int getCpu(){
+    public int getCpu() {
         return cpu;
     }
 

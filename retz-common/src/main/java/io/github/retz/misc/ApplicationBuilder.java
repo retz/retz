@@ -40,7 +40,8 @@ public class ApplicationBuilder {
     public ApplicationBuilder(String name, String owner) {
         appid = name;
         this.owner = owner;
-        largeFiles = files = Collections.emptyList();
+        largeFiles = Collections.emptyList();
+        files = Collections.emptyList();
         user = Optional.empty();
         container = new MesosContainer();
         enabled = true;

@@ -110,7 +110,7 @@ public class ProtocolTest {
             String json = "{\"command\":\"get-job\", \"id\":23}";
             Request req = mapper.readValue(json, Request.class);
             assertThat(req, instanceOf(GetJobRequest.class));
-            GetJobRequest getJobRequest = (GetJobRequest)req;
+            GetJobRequest getJobRequest = (GetJobRequest) req;
             assertThat(23, is(getJobRequest.id()));
         }
 
@@ -152,7 +152,7 @@ public class ProtocolTest {
 
             Response res = mapper.readValue(json, Response.class);
             assertThat(res, instanceOf(GetJobResponse.class));
-            GetJobResponse getJobResponse = (GetJobResponse)res;
+            GetJobResponse getJobResponse = (GetJobResponse) res;
             assertThat(getJobResponse.job().get().id(), is(0));
             assertThat(getJobResponse.job().get().cmd(), is("Mmmmmmmmmy commmmmand1!!!!!"));
         }

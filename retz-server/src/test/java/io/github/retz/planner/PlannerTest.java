@@ -18,10 +18,6 @@ package io.github.retz.planner;
 
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.Database;
-import io.github.retz.planner.AppJobPair;
-import io.github.retz.planner.Plan;
-import io.github.retz.planner.Planner;
-import io.github.retz.planner.PlannerFactory;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
@@ -113,14 +109,14 @@ public class PlannerTest {
             offers.add(RetzSchedulerTest.buildOffer(fid, i, uuid, 16, 512));
             Job job =  new Job(ANON_APPID, "cmd", new Properties(), 16, 512, 256);
             job.schedule(i, TimestampHelper.now());
-            jobs.add(new AppJobPair(app,job));
+            jobs.add(new AppJobPair(app, job));
         }
         Plan p = planner.plan(offers, jobs, 0, "nobody");
 
         assertEquals(2, p.getOfferAcceptors().size());
         assertEquals(0, p.getToKeep().size());
         assertEquals(0, p.getToStock().size());
-        for(int i = 0; i < 2; ++i) {
+        for (int i = 0; i < 2; ++i) {
             System.err.println(i);
             assertTrue(!p.getOfferAcceptors().get(i).getJobs().isEmpty());
             Job job = p.getOfferAcceptors().get(i).getJobs().get(0);
@@ -153,8 +149,8 @@ public class PlannerTest {
             assertEquals(2, p.getOfferAcceptors().size());
             assertEquals(0, p.getToKeep().size());
             assertEquals(0, p.getToStock().size());
-            for(int i = 0; i < 8; ++i) {
-                assertTrue(! p.getOfferAcceptors().get(i / 4).getJobs().isEmpty());
+            for (int i = 0; i < 8; ++i) {
+                assertTrue(!p.getOfferAcceptors().get(i / 4).getJobs().isEmpty());
                 Job job = p.getOfferAcceptors().get(i / 4).getJobs().get(i % 4);
                 assertEquals(i, job.id());
                 assertEquals("cmd", job.cmd());
@@ -181,8 +177,8 @@ public class PlannerTest {
             assertEquals(1, p.getToStock().size());
 
             assertEquals(1, p.getOfferAcceptors().stream().filter(acceptor -> acceptor.getJobs().isEmpty()).count());
-            for(int i = 0; i < 8; ++i) {
-                assertTrue(! p.getOfferAcceptors().get(i / 4).getJobs().isEmpty());
+            for (int i = 0; i < 8; ++i) {
+                assertTrue(!p.getOfferAcceptors().get(i / 4).getJobs().isEmpty());
                 Job job = p.getOfferAcceptors().get(i / 4).getJobs().get(i % 4);
                 System.err.println(i);
                 assertEquals(i, job.id());

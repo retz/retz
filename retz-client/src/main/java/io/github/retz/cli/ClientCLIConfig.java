@@ -28,7 +28,7 @@ import java.util.Objects;
 public class ClientCLIConfig extends FileConfiguration {
     static final Logger LOG = LoggerFactory.getLogger(ClientCLIConfig.class);
 
-    private final String RETZ_SERVER_URI = "retz.server.uri";
+    private static final String RETZ_SERVER_URI = "retz.server.uri";
     private final URI retzServerUri;
 
     public ClientCLIConfig(String file) throws IOException, URISyntaxException {

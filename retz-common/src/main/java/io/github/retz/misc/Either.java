@@ -20,8 +20,8 @@ public class Either<L, R> {
     private final L lhs;
     private final R rhs;
     public Either(L lhs, R rhs) throws IllegalArgumentException {
-        if ((lhs == null && rhs == null) ||
-                (lhs != null && rhs != null)){
+        if ((lhs == null && rhs == null)
+                || (lhs != null && rhs != null)) {
             throw new IllegalArgumentException("Both or either lhs and rhs is null");
         }
         this.lhs = lhs;

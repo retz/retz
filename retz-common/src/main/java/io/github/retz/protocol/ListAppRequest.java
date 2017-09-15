@@ -17,7 +17,6 @@
 package io.github.retz.protocol;
 
 public class ListAppRequest extends Request {
-    public ListAppRequest(){}
 
     @Override
     public String resource() {

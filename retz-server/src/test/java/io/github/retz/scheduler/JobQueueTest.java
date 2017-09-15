@@ -56,7 +56,7 @@ public class JobQueueTest {
     @Test
     public void q() throws Exception {
         Application app = new Application("appq", Collections.emptyList(), Collections.emptyList(),
-                Optional.empty(), "deadbeef",0, new MesosContainer(), true);
+                Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         assertTrue(Applications.load(app));
 
         int id = 0;
@@ -82,7 +82,7 @@ public class JobQueueTest {
             JobQueue.started(taskId, "slaveId", Optional.empty());
             List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0, 0));
             for (Job j : fit) {
-                System.err.println(j.name() + " " +j.cmd());
+                System.err.println(j.name() + " " + j.cmd());
             }
             assertTrue(fit.isEmpty());
             assertThat(JobQueue.countRunning(), is(1));
@@ -92,7 +92,7 @@ public class JobQueueTest {
 
 
         {
-            JobQueue.finished(taskId, Optional.empty(), 0, TimestampHelper.now() );
+            JobQueue.finished(taskId, Optional.empty(), 0, TimestampHelper.now());
             Optional<Job> maybeJob = JobQueue.getJob(id);
             assertTrue(maybeJob.isPresent());
             assertEquals(Job.JobState.FINISHED, maybeJob.get().state());

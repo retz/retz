@@ -16,7 +16,6 @@
  */
 package io.github.retz.planner.spi;
 
-import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.Range;
 import io.github.retz.protocol.data.ResourceQuantity;
@@ -54,7 +53,7 @@ public class ResourceTest {
     public void quantity() {
         {
             Job job = new Job("x", "a", new Properties(), 1, 32, 0, 0, 0);
-            ResourceQuantity resourceQuantity = new ResourceQuantity(10, 1024, 0, 1, 1024,0);
+            ResourceQuantity resourceQuantity = new ResourceQuantity(10, 1024, 0, 1, 1024, 0);
             assertTrue(resourceQuantity.fits(job));
         }
         {

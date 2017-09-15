@@ -56,7 +56,7 @@ public class CommandSchedule implements SubCommand {
     String attributes = null;
     @Parameter(names = {"-N", "--name"}, description = "Human readable job name")
     String name;
-    @Parameter(names="--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
+    @Parameter(names = "--tags", description = "Tags separated by commas (e.g. 'a,b,c')")
     List<String> tags = Collections.emptyList();
 
     @Override

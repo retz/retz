@@ -44,7 +44,7 @@ public class AuthHeader {
         String[] a = line.split(" ");
         if (a.length != 2) {
             return Optional.empty();
-        } else if (! a[0].equals(REALM)) {
+        } else if (!a[0].equals(REALM)) {
             return Optional.empty();
         }
         String[] b = a[1].split(":");
@@ -55,7 +55,7 @@ public class AuthHeader {
         return Optional.of(authHeader);
     }
 
-    public String buildHeader(){
+    public String buildHeader() {
         return new StringBuilder()
                 .append(REALM).append(" ")
                 .append(key).append(":")

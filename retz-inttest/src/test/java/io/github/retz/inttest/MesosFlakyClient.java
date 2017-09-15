@@ -23,7 +23,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class MesosFlakyClient {
+public final class MesosFlakyClient {
+
+    private MesosFlakyClient() {
+        throw new UnsupportedOperationException();
+    }
+
     static String getTaskState(URI uri, String taskId) throws JobNotFoundException {
         for (Map.Entry<String, Object> entry : getTask(uri, taskId).entrySet()) {
             if (entry.getKey().equals("state")) {

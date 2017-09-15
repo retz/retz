@@ -38,7 +38,7 @@ public class Range {
         this.min = min;
         if (max == 0) {
             this.max = Long.MAX_VALUE;
-        } else if (max < min){
+        } else if (max < min) {
             throw new IllegalArgumentException();
         } else {
             this.max = max;
@@ -89,7 +89,7 @@ public class Range {
                 return Arrays.asList(new Range(this.getMin(), rhs.getMin() - 1));
             } else {
                 // this.min < rhs.min < this.max < rhs.max
-                return Arrays.asList(new Range(this.getMin(), rhs.getMin()-1));
+                return Arrays.asList(new Range(this.getMin(), rhs.getMin() - 1));
             }
         }
     }
@@ -133,12 +133,18 @@ public class Range {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Range range = (Range) o;
 
-        if (min != range.min) return false;
+        if (min != range.min) {
+            return false;
+        }
         return max == range.max;
     }
 

@@ -40,7 +40,7 @@ public class User {
     }
 
     @JsonGetter("key_id")
-    public String keyId(){
+    public String keyId() {
         return keyId;
     }
 

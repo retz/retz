@@ -94,7 +94,7 @@ public class RetzSchedulerTest {
         driver.start();
         String offerId = "super duper blooper";
 
-        Protos.Offer offers[] = {buildOffer(offerId, 4, 512)};
+        Protos.Offer[] offers = {buildOffer(offerId, 4, 512)};
 
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
@@ -106,7 +106,7 @@ public class RetzSchedulerTest {
 
     //TODO: @Test
     public void launch() throws InterruptedException, JsonProcessingException, IOException {
-        String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
+        String[] files = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Applications.load(new Application("fooapp", Collections.emptyList(),
                 Arrays.asList(files), Optional.empty(), "deadbeef",
                 0, new MesosContainer(), true));
@@ -116,7 +116,7 @@ public class RetzSchedulerTest {
         driver.start();
         String offerId = "super duper blooper";
 
-        Protos.Offer offers[] = {buildOffer(offerId, 4, 512)};
+        Protos.Offer[] offers = {buildOffer(offerId, 4, 512)};
 
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
@@ -150,7 +150,7 @@ public class RetzSchedulerTest {
 
     @Test
     public void notEnough() throws Exception {
-        String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
+        String[] files = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Database.getInstance().addUser(new User("Deadbeef", "cafebabe", true, "notEnough test user"));
         Applications.load(new Application("fooapp", Collections.emptyList(),
                 Arrays.asList(files), Optional.empty(), "Deadbeef",
@@ -161,7 +161,7 @@ public class RetzSchedulerTest {
         driver.start();
         String offerId = "super duper blooper";
 
-        Protos.Offer offers[] = {buildOffer(offerId, 2, 34)};
+        Protos.Offer[] offers = {buildOffer(offerId, 2, 34)};
 
         driver.clear();
         driver.dummyOffer(Arrays.asList(offers));
@@ -169,7 +169,7 @@ public class RetzSchedulerTest {
         try {
             // Now database update is async with Stanchion, just waiting
             Thread.sleep(5000);
-        }catch(InterruptedException e){
+        } catch (InterruptedException e) {
         }
 
         assertThat(driver.getDeclined().size(), is(1));
@@ -182,7 +182,7 @@ public class RetzSchedulerTest {
 
     // TODO: @Test
     public void slaveFail() throws InterruptedException, JsonProcessingException, IOException {
-        String files[] = {"http://foobar.boom.co.jp/foo.tar.gz"};
+        String[] files = {"http://foobar.boom.co.jp/foo.tar.gz"};
         Applications.load(new Application("fooapp", Collections.emptyList(),
                 Arrays.asList(files), Optional.empty(), "Deadbeef",
                 0, new MesosContainer(), true));
@@ -192,7 +192,7 @@ public class RetzSchedulerTest {
         driver.start();
         String offerId = "super duper blooper";
 
-        Protos.Offer offers[] = {buildOffer(offerId, 4, 512)};
+        Protos.Offer[] offers = {buildOffer(offerId, 4, 512)};
         Protos.SlaveID slaveID = offers[0].getSlaveId();
 
 
@@ -234,8 +234,8 @@ public class RetzSchedulerTest {
     }
     public static Protos.Offer buildOffer(Protos.FrameworkID fid, int slaveNo, String offerId, int cpus, int mem) {
 
-        String hostname = "127.0.0."+ slaveNo + ":5051";
-        String slaveId = "slave("+ slaveNo + ")@" + hostname;
+        String hostname = "127.0.0." + slaveNo + ":5051";
+        String slaveId = "slave(" + slaveNo + ")@" + hostname;
 
         Protos.Offer.Builder builder = Protos.Offer.newBuilder()
                 .addAllResources(ResourceConstructor.construct(cpus, mem))

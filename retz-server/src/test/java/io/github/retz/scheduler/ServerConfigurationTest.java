@@ -45,14 +45,14 @@ public class ServerConfigurationTest {
         assertEquals(12345, config.getMaxFileSize());
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void wrongConfig() throws Exception {
         String s = "retz.mesos = localhost:5050\nretz.bind = http://0.0.0.0:9090\nretz.access.key = foobar\nretz.access.secret = bazbax";
         System.err.println(s);
         new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void wrongConfig2() throws Exception {
         String s = "retz.mesos = mesos.example.com:5050\nretz.bind = http://example.com:90\nretz.access.key = foobar\nretz.access.secret = bazbax";
         System.err.println(s);

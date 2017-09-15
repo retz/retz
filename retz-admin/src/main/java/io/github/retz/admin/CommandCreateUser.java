@@ -47,7 +47,7 @@ public class CommandCreateUser implements SubCommand {
             LOG.error("--info must be smaller than 1024 MBs: {}", info);
         }
 
-        try(AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
+        try (AdminConsoleClient client = new AdminConsoleClient(new JmxClient("localhost", port))) {
             User u = client.createUserAsObject(info);
             System.out.println(FileConfiguration.userAsConfig(u));
             return 0;

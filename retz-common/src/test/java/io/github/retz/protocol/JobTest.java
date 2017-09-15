@@ -135,13 +135,13 @@ public class JobTest {
             secretProperties.forEach(k -> {
                 Pattern p = Pattern.compile(String.format("^.*%s=([^,}]*).*$", k));
                 Matcher m = p.matcher(s);
-                assert(m.matches());
+                assert (m.matches());
                 assertEquals(m.group(1), "<masked>");
             });
             otherProperties.forEach(k -> {
                 Pattern p = Pattern.compile(String.format("^.*%s=([^,}]*).*$", k));
                 Matcher m = p.matcher(s);
-                assert(m.matches());
+                assert (m.matches());
                 assertEquals(m.group(1), "%STRING_NOT_TO_REPLACE%");
             });
         });

@@ -63,8 +63,8 @@ public class PlannerRegressionTest {
                 int mem = rand.nextInt(65536);
                 System.err.println(cpus + " " + mem);
                 // Duplicate offer IDs should lead to assertion error in ExtensiblePlanner.plan
-                offers.add(RetzSchedulerTest.buildOffer(fid.getValue(), "offer"+Integer.toString(i), uuid, cpus, mem));
-                offers.add(RetzSchedulerTest.buildOffer(fid.getValue(), "offer"+Integer.toString(i), uuid, cpus, mem));
+                offers.add(RetzSchedulerTest.buildOffer(fid.getValue(), "offer" + Integer.toString(i), uuid, cpus, mem));
+                offers.add(RetzSchedulerTest.buildOffer(fid.getValue(), "offer" + Integer.toString(i), uuid, cpus, mem));
             }
             Plan plan = planner.plan(offers, jobs, 1, "nobody");
 

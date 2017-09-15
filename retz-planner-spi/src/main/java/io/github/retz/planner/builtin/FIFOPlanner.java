@@ -19,7 +19,6 @@ package io.github.retz.planner.builtin;
 import io.github.retz.planner.spi.Offer;
 import io.github.retz.planner.spi.Plan;
 import io.github.retz.planner.spi.Planner;
-import io.github.retz.planner.spi.Resource;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import org.slf4j.Logger;
@@ -29,7 +28,7 @@ import java.util.*;
 
 public class FIFOPlanner implements Planner {
     private static final Logger LOG = LoggerFactory.getLogger(FIFOPlanner.class);
-    private final List<String> ORDER_BY = Arrays.asList("id");
+    private static final List<String> ORDER_BY = Arrays.asList("id");
 
     private boolean useGpu;
     private int maxStock;
@@ -84,7 +83,7 @@ public class FIFOPlanner implements Planner {
                     break;
                 }
             }
-            if (! plan.getJobSpecs().containsKey(entry.getKey())
+            if (!plan.getJobSpecs().containsKey(entry.getKey())
                     && plan.getOfferIdsToStock().size() < maxStock) {
                 // No jobs found for this offer
                 plan.addStock(entry.getKey());

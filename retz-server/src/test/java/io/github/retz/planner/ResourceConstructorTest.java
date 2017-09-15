@@ -16,7 +16,6 @@
  */
 package io.github.retz.planner;
 
-import io.github.retz.planner.ResourceConstructor;
 import io.github.retz.planner.spi.Resource;
 import org.apache.mesos.Protos;
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class ResourceConstructorTest {
                 .addAllResources(ResourceConstructor.construct(3, 256))
                 .build();
         Resource r = ResourceConstructor.decode(task.getResourcesList());
-        assertThat((int)r.cpu(), is(3));
+        assertThat((int) r.cpu(), is(3));
         assertThat(r.memMB(), is(256));
     }
 

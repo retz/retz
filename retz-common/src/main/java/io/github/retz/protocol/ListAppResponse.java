@@ -24,13 +24,15 @@ import io.github.retz.protocol.data.Application;
 import java.util.Collections;
 import java.util.List;
 
-
 public class ListAppResponse extends Response {
+
     private List<Application> applicationList = Collections.emptyList();
+
     @JsonCreator
     public ListAppResponse(@JsonProperty("applicationList") List<Application> applicationList) {
         this.applicationList = applicationList;
     }
+
     @JsonGetter
     public List<Application> applicationList() {
         return applicationList;

@@ -26,8 +26,7 @@ public class ScheduleResponse extends Response {
     public Job job;
 
     @JsonCreator
-    public ScheduleResponse(@JsonProperty("job") Job job)
-    {
+    public ScheduleResponse(@JsonProperty("job") Job job) {
         this.job = job;
     }
 

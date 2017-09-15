@@ -94,10 +94,10 @@ public class ProtocolTester {
         public boolean equals(Object obj) {
             if (obj instanceof Version) {
                 Version rhs = (Version) obj;
-                return this.major == rhs.major &&
-                        this.minor == rhs.minor &&
-                        this.patch == rhs.patch &&
-                        this.isSnapshot == rhs.isSnapshot;
+                return this.major == rhs.major
+                        && this.minor == rhs.minor
+                        && this.patch == rhs.patch
+                        && this.isSnapshot == rhs.isSnapshot;
             }
             return super.equals(obj);
         }

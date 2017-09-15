@@ -71,7 +71,7 @@ public class CLIParserTest {
         }
         {
             Set<Job.JobState> states = cmd.parseStates("ALL");
-            for(Job.JobState s : Job.JobState.class.getEnumConstants()){
+            for (Job.JobState s : Job.JobState.class.getEnumConstants()) {
                 System.out.println("State: " + s);
                 assertTrue(states.contains(s));
             }

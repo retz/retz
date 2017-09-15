@@ -16,9 +16,12 @@
  */
 package io.github.retz.protocol;
 
-public class Connection {
-    // this message size limits the size of job, number of jobs listable via 'list' command
-    public static final int MAX_PAYLOAD_SIZE = 64 * 1024 * 1024;
-    public static final int IDLE_TIMEOUT_SEC = 30;
-    public static final int KEEPALIVE_INTERVAL_SEC = 20;
+final class Connection {
+
+    private Connection() {
+        throw new UnsupportedOperationException();
+    }
+
+    static final int IDLE_TIMEOUT_SEC = 30;
+    static final int KEEPALIVE_INTERVAL_SEC = 20;
 }
