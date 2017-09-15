@@ -28,7 +28,7 @@ import org.scalatest.junit.JUnitSuite
 import org.scalatest.prop.Checkers
 
 // A property to correctly decode mesos.Proto.Resource to retz.mesos.Resource
-class ResourceProp extends JUnitSuite {
+class ResourcePropTest extends JUnitSuite {
   // val nat = Gen.oneOf(Gen.posInt, 0) // This does not somehow work
   val nat = for {i <- Gen.chooseNum(0, 65536)} yield i.toInt
   // val pos = Gen.posInt // This does not work somehow too
@@ -36,7 +36,7 @@ class ResourceProp extends JUnitSuite {
 
   @Test
   def decodeResource(): Unit = {
-    Checkers.check(Prop.forAll(pos, pos, nat, nat) {
+    Checkers.check(Prop.forAllNoShrink(pos, pos, nat, nat) {
       (cpus: Int, mem: Int, disk: Int, gpu: Int) => {
         println(cpus, mem, disk, gpu)
 
@@ -61,7 +61,7 @@ class ResourceProp extends JUnitSuite {
 
   @Test
   def resourceQuantityProp(): Unit = {
-    Checkers.check(Prop.forAll(Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], resourceQuantity) {
+    Checkers.check(Prop.forAllNoShrink(Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], Gen.posNum[Int], resourceQuantity) {
       (cpus: Int, mem: Int, disk: Int, gpus: Int, ports: Int, q: ResourceQuantity) => {
         val job = new Job("x", "a", new Properties(), cpus+1, mem + 32, disk + 32, gpus, ports)
         val fit = q.fits(job)
@@ -81,7 +81,7 @@ class ResourceProp extends JUnitSuite {
       yield new Resource(cpus.toDouble, mem, disk, gpus, util.Arrays.asList())
   @Test
   def resourceCutProp() : Unit = {
-    Checkers.check(Prop.forAll(Gen.nonEmptyListOf(resource)) {
+    Checkers.check(Prop.forAllNoShrink(Gen.nonEmptyListOf(resource)) {
       (resources: List[Resource]) => {
         val total = resources.foldLeft(new Resource(0, 0, 0))( (t, r) => {
           t.merge(r)
