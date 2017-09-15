@@ -80,7 +80,7 @@ class PlannerPropTest extends JUnitSuite {
        jobs: List[Job],
        offers: List[Offer],
        maxStock) => {
-        var config = new ServerConfiguration("src/test/resources/retz.properties")
+        var config = new ServerConfiguration(getClass.getResource("/retz.properties"))
         var appJobs = jobs.map(job => new AppJobPair(Optional.of(application), job))
         var planner: Planner = PlannerFactory.create(plannerName, config);
         var plan: Plan = planner.plan(offers.asJava, appJobs.asJava, maxStock, "nobody");

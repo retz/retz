@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
 public class ServerConfigurationTest {
     @Test
     public void tryLoadConfig() throws Exception {
-        ServerConfiguration config = new ServerConfiguration("src/test/resources/retz.properties");
+        ServerConfiguration config = new ServerConfiguration(getClass().getResource("/retz.properties"));
 
         assertEquals(config.getMesosMaster(), "mesos.example.com:5050");
         assertEquals(config.getUri(), new URI("http://localhost:9090"));
