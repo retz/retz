@@ -69,7 +69,7 @@ class PlannerPropTest extends JUnitSuite {
   var fid : String = "framewark-id"
   @Test
   def plannerInvariantProp(): Unit = {
-    Checkers.check(Prop.forAll(
+    Checkers.check(Prop.forAllNoShrink(
       Gen.oneOf("naive", "priority", "fifo", "priority2"),
       RetzDataGen.application(owner),
       jobs,
