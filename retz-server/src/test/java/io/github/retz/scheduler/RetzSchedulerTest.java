@@ -71,12 +71,12 @@ public class RetzSchedulerTest {
 
     @Test
     public void versionValidatorTest() {
-        String[] valids = {"1.2.0", "1.2.1", "1.3.0", "1.3.0"};
+        String[] valids = {"1.2.0", "1.2.1", "1.2.2", "1.3.0", "1.3.1", "1.4.0"};
         for (String valid : valids) {
             assertTrue(scheduler.validMesosVersion(valid));
         }
         String[] invalids = {"1.1.1", "1.1.0", "0.28.0", "aaaa",
-            "1.4.0", "1.4.2", "2.0", "2.3.4"};
+            "2.0", "2.3.4"};
         for (String invalid : invalids) {
             assertFalse(scheduler.validMesosVersion(invalid));
         }

@@ -152,7 +152,7 @@ public class RetzScheduler implements Scheduler {
 
     protected boolean validMesosVersion(String version) {
         if (version != null) {
-            if (version.startsWith("1.2") || version.startsWith("1.3")) {
+            if (version.startsWith("1.2") || version.startsWith("1.3") || version.startsWith("1.4")) {
                 return true;
             }
         }

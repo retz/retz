@@ -92,8 +92,6 @@ public class RetzIntTest extends IntTestBase {
             String actualText = catStdout(client, runRes);
             List<String> lines = Arrays.asList(actualText.split("\n"));
             assertThat(lines, hasItem(echoText));
-            assertThat(lines, hasItem("Received SUBSCRIBED event"));
-            assertThat(lines, hasItem("Received LAUNCH event"));
         }
 
         assertThat(ClientHelper.finished(client).size(), greaterThan(0));
@@ -279,8 +277,6 @@ public class RetzIntTest extends IntTestBase {
                         String actualText = catStdout(client, getJobResponse.job().get());
                         List<String> lines = Arrays.asList(actualText.split("\n"));
                         assertThat(lines, hasItem(Integer.toString(echoJob.argv)));
-                        assertThat(lines, hasItem("Received SUBSCRIBED event"));
-                        assertThat(lines, hasItem("Received LAUNCH event"));
 
                     } else if (checkRetval) {
                         assertNull("Unexpected return value for Job " + getJobResponse.job().get().result()
