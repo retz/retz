@@ -410,10 +410,7 @@ public class RetzScheduler implements Scheduler {
                     // LOG.info("Task {} starting at {}", status.getTaskId().getValue(), status.getSlaveId().getValue());
                     Optional<String> maybeUrl = Optional.empty();
                     if (this.master.isPresent()) {
-                        maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
-                                status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                                status.getExecutorId().getValue(),
-                                status.getContainerStatus().getContainerId().getValue());
+                        maybeUrl = maybeGetUrl(status);
                     }
                     JobQueue.starting(job.get(), maybeUrl, status.getTaskId().getValue());
                     break;
@@ -442,10 +439,7 @@ public class RetzScheduler implements Scheduler {
     void finished(Protos.TaskStatus status) throws IOException {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
-            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
-                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue(),
-                    status.getContainerStatus().getContainerId().getValue());
+            maybeUrl = maybeGetUrl(status);
             LOG.info("finished: {}", maybeUrl);
         }
         int ret = status.getState().getNumber() - Protos.TaskState.TASK_FINISHED_VALUE;
@@ -462,10 +456,7 @@ public class RetzScheduler implements Scheduler {
     void failed(Protos.TaskStatus status) throws IOException {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
-            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
-                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue(),
-                    status.getContainerStatus().getContainerId().getValue());
+            maybeUrl = maybeGetUrl(status);
         }
         try {
             JobQueue.failed(status.getTaskId().getValue(), maybeUrl, status.getMessage());
@@ -478,10 +469,7 @@ public class RetzScheduler implements Scheduler {
     void started(Protos.TaskStatus status) throws IOException {
         Optional<String> maybeUrl = Optional.empty();
         if (this.master.isPresent()) {
-            maybeUrl = MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
-                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
-                    status.getExecutorId().getValue(),
-                    status.getContainerStatus().getContainerId().getValue());
+            maybeUrl = maybeGetUrl(status);
         }
         try {
             JobQueue.started(status.getTaskId().getValue(), status.getSlaveId().getValue(), maybeUrl);
@@ -521,6 +509,19 @@ public class RetzScheduler implements Scheduler {
         if (taskStatuses.size() > 0) {
             driver.reconcileTasks(taskStatuses);
         }
+    }
+
+    private Optional<String> maybeGetUrl(Protos.TaskStatus status) {
+        if (status.hasSlaveId() && status.hasExecutorId() && status.hasContainerStatus() && status.getContainerStatus().hasContainerId()) {
+            return MesosHTTPFetcher.sandboxBaseUri(this.master.get(),
+                    status.getSlaveId().getValue(), frameworkInfo.getId().getValue(),
+                    status.getExecutorId().getValue(),
+                    status.getContainerStatus().getContainerId().getValue());
+        }
+        // TODO: something is lacking; show log output?
+        // ... should be debug because if the status piggyback is sent due to reconcilication
+        // most of information is lacking in the task status
+        return Optional.empty();
     }
 
     public boolean validateJob(Job job) {

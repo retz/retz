@@ -106,8 +106,9 @@ public class WebConsoleCommonTests {
     }
 
     @Test
-    public void version() {
+    public void version() throws IOException {
         System.err.println(Client.VERSION_STRING);
+        assertTrue(webClient.ping());
     }
 
     @Test

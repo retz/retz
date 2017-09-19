@@ -131,7 +131,9 @@ public final class JobQueue {
     static void started(String taskId, String slaveId, Optional<String> maybeUrl) throws IOException, JobNotFoundException {
         Optional<Job> maybeJob = Database.getInstance().getJobFromTaskId(taskId);
         Database.getInstance().updateJob(maybeJob.get().id(), job -> {
-            job.started(taskId, slaveId, maybeUrl, TimestampHelper.now());
+            // the state of job is already started; don't update timestamp
+            String ts = (job.state() == Job.JobState.STARTED)? job.started() : TimestampHelper.now();
+            job.started(taskId, slaveId, maybeUrl, ts);
             return Optional.of(job);
         });
     }
