@@ -38,6 +38,7 @@ public class Launcher {
         SUB_COMMANDS = new ArrayList<>();
 
         SUB_COMMANDS.add(new CommandHelp());
+        SUB_COMMANDS.add(new CommandPing());
         SUB_COMMANDS.add(new CommandConfig());
         SUB_COMMANDS.add(new CommandList());
         SUB_COMMANDS.add(new CommandSchedule());
