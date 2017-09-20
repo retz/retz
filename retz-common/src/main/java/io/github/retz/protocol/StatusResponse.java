@@ -32,6 +32,7 @@ public class StatusResponse extends Response {
     private int offers;
     private ResourceQuantity totalOffered;
     private Optional<String> master;
+    private int stanchionQueueLength;
     private final String serverVersion;
 
     @JsonCreator
@@ -42,6 +43,7 @@ public class StatusResponse extends Response {
                           @JsonProperty("offers") int offers,
                           @JsonProperty("totalOffered") ResourceQuantity totalOffered,
                           @JsonProperty("master") Optional<String> master,
+                          @JsonProperty("stanchionQueueLength") int stanchionQueueLength,
                           @JsonProperty("serverVersion") String serverVersion) {
         this.queueLength = queueLength;
         this.runningLength = runningLength;
@@ -50,6 +52,7 @@ public class StatusResponse extends Response {
         this.offers = offers;
         this.totalOffered = totalOffered;
         this.master = (master == null) ? Optional.empty() : master;
+        this.stanchionQueueLength = stanchionQueueLength;
         this.serverVersion = serverVersion;
     }
 
@@ -96,6 +99,11 @@ public class StatusResponse extends Response {
         return master;
     }
 
+    @JsonGetter("stanchionQueueLength")
+    public int stanchionQueueLength() {
+        return stanchionQueueLength;
+    }
+
     @JsonGetter("serverVersion")
     public String serverVersion() {
         return serverVersion;
@@ -110,6 +118,10 @@ public class StatusResponse extends Response {
         this.queueLength = queueLength;
         this.runningLength = runningLength;
         this.totalUsed = totalUsed;
+    }
+
+    public void setStanchionQueueLength(int stanchionQueueLength) {
+        this.stanchionQueueLength = stanchionQueueLength;
     }
 
     public void setMaster(String master) {

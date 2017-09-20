@@ -24,5 +24,6 @@ public interface StatusMXBean {
     int getRunningLength();
     String getServerVersion();
     String getStatus();
+    int getStanchionQueueLength();
     String getVersion();
 }

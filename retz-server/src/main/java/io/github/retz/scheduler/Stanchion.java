@@ -28,7 +28,7 @@ import io.github.retz.misc.LogUtil;
 public final class Stanchion {
     private static final Logger LOG = LoggerFactory.getLogger(RetzScheduler.class);
 
-    static final ExecutorService EXECUTOR = Executors.newSingleThreadExecutor();
+    static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
 
     private Stanchion() {
     }
@@ -55,5 +55,9 @@ public final class Stanchion {
         } catch (InterruptedException | ExecutionException e) {
             throw new IOException(e);
         }
+    }
+
+    public static int getQueueLength() {
+       return EXECUTOR.getQueue().size();
     }
 }
