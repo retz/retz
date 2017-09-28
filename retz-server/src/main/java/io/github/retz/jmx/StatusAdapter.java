@@ -61,6 +61,11 @@ public class StatusAdapter implements StatusMXBean {
         return getStatusResponse().version();
     }
 
+    @Override
+    public int getStanchionQueueLength() {
+        return getStatusResponse().stanchionQueueLength();
+    }
+
     private StatusResponse getStatusResponse() {
         return StatusCache.getRawStatusResponse();
     }

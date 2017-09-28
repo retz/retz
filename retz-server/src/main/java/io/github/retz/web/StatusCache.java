@@ -24,6 +24,7 @@ import io.github.retz.protocol.StatusResponse;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.ResourceQuantity;
 import io.github.retz.scheduler.RetzScheduler;
+import io.github.retz.scheduler.Stanchion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +56,7 @@ public class StatusCache implements Runnable {
     @Override
     public void run() {
         StatusCache.updateUsedResources();
+        StatusCache.updateStanchionStatus();
         if (on) {
             SCHEDULER.schedule(new StatusCache(interval), interval, TimeUnit.SECONDS);
         }
@@ -105,6 +107,12 @@ public class StatusCache implements Runnable {
 
         LOG.debug("poke len(Q)={}, len(Running)={}, totalUsed={}",
                 queueLength, running, total);
+    }
+
+    public static void updateStanchionStatus() {
+        synchronized (STATUS_RESPONSE_CACHE) {
+            STATUS_RESPONSE_CACHE.setStanchionQueueLength(Stanchion.getQueueLength());
+        }
     }
 
     public static void setUsedResources(int queueLength, int runningLenght, ResourceQuantity totalUsed) {
