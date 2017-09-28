@@ -17,6 +17,7 @@
 package io.github.retz.scheduler;
 
 import io.github.retz.db.Database;
+import io.github.retz.grpc.RetzServer;
 import io.github.retz.jmx.RetzJmxServer;
 import io.github.retz.misc.LogUtil;
 import io.github.retz.web.WebConsole;
@@ -107,14 +108,26 @@ public final class Launcher {
         WebConsole.set(scheduler, driver);
         LOG.info("Web console has started with port {}", conf.getPort());
 
+        // Start gRPC server
+        RetzServer server = new RetzServer(50001);
+        try {
+            server.start();
+        } catch (IOException e) {
+            LOG.error("Cannot start gRPC server", e);
+            return -1;
+        }
+
         java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(driver));
+
+        // stop frontend
+        server.stop();
+        WebConsole.stop();
 
         // Stop them all, usually don't come here
         // Wait for Mesos framework stop
         status = driver.join();
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());
 
-        WebConsole.stop(); // Stop web server
         GarbageJobCollector.stop();
         Database.getInstance().stop();
         RetzJmxServer.stop();

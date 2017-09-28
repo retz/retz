@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.github.retz.grpcgen";
+option java_outer_classname = "Protos";
+option objc_class_prefix = "RETZ";
+
+package retz;
+
+// Interface exported by the server.
+service Retz {
+  rpc Ping(PingRequest) returns (PingResponse) {}
+}
+
+message PingRequest {
+  int32 dummy = 1;
+}
+
+message PingResponse {
+  bool pong = 1;
+}
