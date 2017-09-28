@@ -66,9 +66,9 @@ public class IntTestBase {
 
     public static ClosableContainer createContainer(String containerName) throws Exception {
         hostBuildDir = new File("./build/").getCanonicalPath();
-        boolean res = new File(hostBuildDir, "log/").mkdirs();
-        if (!res) {
-            throw new IllegalStateException("fail to create hostBuildDir:" + hostBuildDir);
+        File buildLogDir = new File(hostBuildDir, "log/");
+        if (!buildLogDir.exists() && !buildLogDir.mkdirs()) {
+            throw new IllegalStateException("fail to create buildLogDir:" + buildLogDir);
         }
 
         DefaultDockerClientConfig.Builder builder
