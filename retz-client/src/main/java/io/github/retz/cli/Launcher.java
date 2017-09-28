@@ -29,7 +29,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Launcher {
+public final class Launcher {
     static final Logger LOG = LoggerFactory.getLogger(Launcher.class);
 
     private static final List<SubCommand> SUB_COMMANDS;
@@ -50,6 +50,10 @@ public class Launcher {
         SUB_COMMANDS.add(new CommandGetApp());
         SUB_COMMANDS.add(new CommandListApp());
         SUB_COMMANDS.add(new CommandLoadApp());
+    }
+
+    private Launcher() {
+        throw new UnsupportedOperationException();
     }
 
     public static void main(String... argv) {
@@ -92,7 +96,9 @@ public class Launcher {
 
     private static boolean oneOf(String key, String... list) {
         for (String s : list) {
-            if (key.equals(s)) return true;
+            if (key.equals(s)) {
+                return true;
+            }
         }
         return false;
     }

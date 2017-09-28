@@ -17,10 +17,10 @@
 package io.github.retz.auth;
 
 public class NoopAuthenticator implements Authenticator {
-    private final String KEY;
+    private final String key;
 
     public NoopAuthenticator(String key) {
-        this.KEY = key;
+        this.key = key;
     }
 
     @Override
@@ -40,11 +40,11 @@ public class NoopAuthenticator implements Authenticator {
 
     @Override
     public AuthHeader header(String verb, String md5, String date, String resource) {
-        return new AuthHeader(KEY, "all-okay");
+        return new AuthHeader(key, "all-okay");
     }
 
     @Override
     public String getKey() {
-        return KEY;
+        return key;
     }
 }

@@ -33,10 +33,14 @@ import java.util.concurrent.TimeoutException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class ClientHelper {
+public final class ClientHelper {
     static final Logger LOG = LoggerFactory.getLogger(ClientHelper.class);
     static final int MAX_INTERVAL_MSEC = 32768;
     static final int INITAL_INTERVAL_MSEC = 512;
+
+    private ClientHelper() {
+        throw new UnsupportedOperationException();
+    }
 
     public static List<Job> queue(Client c) throws IOException {
         Response res = c.list(Job.JobState.QUEUED, Optional.empty());

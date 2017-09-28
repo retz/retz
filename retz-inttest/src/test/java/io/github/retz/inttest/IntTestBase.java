@@ -55,8 +55,7 @@ public class IntTestBase {
     // Probably better to make log and downloading directories for testc ases.
     private static String hostBuildDir;
 
-    static int RES_OK = 0;
-    private static final String configfile = "retz-c.properties";
+    static int resOk = 0;
     static ClosableContainer container;
     protected ClientCLIConfig config;
     static String serverConfigFile;
@@ -67,7 +66,10 @@ public class IntTestBase {
 
     public static ClosableContainer createContainer(String containerName) throws Exception {
         hostBuildDir = new File("./build/").getCanonicalPath();
-        boolean _res = new File(hostBuildDir, "log/").mkdirs();
+        boolean res = new File(hostBuildDir, "log/").mkdirs();
+        if (!res) {
+            throw new IllegalStateException("fail to create hostBuildDir:" + hostBuildDir);
+        }
 
         DefaultDockerClientConfig.Builder builder
                 = DefaultDockerClientConfig.createDefaultConfigBuilder().withApiVersion("1.12");
@@ -101,7 +103,7 @@ public class IntTestBase {
         System.out.println(Client.VERSION_STRING);
         container = createContainer(CONTAINER_NAME);
         serverConfigFile = configFile;
-        System.out.println("Using server config file "+ configFile);
+        System.out.println("Using server config file " + configFile);
         container.setConfigfile(configFile);
 
         container.start(needsPostgres);

@@ -72,7 +72,7 @@ public class RegressionTest extends IntTestBase {
             String cmd = "echo palmface > '" + filename + "'";
             Job job = new Job(appName, cmd, new Properties(), 2, 256, 32, 0, 0);
             Job runRes = client.run(job);
-            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.result(), is(resOk));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -98,7 +98,7 @@ public class RegressionTest extends IntTestBase {
             String cmd = "mkdir d && dd if=/dev/urandom of=d/binary count=1024 bs=16 && tar czf d/binary.tgz d/binary && md5sum d/binary.tgz > binary.tgz.md5";
             Job job = new Job(appName, cmd, new Properties(), 2, 256, 32, 0, 0);
             Job runRes = client.run(job);
-            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.result(), is(resOk));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
             {

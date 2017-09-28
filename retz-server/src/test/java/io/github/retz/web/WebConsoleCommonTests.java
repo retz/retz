@@ -42,7 +42,7 @@ import static spark.Spark.awaitInitialization;
 // These tests must pass regardless of any client/server communication configuration
 @Ignore
 public class WebConsoleCommonTests {
-    private final List<String> BASE_ORDER_BY = Arrays.asList("id");
+    private static final List<String> BASE_ORDER_BY = Arrays.asList("id");
     private Client webClient;
     private ObjectMapper mapper;
     private ServerConfiguration config;
@@ -219,7 +219,7 @@ public class WebConsoleCommonTests {
             assertTrue(listFilesResponse.entries().isEmpty());
 
             Response response = webClient.getFile(sres.job.id(), "stdout", 0, 20000);
-            GetFileResponse getFileResponse = (GetFileResponse)response;
+            GetFileResponse getFileResponse = (GetFileResponse) response;
             assertFalse(getFileResponse.file().isPresent());
         }
 
@@ -256,14 +256,14 @@ public class WebConsoleCommonTests {
             assertEquals("No such job: 0", res.status());
         }
         Application app = new ApplicationBuilder("app", config.getUser().keyId()).build();
-        LoadAppResponse loadAppResponse = (LoadAppResponse)webClient.load(app);
+        LoadAppResponse loadAppResponse = (LoadAppResponse) webClient.load(app);
         assertEquals("ok", loadAppResponse.status());
         {
             Job job = new Job("app", "sleep 1000", new Properties(), 1, 64, 0);
-            ScheduleResponse scheduleResponse = (ScheduleResponse)webClient.schedule(job);
-            KillResponse killResponse = (KillResponse)webClient.kill(scheduleResponse.job().id());
+            ScheduleResponse scheduleResponse = (ScheduleResponse) webClient.schedule(job);
+            KillResponse killResponse = (KillResponse) webClient.kill(scheduleResponse.job().id());
             assertEquals("ok", killResponse.status());
-            GetJobResponse getJobResponse = (GetJobResponse)webClient.getJob(scheduleResponse.job().id());
+            GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(scheduleResponse.job().id());
             System.err.println(getJobResponse.job().get().pp());
             assertEquals(Job.JobState.KILLED, getJobResponse.job().get().state());
         }
@@ -369,7 +369,7 @@ public class WebConsoleCommonTests {
                 assertThat(res.status(), not(is("ok")));
                 assertThat(res, instanceOf(ErrorResponse.class));
 
-                GetJobResponse getJobResponse = (GetJobResponse)webClient.getJob(job1.id());
+                GetJobResponse getJobResponse = (GetJobResponse) webClient.getJob(job1.id());
                 assertThat(getJobResponse.job().get().state(), is(Job.JobState.QUEUED));
             }
             { // Charlie tries to snoop files in Alice's job sandbox

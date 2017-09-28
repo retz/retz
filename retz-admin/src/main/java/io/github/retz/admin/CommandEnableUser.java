@@ -43,9 +43,9 @@ public class CommandEnableUser implements SubCommand {
     @Override
     public int handle(FileConfiguration fileConfig, boolean verbose) throws Throwable {
         int port = fileConfig.getJmxPort();
-        try(JmxClient jmxClient = new JmxClient("localhost", port)) {
+        try (JmxClient jmxClient = new JmxClient("localhost", port)) {
             Object o = jmxClient.invokeOperation(new ObjectName("io.github.retz.scheduler:type=AdminConsole"), "enableUser", id, true);
-            boolean result = (Boolean)o;
+            boolean result = (Boolean) o;
             LOG.info("User enabled: {}", result);
             return 0;
         }

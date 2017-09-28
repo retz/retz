@@ -60,8 +60,8 @@ public class ErrorTrapper implements TailerListener {
 
     @Override
     public void handle(String line) {
-        for(String pattern : dictionary) {
-            if(line.contains(pattern)) {
+        for (String pattern : dictionary) {
+            if (line.contains(pattern)) {
                 fail = true;
                 errors.add(line);
             }

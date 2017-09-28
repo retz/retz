@@ -92,7 +92,7 @@ public class CommandLoadApp implements SubCommand {
         boolean enabled = true;
         if ("false".equals(enabledStr)) {
             enabled = false;
-        } else if (! "true".equals(enabledStr)) {
+        } else if (!"true".equals(enabledStr)) {
             LOG.error("Wrong argument for --enabled option: {}", enabledStr);
             return -1;
         }

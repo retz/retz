@@ -20,6 +20,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class MesosContainer extends Container {
     @JsonCreator
-    public MesosContainer(){
+    public MesosContainer() {
     }
 }

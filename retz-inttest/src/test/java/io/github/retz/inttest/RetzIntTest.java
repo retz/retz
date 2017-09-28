@@ -80,7 +80,7 @@ public class RetzIntTest extends IntTestBase {
             String echoText = "hoge from echo-app via Retz";
             Job job = new Job("echo-app", "echo " + echoText, new Properties(), 2, 256, 32, 0, 1);
             Job runRes = client.run(job);
-            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.result(), is(resOk));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
             String toDir = "build/log/";
@@ -102,7 +102,7 @@ public class RetzIntTest extends IntTestBase {
             String echoText = "PPAP";
             Job job = new Job("echo-app", "mkdir -p a/b/c/d; echo " + echoText + " > a/b/c/e", new Properties(), 1, 32, 32);
             Job runRes = client.run(job);
-            assertThat(runRes.result(), is(RES_OK));
+            assertThat(runRes.result(), is(resOk));
             assertThat(runRes.state(), is(Job.JobState.FINISHED));
 
             Response response = client.getFile(runRes.id(), "a/b/c/e", 0, 1024);
@@ -326,7 +326,7 @@ public class RetzIntTest extends IntTestBase {
                 for (Job finished : ClientHelper.finished(client)) {
                     assertThat(finished.retry(), is(0));
                     assertThat(finished.state(), is(Job.JobState.FINISHED));
-                    assertThat(finished.result(), is(RES_OK));
+                    assertThat(finished.result(), is(resOk));
                 }
             }
             assertThat(finishedJobs.size(), is(jobNum));

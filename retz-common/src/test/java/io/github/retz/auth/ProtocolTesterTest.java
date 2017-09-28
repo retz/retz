@@ -36,12 +36,12 @@ public class ProtocolTesterTest {
         {
             String server = "retz-server-0.1.2 (0.1.1-15-g6341986)";
             String client = "retz-client-0.1.2 (0.1.1-15-g6341986)";
-            testVersions(server, client ,true);
+            testVersions(server, client, true);
         }
         {
             String server = "retz-server-0.2.0 (0.2.0-15-asdfasdf)";
             String client = "retz-client-0.2.1 (0.2.1-15-asdfasdf)";
-            testVersions(server, client ,true);
+            testVersions(server, client, true);
         }
         {
             String server = "retz-server-0.1.2-SNAPSHOT (0.1.1-15-g6341986)";

@@ -66,7 +66,7 @@ public class CommandCreateUsers implements SubCommand {
                     User u = client.createUserAsObject(line);
                     String config = FileConfiguration.userAsConfig(u);
                     String filename = dir + "/retz.properties-" + line;
-                    try(PrintWriter writer = new PrintWriter(filename)) {
+                    try (PrintWriter writer = new PrintWriter(filename)) {
                         writer.write(config);
                         LOG.info("Created {}", filename);
                     }

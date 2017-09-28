@@ -32,13 +32,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class HmacSHA256Authenticator implements Authenticator {
     private static final Logger LOG = LoggerFactory.getLogger(HmacSHA256Authenticator.class);
 
-    private static final String REALM = "Retz-auth-v1";
     private static final String ALGORITHM = "HmacSHA256";
 
     static Mac mac = null;
 
-    private final String KEY;
-    private final SecretKeySpec SECRET_KEY_SPEC;
+    private final String key;
+    private final SecretKeySpec secretKeySpec;
 
     static {
         try {
@@ -53,8 +52,8 @@ public class HmacSHA256Authenticator implements Authenticator {
         }
     }
     public HmacSHA256Authenticator(String key, String secret) {
-        KEY = key;
-        SECRET_KEY_SPEC = new SecretKeySpec(secret.getBytes(UTF_8), ALGORITHM);
+        this.key = key;
+        secretKeySpec = new SecretKeySpec(secret.getBytes(UTF_8), ALGORITHM);
     }
 
     // @var sign: signature value of authentication header, which should be provided as
@@ -71,7 +70,7 @@ public class HmacSHA256Authenticator implements Authenticator {
     public boolean authenticate(String verb, String md5, String date, String resource,
                                 String key, String sign) {
 
-        if (!KEY.equals(key)) {
+        if (!this.key.equals(key)) {
             return false;
         }
         String generatedSignature = signature(verb, md5, date, resource);
@@ -89,12 +88,12 @@ public class HmacSHA256Authenticator implements Authenticator {
             }
             // TODO: when this becomes bottleneck at server side, make this TLS
             synchronized (HmacSHA256Authenticator.mac) {
-                HmacSHA256Authenticator.mac.init(SECRET_KEY_SPEC);
-                byte[] mac_bytes = mac.doFinal(string2sign.getBytes(UTF_8));
-                return Base64.getEncoder().withoutPadding().encodeToString(mac_bytes);
+                HmacSHA256Authenticator.mac.init(secretKeySpec);
+                byte[] macBytes = mac.doFinal(string2sign.getBytes(UTF_8));
+                return Base64.getEncoder().withoutPadding().encodeToString(macBytes);
             }
         } catch (InvalidKeyException e) {
-            throw new AssertionError(SECRET_KEY_SPEC.getFormat() + " is wrong");
+            throw new AssertionError(secretKeySpec.getFormat() + " is wrong");
         }
     }
 
@@ -109,16 +108,16 @@ public class HmacSHA256Authenticator implements Authenticator {
 
     @Override
     public String getKey() {
-        return KEY;
+        return key;
     }
 
     @Override
     public String toString() {
-        return KEY + ":" + SECRET_KEY_SPEC.toString();
+        return key + ":" + secretKeySpec.toString();
     }
 
     public AuthHeader header(String verb, String md5, String date, String resource) {
         String signature = signature(verb, md5, date, resource);
-        return new AuthHeader(KEY, signature);
+        return new AuthHeader(key, signature);
     }
 }

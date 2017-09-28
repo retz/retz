@@ -131,11 +131,11 @@ public class Resource {
         this.diskMB -= diskMB;
         this.gpu -= gpus;
 
-        List<Range> newPorts = this.ports.stream().map( (r) -> {
+        List<Range> newPorts = this.ports.stream().map((r) -> {
             List<Range> remain = new LinkedList<>();
             for (Range range : ranges) {
                 List<Range> s = r.subtract(range);
-                if (! (s.size() == 1 && s.get(0).equals(r))) {
+                if (!(s.size() == 1 && s.get(0).equals(r))) {
                     //System.err.println(r + remain.getClass().getName());
                     //System.err.println(s.stream().map( (ra) -> ra.toString()).collect(Collectors.joining(",")));
                     remain.addAll(s);

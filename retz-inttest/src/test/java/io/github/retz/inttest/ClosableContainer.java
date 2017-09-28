@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-public class ClosableContainer implements AutoCloseable {
+public final class ClosableContainer implements AutoCloseable {
     private final DockerClient dockerClient;
     private final String containerId;
     private Thread mesosAgentHolder;
@@ -126,8 +126,8 @@ public class ClosableContainer implements AutoCloseable {
         waitFor(
                 () -> {
                     String res = ps();
-                    return res.contains("/sbin/mesos-slave --master") &&
-                            res.contains("retz-server-all.jar");
+                    return res.contains("/sbin/mesos-slave --master")
+                            && res.contains("retz-server-all.jar");
                 },
                 "Processes failed to spawn, timed out.",
                 () -> {
@@ -142,7 +142,9 @@ public class ClosableContainer implements AutoCloseable {
         int retries = 200;
         while (true) {
             try {
-                if (validator.call()) return;
+                if (validator.call()) {
+                    return;
+                }
             } catch (Exception e) {
                 // nop
             }
@@ -199,8 +201,8 @@ public class ClosableContainer implements AutoCloseable {
     void waitForPostgres() throws Exception {
         waitFor(() -> {
                     String res = select1();
-                    return res.contains("column") &&
-                            res.contains("1");
+                    return res.contains("column")
+                            && res.contains("1");
                 },
                 "Processes failed to spawn, timed out.",
                 () -> {
@@ -235,7 +237,7 @@ public class ClosableContainer implements AutoCloseable {
     }
 
     private Runnable createHolderTask(String name, String[] command) {
-        return () ->{
+        return () -> {
             try {
                 ExecCreateCmdResponse spawnAgent = dockerClient
                         .execCreateCmd(containerId).withTty(false)
@@ -280,7 +282,9 @@ public class ClosableContainer implements AutoCloseable {
             }
             String[] words = line.split("\\s");
             for (String word : words) {
-                if (word.isEmpty()) continue;
+                if (word.isEmpty()) {
+                    continue;
+                }
                 try {
                     return Integer.parseInt(word);
                 } catch (Exception e) {

@@ -42,8 +42,8 @@ public class CommandList implements SubCommand {
     @Parameter(names = "--tag", description = "Tag name to show ('AND' condition with states)")
     private String tag;
 
-    public final String NAME = "list";
-    public final String DESCRIPTION = "list all jobs";
+    public static final String NAME = "list";
+    public static final String DESCRIPTION = "list all jobs";
 
     @Override
     public String description() {

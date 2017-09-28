@@ -21,10 +21,10 @@ import com.beust.jcommander.Parameter;
 ;
 
 public class MainCommand {
-    @Parameter(names={"--config", "-C"})
+    @Parameter(names = {"--config", "-C"})
     private String configFile = "/opt/retz-server/etc/retz.properties";
 
-    @Parameter(names={"--verbose", "-v"})
+    @Parameter(names = {"--verbose", "-v"})
     boolean verbose = false;
 
     public String getConfigFile() {

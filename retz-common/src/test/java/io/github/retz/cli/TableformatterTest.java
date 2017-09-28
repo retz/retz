@@ -24,7 +24,7 @@ public class TableformatterTest {
         TableFormatter formatter = new TableFormatter("a", "b");
         formatter.feed("1111", "2");
         System.err.println(formatter.titles());
-        for(String line : formatter) {
+        for (String line : formatter) {
             System.err.println(line);
         }
     }

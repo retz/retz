@@ -20,7 +20,11 @@ import java.sql.SQLException;
 
 import org.slf4j.Logger;
 
-public class LogUtil {
+public final class LogUtil {
+
+    private LogUtil() {
+        throw new UnsupportedOperationException();
+    }
 
     public static void error(Logger logger, String message, Throwable throwable) {
         action(logger, message, throwable, (log, m, t) -> log.error("{}", m, t));
@@ -36,7 +40,7 @@ public class LogUtil {
 
     @FunctionalInterface
     private interface LogConsumer {
-        public void log(Logger log, String message, Throwable t);
+        void log(Logger log, String message, Throwable t);
     }
 
     private static void action(Logger logger, String message, Throwable t, LogConsumer consumer) {

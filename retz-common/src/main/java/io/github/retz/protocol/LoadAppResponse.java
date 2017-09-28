@@ -17,5 +17,4 @@
 package io.github.retz.protocol;
 
 public class LoadAppResponse extends Response {
-    public LoadAppResponse(){}
 }

@@ -137,7 +137,7 @@ public class LauncherTest {
             String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "--prio", "-2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("schedule", conf.getParsedSubCommand().getName());
-            CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
+            CommandSchedule commandSchedule = (CommandSchedule) conf.getParsedSubCommand();
             assertEquals("fooname", commandSchedule.name);
             assertEquals(-2, commandSchedule.priority);
         }
@@ -146,7 +146,7 @@ public class LauncherTest {
             String[] argv = {"-C", PROPERTY_FILE, "schedule", "-A", "t", "-cmd", "uname -a", "--tags", "a,b,c,234"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("schedule", conf.getParsedSubCommand().getName());
-            CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
+            CommandSchedule commandSchedule = (CommandSchedule) conf.getParsedSubCommand();
             assertEquals(4, commandSchedule.tags.size());
             assertEquals("a", commandSchedule.tags.get(0));
             assertEquals("b", commandSchedule.tags.get(1));
@@ -159,7 +159,7 @@ public class LauncherTest {
                     "-E", "CUDA_PATH=/usr/local/cuda"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("schedule", conf.getParsedSubCommand().getName());
-            CommandSchedule commandSchedule = (CommandSchedule)conf.getParsedSubCommand();
+            CommandSchedule commandSchedule = (CommandSchedule) conf.getParsedSubCommand();
             Properties p = SubCommand.parseKeyValuePairs(commandSchedule.envs);
             assertEquals("b", p.getProperty("a"));
             assertEquals("d", p.getProperty("c"));
@@ -201,7 +201,7 @@ public class LauncherTest {
             String[] argv = {"-C", PROPERTY_FILE, "run", "-A", "t", "-cmd", "uname -a", "-N", "fooname", "--prio", "-2"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("run", conf.getParsedSubCommand().getName());
-            CommandRun commandRun = (CommandRun)conf.getParsedSubCommand();
+            CommandRun commandRun = (CommandRun) conf.getParsedSubCommand();
             assertEquals("fooname", commandRun.name);
             assertEquals(-2, commandRun.priority);
         }

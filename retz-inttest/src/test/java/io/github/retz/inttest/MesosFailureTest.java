@@ -100,7 +100,7 @@ public class MesosFailureTest extends IntTestBase {
                 Job job = client.run(initJob);
                 assertNotNull(job);
                 assertEquals(Job.JobState.FINISHED, job.state());
-                GetFileResponse res = (GetFileResponse)client.getFile(job.id(), "stdout", 0, -1);
+                GetFileResponse res = (GetFileResponse) client.getFile(job.id(), "stdout", 0, -1);
                 assertFalse(res.file().get().data().isEmpty());
             }
 
@@ -115,12 +115,12 @@ public class MesosFailureTest extends IntTestBase {
                 assertNotNull(job);
                 assertEquals(Job.JobState.FINISHED, job.state());
                 client.getFile(job.id(), "stdout", 0, -1);
-                GetFileResponse res = (GetFileResponse)client.getFile(job.id(), "stdout", 0, -1);
+                GetFileResponse res = (GetFileResponse) client.getFile(job.id(), "stdout", 0, -1);
                 assertFalse(res.file().get().data().isEmpty());
             }
         } finally {
             tailer.stop();
-            for(String line: errorTrapper.getErrors()) {
+            for (String line: errorTrapper.getErrors()) {
                 System.err.println(line);
             }
             assertFalse("Retz should not write ERROR log:", errorTrapper.getFail());
@@ -152,12 +152,12 @@ public class MesosFailureTest extends IntTestBase {
             // This sleep time must be artibralily long enough that covers following stop-start sequence
             // to make sure reconciliation runs after restart.
             Job initJob1 = new Job(appName, "sleep 32; ls", new Properties(), 1, 32, 0);
-            ScheduleResponse response = (ScheduleResponse)client.schedule(initJob1);
+            ScheduleResponse response = (ScheduleResponse) client.schedule(initJob1);
             assertNotNull(response.job());
             asyncJob = response.job();
 
             do {
-                GetJobResponse response1 = (GetJobResponse)client.getJob(asyncJob.id());
+                GetJobResponse response1 = (GetJobResponse) client.getJob(asyncJob.id());
                 assertTrue(response1.job().isPresent());
                 asyncJob = response1.job().get();
                 Thread.sleep(512);
@@ -170,14 +170,14 @@ public class MesosFailureTest extends IntTestBase {
             container.system(start);
 
             do {
-                GetJobResponse response1 = (GetJobResponse)client.getJob(asyncJob.id());
+                GetJobResponse response1 = (GetJobResponse) client.getJob(asyncJob.id());
                 assertTrue(response1.job().isPresent());
                 asyncJob = response1.job().get();
                 Thread.sleep(2048);
             } while (asyncJob.state() != Job.JobState.FINISHED);
 
             {
-                GetFileResponse response1 = (GetFileResponse)client.getFile(asyncJob.id(), "stdout", 0, -1);
+                GetFileResponse response1 = (GetFileResponse) client.getFile(asyncJob.id(), "stdout", 0, -1);
                 System.err.println("stdout>" + response1.file().get().data());
                 assertFalse(response1.file().get().data().isEmpty());
             }
@@ -188,12 +188,12 @@ public class MesosFailureTest extends IntTestBase {
                 assertNotNull(job);
                 assertEquals(Job.JobState.FINISHED, job.state());
                 client.getFile(job.id(), "stdout", 0, -1);
-                GetFileResponse res = (GetFileResponse)client.getFile(job.id(), "stdout", 0, -1);
+                GetFileResponse res = (GetFileResponse) client.getFile(job.id(), "stdout", 0, -1);
                 assertFalse(res.file().get().data().isEmpty());
             }
         } finally {
             tailer.stop();
-            for(String line: errorTrapper.getErrors()) {
+            for (String line: errorTrapper.getErrors()) {
                 System.err.println(line);
             }
             assertFalse("Retz should not write ERROR log:", errorTrapper.getFail());

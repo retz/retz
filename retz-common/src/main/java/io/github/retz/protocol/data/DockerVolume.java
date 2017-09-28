@@ -46,7 +46,7 @@ public class DockerVolume {
         this.containerPath = Objects.requireNonNull(containerPath);
         this.mode = (mode == null) ? Mode.RW : mode;
         this.name = Objects.requireNonNull(name);
-        this.options = (options == null)? new Properties() : options;
+        this.options = (options == null) ? new Properties() : options;
     }
 
     @JsonGetter("driver")

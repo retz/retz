@@ -50,7 +50,7 @@ public class FileConfigurationTest {
                 FileConfiguration.userAsConfig(u));
 
         assertEquals(true, config.getBoolProperty(FileConfiguration.AUTHENTICATION, true));
-        assertEquals(40822, config.getLowerboundedIntProperty(FileConfiguration.JMX_PORT, 9999,1024));
+        assertEquals(40822, config.getLowerboundedIntProperty(FileConfiguration.JMX_PORT, 9999, 1024));
         assertEquals(42, config.getIntProperty("nosuch.property", 42));
     }
 
@@ -65,11 +65,11 @@ public class FileConfigurationTest {
         String date = TimestampHelper.now();
         String resource = "/job/234";
         String signature = sign(verb, md5, date, resource, "deadbeef");
-        System.err.println("Signature: "+signature);
+        System.err.println("Signature: " + signature);
         assertTrue(a.authenticate(verb, md5, date, resource, "cafebabe", signature));
 
         String wrongSignature = sign(verb, md5, date, resource, "my name is charlie");
-        System.err.println("Wrong signature: "+wrongSignature);
+        System.err.println("Wrong signature: " + wrongSignature);
         assertFalse(a.authenticate(verb, md5, date, resource, "cafebabe", wrongSignature));
     }
 

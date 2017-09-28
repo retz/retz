@@ -25,7 +25,7 @@ import java.util.List;
 public class PriorityPlanner extends FIFOPlanner {
     private static final Logger LOG = LoggerFactory.getLogger(PriorityPlanner.class);
 
-    private final List<String> ORDER_BY = Arrays.asList("priority", "id");
+    private static final List<String> ORDER_BY = Arrays.asList("priority", "id");
 
     @Override
     public List<String> orderBy() {

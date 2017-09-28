@@ -33,15 +33,15 @@ public class LauncherTest {
             String[] argv = {"-C", CONFIGFILE, "create-user", "--info", "{it's a json}"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("create-user", conf.getParsedSubCommand().getName());
-            assertEquals("{it's a json}", ((CommandCreateUser)conf.getParsedSubCommand()).info);
+            assertEquals("{it's a json}", ((CommandCreateUser) conf.getParsedSubCommand()).info);
         }
 
         {
             String[] argv = {"-C", CONFIGFILE, "create-users", "--file", "deadbeef-file", "--output", "cafebab3e-output"};
             Launcher.Configuration conf = Launcher.parseConfiguration(argv);
             assertEquals("create-users", conf.getParsedSubCommand().getName());
-            assertEquals("deadbeef-file", ((CommandCreateUsers)conf.getParsedSubCommand()).file);
-            assertEquals("cafebab3e-output", ((CommandCreateUsers)conf.getParsedSubCommand()).dir);
+            assertEquals("deadbeef-file", ((CommandCreateUsers) conf.getParsedSubCommand()).file);
+            assertEquals("cafebab3e-output", ((CommandCreateUsers) conf.getParsedSubCommand()).dir);
         }
 
         {

@@ -64,7 +64,7 @@ public class MesosSchedulerDummyDriver implements SchedulerDriver {
                 .setId(frameworkID)
                 .build();
         System.err.println(mesosMaster);
-        String master[] = mesosMaster.split(":");
+        String[] master = mesosMaster.split(":");
         assertThat(master.length, is(2));
         this.masterInfo = Protos.MasterInfo.newBuilder()
                 .setHostname(master[0])
