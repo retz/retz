@@ -100,11 +100,11 @@ public class CommandKillall implements SubCommand {
             LOG.info("{}: {} jobs killed, {} jobs failed", state, killed.size(), failed.size());
 
             if (verbose) {
-                String k = killed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.joining(", "));
+                String k = killed.stream().map(job -> Long.toString(job.id())).collect(Collectors.joining(", "));
                 LOG.info("Jobs killed: {}", k);
             }
             if (!failed.isEmpty()) {
-                String f = failed.stream().map(job -> Integer.toString(job.id())).collect(Collectors.joining(", "));
+                String f = failed.stream().map(job -> Long.toString(job.id())).collect(Collectors.joining(", "));
                 LOG.error("Failed to kill jobs: [{}]", f);
             }
 

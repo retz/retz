@@ -17,9 +17,9 @@
 package io.github.retz.protocol.exception;
 
 public class JobNotFoundException extends Exception {
-    private int id;
+    private long id;
 
-    public JobNotFoundException(int id) {
+    public JobNotFoundException(long id) {
         super("No such job: id=" + id);
         this.id = id;
     }

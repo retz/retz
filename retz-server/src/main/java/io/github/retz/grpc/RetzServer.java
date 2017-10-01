@@ -17,8 +17,15 @@
 package io.github.retz.grpc;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import io.github.retz.grpcgen.RetzGrpc;
 import io.github.retz.grpcgen.*;
+import io.github.retz.protocol.converter.Retz2Pb;
+import io.github.retz.grpcgen.Application;
+import io.github.retz.scheduler.Applications;
+import io.grpc.Context;
 import io.grpc.stub.StreamObserver;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -38,8 +45,9 @@ public class RetzServer {
 
     public void start() throws IOException {
         server = ServerBuilder.forPort(port)
+                .intercept(new ServerAuthInterceptor())
+                //.addService(ServerInterceptors.intercept(new RetzServerImpl(), new ServerAuthInterceptor()))
                 .addService(new RetzServerImpl())
-                //.intercept(new KnapsackAuth())
                 .build()
                 .start();
         LOG.info("Server started, listening on " + port);
@@ -72,13 +80,32 @@ public class RetzServer {
             }
         }
     }
-
+    public static final Context.Key<String> USER_ID_KEY = Context.key("userId");
     static class RetzServerImpl extends RetzGrpc.RetzImplBase {
         @Override
         public void ping(PingRequest request, StreamObserver<PingResponse> responseObserver) {
             LOG.info("Request (ping)");
             PingResponse response = PingResponse.newBuilder().setPong(true).build();
             responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+
+        @Override
+        public void listApp(ListAppRequest request, StreamObserver<ListAppResponse> responseObserver) {
+            String user = USER_ID_KEY.get(Context.current());
+            LOG.info("Key: {}", user);
+            try {
+                List<Application> applications = Applications.getAll(user).stream().map(application -> Retz2Pb.convert(application)).collect(Collectors.toList());
+                ListAppResponse response = ListAppResponse.newBuilder().addAllApps(applications).build();
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
+            } catch (IOException e) {
+                responseObserver.onError(e);
+            }
+        }
+
+        @Override
+        public void listJob(ListJobRequest request, StreamObserver<ListJobResponse> responseObserver) {
             responseObserver.onCompleted();
         }
     }

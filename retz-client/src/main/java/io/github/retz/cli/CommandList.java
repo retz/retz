@@ -72,7 +72,7 @@ public class CommandList implements SubCommand {
                 jobStates = parseStates(states);
             }
 
-            Map<Integer, Job> jobMap = new LinkedHashMap<>();
+            Map<Long, Job> jobMap = new LinkedHashMap<>();
             for (Job.JobState s : jobStates) {
                 if (verbose) {
                     LOG.info("Fetching jobs@{}", s);
@@ -92,7 +92,7 @@ public class CommandList implements SubCommand {
                     "TaskId", "State", "AppName", "Command", "Result", "Duration",
                     "Scheduled", "Started", "Finished", "Tags");
 
-            List<Job> jobs = jobMap.values().stream().sorted(Comparator.comparingInt(job -> job.id())).collect(Collectors.toList());
+            List<Job> jobs = jobMap.values().stream().sorted(Comparator.comparingLong(job -> job.id())).collect(Collectors.toList());
 
             for (Job job : jobs) {
 
@@ -109,7 +109,7 @@ public class CommandList implements SubCommand {
                 }
 
                 if (tag == null || job.tags().contains(tag)) {
-                    formatter.feed(Integer.toString(job.id()), job.state().toString(),
+                    formatter.feed(Long.toString(job.id()), job.state().toString(),
                             job.appid(), job.cmd(), result, duration,
                             job.scheduled(), job.started(), job.finished(),
                             job.tags().stream().sorted().collect(Collectors.joining(",")));

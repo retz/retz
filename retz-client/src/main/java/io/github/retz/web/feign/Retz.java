@@ -66,19 +66,19 @@ public interface Retz {
 
     @RequestLine("GET /job/{id}")
     @Headers({"Content-Type: application/json", "Accept: application/json"})
-    Response getJob(@Param("id") int id);
+    Response getJob(@Param("id") long id);
 
     @RequestLine("GET /job/{id}/file?path={path}&offset={offset}&length={length}")
     @Headers({"Content-Type: application/json", "Accept: application/json"})
     Response getFile(
-            @Param("id") int id,
+            @Param("id") long id,
             @Param("path") String path,
             @Param("offset") long offset,
             @Param("length") long length);
 
     @RequestLine("GET /job/{id}/dir?path={path}")
     @Headers({"Content-Type: application/json", "Accept: application/json"})
-    Response listFiles(@Param("id") int id, @Param("path") String path);
+    Response listFiles(@Param("id") long id, @Param("path") String path);
 
     default Response run(Job job) {
         return run(new ScheduleRequest(job));
@@ -90,7 +90,7 @@ public interface Retz {
 
     @RequestLine("DELETE /job/{id}")
     @Headers({"Content-Type: application/json", "Accept: application/json"})
-    Response kill(@Param("id") int id);
+    Response kill(@Param("id") long id);
 
     @RequestLine("GET /app/{appid}")
     @Headers({"Content-Type: application/json", "Accept: application/json"})

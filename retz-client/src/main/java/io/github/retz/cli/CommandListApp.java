@@ -24,6 +24,8 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class CommandListApp implements SubCommand {
     static final Logger LOG = LoggerFactory.getLogger(CommandListApp.class);
 
@@ -40,7 +42,14 @@ public class CommandListApp implements SubCommand {
     @Override
     public int handle(ClientCLIConfig fileConfig, boolean verbose)throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
-
+        try (io.github.retz.grpc.Client client = new io.github.retz.grpc.Client(fileConfig.getUri(), fileConfig.getAuthenticator())) {
+            for (Application application : client.listApps()) {
+                LOG.info(application.toString());
+            }
+        }
+        return 0;
+    }
+    private int handle1(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         try (Client webClient = Client.newBuilder(fileConfig.getUri())
                 .setAuthenticator(fileConfig.getAuthenticator())
                 .checkCert(!fileConfig.insecure())

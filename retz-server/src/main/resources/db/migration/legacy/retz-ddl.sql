@@ -48,7 +48,7 @@ CREATE TABLE applications (
 -- see io.github.retz.protocol.data.Job
 CREATE TABLE jobs(
     name VARCHAR(32),
-    id INTEGER NOT NULL UNIQUE,
+    id BIGINT NOT NULL UNIQUE,
     appid varchar(32) not null,
     cmd varchar(1024) not null,
     priority INTEGER NOT NULL,

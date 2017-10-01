@@ -128,7 +128,7 @@ public class ExtensiblePlanner implements Planner {
                 for (Job job : jobs1) {
                     Application application = Applications.get(job.appid()).get();
                     TaskBuilder builder = new TaskBuilder();
-                    String id = Integer.toString(job.id());
+                    String id = Long.toString(job.id());
 
                     Protos.TaskInfo taskInfo = builder.setName(job.name())
                             .setResource(resource.cut(job.resources(), last), offer.getSlaveId())

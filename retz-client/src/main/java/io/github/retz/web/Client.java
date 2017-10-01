@@ -131,17 +131,17 @@ public class Client implements AutoCloseable {
         return Retz.tryOrErrorResponse(() -> retz.schedule(Objects.requireNonNull(job)));
     }
 
-    public Response getJob(int id) throws IOException {
+    public Response getJob(long id) throws IOException {
         return Retz.tryOrErrorResponse(() -> retz.getJob(id));
     }
 
-    public Response getFile(int id, String file, long offset, long length) throws IOException {
+    public Response getFile(long id, String file, long offset, long length) throws IOException {
         return Retz.tryOrErrorResponse(
                 () -> retz.getFile(id, Objects.requireNonNull(file), offset, length));
     }
 
     // @return int content size written to OutputStream
-    public long getBinaryFile(int id, String file, OutputStream out) throws IOException {
+    public long getBinaryFile(long id, String file, OutputStream out) throws IOException {
         String date = TimestampHelper.now();
         // Encode path forcibly since we return decoded path by list files
         String encodedFile = file;
@@ -214,7 +214,7 @@ public class Client implements AutoCloseable {
         }
     }
 
-    public Response listFiles(int id, String path) throws IOException {
+    public Response listFiles(long id, String path) throws IOException {
         return Retz.tryOrErrorResponse(
                 () -> retz.listFiles(id, Objects.requireNonNull(path)));
     }
@@ -258,7 +258,7 @@ public class Client implements AutoCloseable {
         } while (true);
     }
 
-    public Response kill(int id) throws IOException {
+    public Response kill(long id) throws IOException {
         return Retz.tryOrErrorResponse(() -> retz.kill(id));
     }
 

@@ -22,7 +22,7 @@ public class Pb2Retz {
         }
 
         Properties props = new Properties();
-        props.putAll(gDockerVolume.getPropertiesMap());
+        props.putAll(gDockerVolume.getOptionsMap());
         return new DockerVolume(gDockerVolume.getDriver(),
                 gDockerVolume.getContainerPath(), mode,
                 gDockerVolume.getName(), props);

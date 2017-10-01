@@ -549,7 +549,7 @@ public class Database {
     private void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
         try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());
-            p.setInt(2, j.id());
+            p.setLong(2, j.id());
             p.setString(3, j.appid());
             p.setInt(4, j.priority());
             p.setString(5, j.taskId());
@@ -671,7 +671,7 @@ public class Database {
         }
     }
 
-    public void setJobStarting(int id, Optional<String> maybeUrl, String taskId) throws IOException, JobNotFoundException {
+    public void setJobStarting(long id, Optional<String> maybeUrl, String taskId) throws IOException, JobNotFoundException {
         updateJob(id, job -> {
             job.starting(taskId, maybeUrl, TimestampHelper.now());
             LOG.info("TaskId of id={}: {} / {}", id, taskId, job.taskId());
@@ -679,11 +679,11 @@ public class Database {
         });
     }
 
-    public void updateJob(int id, Function<Job, Optional<Job>> fun) throws IOException, JobNotFoundException {
+    public void updateJob(long id, Function<Job, Optional<Job>> fun) throws IOException, JobNotFoundException {
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT json FROM jobs WHERE id=?")) {
             conn.setAutoCommit(false);
-            p.setInt(1, id);
+            p.setLong(1, id);
             try (ResultSet set = p.executeQuery()) {
                 if (set.next()) {
                     String json = set.getString("json");

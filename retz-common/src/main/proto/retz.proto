@@ -61,7 +61,7 @@ message DockerVolume {
   string container_path = 2;
   MountMode mode = 3;
   string name = 4;
-  map<string, string> properties = 5;
+  map<string, string> options = 5;
 }
 
 message DockerContainer {

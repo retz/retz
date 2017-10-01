@@ -69,7 +69,7 @@ public class NaivePlanner implements Planner {
                         && job.resources().getDiskMB() <= resource.diskMB()
                         && job.resources().getPorts() <= resource.portAmount()) {
 
-                    String id = Integer.toString(job.id());
+                    String id = Long.toString(job.id());
                     // Not using simple CommandExecutor to keep the executor lifecycle with its assets
                     // (esp ASAKUSA_HOME env)
                     Resource assign = resource.cut(job.resources(), lastPort);

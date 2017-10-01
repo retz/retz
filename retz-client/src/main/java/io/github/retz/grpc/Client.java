@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import io.github.retz.auth.Authenticator;
 import io.github.retz.protocol.converter.Pb2Retz;
 import io.github.retz.protocol.converter.Retz2Pb;
 import io.github.retz.protocol.data.Application;
@@ -32,22 +33,31 @@ import io.github.retz.protocol.data.Job;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.github.retz.grpcgen.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Client implements Closeable {
+    static final Logger LOG = LoggerFactory.getLogger(Client.class);
+
     private final ManagedChannel channel;
     private final RetzGrpc.RetzBlockingStub blockingStub;
 
-    public Client(URI uri) {
-        this(uri.getHost(), uri.getPort());
+    private Authenticator authenticator;
+
+    public Client(URI uri, Authenticator authenticator) {
+        this(uri.getHost(), uri.getPort(), authenticator);
         assert uri.getScheme().equals("grpc");
     }
 
-    public Client(String host, int port) {
+    public Client(String host, int port, Authenticator authenticator) {
         this(ManagedChannelBuilder.forAddress(host, port)
                 // Channels are secure by default (via SSL/TLS). For the example we disable TLS to avoid
                 // needing certificates.
                 .usePlaintext(true)
+                .intercept(new AuthHeaderInterceptor(authenticator))
                 .build());
+        this.authenticator = authenticator;
+        LOG.info("Connecting to {}:{}", host, port);
     }
 
     Client(ManagedChannel channel) {

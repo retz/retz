@@ -66,7 +66,7 @@ public final class ClientHelper {
     }
 
 
-    public static boolean fileExists(Client c, int id, String filename) throws IOException {
+    public static boolean fileExists(Client c, long id, String filename) throws IOException {
         String directory = new File(filename).getParent();
         if (directory == null) {
             directory = ListFilesRequest.DEFAULT_SANDBOX_PATH;
@@ -119,12 +119,12 @@ public final class ClientHelper {
         }
     }
 
-    public static Optional<Job> getWholeFileWithTerminator(Client c, int id, String filename, boolean poll, OutputStream out, Callable<Boolean> terminate)
+    public static Optional<Job> getWholeFileWithTerminator(Client c, long id, String filename, boolean poll, OutputStream out, Callable<Boolean> terminate)
             throws IOException, JobNotFoundException, TimeoutException {
         return getWholeFileWithTerminator(c, id, filename, poll, out, 0, terminate);
     }
 
-    public static Optional<Job> getWholeFileWithTerminator(Client c, int id, String filename, boolean poll, OutputStream out, long offset, Callable<Boolean> terminator)
+    public static Optional<Job> getWholeFileWithTerminator(Client c, long id, String filename, boolean poll, OutputStream out, long offset, Callable<Boolean> terminator)
             throws IOException, JobNotFoundException, TimeoutException {
         Optional<Job> current;
 
@@ -200,7 +200,7 @@ public final class ClientHelper {
     }
 
     // This interface is still in experiment, which may be changed even in patch release.
-    public static void getWholeBinaryFile(Client c, int id, String path, String output) throws IOException {
+    public static void getWholeBinaryFile(Client c, long id, String path, String output) throws IOException {
         String fullpath = FilenameUtils.concat(output, FilenameUtils.getName(path));
         LOG.info("Saving {} as {}", path, fullpath);
         try (FileOutputStream out = new FileOutputStream(fullpath)) {
@@ -208,11 +208,11 @@ public final class ClientHelper {
         }
     }
 
-    public static void getWholeBinaryFile(Client c, int id, String path, OutputStream out) throws IOException {
+    public static void getWholeBinaryFile(Client c, long id, String path, OutputStream out) throws IOException {
         c.getBinaryFile(id, path, out);
     }
 
-    static long readFileUntilEmpty(Client c, int id, String filename, long offset, OutputStream out) throws IOException {
+    static long readFileUntilEmpty(Client c, long id, String filename, long offset, OutputStream out) throws IOException {
         int length = 65536;
         long current = offset;
 
