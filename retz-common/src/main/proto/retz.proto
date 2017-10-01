@@ -10,6 +10,9 @@ package retz;
 // Interface exported by the server.
 service Retz {
   rpc Ping(PingRequest) returns (PingResponse) {}
+
+  rpc ListApp(ListAppRequest) returns (stream ListAppResponse) {}
+  rpc ListJob(ListJobRequest) returns (stream ListJobResponse) {}
 }
 
 message PingRequest {
@@ -18,4 +21,107 @@ message PingRequest {
 
 message PingResponse {
   bool pong = 1;
+}
+
+message ListAppRequest {
+}
+
+message ListAppResponse {
+  repeated Application apps = 1;
+  string error = 2;
+}
+
+message ListJobRequest {
+  JobState state = 1;
+  string tag = 2;
+}
+
+message ListJobResponse {
+  repeated Job jobs = 1;
+  string error = 3;
+}
+
+
+enum ContainerImageType {
+  MESOS_CONTAINER = 0;
+  DOCKER_CONTAINER = 1;
+  // APPC_CONTAINER
+}
+
+message MesosContainer {
+}
+
+enum MountMode {
+  RO = 0;
+  RW = 1;
+}
+
+message DockerVolume {
+  string driver = 1;
+  string container_path = 2;
+  MountMode mode = 3;
+  string name = 4;
+  map<string, string> properties = 5;
+}
+
+message DockerContainer {
+  string image = 1;
+  repeated DockerVolume volumes = 2;
+}
+
+message Container {
+  ContainerImageType image = 1;
+  MesosContainer mesos_container = 2;
+  DockerContainer docker_container = 3;
+}
+
+message Application {
+  string appid = 1;
+  repeated string large_files = 2;
+  repeated string files = 3;
+  string user = 4; // User is just a String that specifies Unix user
+  string owner = 5;     // Owner is Retz access key
+  uint32 grace_period = 6; // default 0; if 0, no KillPolicy will be added to CommandInfo
+  Container container = 7;
+  bool enabled = 8;
+}
+
+enum JobState {
+  CREATED = 0;
+  QUEUED = 1;
+  STARTING = 2;
+  STARTED = 3;
+  FINISHED = 4;
+  KILLED = 5;
+}
+
+message ResourceQuantity {
+  uint32 cpu = 1;
+  uint32 memMB = 2;
+  uint32 gpu = 3;
+  uint32 ports = 4;
+  uint32 diskMB = 5;
+  uint32 nodes = 6;
+}
+
+message Job {
+  string cmd = 1;
+  string appid = 2;
+  repeated string tags = 3;
+  ResourceQuantity resources = 4;
+  string attributes = 5;
+  string scheduled = 6;
+  string started = 7;
+  string finished = 8;
+  map<string, string> properties = 9;   // TODO: use map<> type in proto3.
+  int32 result = 10;
+  uint64 id = 11;
+  string url = 12;
+  string reason = 13;
+  uint32 retry = 14; // How many retry now we have
+  int32  priority = 15;
+  string name = 16;
+  string task_id = 17; // TaskId defined by Retz
+  string slave_id = 18;
+  JobState state = 19;
 }

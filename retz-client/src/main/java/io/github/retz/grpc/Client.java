@@ -17,16 +17,30 @@
 package io.github.retz.grpc;
 
 import java.io.Closeable;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
+import io.github.retz.protocol.converter.Pb2Retz;
+import io.github.retz.protocol.converter.Retz2Pb;
+import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.Job;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
 import io.github.retz.grpcgen.*;
 
 public class Client implements Closeable {
     private final ManagedChannel channel;
     private final RetzGrpc.RetzBlockingStub blockingStub;
+
+    public Client(URI uri) {
+        this(uri.getHost(), uri.getPort());
+        assert uri.getScheme().equals("grpc");
+    }
 
     public Client(String host, int port) {
         this(ManagedChannelBuilder.forAddress(host, port)
@@ -52,6 +66,39 @@ public class Client implements Closeable {
         PingRequest request = PingRequest.newBuilder().build();
         PingResponse response = blockingStub.ping(request);
         return response.getPong();
+    }
+
+    public List<Application> listApps() throws Exception {
+        ListAppRequest request = ListAppRequest.newBuilder().build();
+        Iterator<ListAppResponse> responses = blockingStub.listApp(request);
+
+        List<Application> apps = new ArrayList<>();
+        while(responses.hasNext()) {
+            ListAppResponse response = responses.next();
+            apps.addAll(response.getAppsList().stream()
+            .map(gApp -> Pb2Retz.convert(gApp))
+            .collect(Collectors.toList()));
+        }
+        return apps;
+    }
+
+    public List<Job> listJobs(io.github.retz.protocol.data.Job.JobState state,
+                              Optional<String> tag) throws Exception {
+        ListJobRequest.Builder builder = ListJobRequest.newBuilder();
+        builder.setState(Retz2Pb.convert(state));
+        if (tag.isPresent()) {
+            builder.setTag(tag.get());
+        }
+        Iterator<ListJobResponse> responses = blockingStub.listJob(builder.build());
+
+        List<Job> jobs = new ArrayList<>();
+        while (responses.hasNext()) {
+            ListJobResponse response = responses.next();
+            jobs.addAll(response.getJobsList().stream()
+            .map(gJob -> Pb2Retz.convert(gJob))
+            .collect(Collectors.toList()));
+        }
+        return jobs;
     }
 }
 

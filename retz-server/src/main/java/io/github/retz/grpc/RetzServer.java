@@ -61,9 +61,15 @@ public class RetzServer {
         }
     }
 
-    public void blockUntilShutdown() throws InterruptedException {
-        if (server != null) {
-            server.awaitTermination();
+    public void blockUntilShutdown() {
+        while (server != null) {
+            try {
+                server.awaitTermination();
+                server = null;
+                break;
+            } catch (InterruptedException e) {
+                continue;
+            }
         }
     }
 

@@ -206,4 +206,10 @@ public class LauncherTest {
             assertEquals(-2, commandRun.priority);
         }
     }
+
+    @Test
+    public void configParserTest() throws IOException, URISyntaxException {
+        ClientCLIConfig conf = new ClientCLIConfig(PROPERTY_FILE);
+        assertEquals("grpc", conf.getUri().getScheme());
+    }
 }

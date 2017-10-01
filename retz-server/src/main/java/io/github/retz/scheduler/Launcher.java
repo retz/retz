@@ -119,6 +119,8 @@ public final class Launcher {
 
         java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(driver));
 
+        server.blockUntilShutdown();
+
         // stop frontend
         server.stop();
         WebConsole.stop();
