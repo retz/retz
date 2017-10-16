@@ -90,14 +90,22 @@ public class ServerConfiguration extends FileConfiguration {
     private static final String JOB_QUEUE_STRATEGY = "retz.job-queue-strategy";
     private static final String DEFAULT_JOB_QUEUE_STRATEGY = "all";
     public enum JobQueueStrategy {
-        Fit,
-        All;
+        Fit("fit"),
+        All("all");
         static JobQueueStrategy getStrategy(String s) {
-            switch(s) {
+            switch(s.toLowerCase()) {
                 case "all": return JobQueueStrategy.All;
                 case "fit": return JobQueueStrategy.Fit;
                 default: return null;
             }
+        }
+        private final String text;
+        JobQueueStrategy(final String text) {
+            this.text = text;
+        }
+        @Override
+        public String toString() {
+            return text;
         }
     }
 
@@ -158,7 +166,7 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException(JOB_QUEUE_STRATEGY + " must be either fir or all");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize(),
@@ -167,7 +175,8 @@ public class ServerConfiguration extends FileConfiguration {
                 GC_LEEWAY, getGcLeeway(),
                 GC_INTERVAL, getGcInterval(),
                 MAX_LIST_JOB_SIZE, getMaxJobSize(),
-                MAX_FILE_SIZE, getMaxFileSize());
+                MAX_FILE_SIZE, getMaxFileSize(),
+                JOB_QUEUE_STRATEGY, getJobQueueStrategy());
         LOG.info("{}={}", MESOS_FAILOVER_TIMEOUT, getFailoverTimeout());
     }
 
