@@ -544,36 +544,44 @@ public class Database {
     }
 
     // orderBy must not have any duplication
-    public List<Job> findFit(List<String> orderBy, int cpu, int memMB) throws IOException {
+    public List<Job> findAll(List<String> orderBy) throws IOException {
         List<Job> ret = new ArrayList<>();
         String orders = orderBy.stream().map(s -> s + " ASC").collect(Collectors.joining(", "));
         try (Connection conn = dataSource.getConnection(); //pool.getConnection();
              PreparedStatement p = conn.prepareStatement("SELECT * FROM jobs WHERE state='QUEUED' ORDER BY " + orders)) {
-            conn.setAutoCommit(true);
-
             try (ResultSet res = p.executeQuery()) {
-                int totalCpu = 0;
-                int totalMem = 0;
-
-                while (res.next() && totalCpu <= cpu && totalMem <= memMB) {
+                while (res.next()) {
                     String json = res.getString("json");
                     Job job = mapper.readValue(json, Job.class);
-
                     if (job == null) {
                         throw new AssertionError("Cannot be null!!");
-                    } else if (totalCpu + job.resources().getCpu() <= cpu && totalMem + job.resources().getMemMB() <= memMB) {
-                        ret.add(job);
-                        totalCpu += job.resources().getCpu();
-                        totalMem += job.resources().getMemMB();
-                    } else {
-                        break;
                     }
+                    ret.add(job);
                 }
             }
             return ret;
         } catch (SQLException | IOException e) {
-            throw new IOException(MessageFormat.format("Database.findFit({0}, {1}) failed", cpu, memMB), e);
+            throw new IOException("Database.findAll() failed", e);
         }
+    }
+
+    public List<Job> findFit(List<String> orderBy, int cpu, int memMB) throws IOException {
+        List<Job> ret = new ArrayList<>();
+        int totalCpu = 0;
+        int totalMem = 0;
+
+        for (Job job: findAll(orderBy)) {
+            if (totalCpu <= cpu && totalMem <= memMB) {
+                if (totalCpu + job.resources().getCpu() <= cpu && totalMem + job.resources().getMemMB() <= memMB) {
+                    ret.add(job);
+                    totalCpu += job.resources().getCpu();
+                    totalMem += job.resources().getMemMB();
+                } else {
+                    break;
+                }
+            }
+        }
+        return ret;
     }
 
     public List<Job> queued(int limit) throws IOException {

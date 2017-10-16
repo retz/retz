@@ -226,16 +226,28 @@ public class RetzScheduler implements Scheduler {
                 offerStock.clear();
             }
 
-            ResourceQuantity total = new ResourceQuantity();
-            for (Protos.Offer offer : available) {
-                LOG.debug("offer: {}", offer);
-                Resource resource = ResourceConstructor.decode(offer.getResourcesList());
-                total.add(resource.toQuantity());
+            List<Job> jobs = new ArrayList<>();
+            switch (conf.getServerConfig().getJobQueueStrategy()) {
+                case Fit:
+                    ResourceQuantity total = new ResourceQuantity();
+                    for (Protos.Offer offer : available) {
+                        LOG.debug("offer: {}", offer);
+                        Resource resource = ResourceConstructor.decode(offer.getResourcesList());
+                        total.add(resource.toQuantity());
+                    }
+                    total.setNodes(offers.size());
+                    // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
+                    jobs = JobQueue.findFit(planner.orderBy(), total);
+                    LOG.debug("found {} jobs fit for {}", jobs.size(), total.toString());
+                    break;
+                case All:
+                    jobs = JobQueue.findAll(planner.orderBy());
+                    LOG.debug("found {} jobs", jobs.size());
+                    break;
+                default:
+                    LOG.debug("skip unknown strategy");
+                    break;
             }
-            total.setNodes(offers.size());
-
-            // TODO: change findFit to consider not only CPU and Memory, but GPUs and Ports
-            List<Job> jobs = JobQueue.findFit(planner.orderBy(), total);
             handleAll(available, jobs, driver);
             // As this section is whole serialized by Stanchion, it is safe to do fetching jobs
             // from database and updating database state change from queued => starting at

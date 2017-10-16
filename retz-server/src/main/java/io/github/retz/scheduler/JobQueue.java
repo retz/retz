@@ -99,6 +99,10 @@ public final class JobQueue {
         return maybeJob;
     }
 
+    public static List<Job> findAll(List<String> orderBy) throws IOException {
+        return Database.getInstance().findAll(orderBy);
+    }
+
     // @doc take as much jobs as in the max cpu/memMB
     public static List<Job> findFit(List<String> orderBy, ResourceQuantity total) throws IOException {
         return Database.getInstance().findFit(orderBy, total.getCpu(), total.getMemMB());
