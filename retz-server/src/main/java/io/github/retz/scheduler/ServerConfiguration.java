@@ -87,6 +87,20 @@ public class ServerConfiguration extends FileConfiguration {
     private static final String DEFAULT_PLANNER_NAME = "fifo";
     private static final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
 
+    private static final String JOB_QUEUE_STRATEGY = "retz.job-queue-strategy";
+    private static final String DEFAULT_JOB_QUEUE_STRATEGY = "all";
+    public enum JobQueueStrategy {
+        Fit,
+        All;
+        static JobQueueStrategy getStrategy(String s) {
+            switch(s) {
+                case "all": return JobQueueStrategy.All;
+                case "fit": return JobQueueStrategy.Fit;
+                default: return null;
+            }
+        }
+    }
+
     private static final String ADDITIONAL_CLASSPATH = "retz.classpath";
     private static final String DEFAULT_ADDITIONAL_CLASSPATH = "/opt/retz-server/lib";
 
@@ -138,6 +152,10 @@ public class ServerConfiguration extends FileConfiguration {
 
         if (getRefuseSeconds() < 1) {
             throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
+        }
+
+        if (getJobQueueStrategy() == null) {
+            throw new IllegalArgumentException(JOB_QUEUE_STRATEGY + " must be either fir or all");
         }
 
         LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
@@ -240,6 +258,8 @@ public class ServerConfiguration extends FileConfiguration {
     public String getPlannerName() {
         return properties.getProperty(PLANNER_NAME, DEFAULT_PLANNER_NAME);
     }
+
+    public JobQueueStrategy getJobQueueStrategy() { return JobQueueStrategy.getStrategy(properties.getProperty(JOB_QUEUE_STRATEGY, DEFAULT_JOB_QUEUE_STRATEGY)); }
 
     public int getRefuseSeconds() {
         return getLowerboundedIntProperty(MESOS_REFUSE_SECONDS, DEFAULT_MESOS_REFUSE_SECONDS, 1);
