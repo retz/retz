@@ -68,7 +68,7 @@ public class ServerConfigurationTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void wrongJobQueueStrategy() throws Exception {
-        String s = basicConfig + "retz.job-queue-strategy=hoge";
+        String s = basicConfig + "retz.job-queue.type=hoge";
         System.err.println(s);
         new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
     }

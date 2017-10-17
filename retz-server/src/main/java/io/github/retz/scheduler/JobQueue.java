@@ -99,8 +99,8 @@ public final class JobQueue {
         return maybeJob;
     }
 
-    public static List<Job> findAll(List<String> orderBy) throws IOException {
-        return Database.getInstance().findAll(orderBy);
+    public static List<Job> findAll(List<String> orderBy, int limit) throws IOException {
+        return Database.getInstance().findAll(orderBy, limit);
     }
 
     // @doc take as much jobs as in the max cpu/memMB

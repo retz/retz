@@ -226,9 +226,9 @@ public class RetzScheduler implements Scheduler {
                 offerStock.clear();
             }
 
-            List<Job> jobs = new ArrayList<>();
-            switch (conf.getServerConfig().getJobQueueStrategy()) {
-                case Fit:
+            final List<Job> jobs;
+            switch (conf.getServerConfig().getJobQueueType()) {
+                case FIT:
                     ResourceQuantity total = new ResourceQuantity();
                     for (Protos.Offer offer : available) {
                         LOG.debug("offer: {}", offer);
@@ -240,13 +240,12 @@ public class RetzScheduler implements Scheduler {
                     jobs = JobQueue.findFit(planner.orderBy(), total);
                     LOG.debug("found {} jobs fit for {}", jobs.size(), total.toString());
                     break;
-                case All:
-                    jobs = JobQueue.findAll(planner.orderBy());
-                    LOG.debug("found {} jobs", jobs.size());
+                case ALL:
+                    jobs = JobQueue.findAll(planner.orderBy(), conf.getServerConfig().getJobQueueAllLimit());
+                    LOG.debug("found {} / {} jobs", jobs.size(), conf.getServerConfig().getJobQueueAllLimit());
                     break;
                 default:
-                    LOG.debug("skip unknown strategy");
-                    break;
+                    throw new AssertionError("unknown job queue type");
             }
             handleAll(available, jobs, driver);
             // As this section is whole serialized by Stanchion, it is safe to do fetching jobs

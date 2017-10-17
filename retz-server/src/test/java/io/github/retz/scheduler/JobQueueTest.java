@@ -142,9 +142,12 @@ public class JobQueueTest {
         Job job2 = new Job("appq", "job2", null, 500, 2000000, 0);
         job2.schedule(1, TimestampHelper.now());
         JobQueue.push(job2);
+        Job job3 = new Job("appq", "job2", null, 500, 2000000, 0);
+        job3.schedule(2, TimestampHelper.now());
+        JobQueue.push(job3);
 
         {
-            List<Job> all = JobQueue.findAll(Arrays.asList("id"));
+            List<Job> all = JobQueue.findAll(Arrays.asList("id"), 2);
             for (Job j : all) {
                 System.err.println(j.name() + " " + j.cmd());
             }
@@ -152,6 +155,18 @@ public class JobQueueTest {
             assertEquals(all.size(), 2);
             assertThat(all.get(0).appid(), is(job1.appid()));
             assertThat(all.get(1).appid(), is(job2.appid()));
+        }
+
+        {
+            List<Job> all = JobQueue.findAll(Arrays.asList("id"), -1);
+            for (Job j : all) {
+                System.err.println(j.name() + " " + j.cmd());
+            }
+            System.err.println(all.size());
+            assertEquals(all.size(), 3);
+            assertThat(all.get(0).appid(), is(job1.appid()));
+            assertThat(all.get(1).appid(), is(job2.appid()));
+            assertThat(all.get(2).appid(), is(job3.appid()));
         }
     }
 }
