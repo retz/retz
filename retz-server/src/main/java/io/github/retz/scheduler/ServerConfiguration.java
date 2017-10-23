@@ -88,7 +88,7 @@ public class ServerConfiguration extends FileConfiguration {
     private static final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
 
     private static final String JOB_QUEUE_TYPE = "retz.job-queue.type";
-    private static final String DEFAULT_JOB_QUEUE_TYPE = "all";
+    private static final String DEFAULT_JOB_QUEUE_TYPE = "fit";
     public enum JobQueueType {
         FIT("fit"),
         ALL("all");
