@@ -59,6 +59,7 @@ public class JobQueueTest {
                 Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
         assertTrue(Applications.load(app));
 
+        String taskId = "foobar-taskid";
         int id = 0;
         Job job = new Job("appq", "b", null, 1000, 100000000, 0);
         job.schedule(id, TimestampHelper.now());
@@ -71,13 +72,12 @@ public class JobQueueTest {
             System.err.println(job2.size());
             assertFalse(job2.isEmpty());
             assertThat(job2.get(0).appid(), is(job.appid()));
-            JobQueue.starting(job2.get(0), Optional.empty(), "foobar-taskid");
+            JobQueue.starting(job2.get(0), Optional.empty(), taskId);
 
-            Optional<Job> j = Database.getInstance().getJobFromTaskId("foobar-taskid");
+            Optional<Job> j = Database.getInstance().getJobFromTaskId(taskId);
             assertTrue(j.isPresent());
         }
 
-        String taskId = "foobar-taskid";
         {
             JobQueue.started(taskId, "slaveId", Optional.empty());
             List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1000, 100000000, 0, 0, 0, 0));
@@ -89,7 +89,6 @@ public class JobQueueTest {
         }
         assertEquals(1, JobQueue.size());
         assertEquals(1, JobQueue.countRunning());
-
 
         {
             JobQueue.finished(taskId, Optional.empty(), 0, TimestampHelper.now());
@@ -105,5 +104,69 @@ public class JobQueueTest {
         }
 
         Database.getInstance().safeDeleteApplication(app.getAppid());
+    }
+    @Test
+    public void findFit() throws Exception {
+        Application app = new Application("appq", Collections.emptyList(), Collections.emptyList(),
+                Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
+        assertTrue(Applications.load(app));
+
+        String taskId = "foobar-taskid";
+        Job job1 = new Job("appq", "job1", null, 1000, 100000000, 0);
+        job1.schedule(0, TimestampHelper.now());
+        JobQueue.push(job1);
+        Job job2 = new Job("appq", "job2", null, 500, 2000000, 0);
+        job2.schedule(1, TimestampHelper.now());
+        JobQueue.push(job2);
+
+        {
+            List<Job> fit = JobQueue.findFit(Arrays.asList("id"), new ResourceQuantity(1001, 100000001, 0, 0, 0, 0));
+            for (Job j : fit) {
+                System.err.println(j.name() + " " + j.cmd());
+            }
+            System.err.println(fit.size());
+            assertEquals(fit.size(), 1);
+            assertThat(fit.get(0).appid(), is(job1.appid()));
+        }
+    }
+    @Test
+    public void findAll() throws Exception {
+        Application app = new Application("appq", Collections.emptyList(), Collections.emptyList(),
+                Optional.empty(), "deadbeef", 0, new MesosContainer(), true);
+        assertTrue(Applications.load(app));
+
+        String taskId = "foobar-taskid";
+        Job job1 = new Job("appq", "job1", null, 1000, 100000000, 0);
+        job1.schedule(0, TimestampHelper.now());
+        JobQueue.push(job1);
+        Job job2 = new Job("appq", "job2", null, 500, 2000000, 0);
+        job2.schedule(1, TimestampHelper.now());
+        JobQueue.push(job2);
+        Job job3 = new Job("appq", "job2", null, 500, 2000000, 0);
+        job3.schedule(2, TimestampHelper.now());
+        JobQueue.push(job3);
+
+        {
+            List<Job> all = JobQueue.findAll(Arrays.asList("id"), 2);
+            for (Job j : all) {
+                System.err.println(j.name() + " " + j.cmd());
+            }
+            System.err.println(all.size());
+            assertEquals(all.size(), 2);
+            assertThat(all.get(0).appid(), is(job1.appid()));
+            assertThat(all.get(1).appid(), is(job2.appid()));
+        }
+
+        {
+            List<Job> all = JobQueue.findAll(Arrays.asList("id"), -1);
+            for (Job j : all) {
+                System.err.println(j.name() + " " + j.cmd());
+            }
+            System.err.println(all.size());
+            assertEquals(all.size(), 3);
+            assertThat(all.get(0).appid(), is(job1.appid()));
+            assertThat(all.get(1).appid(), is(job2.appid()));
+            assertThat(all.get(2).appid(), is(job3.appid()));
+        }
     }
 }

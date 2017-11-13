@@ -544,6 +544,31 @@ public class Database {
     }
 
     // orderBy must not have any duplication
+    public List<Job> findAll(List<String> orderBy, int limit) throws IOException {
+        List<Job> ret = new ArrayList<>();
+        String orders = orderBy.stream().map(s -> s + " ASC").collect(Collectors.joining(", "));
+        String sql = "SELECT * FROM jobs WHERE state='QUEUED' ORDER BY " + orders;
+        if (limit >= 0) {
+            sql += " LIMIT " + limit;
+        }
+        try (Connection conn = dataSource.getConnection(); //pool.getConnection();
+             PreparedStatement p = conn.prepareStatement(sql)) {
+            try (ResultSet res = p.executeQuery()) {
+                while (res.next()) {
+                    String json = res.getString("json");
+                    Job job = mapper.readValue(json, Job.class);
+                    if (job == null) {
+                        throw new AssertionError("Cannot be null!!");
+                    }
+                    ret.add(job);
+                }
+            }
+            return ret;
+        } catch (SQLException | IOException e) {
+            throw new IOException("Database.findAll() failed", e);
+        }
+    }
+
     public List<Job> findFit(List<String> orderBy, int cpu, int memMB) throws IOException {
         List<Job> ret = new ArrayList<>();
         String orders = orderBy.stream().map(s -> s + " ASC").collect(Collectors.joining(", "));

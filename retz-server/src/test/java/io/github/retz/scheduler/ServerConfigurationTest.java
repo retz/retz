@@ -25,6 +25,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
 public class ServerConfigurationTest {
+    String basicConfig = "retz.mesos = mesos.example.com:5050\n" +
+        "retz.mesos.principal = retz\n" +
+        "retz.bind  = http://localhost:9090\n" +
+        "retz.authentication = true\n" +
+        "retz.access.key = foobar\n" +
+        "retz.access.secret = bazbax\n";
+
     @Test
     public void tryLoadConfig() throws Exception {
         ServerConfiguration config = new ServerConfiguration("src/test/resources/retz.properties");
@@ -55,6 +62,13 @@ public class ServerConfigurationTest {
     @Test(expected = IllegalArgumentException.class)
     public void wrongConfig2() throws Exception {
         String s = "retz.mesos = mesos.example.com:5050\nretz.bind = http://example.com:90\nretz.access.key = foobar\nretz.access.secret = bazbax";
+        System.err.println(s);
+        new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void wrongJobQueueStrategy() throws Exception {
+        String s = basicConfig + "retz.job-queue.type=hoge";
         System.err.println(s);
         new ServerConfiguration(new ByteArrayInputStream(s.getBytes(UTF_8)));
     }

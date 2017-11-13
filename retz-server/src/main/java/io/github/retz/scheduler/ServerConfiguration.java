@@ -87,6 +87,30 @@ public class ServerConfiguration extends FileConfiguration {
     private static final String DEFAULT_PLANNER_NAME = "fifo";
     private static final String[] PLANNER_NAMES = {"naive", "priority", "fifo", "priority2"};
 
+    private static final String JOB_QUEUE_TYPE = "retz.job-queue.type";
+    private static final String DEFAULT_JOB_QUEUE_TYPE = "fit";
+    public enum JobQueueType {
+        FIT("fit"),
+        ALL("all");
+        static JobQueueType getType(String s) {
+            switch (s.toLowerCase()) {
+                case "all": return JobQueueType.ALL;
+                case "fit": return JobQueueType.FIT;
+                default: return null;
+            }
+        }
+        private final String text;
+        JobQueueType(final String text) {
+            this.text = text;
+        }
+        @Override
+        public String toString() {
+            return text;
+        }
+    }
+    private static final String JOB_QUEUE_ALL_LIMIT = "retz.job-queue.all.limit";
+    private static final int DEFAULT_JOB_QUEUE_ALL_LIMIT = 10;
+
     private static final String ADDITIONAL_CLASSPATH = "retz.classpath";
     private static final String DEFAULT_ADDITIONAL_CLASSPATH = "/opt/retz-server/lib";
 
@@ -140,7 +164,11 @@ public class ServerConfiguration extends FileConfiguration {
             throw new IllegalArgumentException(MESOS_REFUSE_SECONDS + " must be positive integer");
         }
 
-        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
+        if (getJobQueueType() == null) {
+            throw new IllegalArgumentException(JOB_QUEUE_TYPE + " must be either fir or all");
+        }
+
+        LOG.info("Mesos master={}, principal={}, role={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}, {}={}",
                 getMesosMaster(), getPrincipal(), getRole(), MAX_SIMULTANEOUS_JOBS, maxSimultaneousJobs,
                 DATABASE_URL, databaseURL,
                 MAX_STOCK_SIZE, getMaxStockSize(),
@@ -149,7 +177,8 @@ public class ServerConfiguration extends FileConfiguration {
                 GC_LEEWAY, getGcLeeway(),
                 GC_INTERVAL, getGcInterval(),
                 MAX_LIST_JOB_SIZE, getMaxJobSize(),
-                MAX_FILE_SIZE, getMaxFileSize());
+                MAX_FILE_SIZE, getMaxFileSize(),
+                JOB_QUEUE_TYPE, getJobQueueType());
         LOG.info("{}={}", MESOS_FAILOVER_TIMEOUT, getFailoverTimeout());
     }
 
@@ -239,6 +268,14 @@ public class ServerConfiguration extends FileConfiguration {
 
     public String getPlannerName() {
         return properties.getProperty(PLANNER_NAME, DEFAULT_PLANNER_NAME);
+    }
+
+    public JobQueueType getJobQueueType() {
+        return JobQueueType.getType(properties.getProperty(JOB_QUEUE_TYPE, DEFAULT_JOB_QUEUE_TYPE));
+    }
+
+    public int getJobQueueAllLimit() {
+        return getBoundedIntProperty(JOB_QUEUE_ALL_LIMIT, DEFAULT_JOB_QUEUE_ALL_LIMIT, -1, Integer.MAX_VALUE);
     }
 
     public int getRefuseSeconds() {
