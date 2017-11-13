@@ -2,6 +2,10 @@
 
 ## 0.4.1
 
+* Add `job-queue-strategy` to configure selection query to backend
+  database, so that number of jobs to retrieved can be configured as
+  all or limited.
+* Add job queue length as "stanchionQueueLength" to `/status`.
 * Add Mesos 1.4.0, 1.3.1, 1.2.2 to supported versions.
 
 ## 0.4.0
