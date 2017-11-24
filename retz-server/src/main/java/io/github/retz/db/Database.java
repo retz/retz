@@ -30,7 +30,6 @@ import io.github.retz.protocol.exception.JobNotFoundException;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
-import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +125,7 @@ public class Database {
 
         try {
             dbMigrator.migrate();
-        } catch (SQLException | IOException | FlywayException e) {
+        } catch (SQLException | IOException e) {
             throw new IOException("Database.init() failed", e);
         }
     }
@@ -150,7 +149,7 @@ public class Database {
         try {
             dbMigrator.clean();
             LOG.info("All tables dropped successfully");
-        } catch (FlywayException e) {
+        } catch (IOException e) {
             LogUtil.error(LOG,"Database.clear() failed", e);
         }
     }
