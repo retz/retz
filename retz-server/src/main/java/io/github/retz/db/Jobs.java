@@ -93,7 +93,8 @@ public class Jobs {
         try (PreparedStatement p = conn.prepareStatement("UPDATE jobs SET name=?, appid=?, cmd=?, priority=?, taskid=?, state=?, started=?, finished=?, json=? WHERE id=?")) {
             p.setString(1, j.name());
             p.setString(2, j.appid());
-            p.setString(3, j.cmd());
+            // TODO: Remove cmd column
+            p.setString(3, "");
             p.setInt(4, j.priority());
             p.setString(5, j.taskId());
             p.setString(6, j.state().toString());

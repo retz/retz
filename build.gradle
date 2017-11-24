@@ -215,6 +215,7 @@ project(':retz-server') {
         compile 'com.h2database:h2:1.4.+'
         compile group: 'org.postgresql', name: 'postgresql', version: '42.1.+'
         compile group: 'org.apache.tomcat', name: 'tomcat-jdbc', version: '8.5.+'
+        compile group: 'org.flywaydb', name: 'flyway-core', version: '4.2.+'
 
         testCompile project(":retz-client")
         testCompile project(":retz-admin")
