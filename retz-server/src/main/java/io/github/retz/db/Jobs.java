@@ -90,18 +90,16 @@ public class Jobs {
 
     public void updateJob(Job j) throws SQLException, JsonProcessingException {
         LOG.debug("Updating job as name={}, id={}, appid={}", j.name(), j.id(), j.appid());
-        try (PreparedStatement p = conn.prepareStatement("UPDATE jobs SET name=?, appid=?, cmd=?, priority=?, taskid=?, state=?, started=?, finished=?, json=? WHERE id=?")) {
+        try (PreparedStatement p = conn.prepareStatement("UPDATE jobs SET name=?, appid=?, priority=?, taskid=?, state=?, started=?, finished=?, json=? WHERE id=?")) {
             p.setString(1, j.name());
             p.setString(2, j.appid());
-            // TODO: Remove cmd column
-            p.setString(3, "");
-            p.setInt(4, j.priority());
-            p.setString(5, j.taskId());
-            p.setString(6, j.state().toString());
-            p.setString(7, j.started());
-            p.setString(8, j.finished());
-            p.setString(9, mapper.writeValueAsString(j));
-            p.setInt(10, j.id());
+            p.setInt(3, j.priority());
+            p.setString(4, j.taskId());
+            p.setString(5, j.state().toString());
+            p.setString(6, j.started());
+            p.setString(7, j.finished());
+            p.setString(8, mapper.writeValueAsString(j));
+            p.setInt(9, j.id());
             p.execute();
         }
     }

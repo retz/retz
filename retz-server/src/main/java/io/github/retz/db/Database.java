@@ -552,16 +552,14 @@ public class Database {
     }
 
     private void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
-        try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?, ?)")) {
+        try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());
             p.setInt(2, j.id());
             p.setString(3, j.appid());
-            // TODO: Remove cmd column
-            p.setString(4, "");
-            p.setInt(5, j.priority());
-            p.setString(6, j.taskId());
-            p.setString(7, j.state().toString());
-            p.setString(8, mapper.writeValueAsString(j));
+            p.setInt(4, j.priority());
+            p.setString(5, j.taskId());
+            p.setString(6, j.state().toString());
+            p.setString(7, mapper.writeValueAsString(j));
             p.execute();
         }
     }
