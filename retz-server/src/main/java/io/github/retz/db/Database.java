@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
 import io.github.retz.db.migration.DBMigration;
-import io.github.retz.db.migration.LegacyDBMigration;
 import io.github.retz.misc.LogUtil;
 import io.github.retz.planner.AppJobPair;
 import io.github.retz.protocol.data.Application;
@@ -48,6 +47,7 @@ public class Database {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final DataSource dataSource = new DataSource();
+    private final DBMigration dbMigrator = new DBMigration((javax.sql.DataSource) dataSource);
     String databaseURL = null;
 
     Database() {
@@ -60,6 +60,10 @@ public class Database {
 
     public static DataSource getDataSource() {
         return getInstance().dataSource;
+    }
+
+    public static DBMigration getMigrator() {
+        return getInstance().dbMigrator;
     }
 
     static Database newMemInstance(String name) throws IOException {
@@ -121,7 +125,7 @@ public class Database {
         dataSource.setPoolProperties(props);
 
         try {
-            maybeMigrateDB();
+            dbMigrator.migrate();
         } catch (SQLException | IOException | FlywayException e) {
             throw new IOException("Database.init() failed", e);
         }
@@ -143,22 +147,14 @@ public class Database {
 
     // This is for test purpose
     public void clear() {
-        try (Connection conn = dataSource.getConnection();
-             Statement statement = conn.createStatement()) {
-            statement.execute("DROP TABLE users, jobs, applications, properties");
-            //statement.execute("DELETE FROM jobs");
-            //statement.execute("DELETE FROM applications");
-            conn.commit();
+        try {
+            dbMigrator.clean();
             LOG.info("All tables dropped successfully");
-        } catch (SQLException e) {
-            LogUtil.error(LOG, "Database.clear() failed", e);
+        } catch (FlywayException e) {
+            LogUtil.error(LOG,"Database.clear() failed", e);
         }
     }
 
-    private void maybeMigrateDB() throws SQLException, IOException {
-        LegacyDBMigration.migrate(dataSource);
-        DBMigration.migrate(dataSource);
-    }
 
     public List<User> allUsers() throws IOException {
         List<User> ret = new ArrayList<>();
