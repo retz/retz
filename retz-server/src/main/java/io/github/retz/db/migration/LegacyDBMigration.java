@@ -39,7 +39,7 @@ public class LegacyDBMigration {
         } else {
             LOG.info("No table exists: creating....");
 
-            InputStream ddl = LegacyDBMigration.class.getClassLoader().getResourceAsStream("retz-ddl.sql");
+            InputStream ddl = LegacyDBMigration.class.getClassLoader().getResourceAsStream("db/migration/legacy/retz-ddl.sql");
             String createString = org.apache.commons.io.IOUtils.toString(ddl, UTF_8);
             //System.err.println(createString);
             try (Statement statement = conn.createStatement()) {
