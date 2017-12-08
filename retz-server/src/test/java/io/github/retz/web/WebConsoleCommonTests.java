@@ -76,7 +76,7 @@ public class WebConsoleCommonTests {
         RetzScheduler scheduler = new RetzScheduler(conf, frameworkInfo);
         config = conf.getServerConfig();
         Database.getInstance().init(config);
-        assertTrue(Database.getInstance().allTableExists());
+        assertTrue(Database.getMigrator().isFinished());
 
         WebConsole.set(scheduler, null);
         WebConsole.start(config);

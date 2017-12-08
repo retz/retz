@@ -20,13 +20,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.github.retz.cli.TimestampHelper;
+import io.github.retz.db.migration.DBMigration;
 import io.github.retz.misc.LogUtil;
 import io.github.retz.planner.AppJobPair;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.User;
 import io.github.retz.protocol.exception.JobNotFoundException;
-import io.github.retz.scheduler.Launcher;
 import io.github.retz.scheduler.ServerConfiguration;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
@@ -34,14 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.*;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class Database {
     private static final Logger LOG = LoggerFactory.getLogger(Database.class);
@@ -49,6 +46,7 @@ public class Database {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final DataSource dataSource = new DataSource();
+    private final DBMigration dbMigrator = new DBMigration((javax.sql.DataSource) dataSource);
     String databaseURL = null;
 
     Database() {
@@ -61,6 +59,10 @@ public class Database {
 
     public static DataSource getDataSource() {
         return getInstance().dataSource;
+    }
+
+    public static DBMigration getMigrator() {
+        return getInstance().dbMigrator;
     }
 
     static Database newMemInstance(String name) throws IOException {
@@ -121,17 +123,8 @@ public class Database {
 
         dataSource.setPoolProperties(props);
 
-        try (Connection conn = dataSource.getConnection()) { //pool.getConnection()) {
-            conn.setAutoCommit(false);
-            DatabaseMetaData meta = conn.getMetaData();
-
-            if (!meta.supportsTransactionIsolationLevel(Connection.TRANSACTION_SERIALIZABLE)) {
-                LOG.error("Current database ({}) does not support required isolation level ({})",
-                        databaseURL, Connection.TRANSACTION_SERIALIZABLE);
-                throw new RuntimeException("Current database does not support serializable");
-            }
-            maybeCreateTables(conn);
-            conn.commit();
+        try {
+            dbMigrator.migrate();
         } catch (SQLException | IOException e) {
             throw new IOException("Database.init() failed", e);
         }
@@ -153,87 +146,14 @@ public class Database {
 
     // This is for test purpose
     public void clear() {
-        try (Connection conn = dataSource.getConnection();
-             Statement statement = conn.createStatement()) {
-            statement.execute("DROP TABLE users, jobs, applications, properties");
-            //statement.execute("DELETE FROM jobs");
-            //statement.execute("DELETE FROM applications");
-            conn.commit();
+        try {
+            dbMigrator.clean();
             LOG.info("All tables dropped successfully");
-        } catch (SQLException e) {
-            LogUtil.error(LOG, "Database.clear() failed", e);
+        } catch (IOException e) {
+            LogUtil.error(LOG,"Database.clear() failed", e);
         }
     }
 
-    public boolean allTableExists() throws IOException {
-        try (Connection conn = dataSource.getConnection()) {
-            return allTableExists(conn);
-        } catch (SQLException e) {
-            throw new IOException("Database.allTableExists() failed", e);
-        }
-    }
-
-    private boolean allTableExists(Connection conn) throws SQLException, IOException {
-        DatabaseMetaData meta = conn.getMetaData();
-
-        // PostgreSQL accepts only lower case names while
-        // H2DB holds such names with upper case names. WHAT IS THE HELL JDBC
-        // TODO: add PostgreSQL inttest
-        boolean userTableExists = tableExists(meta, "public", "users")
-                || tableExists(meta, "PUBLIC", "USERS");
-        boolean applicationTableExists = tableExists(meta, "public", "applications")
-                || tableExists(meta, "PUBLIC", "APPLICATIONS");
-        boolean jobTableExists = tableExists(meta, "public", "jobs")
-                || tableExists(meta, "PUBLIC", "JOBS");
-        boolean propTableExists = tableExists(meta, "public", "properties")
-                || tableExists(meta, "PUBLIC", "PROPERTIES");
-
-        if (userTableExists && applicationTableExists && jobTableExists && propTableExists) {
-            return true;
-        } else if (!userTableExists && !applicationTableExists && !jobTableExists && !propTableExists) {
-            return false;
-        } else {
-            LOG.error("user:{}, applicaion:{}, job:{}, prop:{}", userTableExists, applicationTableExists, jobTableExists, propTableExists);
-            throw new AssertionError("Database is partially ready: quitting");
-        }
-    }
-
-    private boolean tableExists(DatabaseMetaData meta, String schemaPattern, String tableName) throws SQLException {
-        try (ResultSet res = meta.getTables(null,
-                Objects.requireNonNull(schemaPattern),
-                Objects.requireNonNull(tableName),
-                null)) {
-
-            if (res.next()) {
-                String name = res.getString("TABLE_NAME");
-                LOG.info("category={}, schema={}, name={}, type={}, remarks={}",
-                        res.getString("TABLE_CAT"), res.getString("TABLE_SCHEM"),
-                        res.getString("TABLE_NAME"), res.getString("TABLE_TYPE"),
-                        res.getString("REMARKS"));
-                if (name != null) {
-                    return name.equals(tableName);
-                }
-            }
-        }
-        return false;
-    }
-
-    private void maybeCreateTables(Connection conn) throws SQLException, IOException {
-        LOG.info("Checking database schema of {} ...", databaseURL);
-
-        if (allTableExists(conn)) {
-            LOG.info("All four table exists.");
-        } else {
-            LOG.info("No table exists: creating....");
-
-            InputStream ddl = Launcher.class.getResourceAsStream("/retz-ddl.sql");
-            String createString = org.apache.commons.io.IOUtils.toString(ddl, UTF_8);
-            //System.err.println(createString);
-            try (Statement statement = conn.createStatement()) {
-                statement.execute(createString);
-            }
-        }
-    }
 
     public List<User> allUsers() throws IOException {
         List<User> ret = new ArrayList<>();
@@ -627,15 +547,14 @@ public class Database {
     }
 
     private void addJob(Connection conn, Job j) throws SQLException, JsonProcessingException {
-        try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, cmd, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?, ?)")) {
+        try (PreparedStatement p = conn.prepareStatement("INSERT INTO jobs(name, id, appid, priority, taskid, state, json) values(?, ?, ?, ?, ?, ?, ?)")) {
             p.setString(1, j.name());
             p.setInt(2, j.id());
             p.setString(3, j.appid());
-            p.setString(4, j.cmd());
-            p.setInt(5, j.priority());
-            p.setString(6, j.taskId());
-            p.setString(7, j.state().toString());
-            p.setString(8, mapper.writeValueAsString(j));
+            p.setInt(4, j.priority());
+            p.setString(5, j.taskId());
+            p.setString(6, j.state().toString());
+            p.setString(7, mapper.writeValueAsString(j));
             p.execute();
         }
     }

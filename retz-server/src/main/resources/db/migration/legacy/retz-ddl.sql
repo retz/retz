@@ -15,6 +15,12 @@
 --    limitations under the License.
 --
 
+-- DO NOT UPDATE THIS FILE ANYMORE
+--
+-- DB schema is managed by Flyway now.
+-- To change DB schema, add new migration file into db/migration.
+-- See: https://flywaydb.org/documentation/
+
 -- see io.github.retz.protocol.data.User
 CREATE TABLE users (
     key_id VARCHAR(32) NOT NULL UNIQUE,
