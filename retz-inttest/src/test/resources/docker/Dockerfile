@@ -1,4 +1,4 @@
-FROM centos:7.3.1611
+FROM centos:7.4.1708
 
 ENV container docker
 
@@ -14,6 +14,8 @@ RUN yum install -y java-1.8.0-openjdk postgresql postgresql-server iproute httpd
 
 RUN yum -y install epel-release
 
+## TODO: update to 7.4 someday
+## RUN yum -y install http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-4.noarch.rpm
 RUN yum -y install http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-3.noarch.rpm
 RUN yum -y install mesosphere-el-repo mesosphere-zookeeper
 ARG MESOS_PACKAGE_NAME
