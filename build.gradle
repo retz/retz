@@ -406,7 +406,7 @@ project('retz-inttest') {
                 // run `yum --showduplicates list mesos` to know all available packages at Mesosphere repository
                 def supported_mesos_versions = ['1.2.1-2.0.1', '1.2.2-2.0.1',
                                                 '1.3.0-2.0.3', '1.3.1-2.0.1',
-                                                '1.4.0-2.0.1']
+                                                '1.4.0-2.0.1', '1.4.1-2.0.1']
                 if (! supported_mesos_versions.contains(mesos_version)) {
                     System.err.println("Mesos version should be one of " + supported_mesos_versions + " but is: " + mesos_version)
                     exit

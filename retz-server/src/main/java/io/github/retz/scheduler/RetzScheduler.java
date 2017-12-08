@@ -156,7 +156,7 @@ public class RetzScheduler implements Scheduler {
                 return true;
             }
         }
-        LOG.error("Unsupported Mesos version {}, should be one of [1.2, 1.3]", version);
+        LOG.error("Unsupported Mesos version {}, should be one of [1.2, 1.3, 1.4]", version);
         return false;
     }
 

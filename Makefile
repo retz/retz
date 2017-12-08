@@ -15,7 +15,7 @@ inttest-latest:
 	$(GRADLE) clean
 	-docker rmi mesos-retz
 	@echo "Testing latest Apache Mesos (could be same as 1.4)"
-	$(GRADLE) :retz-inttest:test -Dinttest -is -Dmesos_version=1.4.0-2.0.1
+	$(GRADLE) :retz-inttest:test -Dinttest -is -Dmesos_version=1.4.1-2.0.1
 	docker rmi mesos-retz
 
 inttest-old:
