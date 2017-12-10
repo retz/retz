@@ -1,5 +1,13 @@
 # Retz release notes
 
+## 0.5.0
+
+* Move from findBugs to spotBugs (#189)
+* Support CentOS 7.4 and Apache Mesos 1.4.1.
+* Remove 'cmd' column from jobs table at database, removing 512 bytes
+  length limitation at command line to pass to job. Database schema
+  is automatically updated at restarting Retz server process.
+
 ## 0.4.1
 
 * Add `job-queue-strategy` to configure selection query to backend
