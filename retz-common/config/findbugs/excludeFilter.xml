@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
     <Match>
-        <!-- exclude grpc-generated codes -->
-        <!-- Class name=".*\.grpcgen" / -->
-        <Package name="~io\.github\.retz\.grpcgen.\*" />
+        <!-- exclude grpc-generated codes
+         for spotbugs, this is the right document:
+         http://spotbugs.readthedocs.io/en/latest/filter.html
+         -->
+        <Package name="~.*\.grpcgen" />
     </Match>
 </FindBugsFilter>

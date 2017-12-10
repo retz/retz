@@ -19,6 +19,8 @@ public class Pb2Retz {
             case MountMode.RW_VALUE:
                 mode = DockerVolume.Mode.RW;
                 break;
+            default:
+                throw new AssertionError("Unknown docker volume type:" + gDockerVolume.getModeValue());
         }
 
         Properties props = new Properties();

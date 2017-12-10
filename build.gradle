@@ -185,6 +185,7 @@ project(':retz-common') {
         testCompile 'org.slf4j:slf4j-simple:1.7.25'
     }
 
+    spotbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
 
     idea {
         module {
@@ -195,7 +196,6 @@ project(':retz-common') {
         }
     }
 
-    spotbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
 }
 
 def makePropertyFile(basedir, testType, name, version) {
