@@ -115,7 +115,7 @@ message Job {
   string finished = 8;
   map<string, string> properties = 9;   // TODO: use map<> type in proto3.
   int32 result = 10;
-  uint64 id = 11;
+  int32 id = 11; // TODO: make this uint; for now it's int32 for backward compatibility
   string url = 12;
   string reason = 13;
   uint32 retry = 14; // How many retry now we have

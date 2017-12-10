@@ -37,7 +37,7 @@ public class Job {
     private String finished;
     private Properties props;
     private int result = -1;
-    private long id;
+    private int id;
     private String url;
     private String reason;
     private int retry; // How many retry now we have
@@ -82,7 +82,7 @@ public class Job {
                @JsonProperty("finished") String finished,
                @JsonProperty("env") Properties props,
                @JsonProperty("result") int result,
-               @JsonProperty(value = "id", required = true) long id,
+               @JsonProperty(value = "id", required = true) int id,
                @JsonProperty("url") String url,
                @JsonProperty("reason") String reason,
                @JsonProperty("retry") int retry,
@@ -149,7 +149,7 @@ public class Job {
     }
 
     @JsonGetter("id")
-    public long id() {
+    public int id() {
         return id;
     }
 

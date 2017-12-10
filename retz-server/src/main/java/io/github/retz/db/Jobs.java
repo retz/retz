@@ -99,7 +99,8 @@ public class Jobs {
             p.setString(6, j.started());
             p.setString(7, j.finished());
             p.setString(8, mapper.writeValueAsString(j));
-            p.setInt(9, j.id());
+            //p.setInt(9, j.id());
+            p.setLong(9, j.id());
             p.execute();
         }
     }

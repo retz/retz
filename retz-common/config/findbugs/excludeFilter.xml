@@ -2,6 +2,7 @@
 <FindBugsFilter>
     <Match>
         <!-- exclude grpc-generated codes -->
-        <Class name="~.*\.grpcgen.*" />
+        <!-- Class name=".*\.grpcgen" / -->
+        <Package name="~io\.github\.retz\.grpcgen.\*" />
     </Match>
 </FindBugsFilter>

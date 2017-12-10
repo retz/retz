@@ -25,7 +25,6 @@ import io.github.retz.web.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,7 +71,7 @@ public class CommandList implements SubCommand {
                 jobStates = parseStates(states);
             }
 
-            Map<Long, Job> jobMap = new LinkedHashMap<>();
+            Map<Integer, Job> jobMap = new LinkedHashMap<>();
             for (Job.JobState s : jobStates) {
                 if (verbose) {
                     LOG.info("Fetching jobs@{}", s);
