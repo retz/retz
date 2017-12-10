@@ -195,7 +195,7 @@ project(':retz-common') {
         }
     }
 
-    findbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
+    spotbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
 }
 
 def makePropertyFile(basedir, testType, name, version) {
