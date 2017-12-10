@@ -23,8 +23,10 @@ import io.github.retz.protocol.data.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
@@ -66,7 +68,7 @@ public class CommandCreateUsers implements SubCommand {
                     User u = client.createUserAsObject(line);
                     String config = FileConfiguration.userAsConfig(u);
                     String filename = dir + "/retz.properties-" + line;
-                    try (PrintWriter writer = new PrintWriter(filename)) {
+                    try (PrintWriter writer = new PrintWriter(new File(filename), "UTF-8")) {
                         writer.write(config);
                         LOG.info("Created {}", filename);
                     }

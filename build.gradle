@@ -10,6 +10,7 @@ buildscript {
         classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.4.+'
         classpath "gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.14.0"
+        classpath "gradle.plugin.com.github.spotbugs:gradlePlugin:1.6.0"
     }
 }
 
@@ -45,7 +46,7 @@ subprojects {
     apply plugin: 'jacoco'
     apply plugin: 'scala'
     apply plugin: 'eclipse'
-    apply plugin: 'findbugs'
+    apply plugin: 'com.github.spotbugs'
     apply plugin: 'checkstyle'
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
@@ -102,6 +103,15 @@ subprojects {
             xml.enabled = true
             csv.enabled = false
             html.destination file("${buildDir}/reports/jacoco")
+        }
+    }
+
+
+// To generate an HTML report instead of XML
+    tasks.withType(com.github.spotbugs.SpotBugsTask) {
+        reports {
+            xml.enabled = false
+            html.enabled = true
         }
     }
 
@@ -237,7 +247,7 @@ project(':retz-server') {
 
     mainClassName = 'io.github.retz.scheduler.Launcher'
 
-    findbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
+    spotbugs.excludeFilter = file("config/findbugs/excludeFilter.xml")
 
     ospackage {
         os = LINUX

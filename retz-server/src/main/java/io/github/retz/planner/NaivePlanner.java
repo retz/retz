@@ -147,7 +147,7 @@ public class NaivePlanner implements Planner {
                 .filter(appJobPair -> !appJobPair.hasApplication())
                 .map(appJobPair -> {
                     Job job = appJobPair.job();
-                    String reason = String.format("Applicaion '%s' of Job (%d@%s) does not exist in DB", job.appid(), job.id());
+                    String reason = String.format("Application '%s' of Job (id=%d) does not exist in DB", job.appid(), job.id());
                     job.killed(TimestampHelper.now(), Optional.empty(), reason); // Database to be updated later, after plan accepted
                     return job;
                 }).collect(Collectors.toList()));
