@@ -42,12 +42,15 @@ public class CommandListApp implements SubCommand {
     @Override
     public int handle(ClientCLIConfig fileConfig, boolean verbose)throws Throwable {
         LOG.debug("Configuration: {}", fileConfig.toString());
+        return handle1(fileConfig, verbose);
+        /**
         try (io.github.retz.grpc.Client client = new io.github.retz.grpc.Client(fileConfig.getUri(), fileConfig.getAuthenticator())) {
             for (Application application : client.listApps()) {
                 LOG.info(application.toString());
             }
         }
         return 0;
+         */
     }
     private int handle1(ClientCLIConfig fileConfig, boolean verbose) throws Throwable {
         try (Client webClient = Client.newBuilder(fileConfig.getUri())

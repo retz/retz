@@ -63,7 +63,7 @@ public class RetzServer {
 
     public RetzServer(ServerConfiguration config) {
         this.config = Objects.requireNonNull(config);
-        this.port = config.getUri().getPort();
+        this.port = config.getGrpcURI().getPort();
     }
 
     public void start() throws IOException {

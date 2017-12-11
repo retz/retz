@@ -109,26 +109,31 @@ public final class Launcher {
         LOG.info("Web console has started with port {}", conf.getPort());
 
         // Start gRPC server
-        RetzServer server = new RetzServer(50001);
-        try {
-            server.start();
-        } catch (IOException e) {
-            LOG.error("Cannot start gRPC server", e);
-            return -1;
+        RetzServer server = null;
+        if (conf.fileConfig.getGrpcURI() != null) {
+            server = new RetzServer(conf.fileConfig);
+            try {
+                server.start();
+            } catch (IOException e) {
+                LOG.error("Cannot start gRPC server", e);
+                return -1;
+            }
         }
 
         java.lang.Runtime.getRuntime().addShutdownHook(new ShutdownThread(driver));
-
-        server.blockUntilShutdown();
-
-        // stop frontend
-        server.stop();
-        WebConsole.stop();
 
         // Stop them all, usually don't come here
         // Wait for Mesos framework stop
         status = driver.join();
         LOG.info("{} has been stopped: {}", RetzScheduler.FRAMEWORK_NAME, status.name());
+
+        // stop frontend
+        WebConsole.stop();
+
+        if (server != null) {
+            server.stop();
+            server.blockUntilShutdown();
+        }
 
         GarbageJobCollector.stop();
         Database.getInstance().stop();

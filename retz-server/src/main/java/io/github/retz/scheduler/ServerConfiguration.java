@@ -53,7 +53,8 @@ public class ServerConfiguration extends FileConfiguration {
     // Mesos connections and so on
     static final String MESOS_LOC_KEY = "retz.mesos";
     // TODO: Sparkjava (http://sparkjava.com) only binds to 0.0.0.0, but it must be any IP address
-    static final String BIND_ADDRESS = "retz.bind";
+    static final String HTTP_BIND_ADDRESS = "retz.http.bind";
+    static final String GRPC_BIND_ADDRESS = "retz.grpc.bind";
     static final String MESOS_ROLE = "retz.mesos.role";
     static final String MESOS_PRINCIPAL = "retz.mesos.principal";
     static final String DEFAULT_MESOS_PRINCIPAL = "retz";
@@ -79,6 +80,7 @@ public class ServerConfiguration extends FileConfiguration {
     // static final String[] INVALID_BIND_ADDRESS = {"0.0.0.0", "localhost", "127.0.0.1"};
     private static final Logger LOG = LoggerFactory.getLogger(ServerConfiguration.class);
     private final URI uri;
+    private final URI grpcURI;
     private final int maxSimultaneousJobs;
     private final String databaseURL;
     private final String databaseDriver;
@@ -132,10 +134,17 @@ public class ServerConfiguration extends FileConfiguration {
         super(in);
 
 
-        Objects.requireNonNull(properties.getProperty(BIND_ADDRESS), "Host and port are required");
+        Objects.requireNonNull(properties.getProperty(HTTP_BIND_ADDRESS), "Host and port are required");
         Objects.requireNonNull(getMesosMaster(), "Mesos address must not be empty");
 
-        uri = new URI(properties.getProperty(BIND_ADDRESS));
+        uri = new URI(properties.getProperty(HTTP_BIND_ADDRESS));
+
+        if (properties.getProperty(GRPC_BIND_ADDRESS) != null) {
+            grpcURI = new URI(properties.getProperty(GRPC_BIND_ADDRESS));
+        } else {
+            grpcURI = null;
+        }
+
         // List<String> invalidBindAddresses = Arrays.asList(INVALID_BIND_ADDRESS);
         // loopback addresses must also be checked, but for now inttest uses localhost address
         if (uri.getHost().equals("0.0.0.0")) {
@@ -194,6 +203,10 @@ public class ServerConfiguration extends FileConfiguration {
 
     public URI getUri() {
         return uri;
+    }
+
+    public URI getGrpcURI() {
+        return grpcURI;
     }
 
     public boolean isTLS() {
