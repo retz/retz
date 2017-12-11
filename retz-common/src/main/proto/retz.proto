@@ -16,6 +16,12 @@ service Retz {
   rpc GetApp(GetAppRequest) returns (GetAppResponse) {}
 
   rpc ListJob(ListJobRequest) returns (stream ListJobResponse) {}
+  rpc Schedule(ScheduleRequest) returns (ScheduleResponse) {}
+  rpc GetJob(GetJobRequest) returns (GetJobResponse) {}
+  rpc Kill(KillRequest) returns (KillResponse) {}
+
+  rpc GetFile(GetFileRequest) returns (stream GetFileResponse) {}
+  rpc ListFiles(ListFilesRequest) returns (stream ListFilesResponse) {}
 }
 
 message PingRequest {
@@ -59,8 +65,61 @@ message ListJobRequest {
 
 message ListJobResponse {
   repeated Job jobs = 1;
+  string error = 2;
+}
+
+message ScheduleRequest {
+  Job job = 1;
+}
+
+message ScheduleResponse {
+  Job job = 1;
+  string error = 2;
+}
+
+message GetJobRequest{
+  int32 id = 1;
+}
+
+message GetJobResponse {
+  Job job = 1;
+  string error = 2;
+}
+
+message KillRequest{
+  int32 id = 1;
+}
+
+message KillResponse {
+  string error = 1;
+}
+
+message GetFileRequest {
+  int32 id = 1;
+  string file = 2;
+  uint64 offset = 3;
+  int64 length = 4;
+}
+
+message GetFileResponse {
+  uint64 offset = 1;
+  bytes content = 2;
   string error = 3;
 }
+
+message ListFilesRequest {
+  int32 id = 1;
+  string path = 2;
+}
+
+message ListFilesResponse {
+  Job job = 1;
+  repeated DirEntry entry = 2;
+  string error = 3;
+}
+
+
+
 
 enum ContainerImageType {
   MESOS_CONTAINER = 0;
@@ -144,4 +203,14 @@ message Job {
   string task_id = 17; // TaskId defined by Retz
   string slave_id = 18;
   JobState state = 19;
+}
+
+message DirEntry {
+  string gid = 1;
+  string mode = 2;
+  int64 mtime = 3;
+  int32 nlink = 4;
+  string path = 5;
+  uint64 size = 6;
+  string uid = 7;
 }

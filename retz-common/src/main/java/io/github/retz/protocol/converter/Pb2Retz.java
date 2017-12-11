@@ -26,6 +26,15 @@ import java.util.stream.Collectors;
 // set of converters from PB3 to Retz native data structure
 public class Pb2Retz {
 
+    public static DirEntry convert(io.github.retz.grpcgen.DirEntry dirEntry) {
+        return new DirEntry(dirEntry.getGid(),
+                dirEntry.getMode(),
+                dirEntry.getMtime(),
+                dirEntry.getNlink(),
+                dirEntry.getPath(),
+                dirEntry.getSize(),
+                dirEntry.getUid());
+    }
     public static DockerVolume convert(io.github.retz.grpcgen.DockerVolume gDockerVolume) {
         DockerVolume.Mode mode = DockerVolume.Mode.RO;
         switch (gDockerVolume.getModeValue()) {

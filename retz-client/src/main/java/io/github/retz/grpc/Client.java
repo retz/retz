@@ -17,11 +17,10 @@
 package io.github.retz.grpc;
 
 import java.io.Closeable;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -29,6 +28,7 @@ import io.github.retz.auth.Authenticator;
 import io.github.retz.protocol.converter.Pb2Retz;
 import io.github.retz.protocol.converter.Retz2Pb;
 import io.github.retz.protocol.data.Application;
+import io.github.retz.protocol.data.DirEntry;
 import io.github.retz.protocol.data.Job;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -125,6 +125,75 @@ public class Client implements Closeable {
             .collect(Collectors.toList()));
         }
         return jobs;
+    }
+
+    public Optional<Job> schedule(Job job) {
+        ScheduleRequest request = ScheduleRequest.newBuilder()
+                .setJob(Retz2Pb.convert(job)).build();
+        ScheduleResponse res = blockingStub.schedule(request);
+        if (res.hasJob()) {
+            return Optional.empty();
+        }
+        return  Optional.ofNullable(Pb2Retz.convert(res.getJob()));
+    }
+
+    public Optional<Job> getJob(int id) {
+        GetJobRequest request = GetJobRequest.newBuilder()
+                .setId(id)
+                .build();
+        GetJobResponse res = blockingStub.getJob(request);
+        if (res.hasJob()) {
+            return Optional.of(Pb2Retz.convert(res.getJob()));
+        }
+        LOG.debug(res.getError());
+        return Optional.empty();
+    }
+
+    public void kill(int id) {
+        KillRequest request = KillRequest.newBuilder()
+                .setId(id).build();
+        KillResponse res = blockingStub.kill(request);
+        LOG.debug(res.getError());
+    }
+
+    public long getFile(int id, String path, OutputStream out) throws IOException {
+        return getFile(id, path, 0, -1, out);
+    }
+
+    // So far this won't be implemented because server side downloader is not yet ready
+    private long getFile(int id, String path, long offset, long length, OutputStream out) throws IOException {
+        GetFileRequest request = GetFileRequest.newBuilder()
+                .setId(id)
+                .setFile(path)
+                .setOffset(offset)
+                .setLength(length)
+                .build();
+        Iterator<GetFileResponse> iter = blockingStub.getFile(request);
+        long bytes = 0;
+        while(iter.hasNext()) {
+            GetFileResponse res = iter.next();
+            out.write(res.getContent().toByteArray());
+            // Not implemented yet; offset will be always 0
+            //if (offset + bytes != res.getOffset()) {
+            //    LOG.error("offset alignment got wrong: {} + {} != {}", offset, bytes, res.getOffset());
+            //}
+            bytes += res.getContent().size();
+        }
+        return bytes;
+    }
+
+    public List<DirEntry> listFiles(int id, String path) {
+        ListFilesRequest request = ListFilesRequest.newBuilder()
+                .setId(id)
+                .setPath(path)
+                .build();
+        Iterator<ListFilesResponse> iter = blockingStub.listFiles(request);
+        List<DirEntry> ret = new ArrayList<>();
+        while (iter.hasNext()) {
+            ListFilesResponse res = iter.next();
+            ret.addAll(res.getEntryList().stream().map(Pb2Retz::convert).collect(Collectors.toList()));
+        }
+        return ret;
     }
 }
 

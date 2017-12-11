@@ -16,10 +16,7 @@
  */
 package io.github.retz.protocol.converter;
 
-import io.github.retz.grpcgen.Application;
-import io.github.retz.grpcgen.Container;
-import io.github.retz.grpcgen.JobState;
-import io.github.retz.grpcgen.MountMode;
+import io.github.retz.grpcgen.*;
 import io.github.retz.protocol.data.DockerContainer;
 import io.github.retz.protocol.data.DockerVolume;
 import io.github.retz.protocol.data.Job;
@@ -29,6 +26,18 @@ import java.util.stream.Collectors;
 
 // TODO: write ScalaCheck property test for this kind of conversion
 public class Retz2Pb {
+
+    public static DirEntry convert(io.github.retz.protocol.data.DirEntry dirEntry) {
+        return DirEntry.newBuilder()
+                .setGid(dirEntry.gid())
+                .setMode(dirEntry.mode())
+                .setMtime(dirEntry.mtime())
+                .setNlink(dirEntry.nlink())
+                .setPath(dirEntry.path())
+                .setSize(dirEntry.size())
+                .setUid(dirEntry.uid())
+                .build();
+    }
 
     public static JobState convert(Job.JobState state) {
         switch (state) {
@@ -47,6 +56,41 @@ public class Retz2Pb {
             default:
                 throw new AssertionError("Cannot reach here:" + state);
         }
+    }
+
+    public static ResourceQuantity convert(io.github.retz.protocol.data.ResourceQuantity resourceQuantity) {
+        ResourceQuantity.Builder builder = ResourceQuantity.newBuilder();
+        builder.setCpu(resourceQuantity.getCpu())
+                .setDiskMB(resourceQuantity.getDiskMB())
+                .setGpu(resourceQuantity.getGpu())
+                .setMemMB(resourceQuantity.getMemMB())
+                .setNodes(resourceQuantity.getNodes())
+                .setPorts(resourceQuantity.getPorts());
+        return builder.build();
+    }
+    public static io.github.retz.grpcgen.Job convert(Job job) {
+        io.github.retz.grpcgen.Job.Builder builder = io.github.retz.grpcgen.Job.newBuilder();
+        builder.setId(job.id())
+                .setPriority(job.priority())
+                .setResources(Retz2Pb.convert(job.resources()))
+                .setResult(job.result())
+                .setRetry(job.retry())
+                .setState(Retz2Pb.convert(job.state()))
+                .setAppid(job.appid())
+                .setCmd(job.cmd())
+                .setFinished(job.finished())
+                .setName(job.name())
+                .setReason(job.reason())
+                .setScheduled(job.scheduled())
+                .setSlaveId(job.slaveId())
+                .setStarted(job.started())
+                .addAllTags(job.tags())
+                .setTaskId(job.taskId())
+                .setUrl(job.url());
+        if (job.attributes().isPresent()) {
+            builder.setAttributes(job.attributes().get());
+        }
+        return builder.build();
     }
 
     public static io.github.retz.grpcgen.DockerVolume convert(DockerVolume dockerVolume) {
