@@ -442,6 +442,7 @@ public class RetzServer {
                             throw new DownloadFileSizeExceeded(length, maxFileSize);
                         }
 
+                        // TODO: this is not a clean stereaming; make gRPC-friendly OutputStream
                         ByteArrayOutputStream buf = new ByteArrayOutputStream();
                         IOUtils.copyLarge(io, buf, 0, length);
                         builder.setContent(ByteString.copyFrom(buf.toByteArray()))
