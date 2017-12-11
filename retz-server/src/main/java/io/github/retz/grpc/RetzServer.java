@@ -66,13 +66,9 @@ public class RetzServer {
         this.port = config.getUri().getPort();
     }
 
-    public RetzServer(int port) {
-        assert 1024 < port && port < 65536;
-        this.port = port;
-    }
-
     public void start() throws IOException {
         server = ServerBuilder.forPort(port)
+                // TODO: AuthInterceptor pluggable against authenticagtor
                 .intercept(new ServerAuthInterceptor())
                 //.addService(ServerInterceptors.intercept(new RetzServerImpl(), new ServerAuthInterceptor()))
                 .addService(new RetzServerImpl(this.config))
@@ -116,7 +112,7 @@ public class RetzServer {
 
         public RetzServerImpl(ServerConfiguration config) {
             this.config = config;
-            this.maxListJobSize =config.getMaxListJobSize();
+            this.maxListJobSize = config.getMaxListJobSize();
         }
 
         @Override

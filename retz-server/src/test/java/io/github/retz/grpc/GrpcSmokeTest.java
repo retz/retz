@@ -43,7 +43,7 @@ import static org.junit.Assert.assertTrue;
 public class GrpcSmokeTest {
     RetzServer server;
     ServerConfiguration config;
-    int port = 34756;
+    int port;
 
     @Before
     public void before() throws Throwable {
@@ -52,8 +52,9 @@ public class GrpcSmokeTest {
         config = new ServerConfiguration(in);
         Database.getInstance().init(config);
         assertTrue(Database.getMigrator().isFinished());
+        this.port = config.getUri().getPort();
 
-        this.server = new RetzServer(port);
+        this.server = new RetzServer(config);
         this.server.start();
     }
 
