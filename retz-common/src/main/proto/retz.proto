@@ -12,6 +12,9 @@ service Retz {
   rpc Ping(PingRequest) returns (PingResponse) {}
 
   rpc ListApp(ListAppRequest) returns (stream ListAppResponse) {}
+  rpc LoadApp(LoadAppRequest) returns (LoadAppResponse) {}
+  rpc GetApp(GetAppRequest) returns (GetAppResponse) {}
+
   rpc ListJob(ListJobRequest) returns (stream ListJobResponse) {}
 }
 
@@ -31,6 +34,24 @@ message ListAppResponse {
   string error = 2;
 }
 
+message LoadAppRequest {
+  Application app = 1;
+  string error = 2;
+}
+
+message LoadAppResponse {
+  string error = 1;
+}
+
+message GetAppRequest {
+  string name = 1;
+}
+
+message GetAppResponse {
+  Application app = 1;
+  string error = 2;
+}
+
 message ListJobRequest {
   JobState state = 1;
   string tag = 2;
@@ -40,7 +61,6 @@ message ListJobResponse {
   repeated Job jobs = 1;
   string error = 3;
 }
-
 
 enum ContainerImageType {
   MESOS_CONTAINER = 0;

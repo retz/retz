@@ -78,7 +78,7 @@ public class Client implements Closeable {
         return response.getPong();
     }
 
-    public List<Application> listApps() throws Exception {
+    public List<Application> listApps() {
         ListAppRequest request = ListAppRequest.newBuilder().build();
         Iterator<ListAppResponse> responses = blockingStub.listApp(request);
 
@@ -92,8 +92,24 @@ public class Client implements Closeable {
         return apps;
     }
 
+    public void loadApp(Application application) {
+        LoadAppRequest request = LoadAppRequest.newBuilder()
+                .setApp(Retz2Pb.convert(application))
+                .build();
+        LoadAppResponse res = blockingStub.loadApp(request);
+        LOG.debug(res.getError());
+    }
+
+    public Application getApp(String name) {
+        GetAppRequest request = GetAppRequest.newBuilder()
+                .setName(name)
+                .build();
+        GetAppResponse res = blockingStub.getApp(request);
+        return Pb2Retz.convert(res.getApp());
+    }
+
     public List<Job> listJobs(io.github.retz.protocol.data.Job.JobState state,
-                              Optional<String> tag) throws Exception {
+                              Optional<String> tag) {
         ListJobRequest.Builder builder = ListJobRequest.newBuilder();
         builder.setState(Retz2Pb.convert(state));
         if (tag.isPresent()) {

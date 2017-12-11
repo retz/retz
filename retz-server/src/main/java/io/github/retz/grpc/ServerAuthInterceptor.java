@@ -18,6 +18,7 @@ package io.github.retz.grpc;
 
 import io.github.retz.auth.AuthHeader;
 import io.github.retz.auth.Authenticator;
+import io.github.retz.auth.HmacSHA256Authenticator;
 import io.github.retz.db.Database;
 import io.github.retz.protocol.data.User;
 import io.grpc.*;
@@ -43,15 +44,29 @@ public class ServerAuthInterceptor implements ServerInterceptor {
         AuthHeader remote = maybeRemote.get();
         LOG.info("key={}, date={}, signature={}, verb={}, resource={}", remote.key(), headers.get(DATE_HEADER_KEY), remote.signature(),
                 call.getMethodDescriptor().getType().name(), call.getMethodDescriptor().getFullMethodName());
-        //try {
-            //Optional<User> user = Database.getInstance().getUser(remote.key());
-            //Authenticator authenticator =
-        // TODO: authenticate the client right here!!
-        Context ctx = Context.current().withValue(RetzServer.USER_ID_KEY, remote.key());
+        try {
+            Optional<User> user = Database.getInstance().getUser(remote.key());
+            if (user.isPresent()) {
+                Authenticator authenticator = new HmacSHA256Authenticator(user.get().keyId(), user.get().secret());
 
-            return Contexts.interceptCall(ctx, call, headers, next);
-        //} catch (IOException e) {
-          //  return null;
-        //}
+                String date = headers.get(DATE_HEADER_KEY);
+
+                MethodDescriptor<ReqT, RespT> methodDescriptor = call.getMethodDescriptor();
+                boolean result = authenticator.authenticate(methodDescriptor.getType().name(), "md5", date, methodDescriptor.getFullMethodName(),
+                        authenticator.getKey(), remote.signature());
+
+                // TODO: authenticate the client right here!!
+                Context ctx = Context.current().withValue(RetzServer.USER_ID_KEY, remote.key());
+                if (result) {
+                    LOG.info("Authenticated! {}", remote.signature());
+                    return Contexts.interceptCall(ctx, call, headers, next);
+                }
+            }
+            call.close(Status.UNAUTHENTICATED, new Metadata());
+
+        } catch (IOException e) {
+            call.close(Status.UNAVAILABLE, new Metadata());
+        }
+        return new ServerCall.Listener<ReqT>() {};
     }
 }

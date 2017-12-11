@@ -19,7 +19,6 @@ package io.github.retz.web;
 import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.scheduler.Launcher;
 import io.github.retz.scheduler.ServerConfiguration;
-import org.junit.Ignore;
 
 import java.io.InputStream;
 
