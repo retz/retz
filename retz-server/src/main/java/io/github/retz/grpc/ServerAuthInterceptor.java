@@ -39,10 +39,10 @@ public class ServerAuthInterceptor implements ServerInterceptor {
 
     @Override
     public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-        LOG.info("header: {} ? {} <<<", headers, headers.get(AUTH_HEADER_KEY));
+        LOG.debug("header: {} ? {} <<<", headers, headers.get(AUTH_HEADER_KEY));
         Optional<AuthHeader> maybeRemote = AuthHeader.parseHeaderValue(headers.get(AUTH_HEADER_KEY));
         AuthHeader remote = maybeRemote.get();
-        LOG.info("key={}, date={}, signature={}, verb={}, resource={}", remote.key(), headers.get(DATE_HEADER_KEY), remote.signature(),
+        LOG.debug("key={}, date={}, signature={}, verb={}, resource={}", remote.key(), headers.get(DATE_HEADER_KEY), remote.signature(),
                 call.getMethodDescriptor().getType().name(), call.getMethodDescriptor().getFullMethodName());
         try {
             Optional<User> user = Database.getInstance().getUser(remote.key());
@@ -58,7 +58,7 @@ public class ServerAuthInterceptor implements ServerInterceptor {
                 // TODO: authenticate the client right here!!
                 Context ctx = Context.current().withValue(RetzServer.USER_ID_KEY, remote.key());
                 if (result) {
-                    LOG.info("Authenticated! {}", remote.signature());
+                    LOG.debug("Authenticated! {}", remote.signature());
                     return Contexts.interceptCall(ctx, call, headers, next);
                 }
             }

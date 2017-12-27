@@ -131,7 +131,9 @@ public class Client implements Closeable {
         ScheduleRequest request = ScheduleRequest.newBuilder()
                 .setJob(Retz2Pb.convert(job)).build();
         ScheduleResponse res = blockingStub.schedule(request);
-        if (res.hasJob()) {
+        if (! res.hasJob()) {
+            // TODO: how can we know is error is retryable or not?
+            LOG.error(res.getError());
             return Optional.empty();
         }
         return  Optional.ofNullable(Pb2Retz.convert(res.getJob()));

@@ -24,6 +24,7 @@ import io.github.retz.db.Database;
 import io.github.retz.protocol.data.Application;
 import io.github.retz.protocol.data.Job;
 import io.github.retz.protocol.data.MesosContainer;
+import io.github.retz.scheduler.JobQueue;
 import io.github.retz.scheduler.Launcher;
 import io.github.retz.scheduler.ServerConfiguration;
 import io.grpc.StatusRuntimeException;
@@ -32,12 +33,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class GrpcSmokeTest {
@@ -52,7 +51,7 @@ public class GrpcSmokeTest {
         config = new ServerConfiguration(in);
         Database.getInstance().init(config);
         assertTrue(Database.getMigrator().isFinished());
-        this.port = config.getUri().getPort();
+        this.port = config.getGrpcURI().getPort();
 
         this.server = new RetzServer(config);
         this.server.start();
@@ -96,6 +95,57 @@ public class GrpcSmokeTest {
                 List<Application> apps = client.listApps();
                 assertEquals(1, apps.size());
                 assertEquals(app.getAppid(), apps.get(0).getAppid());
+            }
+
+            int id = 0;
+            {
+                Job job = new Job(app.getAppid(), "ls -l", new Properties(), 1, 32, 32);
+                Optional<Job> maybeJob = client.schedule(job);
+                assertTrue(maybeJob.isPresent());
+                job = maybeJob.get();
+                assertTrue(job.id() > 0);
+
+                Optional<Job> fromQueue = JobQueue.getJob(job.id());
+                assertTrue(fromQueue.isPresent());
+                assertEquals(job.id(), fromQueue.get().id());
+                assertEquals(Job.JobState.QUEUED, fromQueue.get().state());
+                assertEquals(Job.JobState.QUEUED, job.state());
+                assertEquals(job.scheduled(), fromQueue.get().scheduled());
+                assertEquals(job.pp(), fromQueue.get().pp());
+
+                id = job.id();
+            }
+            {
+                List<Job> list = client.listJobs(Job.JobState.QUEUED, Optional.empty());
+                assertEquals(1, list.size());
+                assertEquals(id, list.get(0).id());
+
+                list = client.listJobs(Job.JobState.QUEUED, Optional.of("fugafuga-unknown-tag"));
+                assertTrue(list.isEmpty());
+            }
+            {
+                List<Job> list = client.listJobs(Job.JobState.FINISHED, Optional.empty());
+                assertTrue(list.isEmpty());
+            }
+            {
+                List<Job> list = client.listJobs(Job.JobState.STARTED, Optional.empty());
+                assertTrue(list.isEmpty());
+            }
+            {
+                client.kill(id);
+                Optional<Job> fromQueue = JobQueue.getJob(id);
+                assertTrue(fromQueue.isPresent());
+                assertEquals(Job.JobState.KILLED, fromQueue.get().state());
+                assertNotNull(fromQueue.get().finished());
+            }
+            {
+                List<Job> list = client.listJobs(Job.JobState.QUEUED, Optional.empty());
+                assertTrue(list.isEmpty());
+            }
+            {
+                List<Job> list = client.listJobs(Job.JobState.KILLED, Optional.empty());
+                assertEquals(1, list.size());
+                assertEquals(id, list.get(0).id());
             }
         }
     }

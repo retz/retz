@@ -380,14 +380,14 @@ public class Database {
         }
     }
 
-    public List<Job> listJobs(String id, Job.JobState state, Optional<String> tag, int limit) throws IOException {
+    public List<Job> listJobs(String owner, Job.JobState state, Optional<String> tag, int limit) throws IOException {
         List<Job> ret = new ArrayList<>();
         String prefix = "SELECT j.json FROM jobs j, applications a WHERE j.appid = a.appid AND a.owner = ?";
         String sql = prefix + " AND j.state=? ORDER BY j.id DESC LIMIT ?";
 
         try (Connection conn = dataSource.getConnection(); // pool.getConnection();
              PreparedStatement p = conn.prepareStatement(sql)) {
-            p.setString(1, id);
+            p.setString(1, owner);
             p.setString(2, state.toString());
             p.setInt(3, limit);
 
@@ -406,7 +406,7 @@ public class Database {
             }
             return ret;
         } catch (SQLException e) {
-            throw new IOException(MessageFormat.format("Database.listJobs({0}, {1}) failed", id, state), e);
+            throw new IOException(MessageFormat.format("Database.listJobs({0}, {1}) failed", owner, state), e);
         }
     }
 

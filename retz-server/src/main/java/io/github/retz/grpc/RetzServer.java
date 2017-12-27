@@ -52,6 +52,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static java.lang.Integer.MAX_VALUE;
+
 public class RetzServer {
     private static final Logger LOG = LoggerFactory.getLogger(RetzServer.class);
 
@@ -233,10 +235,13 @@ public class RetzServer {
             String user = Objects.requireNonNull(USER_ID_KEY.get(Context.current()));
 
             try {
+                // Handling null value or optional in gRPC really weird...
+                Optional<String> maybeTag = ("".equals(request.getTag())) ? Optional.empty() :Optional.ofNullable(request.getTag());
+
+                // TODO: make this stream response directed from database cursor
                 List<io.github.retz.protocol.data.Job> jobs = JobQueue.list(user,
                         Pb2Retz.convert(request.getState()),
-                        Optional.ofNullable(request.getTag()),
-                        maxListJobSize);
+                        maybeTag, maxListJobSize);
 
                 ListJobResponse response = ListJobResponse.newBuilder()
                         .addAllJobs(jobs.stream().map(Retz2Pb::convert).collect(Collectors.toList()))
@@ -246,7 +251,9 @@ public class RetzServer {
                 responseObserver.onCompleted();
 
             } catch (IOException e) {
+                LOG.error("error", e);
                 responseObserver.onError(e);
+                responseObserver.onCompleted();
             }
         }
 
@@ -254,7 +261,6 @@ public class RetzServer {
         public void schedule(ScheduleRequest request, StreamObserver<ScheduleResponse> responseObserver) {
             String user = Objects.requireNonNull(USER_ID_KEY.get(Context.current()));
             ScheduleResponse.Builder builder = ScheduleResponse.newBuilder();
-
             try {
                 Optional<io.github.retz.protocol.data.Application> maybeApp = Applications.get(request.getJob().getAppid()); // TODO check owner right here
                 if (!maybeApp.isPresent()) {
@@ -267,14 +273,16 @@ public class RetzServer {
 
                 }
 
-                if (maybeApp.get().getOwner().equals(user)) {
+                if (! maybeApp.get().getOwner().equals(user)) {
                     builder.setError("Not an owner of the application");
+                    responseObserver.onNext(builder.build());
                     responseObserver.onCompleted();
                     return;
                 }
 
                 if (! maybeApp.get().enabled()) {
                     builder.setError("The application is disabled");
+                    responseObserver.onNext(builder.build());
                     responseObserver.onCompleted();
                     return;
                 }
@@ -285,6 +293,7 @@ public class RetzServer {
                     String msg = "Job " + job.toString() + " does not fit system limit " + config.getMaxJobSize();
                     // TODO: this warn log cannot be written in real stable release
                     builder.setError(msg);
+                    responseObserver.onNext(builder.build());
                     responseObserver.onCompleted();
                     return;
                 }
@@ -306,7 +315,9 @@ public class RetzServer {
 
             } catch (IOException e) {
                 responseObserver.onError(e);
+                responseObserver.onNext(builder.build());
             }
+            responseObserver.onCompleted();
         }
 
         private static Optional<Pair<io.github.retz.protocol.data.Application,

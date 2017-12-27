@@ -78,17 +78,31 @@ public class Retz2Pb {
                 .setState(Retz2Pb.convert(job.state()))
                 .setAppid(job.appid())
                 .setCmd(job.cmd())
-                .setFinished(job.finished())
                 .setName(job.name())
-                .setReason(job.reason())
-                .setScheduled(job.scheduled())
-                .setSlaveId(job.slaveId())
-                .setStarted(job.started())
-                .addAllTags(job.tags())
-                .setTaskId(job.taskId())
-                .setUrl(job.url());
+                .addAllTags(job.tags());
+        if (job.started() != null) {
+            builder.setStarted(job.started());
+        }
+        if (job.finished() != null) {
+            builder.setFinished(job.finished());
+        }
+        if (job.scheduled() != null) {
+            builder.setScheduled(job.scheduled());
+        }
+        if (job.slaveId() != null) {
+            builder.setSlaveId(job.slaveId());
+        }
+        if (job.reason() != null) {
+            builder.setReason(job.reason());
+        }
         if (job.attributes().isPresent()) {
             builder.setAttributes(job.attributes().get());
+        }
+        if (job.url() != null) {
+            builder.setUrl(job.url());
+        }
+        if (job.taskId() != null) {
+            builder.setTaskId(job.taskId());
         }
         return builder.build();
     }
