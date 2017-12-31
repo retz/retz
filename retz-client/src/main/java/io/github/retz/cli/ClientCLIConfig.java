@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
@@ -40,6 +41,12 @@ public class ClientCLIConfig extends FileConfiguration {
     public ClientCLIConfig(ClientCLIConfig c) {
         super(c.properties);
         retzServerUri = c.getUri();
+    }
+
+    public ClientCLIConfig(InputStream in) throws IOException, URISyntaxException {
+        super(in);
+        retzServerUri = new URI(Objects.requireNonNull(super.properties.getProperty(RETZ_SERVER_URI)));
+        LOG.debug("Client only config: {}={}", RETZ_SERVER_URI, retzServerUri);
     }
 
     public URI getUri() {

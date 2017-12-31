@@ -68,6 +68,7 @@ public class GrpcSmokeTest {
     public void smoke() throws Throwable {
         // Absolutely passes as it's taken from server configuration!
         Authenticator auth = config.getAuthenticator();
+        String owner = config.getUser().keyId();
         try (Client client = new Client("localhost", port, auth)) {
             assertTrue(client.ping());
 
@@ -81,15 +82,14 @@ public class GrpcSmokeTest {
 
             String[] files = {"http://example.com:234/foobar/test.tar.gz"};
             Application app = new Application("foobar", Collections.emptyList(), Arrays.asList(files),
-                    Optional.empty(), config.getUser().keyId(),
+                    Optional.of("user"), owner,
                     0, new MesosContainer(), true);
             {
                 client.loadApp(app);
                 Application app2 = client.getApp(app.getAppid());
                 assertEquals(app.getAppid(), app2.getAppid());
-                assertEquals(app.getOwner(), app2.getOwner());
-                //TODO: fix this test fails
-                //assertEquals(app.getUser(), app2.getUser());
+                assertEquals(owner, app2.getOwner());
+                assertEquals(app.getUser(), app2.getUser());
                 assertEquals(app.getGracePeriod(), app2.getGracePeriod());
 
                 List<Application> apps = client.listApps();

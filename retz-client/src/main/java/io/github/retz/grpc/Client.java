@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import io.github.retz.auth.Authenticator;
+import io.github.retz.cli.ClientCLIConfig;
 import io.github.retz.protocol.converter.Pb2Retz;
 import io.github.retz.protocol.converter.Retz2Pb;
 import io.github.retz.protocol.data.Application;
@@ -43,6 +44,10 @@ public class Client implements Closeable {
     private final RetzGrpc.RetzBlockingStub blockingStub;
 
     private Authenticator authenticator;
+
+    public Client(ClientCLIConfig config) {
+        this(config.getUri(), config.getAuthenticator());
+    }
 
     public Client(URI uri, Authenticator authenticator) {
         this(uri.getHost(), uri.getPort(), authenticator);
